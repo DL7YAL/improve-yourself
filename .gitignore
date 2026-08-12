@@ -1,0 +1,78 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Test / tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local config / secrets
+.env
+.env.*
+*.local
+secrets/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+~$*
+tmp/
+temp/
+
+# CS2 demos and large captures
+*.dem
+*.dem.bz2
+captures/
+recordings/
+
+# Generated analysis output
+reports/
+output/
+exports/
+*.html
+
+# Performance capture data
+CapFrameX-*.json
+PresentMon-*.csv
+*.etl
+
+# Local backups / archives
+backup/
+backups/
+legacy/
+*.zip
+*.7z
+*.rar
+
+# User / machine specific configuration
+local_config/
+*.user.json
