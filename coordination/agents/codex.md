@@ -8,4 +8,4 @@ VERIFIED: Steam launched the existing CS2 Workshop Tools addon `improve_yourself
 DECISIONS: No new product decision and no scene adjustment. The runtime evidence confirms the already documented ordering: clear the camera occlusion before judging or aligning the Nuke masses.
 OPEN: The exact first-smoke displacement still needs a controlled implementation pass followed by a rebuild and the same runtime-camera check. The optimizer benchmark's authoritative Hammer sources remain in the local CS2 addon workspace and are not yet imported into this repository.
 NEXT: Move only the first Nuke smoke wall far enough out of the early camera corridor to preserve a visible buildup, then rebuild and repeat the runtime-camera check before changing any Nuke geometry.
-COMMIT/PR: Analyzer foundation `3e03875`; initial synchronization `e0aebe1`; visual-check handoff commit follows on `dev/v1-foundation`
+COMMIT/PR: Analyzer foundation `3e03875`; initial synchronization `e0aebe1`; visual-check result begins at `7d1a67d` on `dev/v1-foundation`
