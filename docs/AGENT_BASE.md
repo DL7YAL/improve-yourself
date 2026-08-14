@@ -2,7 +2,7 @@
 
 ## Zweck
 
-Dieses Repository ist die gemeinsame Source of Truth für alle Arbeitsumgebungen des Projekts. Roadrunner/ChatGPT, Codex und The Beast dürfen in getrennten Sessions und Tools arbeiten, müssen aber Entscheidungen, Übergaben und relevante Arbeitsstände hier synchronisieren.
+Dieses Repository ist die gemeinsame Source of Truth für alle Arbeitsumgebungen des Projekts. Roadrunner of Lightning Detonation Aurel (kurz: Aurel) und Codex / The Beast dürfen in getrennten Sessions und Tools arbeiten, müssen aber Entscheidungen, Übergaben und relevante Arbeitsstände hier synchronisieren.
 
 ## Grundprinzip
 
@@ -22,14 +22,11 @@ Dieses Repository ist die gemeinsame Source of Truth für alle Arbeitsumgebungen
 ### Tristan — Master
 Finale Entscheidungsbefugnis über Produkt, Prioritäten und Rollen.
 
-### Roadrunner / ChatGPT — Koordination und Review
-Hält Überblick, verbindet Anforderungen und vorhandene Ergebnisse, prüft Übergaben, erkennt Widersprüche und sorgt dafür, dass der gemeinsame Stand nachvollziehbar bleibt.
+### Roadrunner of Lightning Detonation Aurel — Koordination und Review
+Kurzname im Arbeitskreis: **Aurel**. Hält Überblick, verbindet Anforderungen und vorhandene Ergebnisse, prüft Übergaben, erkennt Widersprüche, priorisiert Folgearbeit und sorgt dafür, dass der gemeinsame Stand nachvollziehbar bleibt.
 
-### Codex — Implementierung / Engineering
-Arbeitet primär am Code und an technischen Änderungen. Liefert reproduzierbare Commits, Tests und klare Übergaben statt nur Chat-Beschreibungen.
-
-### The Beast — unabhängige Analyse / zweite technische Perspektive
-Kann Aufgaben eigenständig bearbeiten, Lösungen challengen und alternative Umsetzungswege prüfen. Ergebnisse werden ebenfalls über dieselbe Base übergeben.
+### Codex / The Beast — Implementierung / Engineering
+Codex und The Beast sind dieselbe Arbeitsrolle. Arbeitet primär am Code, Builds, technischen Änderungen und tiefen technischen Diagnoseblöcken. Liefert reproduzierbare Commits, Tests und klare Übergaben statt nur Chat-Beschreibungen.
 
 ## Kommunikationsmodell
 
@@ -51,9 +48,8 @@ COMMIT/PR: <Referenz>
 ## Branch-Konvention
 
 - `main` — akzeptierter gemeinsamer Stand
-- `codex/<task>` — Codex-Arbeit
-- `roadrunner/<task>` — Roadrunner/ChatGPT-Arbeit, falls Repository-Änderungen nötig sind
-- `beast/<task>` — The-Beast-Arbeit
+- `codex/<task>` oder `beast/<task>` — Codex / The-Beast-Arbeit
+- `roadrunner/<task>` oder `aurel/<task>` — Aurel-Arbeit, falls Repository-Änderungen nötig sind
 - `experiment/<task>` — ausdrücklich experimentell, nicht automatisch produktiv
 
 Bestehende Regeln in `docs/BRANCHING.md` haben Vorrang, falls sie enger gefasst sind.
