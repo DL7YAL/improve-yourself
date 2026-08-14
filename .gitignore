@@ -51,11 +51,13 @@ temp/
 # CS2 demos and large captures
 *.dem
 *.dem.bz2
+*.dem.zst
 captures/
 recordings/
 
 # Generated analysis output
 reports/
+results/
 output/
 exports/
 *.html

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "improve-yourself-analyzer"
+version = "0.1.0"
+description = "Local-first CS2 demo analysis foundation"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "awpy==2.0.2",
+  "zstandard>=0.23,<1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3,<9"]
+
+[project.scripts]
+iy-analyze = "improve_yourself.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/improve_yourself"]

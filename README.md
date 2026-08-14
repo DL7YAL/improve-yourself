@@ -58,3 +58,27 @@ See [`docs/BRANCHING.md`](docs/BRANCHING.md) for the branch policy and [`docs/RO
 ## Current next step
 
 Inventory the saved prototypes, classify each component as **keep / revise / discard / defer**, and move only the approved parts into the new V1 development branch.
+
+## Demo Analyzer V1 foundation
+
+Local, traceable processing of CS2 demos. Automated markers are review cues and
+never proof of cheating.
+
+### Start
+
+```powershell
+py -3.13 -m venv .venv
+.venv\Scripts\python -m pip install -e ".[dev]"
+.venv\Scripts\iy-analyze "D:\Path\match.dem.zst" --output results
+```
+
+The importer supports `.dem`, `.dem.zst`, and `.dem.bz2`. Compressed files are
+materialized only temporarily and deleted automatically after analysis.
+
+### V1 analysis rules
+
+- A multi-kill is at least three kills by one player across the entire round.
+- Missing optional event channels must not abort parsing.
+- Missing footsteps are disclosed as a material data limitation.
+- Results use the versioned `iy.analysis/v1` schema.
+- Original demos and voice content are not stored in analysis results.
