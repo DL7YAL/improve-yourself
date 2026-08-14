@@ -3,8 +3,40 @@
 ## Fokus
 V1 konsolidieren und bestehende funktionierende Komponenten zu einem sauberen gemeinsamen Entwicklungsstand zusammenführen.
 
+## Rollen
+- Tristan: finale Entscheidungen und Prioritäten.
+- ChatGPT / Koordination: Gesamtbild, Status, Handoffs, Konflikte, Reviews und unabhängige Parallelvorbereitung.
+- Codex / The Beast: Implementierung, technische Änderungen, Builds und Tests in seinem jeweils übernommenen Arbeitsobjekt.
+
 ## Arbeitsregel
 Vor Beginn relevanter Arbeiten `docs/AGENT_BASE.md`, `docs/ROADMAP.md`, `docs/DECISIONS.md` und diese Datei lesen. Nach Abschluss oder Blockade den eigenen Übergabestand unter `coordination/agents/` aktualisieren.
 
-## Nächster Schritt
-Den zuletzt dokumentierten technischen Arbeitsstand übernehmen, gegen die V1-Roadmap prüfen und daraus den nächsten reproduzierbaren Implementierungsschritt ableiten.
+Ein Arbeitsobjekt hat genau einen Owner. Keine unkoordinierten Änderungen an `LOCKED`-Objekten. Übergaben ändern den Owner ausdrücklich.
+
+Statusfolge: `FREE` -> `LOCKED` -> `REVIEW` -> `DONE`; bei Hindernissen `BLOCKED`.
+
+## Ereignisbasierte Übergaben
+Keine unnötigen Kurzintervall-Statusabfragen. Ein Handoff ist besonders sinnvoll bei:
+- Blocker oder fehlendem Erkenntnisfortschritt,
+- reproduzierbarem PASS/FAIL,
+- erreichtem Meilenstein,
+- notwendiger Entscheidung,
+- Übergabe eines Arbeitsobjekts.
+
+## Aktuelles Cockpit
+| Arbeitsstrang | Owner | Status | Ziel / nächster belastbarer Schritt |
+| --- | --- | --- | --- |
+| Benchmark Runtime / frühe Nuke-Kamera | Codex / The Beast | BLOCKED | Runtime-Marker, Controller-State sowie Camera/World/Visibility read-only eingrenzen; Smoke/Geometrie bis zur Ursache nicht erneut verschieben. |
+| 2D Analyzer / Viewer | ChatGPT / Koordination | FREE -> Vorbereitung | Anforderungen, vorhandene Komponenten, Datenfluss, Darstellungsbausteine und Testkriterien inventarisieren; keine LOCKED-Implementierung anfassen. |
+| 3D Viewer / World / Assets | ChatGPT / Koordination | FREE -> Vorbereitung | Architektur, benötigte Daten/Assets/Texturen, Schnittstellen und reproduzierbare Visual-Checks inventarisieren; keine Benchmark-Runtime-Änderungen. |
+| Sandbox / reproduzierbare Testpipeline | ChatGPT / Koordination | FREE -> Konzeption | Minimalen Ablauf `Änderung -> Build -> Start -> definierter Test -> Log/Screenshot/Artefakt -> PASS/FAIL` entwerfen. |
+| Internes Avatar-System | gemeinsam, getrennte Eigenentwürfe | FREE | Nur interne Personalisierung; keine Produkt-/Firmenmarke. Siehe `coordination/agents/avatar-brief.md`. |
+
+## Koordinationsprinzip
+Parallel arbeiten, wenn die Stränge unabhängig sind. Nicht dieselbe Schraube gleichzeitig drehen. Wenn ein Owner wiederholt denselben Testkreis ohne neue Information durchläuft, Problemraum aufteilen und eine zweite Diagnoseachse übernehmen.
+
+## Nächste Schritte
+1. Codex / The Beast seinen aktuellen Runtime-Diagnoseblock ohne unnötige Unterbrechung abschließen lassen.
+2. Parallel 2D- und 3D-Bestand, Schnittstellen und offene Abhängigkeiten erfassen.
+3. Aus realen Arbeitsabläufen die kleinste sinnvolle Sandbox/Testpipeline ableiten; kein großes Dashboard vor dem Prozess bauen.
+4. Später aus den Handoffs eine kompakte Projektleiter-Sicht ableiten: Was funktioniert, was ist blockiert, wer besitzt was, was hat sich geändert, wo ist Tristans Entscheidung nötig?
