@@ -1,0 +1,14 @@
+{
+  "schema": "iy.cs2-addon-sources/v1",
+  "addon": "improve_yourself_benchmark",
+  "files": [
+    {
+      "path": "maps/improve_yourself_benchmark.vmap",
+      "sha256": "A37273C6E27AB8357068DC3FF064888EF82C2C11C84C668B85CB1FE910036572"
+    },
+    {
+      "path": "scripts/benchmark_controller.js",
+      "sha256": "41BA031586C168CB368875CE275B02DE7BB0B2879B2CBD0115EA47CE8778DCFA"
+    }
+  ]
+}

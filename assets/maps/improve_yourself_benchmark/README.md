@@ -33,7 +33,8 @@ Compiled VPKs, caches, logs, older backups, Valve example content, Valve type
 definitions, post-processing defaults, sound events, and audio files remain
 outside this repository.
 
-To use these files in Workshop Tools, copy them into the matching `maps/` and
-`scripts/` paths of an `improve_yourself_benchmark` addon. Do not edit the
-repository copy and the installed addon independently; make one location the
-working source and synchronize deliberately.
+Use `tools/benchmark/Sync-BenchmarkAddon.ps1` to verify an installed Workshop
+Tools addon against `source-manifest.json`. Its default mode is read-only; the
+explicit `-Deploy` mode creates verified backups before replacing only missing
+or different manifest files. Do not edit the repository copy and installed
+addon independently.

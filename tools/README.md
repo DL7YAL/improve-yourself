@@ -9,3 +9,7 @@ Examples:
 - build / packaging helpers
 
 Utilities should stay separate from the runtime application unless they are required by the product itself.
+
+Current utilities:
+- `benchmark/Sync-BenchmarkAddon.ps1` — read-only verification and explicit,
+  backed-up one-way deployment of the versioned CS2 benchmark sources
