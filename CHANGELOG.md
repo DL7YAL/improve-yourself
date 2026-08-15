@@ -12,6 +12,8 @@ The project is currently pre-release. Versioning will become formal once the con
 - Branch policy
 - Project roadmap documentation
 - Initial `.gitignore`
+- Reproducible Python 3.13 Demo Analyzer development bootstrap from
+  `requirements.lock`, including dependency, test, and CLI baseline checks
 
 ### Next
 - Inventory existing prototypes

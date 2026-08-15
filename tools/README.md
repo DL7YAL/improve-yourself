@@ -13,3 +13,5 @@ Utilities should stay separate from the runtime application unless they are requ
 Current utilities:
 - `benchmark/Sync-BenchmarkAddon.ps1` — read-only verification and explicit,
   backed-up one-way deployment of the versioned CS2 benchmark sources
+- `dev/Setup-V1.ps1` — idempotent Python 3.13 bootstrap from the dependency
+  lockfile, followed by dependency, test, and CLI baseline checks

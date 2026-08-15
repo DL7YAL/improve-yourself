@@ -67,10 +67,17 @@ never proof of cheating.
 ### Start
 
 ```powershell
-py -3.13 -m venv .venv
-.venv\Scripts\python -m pip install -e ".[dev]"
+.\tools\dev\Setup-V1.ps1
 .venv\Scripts\iy-analyze "D:\Path\match.dem.zst" --output results
 ```
+
+The setup helper requires Python 3.13, installs the exact versions from
+`requirements.lock`, installs this project in editable mode without resolving a
+second dependency set, checks dependency consistency, runs the automated tests,
+and smoke-tests the CLI. It reuses a valid existing `.venv` and refuses an
+existing environment created with another Python version instead of deleting or
+replacing it. Use `-SkipTests` only when a separate test run is intentionally
+scheduled.
 
 The importer supports `.dem`, `.dem.zst`, and `.dem.bz2`. Compressed files are
 materialized only temporarily and deleted automatically after analysis.
