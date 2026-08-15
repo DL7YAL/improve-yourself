@@ -26,7 +26,7 @@ Keine unnötigen Kurzintervall-Statusabfragen. Ein Handoff ist besonders sinnvol
 ## Aktuelles Cockpit
 | Arbeitsstrang | Owner | Status | Ziel / nächster belastbarer Schritt |
 | --- | --- | --- | --- |
-| Benchmark Runtime / frühe Nuke-Kamera | Codex / The Beast | BLOCKED | Runtime-Marker, Controller-State sowie Camera/World/Visibility read-only eingrenzen; Smoke/Geometrie bis zur Ursache nicht erneut verschieben. |
+| Benchmark Runtime / frühe Nuke-Kamera | Codex / The Beast | DONE | Reparierte Map und Controller sind unter `assets/maps/improve_yourself_benchmark/` mit Herkunft und Hashes versioniert; weitere visuelle Verfeinerung ist ein eigener späterer Arbeitsstrang. |
 | 2D Analyzer / Viewer | ChatGPT / Koordination | FREE -> Vorbereitung | Anforderungen, vorhandene Komponenten, Datenfluss, Darstellungsbausteine und Testkriterien inventarisieren; keine LOCKED-Implementierung anfassen. |
 | 3D Viewer / World / Assets | ChatGPT / Koordination | FREE -> Vorbereitung | Architektur, benötigte Daten/Assets/Texturen, Schnittstellen und reproduzierbare Visual-Checks inventarisieren; keine Benchmark-Runtime-Änderungen. |
 | Sandbox / reproduzierbare Testpipeline | ChatGPT / Koordination | FREE -> Konzeption | Minimalen Ablauf `Änderung -> Build -> Start -> definierter Test -> Log/Screenshot/Artefakt -> PASS/FAIL` entwerfen. |
