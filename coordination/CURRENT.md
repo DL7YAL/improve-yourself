@@ -28,6 +28,7 @@ Keine unnötigen Kurzintervall-Statusabfragen. Ein Handoff ist besonders sinnvol
 | --- | --- | --- | --- |
 | Benchmark Runtime / frühe Nuke-Kamera | Codex / The Beast | DONE | Reparierte Quellen sind versioniert; `tools/benchmark/Sync-BenchmarkAddon.ps1` prüft standardmäßig read-only und deployt nur explizit, zielbegrenzt, mit Backup und Hash-Nachprüfung. |
 | Demo Analyzer / reproduzierbare Entwicklungsbaseline | Codex / The Beast | DONE | `tools/dev/Setup-V1.ps1` stellt Python 3.13 aus dem Lockfile her und prüft Abhängigkeiten, 7 Tests sowie den CLI-Start reproduzierbar. |
+| Demo Analyzer / reale Demo-Regression | Codex / The Beast | BLOCKED | Harness und `iy.analysis/v1`-Validator sind bereit; in den bekannten lokalen Ablagen liegt aktuell keine `.dem`, `.dem.zst` oder `.dem.bz2` für den echten End-to-End-Lauf. |
 | 2D Analyzer / Viewer | ChatGPT / Koordination | FREE -> Vorbereitung | Anforderungen, vorhandene Komponenten, Datenfluss, Darstellungsbausteine und Testkriterien inventarisieren; keine LOCKED-Implementierung anfassen. |
 | 3D Viewer / World / Assets | ChatGPT / Koordination | FREE -> Vorbereitung | Architektur, benötigte Daten/Assets/Texturen, Schnittstellen und reproduzierbare Visual-Checks inventarisieren; keine Benchmark-Runtime-Änderungen. |
 | Sandbox / reproduzierbare Testpipeline | ChatGPT / Koordination | FREE -> Konzeption | Minimalen Ablauf `Änderung -> Build -> Start -> definierter Test -> Log/Screenshot/Artefakt -> PASS/FAIL` entwerfen. |

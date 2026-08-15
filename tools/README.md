@@ -15,3 +15,5 @@ Current utilities:
   backed-up one-way deployment of the versioned CS2 benchmark sources
 - `dev/Setup-V1.ps1` — idempotent Python 3.13 bootstrap from the dependency
   lockfile, followed by dependency, test, and CLI baseline checks
+- `dev/Run-DemoRegression.ps1` — local real-demo analysis plus portable
+  `iy.analysis/v1` contract validation and a non-sensitive aggregate summary

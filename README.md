@@ -82,6 +82,9 @@ scheduled.
 The importer supports `.dem`, `.dem.zst`, and `.dem.bz2`. Compressed files are
 materialized only temporarily and deleted automatically after analysis.
 
+For a repeatable real-demo regression that keeps raw matches and detailed
+results local, see [`docs/DEMO_REGRESSION.md`](docs/DEMO_REGRESSION.md).
+
 ### V1 analysis rules
 
 - A multi-kill is at least three kills by one player across the entire round.

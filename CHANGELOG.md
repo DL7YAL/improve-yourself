@@ -14,6 +14,8 @@ The project is currently pre-release. Versioning will become formal once the con
 - Initial `.gitignore`
 - Reproducible Python 3.13 Demo Analyzer development bootstrap from
   `requirements.lock`, including dependency, test, and CLI baseline checks
+- Local real-demo regression harness with portable `iy.analysis/v1` contract
+  validation and a non-sensitive aggregate summary
 
 ### Next
 - Inventory existing prototypes
