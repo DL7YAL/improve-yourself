@@ -31,7 +31,7 @@ Keine unnötigen Kurzintervall-Statusabfragen. Ein Handoff ist besonders sinnvol
 | Demo Analyzer / reale Demo-Regression | Codex / The Beast | DONE | Repräsentative reale `de_mirage`-Demo besteht den End-to-End-Lauf und alle `iy.analysis/v1`-Invarianten; nicht personenbezogene Evidenz ist im Codex-Handoff dokumentiert. |
 | 2D Analyzer / Viewer | ChatGPT / Koordination | FREE -> Vorbereitung | Anforderungen, vorhandene Komponenten, Datenfluss, Darstellungsbausteine und Testkriterien inventarisieren; keine LOCKED-Implementierung anfassen. |
 | 3D Viewer / World / Assets | ChatGPT / Koordination | FREE -> Vorbereitung | Architektur, benötigte Daten/Assets/Texturen, Schnittstellen und reproduzierbare Visual-Checks inventarisieren; keine Benchmark-Runtime-Änderungen. |
-| Sandbox / reproduzierbare Testpipeline | ChatGPT / Koordination | FREE -> Konzeption | Minimalen Ablauf `Änderung -> Build -> Start -> definierter Test -> Log/Screenshot/Artefakt -> PASS/FAIL` entwerfen. |
+| Sandbox / reproduzierbare Testpipeline | Codex / The Beast | DONE | `tools/dev/Run-V1Pipeline.ps1` liefert aus Lockfile-Setup, Tests, CLI-Smoke-Test und realer Demo-Regression ein lokales, nicht personenbezogenes `iy.pipeline/v1`-PASS/FAIL-Artefakt. |
 | Internes Avatar-System | gemeinsam, getrennte Eigenentwürfe | FREE | Nur interne Personalisierung; keine Produkt-/Firmenmarke. Siehe `coordination/agents/avatar-brief.md`. |
 
 ## Koordinationsprinzip

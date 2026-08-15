@@ -17,3 +17,5 @@ Current utilities:
   lockfile, followed by dependency, test, and CLI baseline checks
 - `dev/Run-DemoRegression.ps1` — local real-demo analysis plus portable
   `iy.analysis/v1` contract validation and a non-sensitive aggregate summary
+- `dev/Run-V1Pipeline.ps1` — one-command locked setup, tests, CLI smoke check,
+  real-demo regression, and local aggregate PASS/FAIL evidence
