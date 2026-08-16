@@ -54,6 +54,25 @@ maps`. Patch `17595823` supplied `de_mirage.png` and the transform `pos_x=-3230`
 `pos_y=1713`, `scale=5`, `rotate=0`. The downloaded radar remains outside this
 repository; it is a rendering dependency, not parsed match data.
 
-The first reproducible renderer still needs to consume this local resource and
-visually verify the world-to-radar projection. That visual check is separate
-from the replay data-contract tests.
+## Local renderer
+
+Create a self-contained HTML viewer from an existing replay artifact:
+
+```powershell
+.venv\Scripts\iy-replay-viewer '<replay.json>' --output '<viewer.html>'
+```
+
+With a locally available radar (the image is embedded only into the generated,
+ignored output; it is not added to the repository):
+
+```powershell
+.venv\Scripts\iy-replay-viewer '<replay.json>' --output '<viewer.html>' `
+  --radar '<de_mirage.png>' --pos-x -3230 --pos-y 1713 --scale 5
+```
+
+The renderer validates the replay schema and coordinate space, provides scene
+selection, a frame scrubber, playback, team-colored player positions and view
+directions. Without a radar it deliberately falls back to a relative grid.
+The Source radar projection is `(world_x - pos_x) / scale` and
+`(pos_y - world_y) / scale`; contract tests pin both Mirage transform corners.
+The visual world-to-radar check remains separate from these math and HTML tests.
