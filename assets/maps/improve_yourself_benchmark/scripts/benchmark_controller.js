@@ -1,9 +1,20 @@
 import { CSGrenadeType, Instance } from "cs_script/point_script";
 
-const VERSION = "iy-benchmark/v1";
+const VERSION = "iy-benchmark/v1.1";
 const TICK_SECONDS = 1 / 64;
 const PASS_SECONDS = 64;
 const COOLDOWN_SECONDS = 3;
+
+const TRANSITIONS = [
+    {
+        from: "nuke_outside", to: "ancient_b", occlusion: "smoke",
+        enter: 19.0, swap: 22.0, exit: 24.5,
+    },
+    {
+        from: "ancient_b", to: "inferno_apps_a", occlusion: "flash",
+        landmark: "red_room", approach: 38.0, enter: 41.9, swap: 43.0, exit: 44.5,
+    },
+];
 
 const SCENES = [
     {
@@ -31,7 +42,8 @@ const SCENES = [
         start: 22,
         end: 43,
         cameras: [
-            { t: 22, p: [7850, -420, 165], q: [8050, 0, 72] },
+            { t: 22, p: [7850, -420, 165], q: [8270, -280, 72] },
+            { t: 22.35, p: [7865, -385, 170], q: [8050, 0, 72] },
             { t: 27, p: [8040, 20, 210], q: [8200, 350, 72] },
             { t: 33, p: [8200, 400, 430], q: [8300, 600, 72] },
             { t: 38, p: [8410, 720, 290], q: [8580, 700, 72] },
@@ -50,7 +62,9 @@ const SCENES = [
         start: 43,
         end: 64,
         cameras: [
-            { t: 43, p: [-8676, -520, 175], q: [-8480, -100, 72] },
+            { t: 43, p: [-8676, -520, 175], q: [-8506, -600, 72] },
+            { t: 43.35, p: [-8660, -485, 175], q: [-8480, -100, 72] },
+            { t: 44.5, p: [-8610, -380, 170], q: [-8420, 20, 72] },
             { t: 48, p: [-8486, -80, 180], q: [-8300, 350, 72] },
             { t: 53, p: [-8296, 300, 195], q: [-8100, 650, 72] },
             { t: 58, p: [-8066, 720, 270], q: [-7850, 700, 72] },
@@ -139,6 +153,15 @@ function marker(value) {
     Instance.Msg(`[IYBENCH] ${value}`);
 }
 
+function transitionMarker(index, phaseName) {
+    const transition = TRANSITIONS[index];
+    const landmark = transition.landmark ? ` landmark=${transition.landmark}` : "";
+    marker(
+        `TRANSITION_${phaseName} from=${transition.from} to=${transition.to}`
+        + ` occlusion=${transition.occlusion}${landmark}`
+    );
+}
+
 function runtimeError(scope, error) {
     Instance.Msg(`[IYBENCH] ERROR scope=${scope} detail=${String(error)}`);
 }
@@ -208,6 +231,14 @@ function stopFire() {
     command("-attack", true);
 }
 
+function whiteFadeOut() {
+    command("fadeout 0.15 1.4 255 255 255 255", true);
+}
+
+function whiteFadeIn() {
+    command("fadein 0.35 255 255 255 255", true);
+}
+
 function bombTick() {
     Instance.EntFireAtName({ name: "iy_bomb_tick", input: "StartSound" });
 }
@@ -225,20 +256,29 @@ const EVENTS = [
     { t: 16.2, run: () => grenade(CSGrenadeType.SMOKE, [200, 920, 82]) },
     { t: 16.45, run: () => grenade(CSGrenadeType.SMOKE, [470, 980, 82]) },
     { t: 16.7, run: () => grenade(CSGrenadeType.SMOKE, [720, 1040, 82]) },
+    { t: 19.0, run: () => transitionMarker(0, "ENTER") },
     { t: 21.8, run: () => finishScene("nuke_outside") },
+    { t: 22.0, run: () => transitionMarker(0, "SWAP") },
 
     { t: 22.0, run: () => stageBots(SCENES[1]) },
     { t: 22.05, run: () => grenade(CSGrenadeType.SMOKE, [7850, -420, 165]) },
     { t: 23.0, run: () => grenade(CSGrenadeType.SMOKE, [8360, 610, 85]) },
     { t: 24.0, run: () => grenade(CSGrenadeType.MOLOTOV, [8170, 360, 75]) },
+    { t: 24.5, run: () => transitionMarker(0, "EXIT") },
     { t: 27.0, run: startFire }, { t: 28.4, run: stopFire },
     { t: 31.0, run: () => grenade(CSGrenadeType.HE, [8460, 650, 90]) },
     { t: 34.0, run: startFire }, { t: 35.2, run: stopFire },
-    { t: 40.0, run: () => grenade(CSGrenadeType.SMOKE, [8580, 980, 140]) },
+    { t: 38.0, run: () => transitionMarker(1, "APPROACH") },
+    { t: 41.85, run: clearUtilities },
+    { t: 41.9, run: () => transitionMarker(1, "ENTER") },
+    { t: 41.92, run: () => grenade(CSGrenadeType.FLASHBANG, [8580, 980, 140]) },
+    { t: 41.94, run: whiteFadeOut },
     { t: 42.8, run: () => finishScene("ancient_b") },
+    { t: 43.0, run: () => transitionMarker(1, "SWAP") },
 
     { t: 43.0, run: () => stageBots(SCENES[2]) },
-    { t: 43.05, run: () => grenade(CSGrenadeType.SMOKE, [-8676, -520, 175]) },
+    { t: 43.35, run: whiteFadeIn },
+    { t: 44.5, run: () => transitionMarker(1, "EXIT") },
     { t: 45.0, run: () => grenade(CSGrenadeType.MOLOTOV, [-8256, 440, 75]) },
     { t: 48.0, run: startFire }, { t: 49.3, run: stopFire },
     { t: 51.0, run: bombTick }, { t: 53.0, run: bombTick },
