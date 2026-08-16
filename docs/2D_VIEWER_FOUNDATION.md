@@ -16,10 +16,10 @@ The current `iy.analysis/v1` result contains kill and Multi-Kill timing but no
 position, movement, view direction, shot position or utility geometry. It is
 therefore sufficient for an event list, not for a tactical 2D reconstruction.
 
-## Proposed boundary
+## Implemented boundary
 
-A future `iy.replay/v1` artifact should remain separate from
-`iy.analysis/v1`. It should contain selected scene windows in world coordinates:
+`iy.replay/v1` remains separate from `iy.analysis/v1` and contains selected
+scene windows in world coordinates:
 
 - source hash, map and explicit sampling metadata;
 - round and scene tick bounds;
@@ -30,19 +30,30 @@ A future `iy.replay/v1` artifact should remain separate from
 World coordinates should be preserved in the artifact. A renderer-specific map
 transform belongs to the map asset/metadata layer, not to parsed match data.
 
-## Blocking prerequisites
+## V1 selection and sampling
 
-No versioned radar image or map transform for `de_mirage` exists in the
-repository or bundled Awpy data. A visual viewer therefore cannot yet be
-rendered and validated reproducibly.
+- one scene per existing Multi-Kill marker;
+- exact window from the marker's first through last kill tick;
+- uniform selection from unique ticks, capped at 256 tick frames per scene;
+- the final tick is always retained;
+- all rules are embedded as artifact metadata rather than hidden defaults.
+- incomplete player snapshots with null position or view values are omitted and
+  counted in `data_quality.omitted_incomplete_player_snapshots`; they are never
+  rendered at an invented zero position.
 
-Before implementation is locked, coordination must provide or approve:
+Export from an existing matching analysis:
 
-1. a legally usable, versioned radar asset and its world-to-radar transform;
-2. the first scene-selection rule (for example whole round versus bounded
-   context around a marker);
-3. the sampling budget or target temporal resolution, so 872,450 raw player
-   rows are not copied blindly into every output.
+```powershell
+.venv\Scripts\python -m improve_yourself.replay '<demo>' '<analysis.json>'
+```
 
-These are explicit inputs rather than silent defaults. Until they are resolved,
-the existing Analyzer schema and parser behavior should remain unchanged.
+## Local map resources
+
+Awpy's official resource downloader provides local map data with `awpy get
+maps`. Patch `17595823` supplied `de_mirage.png` and the transform `pos_x=-3230`,
+`pos_y=1713`, `scale=5`, `rotate=0`. The downloaded radar remains outside this
+repository; it is a rendering dependency, not parsed match data.
+
+The first reproducible renderer still needs to consume this local resource and
+visually verify the world-to-radar projection. That visual check is separate
+from the replay data-contract tests.
