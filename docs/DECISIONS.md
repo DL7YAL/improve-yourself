@@ -22,6 +22,13 @@ This file records decisions that should not be repeatedly reopened without a con
 - **Impact:** These transitions are an essential benchmark design and acceptance criterion, not optional polish. A transition is not considered finished if a normal viewer immediately perceives a hard map cut. The current `nuke_outside`, `ancient_b` and `inferno_apps_a` controller scenes must be refined to implement and validate this continuous camera concept without compromising reproducibility of the measured sections.
 - **Date:** 2026-08-16
 
+## Benchmark agent-model variety — optional, cost-bounded
+
+- **Decision:** The benchmark may use a fixed, visually varied selection of common CT/T agent models instead of only standard bot models, but only when The Beast judges the change to be low-cost, reliable and free of meaningful new asset, dependency or reproducibility risk. The selection must be deterministic across benchmark runs; no random model assignment. Full coverage of every available agent model is explicitly out of scope.
+- **Reason:** A small amount of model/material variety can make the benchmark look more representative and may add modest rendering diversity, but it is not important enough to consume significant implementation time or destabilize the benchmark.
+- **Impact:** The Beast has discretion to include a small fixed set of common agent variants when implementation is cheap and clean. If it requires substantial extra work, asset handling, Workshop dependencies or troubleshooting, keep the current standard models and consider the item complete. This is a bonus/polish item and must not delay multi-map transitions, camera work, measurement quality or release readiness.
+- **Date:** 2026-08-17
+
 ## Decision format
 
 When a new decision is added, record:
