@@ -27,6 +27,7 @@ Keine unnötigen Kurzintervall-Statusabfragen. Ein Handoff ist besonders sinnvol
 | Arbeitsstrang | Owner | Status | Ziel / nächster belastbarer Schritt |
 | --- | --- | --- | --- |
 | Benchmark Runtime / frühe Nuke-Kamera | Codex / The Beast | DONE | Reparierte Quellen sind versioniert; `tools/benchmark/Sync-BenchmarkAddon.ps1` prüft standardmäßig read-only und deployt nur explizit, zielbegrenzt, mit Backup und Hash-Nachprüfung. |
+| Benchmark Multi-Map-Transitions | Codex / The Beast | WAITING_FOR_TRISTAN -> LOCKED DESIGN | Verbindlicher Ablauf: Nuke Outside -> Smoke-Whiteout/Blindphase -> Ancient B-Ramp/Wasser mit Reflexionslast -> B-Site -> Red Room; Rot bewusst wahrnehmbar -> Flash-Whiteout -> Inferno Apps/Treppe. Keine sichtbaren harten Map-Cuts. Umsetzung/Feinabstimmung durch Beast nach aktuellem V1-Block; Designentscheidung ist in `docs/DECISIONS.md` verankert und darf nicht als optionales Polish gestrichen werden. |
 | Demo Analyzer / reproduzierbare Entwicklungsbaseline | Codex / The Beast | DONE | `tools/dev/Setup-V1.ps1` stellt Python 3.13 aus dem Lockfile her und prüft Abhängigkeiten, 7 Tests sowie den CLI-Start reproduzierbar. |
 | Demo Analyzer / reale Demo-Regression | Codex / The Beast | DONE | Repräsentative reale `de_mirage`-Demo besteht den End-to-End-Lauf und alle `iy.analysis/v1`-Invarianten; nicht personenbezogene Evidenz ist im Codex-Handoff dokumentiert. |
 | 2D Analyzer / Viewer | Codex / The Beast | BLOCKED | Renderer und automatisierte Projektionstests sind fertig. Der reale Mirage-Viewer ist lokal erzeugt; der abschließende Sichtcheck wartet auf Tristan, weil die Windows-Browsersteuerung lokale Navigation an ihrer URL-Sicherheitsgrenze beendet. |
@@ -44,6 +45,7 @@ Parallel arbeiten, wenn die Stränge unabhängig sind. Nicht dieselbe Schraube g
 
 ## Nächste Schritte
 1. Codex / The Beast seinen aktuellen Runtime-Diagnoseblock ohne unnötige Unterbrechung abschließen lassen.
-2. Parallel 2D- und 3D-Bestand, Schnittstellen und offene Abhängigkeiten erfassen.
-3. Aus realen Arbeitsabläufen die kleinste sinnvolle Sandbox/Testpipeline ableiten; kein großes Dashboard vor dem Prozess bauen.
-4. Später aus den Handoffs eine kompakte Projektleiter-Sicht ableiten: Was funktioniert, was ist blockiert, wer besitzt was, was hat sich geändert, wo ist Tristans Entscheidung nötig?
+2. Danach Benchmark-Multi-Map-Transitions gemäß der gesperrten Designentscheidung umsetzen/validieren: Nuke-Smoke -> Ancient B/Wasser -> Red Room -> Flash -> Inferno Apps.
+3. Parallel 2D- und 3D-Bestand, Schnittstellen und offene Abhängigkeiten erfassen.
+4. Aus realen Arbeitsabläufen die kleinste sinnvolle Sandbox/Testpipeline ableiten; kein großes Dashboard vor dem Prozess bauen.
+5. Später aus den Handoffs eine kompakte Projektleiter-Sicht ableiten: Was funktioniert, was ist blockiert, wer besitzt was, was hat sich geändert, wo ist Tristans Entscheidung nötig?
