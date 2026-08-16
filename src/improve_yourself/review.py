@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .review_state import scene_id
+
 
 def _load(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
@@ -55,9 +57,14 @@ def render_review_surface(
         for item in system.get("checks", [])
     )
     scenes = "".join(
-        f'<li><span>Runde {int(scene.get("round_number", 0))}</span>'
+        f'<li class="scene" data-scene-id="{html.escape(scene_id(scene), quote=True)}">'
+        f'<div class="scene-head"><span>Runde {int(scene.get("round_number", 0))}</span>'
         f'<strong>{html.escape(str(scene.get("marker_player", "")))}</strong>'
-        f'<small>{len(scene.get("frames", []))} Frames · Tick {int(scene.get("start_tick", 0))}–{int(scene.get("end_tick", 0))}</small></li>'
+        f'<small>{len(scene.get("frames", []))} Frames · Tick {int(scene.get("start_tick", 0))}–{int(scene.get("end_tick", 0))}</small></div>'
+        f'<div class="scene-review"><select aria-label="Review-Status">'
+        f'<option value="unreviewed">Ungeprüft</option><option value="reviewed">Geprüft</option>'
+        f'<option value="discarded">Verworfen</option><option value="clip-worthy">Clipwürdig</option></select>'
+        f'<textarea maxlength="2000" rows="2" placeholder="Optionale Notiz" aria-label="Review-Notiz"></textarea></div></li>'
         for scene in replay.get("scenes", [])
     ) or '<li class="empty">Keine Multi-Kill-Szenen in dieser Demo.</li>'
     quality = analysis.get("data_quality") or {}
@@ -69,6 +76,7 @@ def render_review_surface(
     document = _TEMPLATE.format(
         map_name=html.escape(str(analysis.get("map_name", "Unbekannte Karte"))),
         source_hash=html.escape(str(analysis.get("source_sha256", ""))[:12]),
+        source_hash_full=html.escape(str(analysis.get("source_sha256", "")), quote=True),
         kill_count=len(analysis.get("kills", [])),
         scene_count=len(replay.get("scenes", [])),
         quality_status=html.escape(str(quality.get("status", "not_assessable"))),
@@ -94,9 +102,10 @@ h1{{font-size:25px;margin:0 auto 0 0}}h2{{font-size:18px;margin:0 0 14px}}.muted
 .check span{{font-size:12px;font-weight:700}}.check p{{color:#b7c6d9;margin:10px 0 0;line-height:1.4}}
 .ok{{border-left:4px solid #48c78e}}.review{{border-left:4px solid #ffca62}}.action{{border-left:4px solid #ff6b6b}}
 .layout{{display:grid;grid-template-columns:1fr 1fr;gap:16px}}ul{{padding-left:20px}}.scenes{{list-style:none;padding:0;margin:0}}
-.scenes li{{display:grid;grid-template-columns:110px 1fr auto;gap:12px;padding:11px 0;border-bottom:1px solid #26374d}}
+.scene{{padding:11px 0;border-bottom:1px solid #26374d}}.scene-head{{display:grid;grid-template-columns:90px 1fr auto;gap:12px;align-items:center}}
+.scene-review{{display:grid;grid-template-columns:150px 1fr;gap:10px;margin-top:9px}}select,textarea{{background:#0b1727;color:#edf3fb;border:1px solid #334966;border-radius:7px;padding:8px}}textarea{{resize:vertical}}
 .button{{display:inline-block;background:#58a6ff;color:#07111e;text-decoration:none;font-weight:800;border-radius:9px;padding:11px 16px}}
-.boundary{{border-color:#8b6b2d;background:#211c12;line-height:1.5}}@media(max-width:760px){{.layout{{grid-template-columns:1fr}}.scenes li{{grid-template-columns:1fr}}}}
+.boundary{{border-color:#8b6b2d;background:#211c12;line-height:1.5}}#save{{border:0;cursor:pointer}}#save-status{{margin-left:12px}}@media(max-width:760px){{.layout{{grid-template-columns:1fr}}.scene-head,.scene-review{{grid-template-columns:1fr}}}}
 </style></head><body><main><header><div><h1>Improve Yourself · Match Review</h1>
 <div class="muted">{map_name} · Quelle {source_hash}</div></div><a class="button" href="{viewer_href}">Tactical Replay öffnen</a></header>
 <section class="metrics"><article class="metric"><strong>{kill_count}</strong><span class="muted">erkannte Kills</span></article>
@@ -105,5 +114,9 @@ h1{{font-size:25px;margin:0 auto 0 0}}h2{{font-size:18px;margin:0 0 14px}}.muted
 <section class="card"><h2>System Check</h2><div class="checks">{system_cards}</div></section>
 <div class="layout"><section class="card"><h2>Datenqualität</h2><ul>{warnings}</ul></section>
 <section class="card"><h2>Szenen</h2><ul class="scenes">{scenes}</ul></section></div>
+<section class="card"><button id="save" class="button" type="button">Review-Stand speichern</button><span id="save-status" class="muted">Lokaler Review-Dienst wird geprüft …</span></section>
 <section class="card boundary"><strong>Menschliche Prüfung erforderlich.</strong> Automatische Marker sind Review-Hinweise und kein Cheat-Nachweis. Sichtlinie, Sound, Utility, Calls, Timing und Gegnerperspektive müssen im Kontext geprüft werden.</section>
-</main></body></html>'''
+</main><script>const SOURCE_HASH="{source_hash_full}";const statusEl=document.querySelector('#save-status');
+function controls(){{return [...document.querySelectorAll('.scene')].map(el=>({{el,scene_id:el.dataset.sceneId,state:el.querySelector('select').value,note:el.querySelector('textarea').value}}))}}
+async function loadState(){{try{{const response=await fetch('/api/review-state',{{cache:'no-store'}});if(!response.ok)throw new Error('API nicht verfügbar');const data=await response.json();const byId=new Map(data.scenes.map(x=>[x.scene_id,x]));for(const c of controls()){{const item=byId.get(c.scene_id);if(item){{c.el.querySelector('select').value=item.state;c.el.querySelector('textarea').value=item.note}}}}statusEl.textContent='Gespeicherter lokaler Review-Stand geladen.'}}catch(error){{statusEl.textContent='Zum Speichern über iy-review-server öffnen; die statische Ansicht bleibt lesbar.'}}}}
+document.querySelector('#save').onclick=async()=>{{statusEl.textContent='Speichert …';const payload={{schema:'iy.review_state/v1',source_sha256:SOURCE_HASH,scenes:controls().map(c=>({{scene_id:c.scene_id,state:c.state,note:c.note}}))}};try{{const response=await fetch('/api/review-state',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(payload)}});const data=await response.json();if(!response.ok)throw new Error(data.error||'Speichern fehlgeschlagen');statusEl.textContent='Review-Stand lokal gespeichert.'}}catch(error){{statusEl.textContent='Speichern nicht möglich: '+error.message}}}};loadState();</script></body></html>'''

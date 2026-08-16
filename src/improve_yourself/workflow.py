@@ -9,6 +9,7 @@ from typing import Any
 
 from .replay import export_replay
 from .review import render_review_surface
+from .review_state import load_or_create_review_state
 from .service import analyze
 from .system_check import run_system_check
 from .viewer import render_viewer
@@ -45,6 +46,9 @@ def run_workflow(
     system_path = run_system_check(run_directory / "system-check.json")
     analysis_path = analyze(demo, run_directory / "analysis", max_bytes=max_bytes)
     replay_path = export_replay(demo, analysis_path, run_directory / "replay", max_frames=max_frames)
+    replay_payload = json.loads(replay_path.read_text(encoding="utf-8"))
+    state_path = run_directory / "review-state.json"
+    load_or_create_review_state(state_path, source_hash, replay_payload["scenes"])
     viewer_path = render_viewer(
         replay_path, run_directory / "viewer.html", radar_path=radar_path,
         pos_x=pos_x, pos_y=pos_y, scale=scale,
@@ -59,6 +63,7 @@ def run_workflow(
         "replay": replay_path.relative_to(run_directory).as_posix(),
         "viewer": viewer_path.relative_to(run_directory).as_posix(),
         "review": review_path.relative_to(run_directory).as_posix(),
+        "review_state": state_path.relative_to(run_directory).as_posix(),
     }
     payload: dict[str, Any] = {
         "schema": WORKFLOW_SCHEMA,

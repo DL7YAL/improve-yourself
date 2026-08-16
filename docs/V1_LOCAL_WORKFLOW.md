@@ -30,6 +30,20 @@ mandatory human-review boundary. It does not contain the original demo path.
 Open `review.html` as the human entry point. It summarizes findings without
 copying raw JSON into the interface and links to the generated `viewer.html`.
 
+For persistent user-authored review states and notes, start the loopback-only
+local service and open the printed address:
+
+```powershell
+.venv\Scripts\iy-review-server '<run-directory>\workflow.json'
+```
+
+The UI supports `unreviewed`, `reviewed`, `discarded` and `clip-worthy`, plus a
+note of at most 2,000 characters per known scene. It writes only
+`review-state.json` (`iy.review_state/v1`) beside the generated artifacts.
+Analysis and replay JSON remain unchanged. Requests are size-limited, scene- and
+source-bound, same-origin checked, atomically written and accepted only through
+`127.0.0.1`; the service never binds to the LAN.
+
 `READY_FOR_REVIEW` means processing succeeded; it does not mean that a marker
 is suspicious or that any player conclusion has been reached. The workflow
 does not change Windows, apply an Optimizer profile, elevate privileges, upload
