@@ -57,7 +57,11 @@ See [`docs/BRANCHING.md`](docs/BRANCHING.md) for the branch policy and [`docs/RO
 
 ## Current next step
 
-Inventory the saved prototypes, classify each component as **keep / revise / discard / defer**, and move only the approved parts into the new V1 development branch.
+The saved prototypes are inventoried in
+[`docs/PROTOTYPE_INVENTORY.md`](docs/PROTOTYPE_INVENTORY.md). Keep the current
+analysis and replay schemas as the sole parser foundation, complete the bounded
+2D visual check, and then build the first structured read-only System Check
+contract before any Optimizer apply/restore work.
 
 ## Demo Analyzer V1 foundation
 
