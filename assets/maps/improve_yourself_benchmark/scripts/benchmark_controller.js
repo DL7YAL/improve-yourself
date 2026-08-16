@@ -42,19 +42,19 @@ const SCENES = [
         start: 22,
         end: 43,
         cameras: [
-            { t: 22, p: [7850, -420, 165], q: [8270, -280, 72] },
-            { t: 22.35, p: [7865, -385, 170], q: [8050, 0, 72] },
-            { t: 27, p: [8040, 20, 210], q: [8200, 350, 72] },
-            { t: 33, p: [8200, 400, 430], q: [8300, 600, 72] },
-            { t: 38, p: [8410, 720, 290], q: [8580, 700, 72] },
-            { t: 43, p: [8580, 980, 140], q: [8750, 900, 72] },
+            { t: 22, p: [0, 1550, 160], q: [430, 1690, 72] },
+            { t: 22.35, p: [0, 1580, 165], q: [0, 2000, 72] },
+            { t: 27, p: [0, 2050, 165], q: [0, 2400, 60] },
+            { t: 33, p: [0, 2450, 230], q: [0, 2700, 80] },
+            { t: 38, p: [0, 2720, 165], q: [0, 2980, 100] },
+            { t: 43, p: [0, 2950, 140], q: [0, 3070, 90] },
         ],
         botPositions: [
-            [7900, -80, 72, 0, 30, 0], [8020, 40, 72, 0, 28, 0],
-            [8120, 160, 72, 0, 26, 0], [8200, 280, 72, 0, 22, 0],
-            [8280, 420, 72, 0, 18, 0], [8420, 760, 72, 0, 205, 0],
-            [8500, 640, 72, 0, 210, 0], [8580, 520, 72, 0, 215, 0],
-            [8660, 400, 72, 0, 220, 0], [8740, 280, 72, 0, 225, 0],
+            [-300, 1900, 72, 0, 90, 0], [0, 2000, 72, 0, 90, 0],
+            [300, 2100, 72, 0, 90, 0], [-280, 2300, 72, 0, 90, 0],
+            [280, 2400, 72, 0, 90, 0], [-260, 2600, 72, 0, 90, 0],
+            [260, 2700, 72, 0, 90, 0], [-220, 2820, 72, 0, 90, 0],
+            [0, 2880, 72, 0, 90, 0], [220, 2820, 72, 0, 90, 0],
         ],
     },
     {
@@ -62,20 +62,20 @@ const SCENES = [
         start: 43,
         end: 64,
         cameras: [
-            { t: 43, p: [-8676, -520, 175], q: [-8506, -600, 72] },
-            { t: 43.35, p: [-8660, -485, 175], q: [-8480, -100, 72] },
-            { t: 44.5, p: [-8610, -380, 170], q: [-8420, 20, 72] },
-            { t: 48, p: [-8486, -80, 180], q: [-8300, 350, 72] },
-            { t: 53, p: [-8296, 300, 195], q: [-8100, 650, 72] },
-            { t: 58, p: [-8066, 720, 270], q: [-7850, 700, 72] },
-            { t: 64, p: [-7756, 1050, 430], q: [-8060, 720, 72] },
+            { t: 43, p: [0, 3500, 160], q: [0, 3900, 72] },
+            { t: 43.35, p: [0, 3520, 165], q: [0, 3900, 90] },
+            { t: 44.5, p: [0, 3650, 170], q: [0, 4020, 100] },
+            { t: 48, p: [0, 3950, 185], q: [0, 4300, 120] },
+            { t: 53, p: [0, 4300, 205], q: [0, 4650, 120] },
+            { t: 58, p: [0, 4650, 230], q: [0, 4950, 110] },
+            { t: 64, p: [0, 5050, 300], q: [0, 4750, 120] },
         ],
         botPositions: [
-            [-8596, -120, 72, 0, 42, 0], [-8476, 20, 72, 0, 38, 0],
-            [-8366, 170, 72, 0, 34, 0], [-8256, 320, 72, 0, 30, 0],
-            [-8136, 460, 72, 0, 25, 0], [-8016, 820, 72, 0, 205, 0],
-            [-7916, 700, 72, 0, 210, 0], [-7816, 580, 72, 0, 215, 0],
-            [-7716, 460, 72, 0, 220, 0], [-7616, 340, 72, 0, 225, 0],
+            [-300, 3800, 72, 0, 90, 0], [300, 3900, 72, 0, 90, 0],
+            [-280, 4100, 96, 0, 90, 0], [280, 4200, 112, 0, 90, 0],
+            [-260, 4350, 120, 0, 90, 0], [260, 4500, 120, 0, 90, 0],
+            [-240, 4650, 120, 0, 90, 0], [240, 4800, 120, 0, 90, 0],
+            [-200, 4950, 120, 0, 90, 0], [200, 5050, 120, 0, 90, 0],
         ],
     },
 ];
@@ -239,6 +239,14 @@ function whiteFadeIn() {
     command("fadein 0.35 255 255 255 255", true);
 }
 
+function redRoomTint() {
+    command("fadeout 0.25 3.3 160 0 0 96", true);
+}
+
+function clearRedRoomTint() {
+    command("fadein 0.1 160 0 0 96", true);
+}
+
 function bombTick() {
     Instance.EntFireAtName({ name: "iy_bomb_tick", input: "StartSound" });
 }
@@ -261,17 +269,19 @@ const EVENTS = [
     { t: 22.0, run: () => transitionMarker(0, "SWAP") },
 
     { t: 22.0, run: () => stageBots(SCENES[1]) },
-    { t: 22.05, run: () => grenade(CSGrenadeType.SMOKE, [7850, -420, 165]) },
-    { t: 23.0, run: () => grenade(CSGrenadeType.SMOKE, [8360, 610, 85]) },
-    { t: 24.0, run: () => grenade(CSGrenadeType.MOLOTOV, [8170, 360, 75]) },
+    { t: 22.05, run: () => grenade(CSGrenadeType.SMOKE, [0, 1550, 160]) },
+    { t: 23.0, run: () => grenade(CSGrenadeType.SMOKE, [0, 1800, 85]) },
+    { t: 24.0, run: () => grenade(CSGrenadeType.MOLOTOV, [-220, 2400, 75]) },
     { t: 24.5, run: () => transitionMarker(0, "EXIT") },
     { t: 27.0, run: startFire }, { t: 28.4, run: stopFire },
-    { t: 31.0, run: () => grenade(CSGrenadeType.HE, [8460, 650, 90]) },
+    { t: 31.0, run: () => grenade(CSGrenadeType.HE, [220, 2600, 90]) },
     { t: 34.0, run: startFire }, { t: 35.2, run: stopFire },
     { t: 38.0, run: () => transitionMarker(1, "APPROACH") },
+    { t: 38.05, run: redRoomTint },
+    { t: 41.82, run: clearRedRoomTint },
     { t: 41.85, run: clearUtilities },
     { t: 41.9, run: () => transitionMarker(1, "ENTER") },
-    { t: 41.92, run: () => grenade(CSGrenadeType.FLASHBANG, [8580, 980, 140]) },
+    { t: 41.92, run: () => grenade(CSGrenadeType.FLASHBANG, [0, 2950, 140]) },
     { t: 41.94, run: whiteFadeOut },
     { t: 42.8, run: () => finishScene("ancient_b") },
     { t: 43.0, run: () => transitionMarker(1, "SWAP") },
@@ -279,7 +289,7 @@ const EVENTS = [
     { t: 43.0, run: () => stageBots(SCENES[2]) },
     { t: 43.35, run: whiteFadeIn },
     { t: 44.5, run: () => transitionMarker(1, "EXIT") },
-    { t: 45.0, run: () => grenade(CSGrenadeType.MOLOTOV, [-8256, 440, 75]) },
+    { t: 45.0, run: () => grenade(CSGrenadeType.MOLOTOV, [-180, 4300, 75]) },
     { t: 48.0, run: startFire }, { t: 49.3, run: stopFire },
     { t: 51.0, run: bombTick }, { t: 53.0, run: bombTick },
     { t: 54.5, run: bombTick }, { t: 55.6, run: bombTick },
@@ -287,7 +297,7 @@ const EVENTS = [
     { t: 58.0, run: startFire }, { t: 59.2, run: stopFire },
     { t: 60.0, run: bombTick }, { t: 60.4, run: bombTick },
     { t: 60.8, run: bombTick }, { t: 61.2, run: bombTick },
-    { t: 62.0, run: () => grenade(CSGrenadeType.HE, [-7956, 860, 82]) },
+    { t: 62.0, run: () => grenade(CSGrenadeType.HE, [200, 4900, 122]) },
 ];
 
 function finishScene(sceneId) {

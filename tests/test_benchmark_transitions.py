@@ -25,11 +25,12 @@ def test_transition_sequence_and_occlusions_are_locked() -> None:
     assert 'from: "nuke_outside", to: "ancient_b", occlusion: "smoke"' in text
     assert 'from: "ancient_b", to: "inferno_apps_a", occlusion: "flash"' in text
     assert 'landmark: "red_room"' in text
-    assert 'grenade(CSGrenadeType.FLASHBANG, [8580, 980, 140])' in text
+    assert 'grenade(CSGrenadeType.FLASHBANG, [0, 2950, 140])' in text
     assert 'fadeout 0.15 1.4 255 255 255 255' in text
     assert 'fadein 0.35 255 255 255 255' in text
-    assert 'grenade(CSGrenadeType.SMOKE, [8580, 980, 140])' not in text
-    assert 'grenade(CSGrenadeType.SMOKE, [-8676, -520, 175])' not in text
+    assert 'grenade(CSGrenadeType.SMOKE, [0, 2950, 140])' not in text
+    assert 'grenade(CSGrenadeType.SMOKE, [0, 3500, 160])' not in text
+    assert 'fadeout 0.25 3.3 160 0 0 96' in text
 
 
 def test_hidden_swap_markers_follow_enter_and_precede_exit() -> None:
@@ -44,9 +45,9 @@ def test_hidden_swap_markers_follow_enter_and_precede_exit() -> None:
 def test_hidden_swap_endpoint_height_and_yaw_are_matched() -> None:
     text = source()
     assert '{ t: 22, p: [470, 980, 125], q: [900, 1120, 70] }' in text
-    assert '{ t: 22, p: [7850, -420, 165], q: [8270, -280, 72] }' in text
-    assert '{ t: 22.35, p: [7865, -385, 170], q: [8050, 0, 72] }' in text
-    assert '{ t: 43, p: [8580, 980, 140], q: [8750, 900, 72] }' in text
-    assert '{ t: 43, p: [-8676, -520, 175], q: [-8506, -600, 72] }' in text
-    assert '{ t: 43.35, p: [-8660, -485, 175], q: [-8480, -100, 72] }' in text
-    assert re.search(r'\{ t: 44\.5, p: \[-8610, -380, 170\], q: \[-8420, 20, 72\] \}', text)
+    assert '{ t: 22, p: [0, 1550, 160], q: [430, 1690, 72] }' in text
+    assert '{ t: 22.35, p: [0, 1580, 165], q: [0, 2000, 72] }' in text
+    assert '{ t: 43, p: [0, 2950, 140], q: [0, 3070, 90] }' in text
+    assert '{ t: 43, p: [0, 3500, 160], q: [0, 3900, 72] }' in text
+    assert '{ t: 43.35, p: [0, 3520, 165], q: [0, 3900, 90] }' in text
+    assert re.search(r'\{ t: 44\.5, p: \[0, 3650, 170\], q: \[0, 4020, 100\] \}', text)
