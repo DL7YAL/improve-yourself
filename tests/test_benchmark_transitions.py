@@ -26,11 +26,11 @@ def test_transition_sequence_and_occlusions_are_locked() -> None:
     assert 'from: "ancient_b", to: "inferno_apps_a", occlusion: "flash"' in text
     assert 'landmark: "red_room"' in text
     assert 'grenade(CSGrenadeType.FLASHBANG, [0, 2950, 140])' in text
-    assert 'fadeout 0.15 1.4 255 255 255 255' in text
-    assert 'fadein 0.35 255 255 255 255' in text
+    assert 'fadeout 0.15 255 255 255' in text
+    assert 'fadein 0.35 255 255 255' in text
     assert 'grenade(CSGrenadeType.SMOKE, [0, 2950, 140])' not in text
     assert 'grenade(CSGrenadeType.SMOKE, [0, 3500, 160])' not in text
-    assert 'fadeout 0.25 3.3 160 0 0 96' in text
+    assert 'fadeout 0.25 160 0 0' in text
 
 
 def test_hidden_swap_markers_follow_enter_and_precede_exit() -> None:
@@ -50,4 +50,17 @@ def test_hidden_swap_endpoint_height_and_yaw_are_matched() -> None:
     assert '{ t: 43, p: [0, 2950, 140], q: [0, 3070, 90] }' in text
     assert '{ t: 43, p: [0, 3500, 160], q: [0, 3900, 72] }' in text
     assert '{ t: 43.35, p: [0, 3520, 165], q: [0, 3900, 90] }' in text
-    assert re.search(r'\{ t: 44\.5, p: \[0, 3650, 170\], q: \[0, 4020, 100\] \}', text)
+    assert re.search(r'\{ t: 44\.5, p: \[0, 3450, 600\], q: \[0, 4300, 0\] \}', text)
+    assert '{ t: 48, p: [0, 3600, 560], q: [0, 4450, 20] }' in text
+    assert '{ t: 53, p: [0, 3900, 520], q: [0, 4700, 60] }' in text
+
+
+def test_transition_fades_use_cs2_time_and_rgb_syntax() -> None:
+    text = CONTROLLER.read_text(encoding="utf-8")
+
+    assert 'command("fadeout 0.15 255 255 255")' in text
+    assert 'command("fadein 0.35 255 255 255")' in text
+    assert 'command("fadeout 0.25 160 0 0")' in text
+    assert 'command("fadein 0.1 160 0 0")' in text
+    assert "255 255 255 255" not in text
+    assert "160 0 0 96" not in text

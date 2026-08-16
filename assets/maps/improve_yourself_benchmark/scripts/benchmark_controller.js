@@ -64,10 +64,10 @@ const SCENES = [
         cameras: [
             { t: 43, p: [0, 3500, 160], q: [0, 3900, 72] },
             { t: 43.35, p: [0, 3520, 165], q: [0, 3900, 90] },
-            { t: 44.5, p: [0, 3650, 170], q: [0, 4020, 100] },
-            { t: 48, p: [0, 3950, 185], q: [0, 4300, 120] },
-            { t: 53, p: [0, 4300, 205], q: [0, 4650, 120] },
-            { t: 58, p: [0, 4650, 230], q: [0, 4950, 110] },
+            { t: 44.5, p: [0, 3450, 600], q: [0, 4300, 0] },
+            { t: 48, p: [0, 3600, 560], q: [0, 4450, 20] },
+            { t: 53, p: [0, 3900, 520], q: [0, 4700, 60] },
+            { t: 58, p: [0, 4300, 480], q: [0, 5000, 100] },
             { t: 64, p: [0, 5050, 300], q: [0, 4750, 120] },
         ],
         botPositions: [
@@ -232,19 +232,19 @@ function stopFire() {
 }
 
 function whiteFadeOut() {
-    command("fadeout 0.15 1.4 255 255 255 255", true);
+    command("fadeout 0.15 255 255 255");
 }
 
 function whiteFadeIn() {
-    command("fadein 0.35 255 255 255 255", true);
+    command("fadein 0.35 255 255 255");
 }
 
 function redRoomTint() {
-    command("fadeout 0.25 3.3 160 0 0 96", true);
+    command("fadeout 0.25 160 0 0");
 }
 
 function clearRedRoomTint() {
-    command("fadein 0.1 160 0 0 96", true);
+    command("fadein 0.1 160 0 0");
 }
 
 function bombTick() {

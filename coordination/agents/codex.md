@@ -34,6 +34,18 @@ OPEN: BLOCKED on runtime placement evidence. Do not claim Ancient/Inferno visual
 NEXT: Convert and inspect the newly authored object transforms together with their referenced mesh data, then derive one directly observable camera target from the compiled placement. Re-run Full Compile and capture Ancient water/Red Room and Inferno stairs only after that coordinate is proven.
 COMMIT/PR: Pending checkpoint commit and push after final diff/test/sync verification.
 
+## 2026-08-17 — Fade recovery and Inferno camera measurement
+
+STATUS: blocked
+TASK: Remove the persistent Red-Room/flash occlusion and establish a valid view of the real Inferno stairs without smoke or geometry changes.
+BRANCH: `dev/v1-foundation`
+CHANGED: Corrected CS2 `fadeout`/`fadein` calls to supported time-plus-RGB syntax and routed the server-side cheat commands through `ServerCommand`. Raised the post-flash Inferno camera above the stair meshes. Smoke and VMAP geometry are unchanged. Controller hash is `45D2CF2C0EFB05454304B2F46630239D6B7998BC0F3172B8B71DD405DC07B4BD`.
+VERIFIED: 33/33 tests pass. Hash-verified deploy backup is `deploy-20260817-014957`. Full Compile ended 2026-08-17 01:50:31 with `22 compiled, 0 failed, 1 skipped` and 25.066 s total elapsed. A fresh runtime pass no longer remains red after the flash handoff. With runtime frozen after the pass, `setpos_exact 0 3450 600; setang_exact 35 90 0` renders all five ascending white stair blocks clearly and proves valid geometry/camera coordinates.
+DIAGNOSIS: The previous red full-screen blocker was invalid legacy fade syntax plus client-only dispatch. The remaining mismatch is narrower: at the automatic `TRANSITION_EXIT` marker, the interpolated camera still showed an empty enclosed floor/wall composition instead of the stair view produced by the same intended position/angle in the static check.
+OPEN: BLOCKED only on proving why the automatic camera application/timing differs from the static validated view, then on the complete Ancient-water/Red-Room/flash/Inferno acceptance capture. Do not change smoke or geometry.
+NEXT: Instrument or echo the applied camera position/angles at `TRANSITION_EXIT`, compare them with `0 3450 600 / 35 90 0`, correct only camera interpolation/application, Full Compile, then rerun the complete marker-synchronized sequence.
+COMMIT/PR: Pending checkpoint commit and push after final diff/test/sync verification.
+
 ## 2026-08-17 — Compiled graybox transform correction
 
 STATUS: blocked
