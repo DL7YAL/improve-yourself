@@ -24,7 +24,7 @@ function Invoke-Checked {
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $venvRoot = Join-Path $repositoryRoot '.venv'
 $venvPython = Join-Path $venvRoot 'Scripts\python.exe'
-$venvCli = Join-Path $venvRoot 'Scripts\iy-analyze.exe'
+$cliNames = @('iy-analyze', 'iy-system-check', 'iy-workflow', 'iy-replay-viewer', 'iy-review-server')
 $lockFile = Join-Path $repositoryRoot 'requirements.lock'
 
 if (-not (Test-Path -LiteralPath $lockFile -PathType Leaf)) {
@@ -54,14 +54,17 @@ try {
         Invoke-Checked -Executable $venvPython -Arguments @('-m', 'pytest') -Description 'Run automated tests'
     }
 
-    if (-not (Test-Path -LiteralPath $venvCli -PathType Leaf)) {
-        throw "CLI entry point is missing after installation: $venvCli"
+    foreach ($cliName in $cliNames) {
+        $cliPath = Join-Path $venvRoot "Scripts\$cliName.exe"
+        if (-not (Test-Path -LiteralPath $cliPath -PathType Leaf)) {
+            throw "CLI entry point is missing after installation: $cliPath"
+        }
+        Invoke-Checked -Executable $cliPath -Arguments @('--help') -Description "Smoke-test $cliName CLI"
     }
-    Invoke-Checked -Executable $venvCli -Arguments @('--help') -Description 'Smoke-test iy-analyze CLI'
 
     Write-Host 'PASS: V1 development baseline is ready.' -ForegroundColor Green
     Write-Host "Python: $venvPython"
-    Write-Host "CLI:    $venvCli"
+    Write-Host "CLIs:   $($cliNames -join ', ')"
 }
 finally {
     Pop-Location

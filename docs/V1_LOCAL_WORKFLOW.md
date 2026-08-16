@@ -1,5 +1,33 @@
 # Integrated local V1 workflow
 
+## Supported Windows start
+
+From the repository root, the supported local entry point is:
+
+```powershell
+.\tools\dev\Start-V1Review.ps1 -Demo '<match.dem.zst>'
+```
+
+For Mirage with the local Awpy radar:
+
+```powershell
+.\tools\dev\Start-V1Review.ps1 -Demo '<match.dem.zst>' `
+  -Radar "$env:USERPROFILE\.awpy\maps\de_mirage.png" `
+  -PosX -3230 -PosY 1713 -Scale 5
+```
+
+The launcher validates input paths and numeric limits, runs the idempotent
+locked Python 3.13 setup without deleting an existing environment, executes the
+workflow, validates the returned manifest, prints the exact local review URL
+and then runs the loopback service in the foreground. `Ctrl+C` stops it. It does
+not silently open a browser, hide logs, upload data, elevate privileges or apply
+system/Optimizer changes.
+
+`-SkipSetup` is intended only when the baseline was already prepared and
+verified. `-NoServe` performs and validates the workflow but intentionally does
+not start the HTTP service; it exists for reproducible smoke tests and artifact
+generation.
+
 `iy-workflow` connects the first usable local product path without applying any
 system optimization:
 

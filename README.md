@@ -61,8 +61,9 @@ The saved prototypes are inventoried in
 [`docs/PROTOTYPE_INVENTORY.md`](docs/PROTOTYPE_INVENTORY.md). The integrated
 [`iy-workflow`](docs/V1_LOCAL_WORKFLOW.md) now produces a read-only System
 Check, demo analysis, bounded replay, local viewer and review manifest. The next
-product step is a reduced review surface over that manifest; Optimizer
-apply/restore remains a separate later safety boundary.
+supported local start is `tools/dev/Start-V1Review.ps1`; it also provides the
+reduced review surface and source-bound local review-state persistence.
+Optimizer apply/restore remains a separate later safety boundary.
 
 ## Demo Analyzer V1 foundation
 

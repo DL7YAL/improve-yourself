@@ -19,3 +19,6 @@ Current utilities:
   `iy.analysis/v1` contract validation and a non-sensitive aggregate summary
 - `dev/Run-V1Pipeline.ps1` — one-command locked setup, tests, CLI smoke check,
   real-demo regression, and local aggregate PASS/FAIL evidence
+- `dev/Start-V1Review.ps1` — supported local product entry point: locked Python
+  setup, integrated workflow, explicit review URL and loopback-only review
+  service; it never applies system or Optimizer changes

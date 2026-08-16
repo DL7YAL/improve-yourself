@@ -38,6 +38,7 @@ Keine unnötigen Kurzintervall-Statusabfragen. Ein Handoff ist besonders sinnvol
 | Integrierter lokaler V1-Ablauf | Codex / The Beast | DONE | `iy-workflow` erzeugt lokal System Check, Analyse, Replay, selbsttragenden Viewer und ein hashgebundenes `iy.workflow/v1`-Manifest; realer Mirage-Lauf mit 7 Szenen und 1.792 Frames validiert. |
 | Reduzierte lokale Review-Oberfläche | Codex / The Beast | DONE | `review.html` zeigt Systemstatus, verständliche Datenqualität, alle Szenen und den Tactical-Replay-Einstieg; realer 1440x1200-Headless-Render geprüft, interne Parserausnahmen werden nicht angezeigt. |
 | Lokale Review-Persistenz | Codex / The Beast | DONE | `iy-review-server` speichert vier neutrale Benutzerzustände und begrenzte Notizen als separates `iy.review_state/v1`; Loopback-only, origin-/größen-/szenen-/hashgeprüft und atomar, realer 7-Szenen-Dienst-/Rendercheck bestanden. |
+| Unterstützter lokaler V1-Start | Codex / The Beast | DONE | `Start-V1Review.ps1` validiert Eingaben, stellt die gesperrte Python-3.13-Basis her, startet Workflow und Loopback-Review sichtbar; realer Mirage-NoServe- und Vordergrundtest samt HTTP-200/State-Check bestanden. |
 | Internes Avatar-System | gemeinsam, getrennte Eigenentwürfe | FREE | Nur interne Personalisierung; keine Produkt-/Firmenmarke. Siehe `coordination/agents/avatar-brief.md`. |
 
 ## Koordinationsprinzip
