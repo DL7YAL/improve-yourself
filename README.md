@@ -58,10 +58,11 @@ See [`docs/BRANCHING.md`](docs/BRANCHING.md) for the branch policy and [`docs/RO
 ## Current next step
 
 The saved prototypes are inventoried in
-[`docs/PROTOTYPE_INVENTORY.md`](docs/PROTOTYPE_INVENTORY.md). Keep the current
-analysis and replay schemas as the sole parser foundation, complete the bounded
-2D visual check, and then build the first structured read-only System Check
-contract before any Optimizer apply/restore work.
+[`docs/PROTOTYPE_INVENTORY.md`](docs/PROTOTYPE_INVENTORY.md). The integrated
+[`iy-workflow`](docs/V1_LOCAL_WORKFLOW.md) now produces a read-only System
+Check, demo analysis, bounded replay, local viewer and review manifest. The next
+product step is a reduced review surface over that manifest; Optimizer
+apply/restore remains a separate later safety boundary.
 
 ## Demo Analyzer V1 foundation
 
