@@ -18,7 +18,7 @@ Full Compile and runtime-camera revalidation recorded in
 
 | Source | SHA-256 |
 | --- | --- |
-| `maps/improve_yourself_benchmark.vmap` | `CA54A61FB837669E7E420CEBDB5E1F96B01C666E0531F35B20EBCDCD8E6CFBA8` |
+| `maps/improve_yourself_benchmark.vmap` | `9D7BE49FD2FA9F720267E5FD155054F478F64416408AC681EF02B578274276CE` |
 | `scripts/benchmark_controller.js` | `8FD5218807B94BF02AFECFB44280C3A04133392FBDCCDC0488EF9D3D5720C53F` |
 
 The earlier map baseline hash
@@ -104,3 +104,21 @@ and source-side camera coordinates now exist, but their compiled runtime
 placement has not yet been reconciled. The next pass must inspect mesh/object
 transform semantics and prove one compiled target position before any further
 smoke, fade, yaw or blind geometry change.
+
+### Compiled transform correction
+
+The transform audit found that the cloned primitive is a flat mesh whose
+runtime dimensions were not reliably established by the non-unit object scale.
+The authoring tool now multiplies the `position:0` vertex stream by the intended
+box dimensions and resets the generated object scale to `1 1 1`. This makes the
+compiled dimensions explicit while preserving the same origins, controller
+coordinates, transition effects and timing.
+
+A fresh Full Compile completed with `22 compiled, 0 failed, 1 skipped` in 26
+seconds. A clean normal-viewer run then showed the first smoke inside enclosed
+destination geometry and later camera frames inside the baked corridors. This
+resolves the earlier empty-sky/runtime-placement blocker. The transition is
+still not approved: sampled frames did not yet prove the reflective water,
+recognizable Red Room and all five Inferno stair blocks as a coherent sequence.
+The next runtime pass must correlate those landmarks with the existing markers
+and adjust only camera composition if required.

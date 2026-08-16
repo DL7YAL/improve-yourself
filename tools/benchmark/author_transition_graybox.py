@@ -82,12 +82,38 @@ def format_number(value: float) -> str:
     return str(int(value)) if float(value).is_integer() else str(value)
 
 
+def bake_mesh_scale(block: str, scales: tuple[float, float, float]) -> str:
+    """Bake dimensions into the cloned mesh instead of relying on object scale.
+
+    Hammer preserves the object transform in the VMAP, but the compiled runtime
+    keeps cloned CMapMesh primitives at their original flat dimensions. Baking
+    the scale into the position stream makes the compiled placement explicit.
+    """
+    position_stream = re.compile(
+        r'("name" "string" "position:0".*?"data" "vector3_array"\s*\[)(.*?)(\n\s*\])',
+        re.DOTALL,
+    )
+    match = position_stream.search(block)
+    if not match:
+        raise ValueError("cloned primitive has no position:0 vertex stream")
+
+    def scaled_position(value: re.Match[str]) -> str:
+        coordinates = [float(component) for component in value.group(1).split()]
+        if len(coordinates) != 3:
+            raise ValueError(f"unexpected mesh position: {value.group(1)}")
+        scaled = [coordinate * factor for coordinate, factor in zip(coordinates, scales)]
+        return '"' + " ".join(format_number(component) for component in scaled) + '"'
+
+    baked = re.sub(r'"([+-]?[\d.]+\s+[+-]?[\d.]+\s+[+-]?[\d.]+)"', scaled_position, match.group(2))
+    return block[:match.start(2)] + baked + block[match.end(2):]
+
+
 def specialize(block: str, node_id: int, name: str, origin: tuple[float, float, float], scales: tuple[float, float, float], material: str) -> str:
     block = replace_ids(block, node_id)
+    block = bake_mesh_scale(block, scales)
     origin_text = " ".join(format_number(value) for value in origin)
-    scales_text = " ".join(format_number(value) for value in scales)
     block = re.sub(r'(?m)^(\s*)"origin" "vector3" "[^"]+"$', rf'\1"origin" "vector3" "{origin_text}"', block, count=1)
-    block = re.sub(r'(?m)^(\s*)"scales" "vector3" "[^"]+"$', rf'\1"scales" "vector3" "{scales_text}"', block, count=1)
+    block = re.sub(r'(?m)^(\s*)"scales" "vector3" "[^"]+"$', rf'\1"scales" "vector3" "1 1 1"', block, count=1)
     block = re.sub(r'"materials/dev/dev_measuregeneric01\.vmat"', f'"{material}"', block)
     return block
 

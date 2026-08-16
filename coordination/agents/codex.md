@@ -33,3 +33,15 @@ DIAGNOSIS: The earlier invalid +/-8,000-unit path error is removed at source and
 OPEN: BLOCKED on runtime placement evidence. Do not claim Ancient/Inferno visual acceptance. Do not add more smoke/fade/yaw tuning or more blind geometry before measuring the compiled mesh locations/transform semantics.
 NEXT: Convert and inspect the newly authored object transforms together with their referenced mesh data, then derive one directly observable camera target from the compiled placement. Re-run Full Compile and capture Ancient water/Red Room and Inferno stairs only after that coordinate is proven.
 COMMIT/PR: Pending checkpoint commit and push after final diff/test/sync verification.
+
+## 2026-08-17 — Compiled graybox transform correction
+
+STATUS: blocked
+TASK: Resolve the measured VMAP/runtime placement mismatch before further transition tuning.
+BRANCH: `dev/v1-foundation`
+CHANGED: `author_transition_graybox.py` now bakes each requested box dimension into the cloned mesh `position:0` vertices and emits unit object scale. The VMAP was reproducibly regenerated from the pre-graybox baseline; Nuke geometry, controller paths, smoke, flash and timing are unchanged. Manifest hash updated to `9D7BE49FD2FA9F720267E5FD155054F478F64416408AC681EF02B578274276CE`.
+VERIFIED: 32/32 tests pass. Deployment was hash-verified with backup `deploy-20260817-011505`. After Reload From Disk, Full Compile reported `22 compiled, 0 failed, 1 skipped, 0m:26s`; end build was 2026-08-17 01:16:48 with 29.098 s total elapsed. A fresh normal-viewer run rendered the first transition smoke inside a closed corridor and subsequent frames inside the baked destination rooms, proving that compiled geometry now exists at the controller coordinates.
+DIAGNOSIS: The earlier source transforms were arithmetically plausible but object scale was not a reliable compiled-size mechanism for the cloned flat mesh. Vertex baking fixes that placement/shape failure. Current frames are no longer empty sky, but landmark composition remains incomplete: reflective water, the intended Red Room read and the Inferno stair sequence were not all unambiguously visible in the sampled frames.
+OPEN: BLOCKED only on marker-synchronized visual composition/acceptance, not Steam, Workshop Tools, missing geometry or runtime placement. Do not claim the full transition complete yet.
+NEXT: Capture Ancient water, Red Room approach/flash and Inferno stair exit against their VConsole markers on this baked build. If a landmark misses the frame, adjust only the corresponding camera keyframe/target, then Full Compile and repeat the complete sequence.
+COMMIT/PR: Pending checkpoint commit and push after final diff/test/sync verification.
