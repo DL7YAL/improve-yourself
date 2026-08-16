@@ -28,10 +28,15 @@ def test_integrates_artifacts_and_writes_review_manifest(tmp_path: Path, monkeyp
         output.write_text("<html></html>", encoding="utf-8")
         return output
 
+    def fake_review(system: Path, analysis: Path, replay: Path, viewer: Path, output: Path) -> Path:
+        output.write_text("<html></html>", encoding="utf-8")
+        return output
+
     monkeypatch.setattr(workflow, "run_system_check", fake_system)
     monkeypatch.setattr(workflow, "analyze", fake_analyze)
     monkeypatch.setattr(workflow, "export_replay", fake_replay)
     monkeypatch.setattr(workflow, "render_viewer", fake_viewer)
+    monkeypatch.setattr(workflow, "render_review_surface", fake_review)
 
     manifest_path = workflow.run_workflow(demo, tmp_path / "output")
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -42,6 +47,7 @@ def test_integrates_artifacts_and_writes_review_manifest(tmp_path: Path, monkeyp
     assert payload["artifacts"] == {
         "system_check": "system-check.json", "analysis": "analysis/analysis.json",
         "replay": "replay/replay.json", "viewer": "viewer.html",
+        "review": "review.html",
     }
 
 

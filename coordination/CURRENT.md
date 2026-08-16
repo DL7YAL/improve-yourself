@@ -35,6 +35,7 @@ Keine unnötigen Kurzintervall-Statusabfragen. Ein Handoff ist besonders sinnvol
 | V1 Prototypinventur | Codex / The Beast | DONE | Alle sieben dokumentierten Referenzstände sind als REVISE oder DEFER klassifiziert; aktuelle Analyzer-/Replay-Schemas bleiben einzige Parserbasis, maschinenspezifische Optimizerwerte werden nicht als Defaults übernommen. |
 | System Check / read-only Baseline | Codex / The Beast | DONE | `iy.system_check/v1` erkennt Windows, CPU, RAM, Mainboard/BIOS, GPU-Treiber, Refresh Rate, Secure Boot und TPM ohne Änderungen oder Elevation; nicht belegbare Sicherheitswerte bleiben REVIEW. |
 | Integrierter lokaler V1-Ablauf | Codex / The Beast | DONE | `iy-workflow` erzeugt lokal System Check, Analyse, Replay, selbsttragenden Viewer und ein hashgebundenes `iy.workflow/v1`-Manifest; realer Mirage-Lauf mit 7 Szenen und 1.792 Frames validiert. |
+| Reduzierte lokale Review-Oberfläche | Codex / The Beast | DONE | `review.html` zeigt Systemstatus, verständliche Datenqualität, alle Szenen und den Tactical-Replay-Einstieg; realer 1440x1200-Headless-Render geprüft, interne Parserausnahmen werden nicht angezeigt. |
 | Internes Avatar-System | gemeinsam, getrennte Eigenentwürfe | FREE | Nur interne Personalisierung; keine Produkt-/Firmenmarke. Siehe `coordination/agents/avatar-brief.md`. |
 
 ## Koordinationsprinzip

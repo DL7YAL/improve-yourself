@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .replay import export_replay
+from .review import render_review_surface
 from .service import analyze
 from .system_check import run_system_check
 from .viewer import render_viewer
@@ -48,12 +49,16 @@ def run_workflow(
         replay_path, run_directory / "viewer.html", radar_path=radar_path,
         pos_x=pos_x, pos_y=pos_y, scale=scale,
     )
+    review_path = render_review_surface(
+        system_path, analysis_path, replay_path, viewer_path, run_directory / "review.html"
+    )
 
     artifacts = {
         "system_check": system_path.relative_to(run_directory).as_posix(),
         "analysis": analysis_path.relative_to(run_directory).as_posix(),
         "replay": replay_path.relative_to(run_directory).as_posix(),
         "viewer": viewer_path.relative_to(run_directory).as_posix(),
+        "review": review_path.relative_to(run_directory).as_posix(),
     }
     payload: dict[str, Any] = {
         "schema": WORKFLOW_SCHEMA,
