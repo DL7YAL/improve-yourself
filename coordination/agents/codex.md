@@ -1,5 +1,20 @@
 # Codex
 
+## 2026-08-17 — Finaler Viewer-V1-No-Merge-Review: Datenschutz-Blocker
+
+STATUS: blocked
+TASK: Fully review `beast/2d-tactical-replay-viewer-v1` against the freshly fetched `origin/main` `de087d9` without merging.
+BRANCH: `beast/2d-tactical-replay-viewer-v1` reviewed at `9d6bca3abeb57ef1df1e491aacc3e78849b9d258`; `origin/main` reviewed at `de087d9a3db8e70a6e7295516adb5012f3065213`.
+CHANGED: No Viewer, product, benchmark, Kubus, system or generated-result change was made. This handoff records the review result only; no merge, rebase or conflict-resolution mutation occurred.
+VERIFIED: The complete range from merge-base `e614389` contains exactly six intended tracked files: CURRENT, Codex handoff, replay/viewer implementation and their tests (131 additions, 10 deletions). `git diff --check origin/main...HEAD` passes. The working tree has no non-ignored change; ignored content is limited to `.venv/`, `.pytest_cache/`, Python caches and `results/`. No tracked `.dem`, `.zst`, archive, log or generated-result artifact exists. A tracked-text secret scan has no private-key, API-key, token or password assignment match. `pytest -q` passes 35/35. Tristan's full V1 visual PASS is correctly recorded: known-dead players/direction lines hide at documented kill ticks, unsupported deaths remain visible, and radar/event/navigation/playback behavior is accepted. `origin/main` `de087d9` changes only `docs/AGENT_BASE.md` (`docs: clarify efficient worker acceptance`), so it creates neither functional behavior divergence nor a contradictory product/handoff rule. `git merge-tree` reports no conflict markers for the three-way merge projection.
+DIAGNOSIS: One explicit merge criterion fails: the branch diff contains one concrete absolute local demo pathname including its filename in the historical Viewer evidence handoff. The raw demo is not tracked and no match contents, player names or detailed match records are committed, but that pathname is still a private local demo reference and must not enter `main` under this review scope.
+DECISIONS: **MERGE_BLOCKED.** The only blocker is documentation privacy hygiene, not Viewer functionality, tests, Foundation regression, main compatibility, secrets or merge conflict.
+OPEN: Replace the concrete local demo pathname with a non-private evidence description (map, source hash prefix and aggregate counts are sufficient), then rerun the short no-merge diff/secret/status/test review against the then-current `origin/main`. Do not merge before that passes.
+NEXT: WAITING_FOR_TRISTAN for authorization to perform that narrowly scoped documentation-only privacy cleanup, or for Tristan to choose another approved redaction wording.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Full repository merge-readiness review with confidentiality and compatibility checks.
+COMPUTER_USE: no.
+
 ## 2026-08-17 — Tristan-PASS und Vorbereitung des Viewer-V1-Merge-Reviews
 
 STATUS: waiting_for_tristan
