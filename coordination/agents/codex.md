@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Analyzer Excel Report V1 nach `main` gemergt
+
+STATUS: done
+TASK: Merge the Tristan-approved Analyzer Excel Report V1 only after reconfirming the reviewed remote main head, then run the complete post-merge gate.
+BRANCH: `main`.
+CHANGED: Remote `main` was checked immediately before merge and still equalled `2d1dbb108a13d8ec1ea326f64687b564b40b2b62`. Local main was already at that exact head. It was merged with `beast/analyzer-excel-report-v1` using an explicit no-fast-forward merge. Merge commit `f0b83b0a5265a28094c8fca29d3d74ac8f150f4a` has been pushed to origin/main. No benchmark/VRAD, Kubus, 3D/POV, Optimizer or unrelated product work was mixed into the merge.
+VERIFIED: Full post-merge `tools/dev/Setup-V1.ps1` is PASS: locked dependency consistency, 51/51 tests and all seven public CLI help smokes. `git diff --check` is clean. Tracked demo/generated-result/XLSX scan is empty and secret-indicator scan is empty. Remote main equalled the merge commit at gate time. The accepted real report remains local/ignored and contains the documented corrected `de_anubis` evidence (42 rounds, 307 kills, 22 scenes, 115 headshots; tick 165532 in round 25).
+DECISIONS: **Analyzer Excel Report V1 = DONE.** The external report generator, official-round mapping and evidence-based non-match exclusion are now on main. No further Excel/Analyzer feature work is authorized.
+OPEN: None for Analyzer Excel Report V1.
+NEXT: `WAITING_FOR_NEXT_ASSIGNMENT`. Do not start a new product function autonomously. The Workshop Tools/VRAD benchmark blocker remains separately parked.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Merge integrity and complete regression verification.
+COMPUTER_USE: no.
+
 ## 2026-08-17 — Analyzer Excel Report V1: MERGE_RECOMMENDED, wartet auf Tristan
 
 STATUS: merge_recommended_waiting_for_tristan
