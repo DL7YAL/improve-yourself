@@ -2,7 +2,14 @@ import sys
 from threading import Event
 from types import SimpleNamespace
 
-from improve_yourself.desktop import run_desktop_app
+from improve_yourself.desktop import DesktopBridge, run_desktop_app
+
+
+def test_desktop_bridge_keeps_native_runtime_references_private() -> None:
+    bridge = DesktopBridge(SimpleNamespace())
+
+    assert set(bridge.__dict__) == {"_server", "_window"}
+    assert callable(bridge.choose_demo)
 
 
 def test_desktop_shell_uses_loopback_window_and_stops_cleanly(tmp_path, monkeypatch) -> None:

@@ -11,24 +11,28 @@ from .analyzer_server import AnalyzerServer, create_server
 
 class DesktopBridge:
     def __init__(self, server: AnalyzerServer) -> None:
-        self.server = server
-        self.window: Any | None = None
+        # pywebview recursively enumerates public attributes of ``js_api``.
+        # Keeping the native WinForms/WebView2 object public makes that
+        # enumeration cross the STA boundary during startup.  Only callable
+        # bridge methods are part of the JavaScript API.
+        self._server = server
+        self._window: Any | None = None
 
     def choose_demo(self) -> dict[str, object]:
         """Open a native local-file dialog; no upload or browser dialog is used."""
-        if self.window is None:
+        if self._window is None:
             return {"ok": False, "error": "Desktopfenster ist noch nicht bereit."}
         try:
             import webview
 
-            selected = self.window.create_file_dialog(
+            selected = self._window.create_file_dialog(
                 webview.OPEN_DIALOG,
                 allow_multiple=False,
                 file_types=("CS2 demos (*.dem;*.dem.zst;*.dem.bz2)",),
             )
             if not selected:
                 return {"ok": False, "error": "Keine Demo ausgewählt."}
-            self.server.select_demo(Path(selected[0]))
+            self._server.select_demo(Path(selected[0]))
             return {"ok": True}
         except (OSError, ValueError, RuntimeError) as error:
             return {"ok": False, "error": str(error)}
@@ -51,7 +55,7 @@ def run_desktop_app(output_root: Path, *, port: int = 0, initial_demo: Path | No
         "IMPROVE YOURSELF · PREVIEW V1", f"http://127.0.0.1:{server.server_port}/analyzer.html", js_api=bridge,
         width=1500, height=980, min_size=(1080, 720), background_color="#07111e", text_select=True,
     )
-    bridge.window = window
+    bridge._window = window
     try:
         # On Windows the WinForms backend creates its STA UI thread and then
         # returns from start().  The loopback server must therefore live until
