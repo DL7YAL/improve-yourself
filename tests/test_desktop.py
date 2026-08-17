@@ -1,8 +1,20 @@
 import sys
+from pathlib import Path
 from threading import Event
 from types import SimpleNamespace
 
 from improve_yourself.desktop import DesktopBridge, run_desktop_app
+
+
+def test_preview_build_uses_canonical_windows_icon() -> None:
+    root = Path(__file__).resolve().parents[1]
+    icon = root / "src" / "improve_yourself" / "assets" / "improve-yourself-logo-v3.ico"
+    build_script = root / "tools" / "build" / "Build-Preview-V1.ps1"
+
+    assert icon.is_file()
+    content = build_script.read_text(encoding="utf-8")
+    assert "improve-yourself-logo-v3.ico" in content
+    assert "--icon $icon" in content
 
 
 def test_desktop_bridge_keeps_native_runtime_references_private() -> None:
@@ -25,7 +37,8 @@ def test_desktop_shell_uses_loopback_window_and_stops_cleanly(tmp_path, monkeypa
     monkeypatch.setitem(sys.modules, "webview", fake_webview)
 
     assert run_desktop_app(tmp_path / "desktop-data") == 0
-    assert captured["title"] == "IMPROVE YOURSELF · PREVIEW V1"
+    assert captured["title"] == "IMPROVE YOURSELF · PREVIEW V1.1"
     assert captured["url"].startswith("http://127.0.0.1:")
     assert captured["kwargs"]["js_api"] is not None
     assert captured["start"]["gui"] == "edgechromium"
+    assert captured["start"]["icon"].endswith("improve-yourself-logo-v3.ico")

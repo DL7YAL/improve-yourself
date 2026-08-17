@@ -7,6 +7,7 @@ from threading import Thread
 from typing import Any
 
 from .analyzer_server import AnalyzerServer, create_server
+from .branding import ASSET_ROOT
 
 
 class DesktopBridge:
@@ -52,7 +53,7 @@ def run_desktop_app(output_root: Path, *, port: int = 0, initial_demo: Path | No
     worker.start()
     bridge = DesktopBridge(server)
     window = webview.create_window(
-        "IMPROVE YOURSELF · PREVIEW V1", f"http://127.0.0.1:{server.server_port}/analyzer.html", js_api=bridge,
+        "IMPROVE YOURSELF · PREVIEW V1.1", f"http://127.0.0.1:{server.server_port}/analyzer.html", js_api=bridge,
         width=1500, height=980, min_size=(1080, 720), background_color="#07111e", text_select=True,
     )
     bridge._window = window
@@ -61,7 +62,12 @@ def run_desktop_app(output_root: Path, *, port: int = 0, initial_demo: Path | No
         # returns from start().  The loopback server must therefore live until
         # the native window is actually closed, not merely until that call
         # returns.
-        webview.start(gui="edgechromium", debug=False, private_mode=True)
+        webview.start(
+            gui="edgechromium",
+            debug=False,
+            private_mode=True,
+            icon=str(ASSET_ROOT / "improve-yourself-logo-v3.ico"),
+        )
         if not window.events.shown.wait(15):
             raise RuntimeError("Das Improve-Yourself-Fenster konnte nicht initialisiert werden.")
         window.events.closed.wait()

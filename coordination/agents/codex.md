@@ -1,5 +1,20 @@
 # Codex
 
+## 2026-08-17 — Preview V1.1: verbindliches Variante-3-Branding-Checkpoint
+
+STATUS: partial
+TASK: Apply the user-provided, binding Improve Yourself Logo Variant 3 consistently to the V1.1 desktop shell without changing Analyzer facts, review contracts or the accepted V1 fallback package.
+BRANCH: `beast/analyzer-default-criteria-v1` at `b91db70` plus this unmerged checkpoint.
+MODEL_PROFILE: terra
+MODEL_REASON: desktop host, reproducible Windows packaging and UI integration.
+COMPUTER_USE: no
+CHANGED: The original approved vertical Variant-3 PNG is stored as the canonical local source asset. Its unchanged horizontal wordmark portion is used in the application header so the full wordmark remains legible at desktop sizes. Its existing ascending-bars/stylized-I symbol is derived into `improve-yourself-logo-v3.ico` with standard square Windows entries 16, 20, 24, 32, 40, 48, 64, 128 and 256 px. The reproducible PyInstaller command now passes this exact ICO through `--icon`; the WinForms/Edge host also receives the same ICO path, so the executable, title bar and taskbar resolve the same approved symbol. No alternate logo form was invented.
+VERIFIED: Pillow validates the ICO container and all nine square icon sizes. `pytest -q` PASS (59 tests), `compileall` PASS and `git diff --check` PASS. Regression asserts both that the build script requires/passes the canonical ICO and that the desktop host passes the same asset to PyWebView.
+DECISIONS: Variant 3 is the sole branding source. The currently accepted V1 distribution `Improve-Yourself-Preview-V1.zip` remains untouched; no V1.1 ZIP is produced until the remaining approved V1.1 scope and its full gate are complete.
+OPEN: The broader approved V1.1 desktop follow-pass remains in progress (safe profile storage, final Analyzer/Profile/Optimizer/Replay UX consolidation and full clean-distribution gate).
+NEXT: Continue the explicitly approved V1.1 scope; preserve this branding asset and do not introduce another mark.
+COMMIT/PR: Pending this checkpoint commit and push.
+
 ## 2026-08-17 — Desktop-Host-Kaltstart: belegte Ursache und Minimalfix
 
 STATUS: done — send_ready_waiting_for_tristan_final_package_review

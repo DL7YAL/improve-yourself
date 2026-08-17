@@ -137,6 +137,8 @@ def test_desktop_preflight_keeps_replay_available_and_supports_demo_switching(tm
     server = create_server(tmp_path / "server", 0)
     try:
         assert server.server_address[0] == "127.0.0.1"
-        assert "Noch keine Review-Szene" in (tmp_path / "server" / "analyzer.html").read_text(encoding="utf-8")
+        html = (tmp_path / "server" / "analyzer.html").read_text(encoding="utf-8")
+        assert "Gesamtes Match und Review-Szenen" in html
+        assert "improve-yourself-wordmark-v3.png" in html
     finally:
         server.server_close()

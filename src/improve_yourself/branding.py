@@ -9,4 +9,4 @@ THEME_TOKENS = "--iy-night:#07111e;--iy-panel:#102033;--iy-metal:#264766;--iy-ic
 
 
 def brand_markup() -> str:
-    return '<a class="brand" href="/analyzer.html" aria-label="Improve Yourself Preview V1"><img src="/assets/improve-yourself-mark.svg" alt="Improve Yourself Preview V1"></a>'
+    return '<a class="brand" href="/analyzer.html" aria-label="Improve Yourself Preview V1.1"><img src="/assets/improve-yourself-wordmark-v3.png" alt="Improve Yourself"></a>'
