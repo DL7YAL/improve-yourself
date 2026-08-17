@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Analyzer Excel Report V1: Tristan-PASS, finaler No-Merge-Review
+
+STATUS: review_in_progress
+TASK: Record Tristan's acceptance of the corrected real Analyzer Excel Report V1, then complete the final no-merge review against current remote main.
+BRANCH: `beast/analyzer-excel-report-v1`, current review base `origin/main`/remote `main` `2d1dbb108a13d8ec1ea326f64687b564b40b2b62`.
+CHANGED: Tristan accepted the real de_anubis report: 42 visible rounds, 307 kills, 22 Multi-Kill scenes, 115 headshots and tick `165532 -> round 25`; the evidence-based non-match event exclusion is accepted as well. No new product function, report feature or merge was started.
+VERIFIED: Pending final repeat of full gate, scoped private-data/secret/generated-artifact scan and temporary-index merge simulation. Existing final evidence before this review is 51/51 tests, seven CLI smokes, formula-clean real XLSX and no private local-path/demo/Codex/AppData content in the workbook.
+DECISIONS: Tristan-PASS is final for the bounded Excel V1 user acceptance. Merge authority remains with Tristan.
+OPEN: `WAITING_FOR_TRISTAN` after the No-Merge review reports its recommendation.
+NEXT: If all scoped gates remain clean, report `MERGE_RECOMMENDED — WAITING_FOR_TRISTAN`; do not merge until Tristan explicitly authorizes it.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Final scoped integration review after human product acceptance.
+COMPUTER_USE: no.
+
 ## 2026-08-17 — Analyzer Excel Report V1: FACEIT-/Pre-Match-Prüfung ergänzt
 
 STATUS: waiting_for_tristan_round_mapping_review
