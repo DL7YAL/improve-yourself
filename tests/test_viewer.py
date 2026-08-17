@@ -39,6 +39,10 @@ def test_renders_self_contained_html_and_escapes_script_end(tmp_path: Path) -> N
     assert "data:image/png;base64,dGVzdC1yYWRhcg==" in html
     assert "</script><script>alert(1)</script>" not in html
     assert "\\u003c/script>" in html
+    assert 'id="previous-frame"' in html
+    assert 'id="next-scene"' in html
+    assert 'id="speed"' in html
+    assert 'id="event-info"' in html
 
 
 def test_rejects_wrong_schema(tmp_path: Path) -> None:

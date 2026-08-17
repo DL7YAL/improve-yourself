@@ -1,5 +1,18 @@
 # Codex
 
+## 2026-08-17 — 2D Tactical Replay Viewer V1 implementation checkpoint
+
+STATUS: running
+TASK: Upgrade the merged Foundation viewer into a practical local tactical review tool while retaining `iy.replay/v1` and using Kubus V0 without extending it.
+BRANCH: `beast/2d-tactical-replay-viewer-v1` from current `main` `e614389`.
+CHANGED: `iy.replay/v1` scenes now carry only reliably derived in-range kill-event records (tick, attacker, victim, weapon, headshot and marker-multikill relation). The self-contained viewer adds explicit scene/frame forward-back controls, direct slider scrubbing, speed selection, current tick/frame and compact event/scene context. It states honestly that death status is not inferred from absent snapshots. No analyzer, radar transform, benchmark, Kubus, system or network behavior changed.
+VERIFIED: 33/33 tests pass, including new replay-event and viewer-control assertions. A real local Anubis workflow completed as `READY_FOR_REVIEW` under ignored `results/viewer-v1-workflow/446eec75822c/`: 22 scenes and 108 derived kill events. Kubus productive job `job-20260817T052031766-23ff26` was DONE by `worker-01` for read-only `text_stats` on the existing Tactical-Replay reference input; result 637 lines, 969 words, 19,519 characters, SHA-256 `487e1910…`. Beast independently confirmed 637 lines and 19,519 characters; follow-up integrity audit has 0 errors (25 jobs, 24 healthy, 1 preserved warning).
+OPEN: The historical Mirage replay remains usable for radar positioning but predates the new event field; its original local demo hash is no longer present, so it must not be represented as a current Viewer-V1 event run. The real Anubis Viewer-V1 run has events but no approved local Anubis radar resource. Continue technical review without inventing radar data; final Tristan visual UX review waits for an honestly suitable current viewer artifact.
+NEXT: Commit this tested checkpoint, then perform additional bounded viewer-state validation and prepare Tristan's loopback review only when the current artifact can satisfy the visual radar scope without fabrication.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Focused viewer implementation, real-demo validation and responsible Kubus-result acceptance.
+COMPUTER_USE: no
+
 ## 2026-08-17 — `dev/v1-foundation` merged into `main`
 
 STATUS: done
