@@ -17,6 +17,15 @@ REVIEW = "REVIEW"
 ACTION_REQUIRED = "ACTION_REQUIRED"
 
 _AMD_RX_7900_XTX_URL = "https://www.amd.com/en/support/downloads/drivers.html/graphics/radeon-rx/radeon-rx-7000-series/amd-radeon-rx-7900-xtx.html"
+_GIGABYTE_X870_GAMING_X_WIFI7_URL = "https://www.gigabyte.com/us/Motherboard/X870-GAMING-X-WIFI7-rev-1x/sp"
+_AMD_X870_CHIPSET_URL = "https://www.amd.com/en/support/downloads/drivers.html/chipsets/am5/x870.html"
+
+
+def detect_chipset(board: dict[str, Any]) -> dict[str, str]:
+    """Return only an exact board-to-chipset mapping backed by the board vendor."""
+    if (board.get("manufacturer"), board.get("product")) == ("Gigabyte Technology Co., Ltd.", "X870 GAMING X WIFI7"):
+        return {"name": "AMD X870", "source": _GIGABYTE_X870_GAMING_X_WIFI7_URL}
+    return {}
 
 
 def collect_official_gpu_driver_catalog(gpus: list[dict[str, Any]], timeout_seconds: int = 5) -> dict[str, Any]:
@@ -37,6 +46,23 @@ def collect_official_gpu_driver_catalog(gpus: list[dict[str, Any]], timeout_seco
         return {"source": _AMD_RX_7900_XTX_URL, "checked_at_utc": checked_at, "reason": f"Official comparison source unavailable: {type(error).__name__}"}
 
 
+def collect_official_chipset_catalog(chipset: dict[str, Any], timeout_seconds: int = 5) -> dict[str, Any]:
+    """Read the fixed official AMD page only for an exactly identified chipset."""
+    if chipset.get("name") != "AMD X870":
+        return {"reason": "No supported official product-page mapping for the identified chipset."}
+    checked_at = datetime.now(UTC).isoformat()
+    try:
+        request = Request(_AMD_X870_CHIPSET_URL, headers={"User-Agent": "Improve-Yourself-System-Check/1.0"})
+        with urlopen(request, timeout=timeout_seconds) as response:  # noqa: S310 - fixed official HTTPS source
+            document = response.read().decode("utf-8", errors="replace")
+        match = re.search(r"AMD\s+Chipset\s+(?:Drivers|Software).*?(?:Revision Number\s*)?([0-9]+(?:\.[0-9]+){2,})", document, re.I | re.S)
+        if not match:
+            return {"source": _AMD_X870_CHIPSET_URL, "checked_at_utc": checked_at, "reason": "Official page format did not expose a comparable chipset version."}
+        return {"version": match.group(1), "source": _AMD_X870_CHIPSET_URL, "checked_at_utc": checked_at}
+    except (OSError, URLError, TimeoutError) as error:
+        return {"source": _AMD_X870_CHIPSET_URL, "checked_at_utc": checked_at, "reason": f"Official comparison source unavailable: {type(error).__name__}"}
+
+
 def _presentation(check_id: str, status: str, *, detail: str | None = None) -> dict[str, str]:
     if check_id == "gpu_driver" and status == OK:
         return {
@@ -49,6 +75,18 @@ def _presentation(check_id: str, status: str, *, detail: str | None = None) -> d
             "status": "Verbesserung empfohlen", "priority": "wichtig",
             "relevance": "Ein neuerer offizieller Grafiktreiber steht für den erkannten Adapter bereit.",
             "action": "Den offiziellen Hersteller-Download prüfen und die Aktualisierung nur bewusst manuell durchführen. Keine Änderung wurde vorgenommen.",
+        }
+    if check_id == "chipset_driver" and status == OK:
+        return {
+            "status": "OK", "priority": "informativ",
+            "relevance": "Der installierte Chipsatztreiber wurde gegen den offiziellen Stand des eindeutig erkannten Chipsatzes geprüft.",
+            "action": "Keine Aktion erforderlich.",
+        }
+    if check_id == "chipset_driver" and status == ACTION_REQUIRED:
+        return {
+            "status": "Verbesserung empfohlen", "priority": "wichtig",
+            "relevance": "Für den eindeutig erkannten Chipsatz steht ein neueres offizielles Paket bereit.",
+            "action": "Das offizielle AMD-Chipsatzpaket manuell prüfen und eine Aktualisierung nur bewusst durchführen. Keine Änderung wurde vorgenommen.",
         }
     if status == REVIEW:
         security_actions = {
@@ -153,20 +191,37 @@ def evaluate_system_facts(facts: dict[str, Any]) -> dict[str, Any]:
     ))
 
     chipset = facts.get("amd_chipset") or {}
+    chipset_identity = facts.get("chipset") or {}
+    chipset_catalog = facts.get("chipset_driver_catalog") or {}
     chipset_version = chipset.get("version")
+    official_chipset_version = chipset_catalog.get("version")
+    if chipset_identity.get("name") and chipset_version and official_chipset_version:
+        chipset_status = OK if chipset_version == official_chipset_version else ACTION_REQUIRED
+        chipset_summary = (
+            f"{chipset_identity['name']}: installierte AMD-Chipsatzsoftware {chipset_version} entspricht dem offiziellen Stand {official_chipset_version}."
+            if chipset_status == OK else
+            f"{chipset_identity['name']}: AMD-Chipsatzsoftware {chipset_version} erkannt; offizieller Stand ist {official_chipset_version}."
+        )
+    else:
+        chipset_status = REVIEW
+        chipset_summary = "Chipsatz oder offizieller Chipsatztreiberstand konnte nicht zuverlässig verglichen werden."
     checks.append(_result(
-        "chipset_driver", "Chipsatztreiber", REVIEW,
-        f"AMD-Chipsatzsoftware {chipset_version} erkannt; ein zuverlässiger Vergleich benötigt das exakte Mainboard-/Chipsatzmodell." if chipset_version else "Chipsatztreiber konnte nicht zuverlässig erkannt werden.",
-        {"package": chipset.get("name"), "installed_version": chipset_version},
-        detail="Die installierte Chipsatzsoftware ist erkannt, aber ohne exaktes Chipsatzmodell nicht zuverlässig gegen einen Herstellerstand bewertbar. Mainboard-Hersteller-Supportseite bei Bedarf manuell prüfen; keine Änderung wurde vorgenommen.",
+        "chipset_driver", "Chipsatztreiber", chipset_status, chipset_summary,
+        {"chipset": chipset_identity.get("name"), "chipset_source": chipset_identity.get("source"), "package": chipset.get("name"),
+         "installed_version": chipset_version, "official_version": official_chipset_version,
+         "official_source": chipset_catalog.get("source"), "checked_at_utc": chipset_catalog.get("checked_at_utc")},
+        detail="Der Chipsatz oder sein offizieller Herstellerstand war bei dieser Prüfung nicht zuverlässig bestimmbar. Ohne eindeutige Zuordnung wird keine Aktualität geraten; keine Änderung wurde vorgenommen.",
     ))
 
     adrenalin = facts.get("amd_adrenalin") or {}
     checks.append(_result(
-        "amd_adrenalin", "AMD-Adrenalin-Einstellungen", REVIEW,
-        "AMD Software ist erkannt; relevante Profil- und Grafikschalter sind ohne stabile öffentliche Lese-Schnittstelle nicht zuverlässig bewertbar." if adrenalin.get("installed") else "AMD Software/Adrenalin konnte nicht zuverlässig erkannt werden.",
-        {"installed": adrenalin.get("installed"), "version": adrenalin.get("version"), "read_api": "not_available"},
-        detail="AMD Software > Gaming > Grafik bzw. das CS2-Spielprofil manuell prüfen. Improve liest keine und ändert keine AMD-Adrenalin-Einstellungen.",
+        "amd_adrenalin", "Grafikeinstellungen und Spielprofil", REVIEW,
+        "AMD Software und ein CS2-bezogenes lokales Berichtartefakt sind erkannt; die tatsächlich wirksamen globalen und CS2-Profilschalter sind aus den untersuchten lokalen Daten nicht belastbar dekodierbar." if adrenalin.get("installed") else "AMD Software/Adrenalin konnte nicht zuverlässig erkannt werden.",
+        {"provider": "AMD", "installed": adrenalin.get("installed"), "version": adrenalin.get("version"),
+         "global_settings": "investigated_not_reliably_decodable", "cs2_profile": "observed_not_reliably_decodable",
+         "sources_examined": ["active AMD display-driver UMD configuration", "AMD CN GameReport/cs2.exe", "AMD CN steamdata/730", "AMD ADLX runtime"],
+         "read_api": "native AMD ADLX runtime present; no shipped read-only binding"},
+        detail="AMD Software > Gaming > Grafik bzw. das CS2-Spielprofil manuell prüfen. Die lokalen AMD-Daten enthalten teils binäre oder nicht dokumentiert codierte Werte; Improve interpretiert sie nicht als Fakten und ändert keine AMD-Adrenalin-Einstellungen.",
     ))
 
     displays = facts.get("displays") or []
@@ -270,7 +325,9 @@ def collect_windows_facts(timeout_seconds: int = 20) -> dict[str, Any]:
         message = completed.stderr.strip() or "Windows inventory failed"
         raise RuntimeError(message)
     facts = json.loads(completed.stdout)
+    facts["chipset"] = detect_chipset(facts.get("motherboard") or {})
     facts["gpu_driver_catalog"] = collect_official_gpu_driver_catalog(facts.get("gpus") or [])
+    facts["chipset_driver_catalog"] = collect_official_chipset_catalog(facts["chipset"])
     return facts
 
 

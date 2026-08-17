@@ -1,4 +1,4 @@
-from improve_yourself.system_check import ACTION_REQUIRED, OK, REVIEW, collect_official_gpu_driver_catalog, evaluate_system_facts
+from improve_yourself.system_check import ACTION_REQUIRED, OK, REVIEW, collect_official_gpu_driver_catalog, detect_chipset, evaluate_system_facts
 
 
 def test_evaluates_complete_read_only_baseline() -> None:
@@ -23,7 +23,7 @@ def test_evaluates_complete_read_only_baseline() -> None:
     assert by_id["gpu_driver"]["user_view"]["status"] == "OK"
     assert by_id["gpu_driver"]["evidence"]["official_version"] == "26.7.1"
     assert by_id["chipset_driver"]["user_view"]["status"] == "Nicht prüfbar / unbekannt"
-    assert by_id["amd_adrenalin"]["evidence"]["read_api"] == "not_available"
+    assert by_id["amd_adrenalin"]["evidence"]["global_settings"] == "investigated_not_reliably_decodable"
     assert by_id["motherboard"]["user_view"]["priority"] == "optional"
     assert by_id["secure_boot"]["user_view"]["area"] == "Anti-Cheat-Readiness"
     assert payload["user_summary"]["anti_cheat_readiness"]["status"] == "bestätigt"
@@ -88,3 +88,22 @@ def test_official_amd_catalog_is_limited_to_mapped_adapter_and_safe_on_unavailab
     result = collect_official_gpu_driver_catalog([{ "name": "AMD Radeon RX 7900 XTX" }])
     assert result["source"].startswith("https://www.amd.com/")
     assert "reason" in result
+
+
+def test_exact_board_chipset_mapping_allows_a_real_currentness_verdict() -> None:
+    identity = detect_chipset({"manufacturer": "Gigabyte Technology Co., Ltd.", "product": "X870 GAMING X WIFI7"})
+    assert identity["name"] == "AMD X870"
+    assert "gigabyte.com" in identity["source"]
+    payload = evaluate_system_facts({
+        "chipset": identity,
+        "amd_chipset": {"name": "AMD Chipset Software", "version": "8.07.16.1035"},
+        "chipset_driver_catalog": {"version": "8.08.12.551", "source": "https://example.test/amd-x870", "checked_at_utc": "2026-08-17T00:00:00+00:00"},
+    })
+    by_id = {item["id"]: item for item in payload["checks"]}
+    assert by_id["chipset_driver"]["status"] == ACTION_REQUIRED
+    assert by_id["chipset_driver"]["user_view"]["status"] == "Verbesserung empfohlen"
+    assert by_id["chipset_driver"]["evidence"]["chipset"] == "AMD X870"
+
+
+def test_unknown_board_never_receives_a_guessed_chipset() -> None:
+    assert detect_chipset({"manufacturer": "Gigabyte Technology Co., Ltd.", "product": "X870-like board"}) == {}
