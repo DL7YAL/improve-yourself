@@ -23,6 +23,7 @@ Goal: a stable, independent first version with real practical value.
 - Identify match and player data
 - Find relevant or suspicious scenes
 - Evaluate line of sight, sound, voice/calls, prior information, game flow, opponent perspective, aim/mouse movement and timing
+- My Improvement uses the same neutral Analyzer facts for the own player; it is not an Optimizer feature. See `MY_IMPROVEMENT_ANALYZER_V1.md` for the local-first, evidence-bound V1 foundation.
 
 ### Tactical Replay
 - Reconstruct relevant scenes visually

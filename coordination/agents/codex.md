@@ -1,5 +1,17 @@
 # Codex
 
+## 2026-08-17 — Analyzer V1 konsolidierte UX / Tactical Replay Utility / My Improvement
+
+STATUS: waiting_for_tristan_review
+TASK: Consolidate the approved Analyzer V1 UX, add only evidence-bound 2D utility rendering, and define My Improvement as the local Analyzer release path without building an unsupported scoring product.
+BRANCH: `beast/analyzer-default-criteria-v1`.
+CHANGED: Preflight scoreboard is explicitly divided into TERRORISTS and COUNTER-TERRORISTS and emphasizes missing data/affected criteria instead of a prominent standard-channel list. Replay scenes now carry documented utility records: tickwise grenade paths when coordinates exist; smoke/inferno lifetime areas only from their start/end/effect records; local flash/HE/decoy pop markers without a claimed effect duration or fullscreen flash. `docs/MY_IMPROVEMENT_ANALYZER_V1.md` fixes ownership (Analyzer, not Optimizer), the shared-facts model, future local `iy.improvement_match/v1`/`iy.improvement_history/v1`, 30/60 reduced-history boundary, identity options, metric plan and non-invention rules.
+VERIFIED: Fresh real de_anubis workflow after the utility change has 22 scenes and 268 documented utility elements: 129 smoke, 61 fire, 43 HE, 35 flash. One parser case with an absent utility end tick was reproducibly found and skipped rather than guessed. Full `tools/dev/Setup-V1.ps1` is now PASS: locked dependencies, editable install, `pip check`, 54 tests and all eight native `iy-*.exe --help` smokes. The earlier Windows wrapper-policy symptom is cleared under Tristan's approved local permissions; no workaround or security bypass was used.
+DECISIONS: No named teams are fabricated; the source-supported sides are T/CT. No 3D/POV, cloud, automatic CS2 tick navigation, Level-10 reference, mouse/crosshair scoring or full My Improvement UI was started.
+OPEN: `WAITING_FOR_TRISTAN — Analyzer V1 consolidated UX review`. No merge.
+NEXT: Complete full gate, then provide local review URL and stop for Tristan UX review.
+COMMIT/PR: Pending consolidated checkpoint.
+
 ## 2026-08-17 — Analyzer V1 Workflow / Profil / Preflight / Review für Tristan bereit
 
 STATUS: waiting_for_tristan_review

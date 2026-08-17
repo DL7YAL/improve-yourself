@@ -19,8 +19,75 @@ def _records(frame: Any) -> list[dict[str, Any]]:
     return converter() if converter else list(frame or [])
 
 
+def _finite_point(row: dict[str, Any], prefix: str = "") -> dict[str, float] | None:
+    try:
+        return {"x": float(row[f"{prefix}X"]), "y": float(row[f"{prefix}Y"]), "z": float(row[f"{prefix}Z"])}
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _utility_type(value: object) -> str | None:
+    text = str(value)
+    if "Smoke" in text:
+        return "smoke"
+    if "Flash" in text:
+        return "flash"
+    if "HE" in text:
+        return "he"
+    if "Molotov" in text or "Incendiary" in text:
+        return "fire"
+    if "Decoy" in text:
+        return "decoy"
+    return None
+
+
+def _sample_path(rows: list[dict[str, Any]], maximum: int = 24) -> list[dict[str, float]]:
+    points = [point for row in sorted(rows, key=lambda item: int(item.get("tick", 0))) if (point := _finite_point(row))]
+    if len(points) <= maximum:
+        return points
+    return [points[round(index * (len(points) - 1) / (maximum - 1))] for index in range(maximum)]
+
+
+def _scene_utility(
+    round_number: int, start: int, end: int, grenade_rows: list[dict[str, Any]], smoke_rows: list[dict[str, Any]], inferno_rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    for row in [*smoke_rows, *inferno_rows]:
+        if int(row.get("round_num", -1)) != round_number:
+            continue
+        try:
+            item_start, item_end = int(row.get("start_tick")), int(row.get("end_tick"))
+        except (TypeError, ValueError):
+            continue
+        if item_end < start or item_start > end:
+            continue
+        target, origin = _finite_point(row), _finite_point(row, "thrower_")
+        if target is None:
+            continue
+        kind = "smoke" if row in smoke_rows else "fire"
+        items.append({"kind": kind, "thrower": str(row.get("thrower_name", "")), "start_tick": item_start, "end_tick": item_end, "origin": origin, "target": target, "path": [], "area": True})
+    grouped: dict[tuple[object, str], list[dict[str, Any]]] = {}
+    for row in grenade_rows:
+        if int(row.get("round_num", -1)) != round_number:
+            continue
+        tick = int(row.get("tick", -1))
+        if not start <= tick <= end:
+            continue
+        kind = _utility_type(row.get("grenade_type"))
+        if kind is None:
+            continue
+        grouped.setdefault((row.get("entity_id"), kind), []).append(row)
+    for (_, kind), rows in grouped.items():
+        path = _sample_path(rows)
+        if not path:
+            continue
+        items.append({"kind": kind, "thrower": str(rows[0].get("thrower", "")), "start_tick": int(rows[0].get("tick", 0)), "end_tick": int(rows[-1].get("tick", 0)), "origin": path[0], "target": path[-1], "path": path, "area": False})
+    return sorted(items, key=lambda item: (item["start_tick"], item["kind"]))
+
+
 def build_replay_payload(
-    analysis: dict[str, Any], tick_rows: list[dict[str, Any]], max_frames: int = 256
+    analysis: dict[str, Any], tick_rows: list[dict[str, Any]], max_frames: int = 256,
+    grenade_rows: list[dict[str, Any]] | None = None, smoke_rows: list[dict[str, Any]] | None = None, inferno_rows: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     if max_frames <= 0:
         raise ValueError("max_frames must be positive")
@@ -83,6 +150,7 @@ def build_replay_payload(
             "end_tick": end,
             "frames": frames,
             "events": events,
+            "utility": _scene_utility(marker["round_number"], start, end, grenade_rows or [], smoke_rows or [], inferno_rows or []),
         })
     return {
         "schema": REPLAY_SCHEMA,
@@ -104,7 +172,7 @@ def export_replay(source: Path, analysis_path: Path, output: Path, max_frames: i
     with materialize_demo(source.resolve(), max_bytes=2_000_000_000) as demo_path:
         demo = Demo(str(demo_path), verbose=False)
         demo.parse(player_props=["pitch", "yaw"])
-        payload = build_replay_payload(analysis, _records(demo.ticks), max_frames=max_frames)
+        payload = build_replay_payload(analysis, _records(demo.ticks), max_frames=max_frames, grenade_rows=_records(demo.grenades), smoke_rows=_records(demo.smokes), inferno_rows=_records(demo.infernos))
     output.mkdir(parents=True, exist_ok=True)
     destination = output / f"{digest[:12]}.replay.json"
     destination.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

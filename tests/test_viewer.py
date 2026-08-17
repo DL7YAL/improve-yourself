@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from improve_yourself.viewer import active_players_at_tick, render_viewer, world_to_radar
+from improve_yourself.replay import build_replay_payload
 
 
 def replay_payload() -> dict:
@@ -63,6 +64,8 @@ def test_renders_self_contained_html_and_escapes_script_end(tmp_path: Path) -> N
     assert 'id="speed"' in html
     assert 'id="event-info"' in html
     assert 'active_players' in html
+    assert 'Utility: Rauch' in html
+    assert 'u.area' in html
     assert 'dokumentierten Kill-Tick' in html
 
 
@@ -71,3 +74,19 @@ def test_rejects_wrong_schema(tmp_path: Path) -> None:
     source.write_text('{"schema":"wrong","coordinate_space":"cs2_world","scenes":[]}', encoding="utf-8")
     with pytest.raises(ValueError, match="iy.replay/v1"):
         render_viewer(source, tmp_path / "viewer.html")
+
+
+def test_replay_exports_only_documented_utility_paths_and_effect_points() -> None:
+    analysis = {
+        "schema": "iy.analysis/v1", "source_name": "match.dem", "source_sha256": "a" * 64, "map_name": "de_mirage", "disclaimer": "Automatische Marker sind Prüfhinweise und kein Cheat-Nachweis.",
+        "kills": [{"round_number": 1, "tick": 20, "attacker": "Player", "victim": "Victim", "weapon": "ak47", "headshot": False}, {"round_number": 1, "tick": 30, "attacker": "Player", "victim": "Victim2", "weapon": "ak47", "headshot": False}, {"round_number": 1, "tick": 40, "attacker": "Player", "victim": "Victim3", "weapon": "ak47", "headshot": False}],
+        "multikills": [{"round_number": 1, "player": "Player", "kill_count": 3, "first_tick": 20, "last_tick": 40, "victims": ["Victim", "Victim2", "Victim3"]}],
+        "data_quality": {"status": "ok", "missing_channels": [], "warnings": []}, "available_channels": ["rounds", "kills"],
+    }
+    ticks = [{"tick": 20, "round_num": 1, "name": "Player", "side": "CT", "X": 0, "Y": 0, "Z": 0, "pitch": 0, "yaw": 0}]
+    smokes = [{"round_num": 1, "start_tick": 21, "end_tick": 35, "thrower_name": "Player", "thrower_X": 1, "thrower_Y": 2, "thrower_Z": 3, "X": 4, "Y": 5, "Z": 6}]
+    grenades = [{"round_num": 1, "entity_id": 4, "grenade_type": "CFlashbangProjectile", "thrower": "Player", "tick": 22, "X": 1, "Y": 2, "Z": 3}, {"round_num": 1, "entity_id": 4, "grenade_type": "CFlashbangProjectile", "thrower": "Player", "tick": 24, "X": 4, "Y": 5, "Z": 6}]
+    replay = build_replay_payload(analysis, ticks, grenade_rows=grenades, smoke_rows=smokes)
+    utility = replay["scenes"][0]["utility"]
+    assert [(item["kind"], item["target"]) for item in utility] == [("smoke", {"x": 4.0, "y": 5.0, "z": 6.0}), ("flash", {"x": 4.0, "y": 5.0, "z": 6.0})]
+    assert all("effectiveness" not in item for item in utility)
