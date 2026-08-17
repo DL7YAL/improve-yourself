@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Viewer V1: vollständige reale Mirage-Review-Evidenz
+
+STATUS: waiting_for_tristan
+TASK: Produce a fresh complete Viewer-V1 visual-review artifact from an existing real local demo and a matching approved local radar resource, without changing the existing architecture or data contract.
+BRANCH: `beast/2d-tactical-replay-viewer-v1` at pushed checkpoint `95f06a9`.
+CHANGED: No further feature was added after the accepted Viewer-V1 checkpoint. Read-only inventory identified the existing local `D:\downloads\Improve Yourself\Demos\§$!$!$!.dem` as real `de_mirage`; the existing local Awpy resource `C:\Users\tleik\.awpy\maps\de_mirage.png` is used with the already documented transform `pos_x=-3230`, `pos_y=1713`, `scale=5`. The raw demo remains in place and uncommitted; generated workflow/review artifacts remain ignored and local.
+VERIFIED: Fresh local `iy-workflow` result `results/viewer-v1-mirage/2d70058ba006/workflow.json` is `iy.workflow/v1`, `READY_FOR_REVIEW`, and preserves the local-only/read-only/no-change policy. Its source hash is `2d70058ba006fecebf804e499a13ebeab97308804b433723c0657bf7810927a2`. Analysis identifies `de_mirage` and 201 real kill events; the generated `iy.replay/v1` contains 11 scenes, all 11 with associated derived events (53 event records total). The self-contained 4.3 MB `viewer.html` embeds the local radar and contains the V1 scene/frame navigation, range scrubber, playback/speed, scene/event context and data-quality notices. `tools/dev/Setup-V1.ps1` is PASS: locked dependency consistency, 33/33 tests and help-smokes for all five public CLIs. Kubus V0 was used only within its frozen allowlist: completed `text_stats` job `job-20260817T052031766-23ff26` was independently accepted by Beast; no Kubus feature changed.
+DECISIONS: This is technical evidence, not a claimed visual acceptance. The suitable current Mirage/radar pair removes the prior evidence gap without inventing positions, direction, map metadata or radar geometry. No VRAD/benchmark action and no Kubus infrastructure change occurred.
+OPEN: `WAITING_FOR_TRISTAN — 2D Viewer V1 visual review`. Tristan must visually assess the live local page for plausible Mirage player placement and view-direction lines, navigation/playback and event context. No additional Viewer V1 function is to be added before that result.
+NEXT: Keep the loopback service running and give Tristan the exact local review URL. On Tristan PASS/FAIL, record only that bounded human result; preserve the external Workshop Tools/VRAD blocker as separately parked.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Bounded local real-demo evidence creation and regression validation without contract or system changes.
+COMPUTER_USE: no UI control; loopback service only.
+
 ## 2026-08-17 — 2D Tactical Replay Viewer V1 implementation checkpoint
 
 STATUS: running
