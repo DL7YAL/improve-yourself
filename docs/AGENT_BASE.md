@@ -28,6 +28,36 @@ Kurzname im Arbeitskreis: **Aurel**. Hält Überblick, verbindet Anforderungen u
 ### Codex / The Beast — Implementierung / Engineering
 Codex und The Beast sind dieselbe Arbeitsrolle. Arbeitet primär am Code, Builds, technischen Änderungen und tiefen technischen Diagnoseblöcken. Liefert reproduzierbare Commits, Tests und klare Übergaben statt nur Chat-Beschreibungen.
 
+## Foundry-Regel — Verantwortung und effiziente Worker-Abnahme
+
+Für jede an ein Mainzelmännchen bzw. einen Worker delegierte Aufgabe trägt das zuständige Brain — aktuell The Beast — weiterhin die Verantwortung für das finale Ergebnis.
+
+**Abnahme bedeutet ausdrücklich nicht, dass The Beast die vollständige Arbeit des Workers erneut durchführen muss.** The Beast wählt die kleinste ausreichend belastbare Prüfmethode, die Art und Risiko der Aufgabe angemessen ist.
+
+Zulässige Prüfmethoden sind insbesondere:
+
+- automatisierte Tests, Validatoren und Invarianten;
+- Prüfung von Diff, Logs, Input/Output und Artefakten;
+- gezielte Stichproben;
+- Plausibilitäts- und Konsistenzprüfungen;
+- Hashes und reproduzierbare Nachweise;
+- bei erhöhtem Risiko eine unabhängige Gegenprüfung, gegebenenfalls durch einen anderen Worker;
+- vollständige manuelle Wiederholung nur dann, wenn Risiko, fehlende Evidenz oder Auffälligkeiten dies tatsächlich erforderlich machen.
+
+Worker sollen ihre Ergebnisse grundsätzlich mit prüfbarer Evidenz zurückgeben und nicht lediglich `DONE` melden.
+
+Zielprinzip:
+
+**Worker erledigt die Arbeit → Worker liefert Evidenz → Beast prüft effizient → Beast übernimmt Verantwortung und erteilt die fachliche Abnahme.**
+
+Nicht:
+
+**Worker erledigt die Arbeit → Beast erledigt dieselbe Arbeit noch einmal.**
+
+Die Prüftiefe darf mit wachsender nachgewiesener Zuverlässigkeit eines Workers angepasst werden. Auffälligkeiten, neue Aufgabentypen und risikoreiche Änderungen erhöhen die Prüftiefe wieder.
+
+Ziel ist ein geringerer Prüfaufwand bei weiterhin ausreichend belastbarer Qualitätssicherung. Effizienz hebt die Verantwortlichkeit des Brains niemals auf.
+
 ## Modell- und Verbrauchssteuerung für Codex / The Beast
 
 Ziel ist, das verfügbare Codex-Kontingent effizient zu nutzen, ohne technische Qualität oder Abnahmeverantwortung zu schwächen. Das Modell wird nach Aufgabenrisiko und Schwierigkeit gewählt, nicht pauschal nach maximaler Leistung.
@@ -53,7 +83,7 @@ Ziel ist, das verfügbare Codex-Kontingent effizient zu nutzen, ohne technische 
 3. **Kontext klein halten.** Repository-Handoffs, relevante Dateien und kurze Log-Ausschnitte sind die Source of Truth; keine langen Chatverläufe oder vollständigen Logs erneut laden, wenn der belastbare Stand bereits dokumentiert ist.
 4. **Keine stille Hochstufung.** Ein Wechsel zu Sol bzw. höherem Reasoning muss durch Schwierigkeit/Risiko begründet sein. Ein Wechsel zurück auf Terra/Luna erfolgt, sobald die Eskalation nicht mehr nötig ist.
 5. **Keine erfundene Modellumschaltung.** Wenn die aktuelle Laufzeit das Modell nicht selbst umstellen oder gezielt routen kann, darf der Agent keinen erfolgten Wechsel behaupten. In diesem Fall wird das gewünschte Profil im Handoff/Status vermerkt und mit dem tatsächlich verfügbaren Modell weitergearbeitet oder auf eine explizite Umschaltung gewartet.
-6. **Qualität bleibt Pflicht.** Ein günstigeres Modell ändert nichts an der Foundry-Regel: delegierte oder erzeugte Ergebnisse müssen vom zuständigen Brain ausreichend geprüft und ausdrücklich abgenommen werden.
+6. **Qualität bleibt Pflicht.** Ein günstigeres Modell ändert nichts an der Foundry-Regel: delegierte oder erzeugte Ergebnisse müssen vom zuständigen Brain ausreichend geprüft und ausdrücklich abgenommen werden. Die Prüfung soll dabei gemäß der Foundry-Regel effizient und risikoadäquat erfolgen, nicht durch pauschale vollständige Wiederholung der Worker-Arbeit.
 
 Bei relevanten Arbeitsblöcken soll der Handoff zusätzlich enthalten:
 
