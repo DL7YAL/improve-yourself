@@ -20,7 +20,7 @@ def test_renders_reduced_review_surface_and_escapes_content(tmp_path: Path) -> N
     ]}}, "checks": [
         {"label": "CPU <fast>", "status": "OK", "summary": "Detected & safe", "user_view": {
             "status": "OK", "priority": "informativ", "relevance": "Kein Handlungsbedarf.", "action": "Keine Aktion erforderlich."
-        }}
+        }, "evidence": {"installed_version": "1.0", "official_version": "2.0", "official_source": "https://example.test", "checked_at_utc": "2026-08-17T00:00:00+00:00"}}
     ]})
     analysis = write(tmp_path / "analysis.json", {
         "schema": "iy.analysis/v1", "source_sha256": source_hash, "map_name": "de_mirage",
@@ -39,6 +39,10 @@ def test_renders_reduced_review_surface_and_escapes_content(tmp_path: Path) -> N
     assert "Tactical Replay öffnen" in document
     assert 'href="viewer.html"' in document
     assert "CPU &lt;fast&gt;" in document
+    assert "Detected &amp; safe" in document
+    assert "Installierte Software:" in document
+    assert "Offizieller Stand:" in document
+    assert "https://example.test" in document
     assert "&lt;/script&gt;" in document
     assert "kein Cheat-Nachweis" in document
     assert "KeyError" not in document

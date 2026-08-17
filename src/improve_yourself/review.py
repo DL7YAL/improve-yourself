@@ -43,6 +43,19 @@ def _system_user_view(item: dict[str, Any]) -> dict[str, str]:
     }
 
 
+def _system_evidence_details(item: dict[str, Any]) -> str:
+    """Expose only review-safe provenance fields, never arbitrary inventory data."""
+    evidence = item.get("evidence") if isinstance(item.get("evidence"), dict) else {}
+    labels = {
+        "chipset": "Plattform", "installed_package_version": "Installierte Software", "installed_version": "Installierte Software",
+        "official_version": "Offizieller Stand", "official_source": "Quelle", "checked_at_utc": "Geprüft (UTC)",
+    }
+    return " ".join(
+        f"<small><strong>{label}:</strong> {html.escape(str(evidence[key]))}</small>"
+        for key, label in labels.items() if evidence.get(key) not in (None, "")
+    )
+
+
 def render_review_surface(
     system_path: Path,
     analysis_path: Path,
@@ -66,7 +79,9 @@ def render_review_surface(
         f'<article class="check {_status_class(view["status"])}">'
         f'<div><strong>{html.escape(str(item.get("label", "")))}</strong>'
         f'<span>{html.escape(view["status"]) } · {html.escape(view["priority"])}</span></div>'
-        f'<p>{html.escape(view["relevance"])}</p><p><strong>Nächster Schritt:</strong> {html.escape(view["action"])}</p></article>'
+        f'<p><strong>Ergebnis:</strong> {html.escape(str(item.get("summary", "Nicht verfügbar.")))}</p>'
+        f'<p>{html.escape(view["relevance"])}</p>{_system_evidence_details(item)}'
+        f'<p><strong>Nächster Schritt:</strong> {html.escape(view["action"])}</p></article>'
         for item in system.get("checks", [])
         for view in [_system_user_view(item)]
     )
