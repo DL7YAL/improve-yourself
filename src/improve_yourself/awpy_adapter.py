@@ -30,10 +30,27 @@ def _value(row: dict[str, Any], names: Iterable[str], default: Any = None) -> An
 def _round_for_tick(tick: int, rounds: list[dict[str, Any]]) -> int:
     for index, round_row in enumerate(rounds, start=1):
         start = int(_value(round_row, ("start", "start_tick"), -1))
-        end = int(_value(round_row, ("end", "end_tick", "official_end"), 2**63 - 1))
+        # `end` can precede late official kill events (for example a bomb
+        # explosion). `official_end` retains the full round boundary.
+        end = int(_value(round_row, ("official_end", "end", "end_tick"), 2**63 - 1))
         if start <= tick <= end:
-            return int(_value(round_row, ("round_num", "round_number"), index))
+            number = _value(round_row, ("round_num", "round_number"), index)
+            try:
+                return int(number) if int(number) >= 1 else index
+            except (TypeError, ValueError):
+                return index
     return 0
+
+
+def _round_for_kill(row: dict[str, Any], tick: int, rounds: list[dict[str, Any]]) -> int:
+    """Use AWPy's explicit kill round when present; otherwise use boundaries."""
+    number = _value(row, ("round_num", "round_number"))
+    try:
+        if number is not None and int(number) >= 1:
+            return int(number)
+    except (TypeError, ValueError):
+        pass
+    return _round_for_tick(tick, rounds)
 
 
 def _read_optional_channel(demo: Any, channel: str) -> tuple[Any, str | None]:
@@ -56,7 +73,7 @@ class AwpyAdapter:
             tick = int(_value(row, ("tick",), 0) or 0)
             kills.append(
                 Kill(
-                    round_number=_round_for_tick(tick, rounds),
+                    round_number=_round_for_kill(row, tick, rounds),
                     tick=tick,
                     attacker=str(_value(row, ("attacker_name", "attacker"), "") or "").strip(),
                     victim=str(_value(row, ("victim_name", "victim", "user_name"), "") or "").strip(),

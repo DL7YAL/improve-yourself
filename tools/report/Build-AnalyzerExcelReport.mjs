@@ -11,14 +11,19 @@ const analysis = JSON.parse(await fs.readFile(analysisArg, "utf8"));
 if (analysis.schema !== "iy.analysis/v1") throw new Error("expected iy.analysis/v1");
 if (!Array.isArray(analysis.kills) || !Array.isArray(analysis.multikills)) throw new Error("analysis lacks kills or multikills");
 
-const kills = [...analysis.kills].sort((a, b) => a.round_number - b.round_number || a.tick - b.tick);
-const scenes = [...analysis.multikills].sort((a, b) => a.round_number - b.round_number || a.first_tick - b.first_tick);
+const nonMatchKills = analysis.kills.filter((kill) => !Number.isInteger(kill.round_number) || kill.round_number < 1);
+const nonMatchScenes = analysis.multikills.filter((scene) => !Number.isInteger(scene.round_number) || scene.round_number < 1);
+const kills = analysis.kills.filter((kill) => Number.isInteger(kill.round_number) && kill.round_number >= 1).sort((a, b) => a.round_number - b.round_number || a.tick - b.tick);
+const scenes = analysis.multikills.filter((scene) => Number.isInteger(scene.round_number) && scene.round_number >= 1).sort((a, b) => a.round_number - b.round_number || a.first_tick - b.first_tick);
 const players = [...new Set(kills.flatMap((kill) => [kill.attacker, kill.victim]).filter(Boolean))].sort((a, b) => a.localeCompare(b, "de"));
 const rounds = [...new Set(kills.map((kill) => kill.round_number))].sort((a, b) => a - b);
 const generatedAt = new Date().toISOString().replace("T", " ").replace("Z", " UTC");
 const sourceId = String(analysis.source_sha256 || "").slice(0, 12);
 const userView = analysis.user_view || {};
-const readableWarnings = (analysis.data_quality?.warnings || userView?.limitations || [])
+const readableWarnings = [
+  ...(analysis.data_quality?.warnings || userView?.limitations || []),
+  ...(nonMatchKills.length || nonMatchScenes.length ? [`${nonMatchKills.length + nonMatchScenes.length} Ereignis(se) ohne reguläre Matchrundenzuordnung wurden nicht als Matchrunde dargestellt.`] : []),
+]
   .filter((warning) => !/(KeyError|Traceback|Exception)/i.test(String(warning)));
 
 const workbook = Workbook.create();

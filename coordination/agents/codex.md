@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Analyzer Excel Report V1: Round-Mapping-Korrektur für Wiederabnahme bereit
+
+STATUS: waiting_for_tristan_round_mapping_review
+TASK: Correct the visible external-report round zero only after proving the real source round semantics, then regenerate the same local de_anubis report.
+BRANCH: `beast/analyzer-excel-report-v1`.
+CHANGED: Corrected `src/improve_yourself/awpy_adapter.py` and added bounded adapter regressions in `tests/test_awpy_adapter.py`. AWPy's kill row at tick `165532` directly states `round_num=25`. Its parent round begins at `159427`, has gameplay `end=165442`, but its authoritative `official_end=165890`; the old tick-only code used the earlier boundary and produced fallback 0. The adapter now prefers a positive explicit per-kill source round and, if unavailable, uses `official_end` for the boundary fallback. The Excel generator also never displays an unassigned (`<1`) event as a regular match round; it omits it from regular match sheets and would disclose the omission in the data-quality hints.
+VERIFIED: Read-only source inspection proves that AWPy uses 1-based regular rounds, not a zero-based sequence. Fresh analysis of the same hash-bound local de_anubis input has exactly one mapping change: tick `165532`, DanuTu_ -> neeyanc1337, `0 -> 25`. It now contains only rounds 1 through 42, no kill or scene in round 0, 307 kills, 22 multi-kill scenes and 115 headshots. Every marker's count equals its same-round/player kill count. Fresh XLSX generation has no formula errors; visual rendering confirms the Runden sheet starts at 1 and the Kills sheet lists tick `165532` as round 25. Full `tools/dev/Setup-V1.ps1` is PASS with 49/49 tests and all seven CLI smokes; privacy scan remains 0 hits for local paths/demo names/Codex or AppData material. Generated analysis/report files remain ignored/local.
+DECISIONS: This is a focused source-mapping defect fix, not a blanket `round + 1` presentation transformation. No new Analyzer, report, benchmark/VRAD, Kubus, 3D/POV or Optimizer function was started.
+OPEN: `WAITING_FOR_TRISTAN — Analyzer Excel Report V1 round-mapping re-review`.
+NEXT: Tristan reviews only the corrected local XLSX round mapping. Do not merge or start a next product function until that bounded result.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Real parser-boundary diagnosis and bounded regression correction.
+COMPUTER_USE: no.
+
 ## 2026-08-17 — Analyzer Excel Report V1 für Tristan-Review bereit
 
 STATUS: waiting_for_tristan_review
