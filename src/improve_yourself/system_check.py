@@ -3,23 +3,52 @@ from __future__ import annotations
 import argparse
 import json
 import platform
+import re
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 SYSTEM_CHECK_SCHEMA = "iy.system_check/v1"
 OK = "OK"
 REVIEW = "REVIEW"
 ACTION_REQUIRED = "ACTION_REQUIRED"
 
+_AMD_RX_7900_XTX_URL = "https://www.amd.com/en/support/downloads/drivers.html/graphics/radeon-rx/radeon-rx-7000-series/amd-radeon-rx-7900-xtx.html"
 
-def _presentation(check_id: str, status: str) -> dict[str, str]:
-    if status == OK and check_id == "gpu":
+
+def collect_official_gpu_driver_catalog(gpus: list[dict[str, Any]], timeout_seconds: int = 5) -> dict[str, Any]:
+    """Read the official AMD product page for a known adapter; never download or install."""
+    names = " ".join(str(gpu.get("name", "")) for gpu in gpus).lower()
+    if "amd radeon rx 7900 xtx" not in names:
+        return {"reason": "No supported official product-page mapping for the detected adapter."}
+    checked_at = datetime.now(UTC).isoformat()
+    try:
+        request = Request(_AMD_RX_7900_XTX_URL, headers={"User-Agent": "Improve-Yourself-System-Check/1.0"})
+        with urlopen(request, timeout=timeout_seconds) as response:  # noqa: S310 - fixed official HTTPS source
+            document = response.read().decode("utf-8", errors="replace")
+        match = re.search(r"Adrenalin\s+([0-9]+(?:\.[0-9]+)+)\s*\((?:WHQL Recommended|Optional)\)", document, re.I)
+        if not match:
+            return {"source": _AMD_RX_7900_XTX_URL, "checked_at_utc": checked_at, "reason": "Official page format did not expose a comparable version."}
+        return {"version": match.group(1), "source": _AMD_RX_7900_XTX_URL, "checked_at_utc": checked_at}
+    except (OSError, URLError, TimeoutError) as error:
+        return {"source": _AMD_RX_7900_XTX_URL, "checked_at_utc": checked_at, "reason": f"Official comparison source unavailable: {type(error).__name__}"}
+
+
+def _presentation(check_id: str, status: str, *, detail: str | None = None) -> dict[str, str]:
+    if check_id == "gpu_driver" and status == OK:
         return {
-            "status": "Hinweis", "priority": "informativ",
-            "relevance": "Der installierte Treiber wurde erkannt; seine Aktualität wird nicht automatisch bewertet.",
-            "action": "Nur bei konkreten Grafikproblemen den Herstellerstand manuell vergleichen. Keine automatische Änderung wurde vorgenommen.",
+            "status": "OK", "priority": "informativ",
+            "relevance": "Der installierte Treiber wurde gegen den offiziellen Herstellerstand geprüft.",
+            "action": "Keine Aktion erforderlich.",
+        }
+    if check_id == "gpu_driver" and status == ACTION_REQUIRED:
+        return {
+            "status": "Verbesserung empfohlen", "priority": "wichtig",
+            "relevance": "Ein neuerer offizieller Grafiktreiber steht für den erkannten Adapter bereit.",
+            "action": "Den offiziellen Hersteller-Download prüfen und die Aktualisierung nur bewusst manuell durchführen. Keine Änderung wurde vorgenommen.",
         }
     if status == REVIEW:
         security_actions = {
@@ -29,7 +58,7 @@ def _presentation(check_id: str, status: str) -> dict[str, str]:
         return {
             "status": "Nicht prüfbar / unbekannt", "priority": "wichtig" if check_id in {"secure_boot", "tpm"} else "informativ",
             "relevance": "Für die Anti-Cheat-Readiness relevant; Improve konnte diesen Pflichtpunkt nicht bestätigen. Daraus wird kein negativer Befund abgeleitet." if check_id in security_actions else "Die Information fehlt; daraus wird kein negativer Befund abgeleitet.",
-            "action": security_actions.get(check_id, "Keine Aktion nötig, solange die Information nicht für eine Entscheidung benötigt wird."),
+            "action": security_actions.get(check_id, detail or "Keine Aktion nötig, solange die Information nicht für eine Entscheidung benötigt wird."),
         }
     if status == ACTION_REQUIRED:
         if check_id in {"secure_boot", "tpm"}:
@@ -54,10 +83,10 @@ def _presentation(check_id: str, status: str) -> dict[str, str]:
     }
 
 
-def _result(check_id: str, label: str, status: str, summary: str, evidence: dict[str, Any]) -> dict[str, Any]:
+def _result(check_id: str, label: str, status: str, summary: str, evidence: dict[str, Any], *, detail: str | None = None) -> dict[str, Any]:
     return {
         "id": check_id, "label": label, "status": status, "summary": summary, "evidence": evidence,
-        "user_view": _presentation(check_id, status),
+        "user_view": _presentation(check_id, status, detail=detail),
     }
 
 
@@ -96,9 +125,48 @@ def evaluate_system_facts(facts: dict[str, Any]) -> dict[str, Any]:
     gpus = facts.get("gpus") or []
     gpu_complete = bool(gpus) and all(g.get("name") and g.get("driver_version") for g in gpus)
     checks.append(_result(
-        "gpu", "Grafik und Treiber", OK if gpu_complete else REVIEW,
-        f"{len(gpus)} Grafikadapter mit Treiberstand erkannt." if gpu_complete else "Grafikadapter oder Treiberstand unvollständig.",
-        {"adapters": [{"name": g.get("name"), "driver_version": g.get("driver_version")} for g in gpus]},
+        "gpu", "Grafikadapter", OK if gpu_complete else REVIEW,
+        f"{len(gpus)} Grafikadapter erkannt." if gpu_complete else "Grafikadapter oder Treiberstand unvollständig.",
+        {"adapters": [{key: g.get(key) for key in ("name", "driver_version", "driver_date")} for g in gpus]},
+    ))
+
+    gpu_catalog = facts.get("gpu_driver_catalog") or {}
+    installed_package = facts.get("amd_software") or {}
+    current_version = gpu_catalog.get("version")
+    installed_version = installed_package.get("version")
+    if installed_version and current_version:
+        driver_status = OK if installed_version == current_version else ACTION_REQUIRED
+        driver_summary = (
+            f"AMD Software Adrenalin {installed_version} entspricht dem offiziellen Stand {current_version}."
+            if driver_status == OK else
+            f"AMD Software Adrenalin {installed_version} erkannt; offizieller Stand ist {current_version}."
+        )
+    else:
+        driver_status = REVIEW
+        driver_summary = "Installierter oder offizieller Grafiktreiberstand konnte nicht zuverlässig verglichen werden."
+    checks.append(_result(
+        "gpu_driver", "Grafiktreiber-Aktualität", driver_status, driver_summary,
+        {"installed_package_version": installed_version, "installed_driver_versions": [g.get("driver_version") for g in gpus],
+         "official_version": current_version, "official_source": gpu_catalog.get("source"),
+         "checked_at_utc": gpu_catalog.get("checked_at_utc")},
+        detail="Der aktuelle Herstellerstand war bei dieser Prüfung nicht zuverlässig verfügbar. Den Stand auf der offiziellen Hersteller-Supportseite manuell vergleichen; keine Änderung wurde vorgenommen.",
+    ))
+
+    chipset = facts.get("amd_chipset") or {}
+    chipset_version = chipset.get("version")
+    checks.append(_result(
+        "chipset_driver", "Chipsatztreiber", REVIEW,
+        f"AMD-Chipsatzsoftware {chipset_version} erkannt; ein zuverlässiger Vergleich benötigt das exakte Mainboard-/Chipsatzmodell." if chipset_version else "Chipsatztreiber konnte nicht zuverlässig erkannt werden.",
+        {"package": chipset.get("name"), "installed_version": chipset_version},
+        detail="Die installierte Chipsatzsoftware ist erkannt, aber ohne exaktes Chipsatzmodell nicht zuverlässig gegen einen Herstellerstand bewertbar. Mainboard-Hersteller-Supportseite bei Bedarf manuell prüfen; keine Änderung wurde vorgenommen.",
+    ))
+
+    adrenalin = facts.get("amd_adrenalin") or {}
+    checks.append(_result(
+        "amd_adrenalin", "AMD-Adrenalin-Einstellungen", REVIEW,
+        "AMD Software ist erkannt; relevante Profil- und Grafikschalter sind ohne stabile öffentliche Lese-Schnittstelle nicht zuverlässig bewertbar." if adrenalin.get("installed") else "AMD Software/Adrenalin konnte nicht zuverlässig erkannt werden.",
+        {"installed": adrenalin.get("installed"), "version": adrenalin.get("version"), "read_api": "not_available"},
+        detail="AMD Software > Gaming > Grafik bzw. das CS2-Spielprofil manuell prüfen. Improve liest keine und ändert keine AMD-Adrenalin-Einstellungen.",
     ))
 
     displays = facts.get("displays") or []
@@ -107,7 +175,7 @@ def evaluate_system_facts(facts: dict[str, Any]) -> dict[str, Any]:
     display_summary = f"Maximal {max(rates):g} Hz erkannt." if rates else "Bildwiederholrate konnte nicht erkannt werden."
     if rates and max(rates) < 120:
         display_summary += " Für den CS2-Fokus sollte die aktive Anzeigeeinstellung geprüft werden."
-    checks.append(_result("display", "Anzeige", display_status, display_summary, {"refresh_rates_hz": rates}))
+    checks.append(_result("display", "Anzeige", display_status, display_summary, {"active_displays": [{key: d.get(key) for key in ("name", "width", "height", "refresh_hz")} for d in displays]}))
 
     for check_id, label in (("secure_boot", "Secure Boot"), ("tpm", "TPM 2.0")):
         value = facts.get(check_id)
@@ -166,8 +234,11 @@ $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
 $board = Get-CimInstance Win32_BaseBoard | Select-Object -First 1
 $bios = Get-CimInstance Win32_BIOS | Select-Object -First 1
 $computer = Get-CimInstance Win32_ComputerSystem
-$gpus = @(Get-CimInstance Win32_VideoController | ForEach-Object { @{name=$_.Name;driver_version=$_.DriverVersion} })
-$displays = @(Get-CimInstance Win32_VideoController | ForEach-Object { @{refresh_hz=$_.CurrentRefreshRate} })
+$gpus = @(Get-CimInstance Win32_VideoController | ForEach-Object { @{name=$_.Name;driver_version=$_.DriverVersion;driver_date=[string]$_.DriverDate} })
+$displays = @(Get-CimInstance Win32_VideoController | Where-Object { $_.CurrentHorizontalResolution -and $_.CurrentVerticalResolution -and $_.CurrentRefreshRate } | ForEach-Object { @{name=$_.Name;width=$_.CurrentHorizontalResolution;height=$_.CurrentVerticalResolution;refresh_hz=$_.CurrentRefreshRate} })
+$installed = @(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue)
+$amdSoftware = $installed | Where-Object { $_.DisplayName -eq 'AMD Software' } | Select-Object -First 1
+$amdChipset = $installed | Where-Object { $_.DisplayName -eq 'AMD Chipset Software' } | Select-Object -First 1
 $secureBoot = $null;$secureBootSource = $null; try { $secureBoot = [bool](Confirm-SecureBootUEFI);$secureBootSource='Confirm-SecureBootUEFI' } catch {}
 if ($null -eq $secureBoot) { try { $state=(Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\SecureBoot\State' -Name UEFISecureBootEnabled -ErrorAction Stop).UEFISecureBootEnabled;if ($state -in 0,1) { $secureBoot=[bool]$state;$secureBootSource='SecureBootStateRegistry' } } catch {} }
 $tpm = $null;$tpmVersion=$null;$tpmSource=$null; try {
@@ -182,7 +253,7 @@ if ($null -eq $tpm) { try { $tpmTool=& "$env:SystemRoot\System32\tpmtool.exe" ge
  cpu=@{name=$cpu.Name;logical_processors=$computer.NumberOfLogicalProcessors}
  memory=@{total_gb=[math]::Round($computer.TotalPhysicalMemory/1GB,1)}
  motherboard=@{manufacturer=$board.Manufacturer;product=$board.Product;bios_version=$bios.SMBIOSBIOSVersion;bios_date=[string]$bios.ReleaseDate}
- gpus=$gpus;displays=$displays;secure_boot=$secureBoot;secure_boot_source=$secureBootSource;tpm=$tpm;tpm_version=$tpmVersion;tpm_source=$tpmSource
+ gpus=$gpus;displays=$displays;amd_software=@{installed=($null -ne $amdSoftware);name=$amdSoftware.DisplayName;version=$amdSoftware.DisplayVersion};amd_chipset=@{name=$amdChipset.DisplayName;version=$amdChipset.DisplayVersion};amd_adrenalin=@{installed=($null -ne $amdSoftware);version=$amdSoftware.DisplayVersion};secure_boot=$secureBoot;secure_boot_source=$secureBootSource;tpm=$tpm;tpm_version=$tpmVersion;tpm_source=$tpmSource
 } | ConvertTo-Json -Depth 6 -Compress
 '''
 
@@ -198,7 +269,9 @@ def collect_windows_facts(timeout_seconds: int = 20) -> dict[str, Any]:
     if completed.returncode != 0:
         message = completed.stderr.strip() or "Windows inventory failed"
         raise RuntimeError(message)
-    return json.loads(completed.stdout)
+    facts = json.loads(completed.stdout)
+    facts["gpu_driver_catalog"] = collect_official_gpu_driver_catalog(facts.get("gpus") or [])
+    return facts
 
 
 def run_system_check(output: Path) -> Path:

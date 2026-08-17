@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — System Check V1: vollständiger Soll-/Ist-Abgleich und read-only Korrekturrunde
+
+STATUS: waiting_for_tristan
+TASK: Resolve the incomplete System Check UX review against the complete V1 roadmap, implement every reliable read-only check in scope, and produce a fresh representative local review without changing system state.
+BRANCH: `beast/system-check-analyzer-output-v1` after `e920924`.
+CHANGED: The existing System Check now separates the graphics adapter from its driver currency. For the actual mapped AMD Radeon RX 7900 XTX, it fetches only AMD's fixed official HTTPS product-support page (no download, install or telemetry), extracts the official Adrenalin version only when the page exposes a recognized version format, and records source plus UTC check time. Any inaccessible/changed/non-mapped source becomes `Nicht prüfbar / unbekannt`, never a guessed comparison. The local inventory additionally records installed AMD Software/Chipset package versions and actual adapter resolution/refresh. AMD Adrenalin profile settings are intentionally not scraped from undocumented configuration stores: no stable public read API was found, so the card says recognised but not reliably assessable and names the manual UI path. The user-facing status/action is additive; raw `iy.system_check/v1` facts and read-only policy remain.
+VERIFIED: The complete roadmap matrix is: CPU — reliably checked; GPU adapter — reliably checked; GPU driver version — reliably checked; GPU driver currency — reliably checked for RX 7900 XTX through the official AMD page, otherwise unknown; AMD chipset package — detected but currentness not reliably evaluable without exact chipset/board mapping; AMD Adrenalin settings — package detected but relevant switches not reliably readable; Windows/build — reliably checked; Mainboard/BIOS — reliably checked; RAM — reliably checked; monitor/active resolution/active Hz — reliably checked from the active adapter; Secure Boot and TPM 2.0 — reliably checked with documented safe fallbacks; Anti-Cheat readiness — those two mandatory criteria are aggregated as confirmed, attention required, or not fully confirmable. On this system the fresh real check reports AMD Software `26.7.1` matching official AMD `26.7.1`, AMD chipset `8.07.16.1035` detected, active `1920×1080 @ 240 Hz`, Secure Boot enabled and TPM 2.0 present/ready. Full `Setup-V1.ps1` passes dependency consistency, 39/39 tests and five public CLI smoke tests. Fresh local real workflow `results/workflow-output-ux-round2-anubis/446eec75822c/workflow.json` is `iy.workflow/v1`, `READY_FOR_REVIEW`, with verified `de_anubis` radar calibration and 307 kills/22 Multi-Kill review scenes; artifacts remain ignored and source path-free. Loopback service on `127.0.0.1:8878` returns HTTP 200 for review and review-state and contains the new graphics-driver, AMD-Adrenalin and Anti-Cheat sections.
+DECISIONS: A product-page parser is limited to the exact, known AMD RX 7900 XTX mapping and is fail-closed; it does not broadly scrape vendors or download drivers. No undocumented AMD registry/profile data is treated as reliable. “Anti-Cheat Ready” is still not claimed — only the explicitly evaluated criteria are reported. No driver/AMD/Windows/TPM/UEFI/registry change, Optimizer action, benchmark/VRAD/Kubus work or Analyzer/Replayer contract change occurred.
+OPEN: `WAITING_FOR_TRISTAN — System Check / Analyzer UX review`.
+NEXT: Tristan reviews the fresh local UI. Stop the loopback service and prepare only the final no-merge review after a PASS; on a FAIL, address only the concrete reviewed issue.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Bounded Windows capability and vendor-source diagnosis, user-output correction, and end-to-end safety verification.
+COMPUTER_USE: no; loopback-only review service.
+
 ## 2026-08-17 — Anti-Cheat-Readiness: Secure Boot und TPM 2.0 nachgeschärft
 
 STATUS: waiting_for_tristan
