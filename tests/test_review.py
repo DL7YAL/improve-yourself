@@ -62,3 +62,20 @@ def test_rejects_mismatched_sources(tmp_path: Path) -> None:
     replay = write(tmp_path / "replay.json", {"schema": "iy.replay/v1", "source_sha256": "b" * 64, "scenes": []})
     with pytest.raises(ValueError, match="source hashes differ"):
         render_review_surface(system, analysis, replay, tmp_path / "viewer.html", tmp_path / "review.html")
+
+
+def test_renders_analyzer_review_without_implicit_system_check(tmp_path: Path) -> None:
+    source_hash = "c" * 64
+    analysis = write(tmp_path / "analysis.json", {
+        "schema": "iy.analysis/v1", "source_sha256": source_hash, "map_name": "de_mirage",
+        "kills": [], "data_quality": {}, "user_view": {},
+    })
+    replay = write(tmp_path / "replay.json", {
+        "schema": "iy.replay/v1", "source_sha256": source_hash, "scenes": [],
+    })
+    viewer = tmp_path / "viewer.html"
+    viewer.write_text("viewer", encoding="utf-8")
+    document = render_review_surface(None, analysis, replay, viewer, tmp_path / "review.html").read_text(encoding="utf-8")
+    assert "Tactical Replay öffnen" in document
+    assert "System Check" not in document
+    assert "Anti-Cheat-Readiness" not in document

@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Architekturkorrektur: System Check als expliziter Optimizer-Eingang
+
+STATUS: waiting_for_tristan
+TASK: Decouple the read-only System Check from the Analyzer/2D/3D path while retaining it as the primary explicit input boundary for the future Optimizer; do not add Apply or mutations.
+BRANCH: `beast/system-check-analyzer-output-v1` after `07ce81b`.
+CHANGED: `iy-workflow` no longer imports or invokes `run_system_check`, no longer writes `system-check.json`, and its manifest contains only analyzer/replay/viewer/review/state artifacts. The reusable review renderer now accepts an explicit optional System Check document, preserving existing combined-output capability but rendering an analyzer-only review by default. New public `iy-optimizer-input` validates an explicitly supplied `iy.system_check/v1` document only when it declares `read_only: true` and `changes_applied: false`, then exports `iy.optimizer_input/v1` as planning evidence. Its policy explicitly states planning-input-only, no apply/restore available, no changes applied and no demo/replay data. `docs/SYSTEM_CHECK_OPTIMIZER_BOUNDARY.md` fixes the architecture: System Check -> Optimizer input and Demo Analyzer -> Replay -> 2D/later 3D are separate paths.
+VERIFIED: New tests prove analyzer review rendering with no System Check and reject a non-read-only optimizer source. Full `tools/dev/Setup-V1.ps1` passes locked dependency consistency, 45/45 tests and all six public CLI help smokes, including `iy-optimizer-input`. `git diff --check` is clean. No System Check collection/evaluation behavior, existing System Check tests, demo/replay contracts, review-state API, benchmark/VRAD, Kubus, drivers, registry, AMD/NVIDIA configuration or Windows setting changed.
+DECISIONS: System Check remains an independent local diagnostic basis; an Optimizer planner must consume the explicit versioned input rather than re-running it as an Analyzer side effect. Analyzer/2D/3D must not automatically invoke or depend on System Check. The new input artifact is deliberately not an Optimize, Apply, Restore, recommendation-engine or mutation feature.
+OPEN: `WAITING_FOR_TRISTAN — System Check / Analyzer UX review` remains; the earlier loopback review service and static review artifact are not regenerated or modified by this architecture-only correction.
+NEXT: Await Tristan's review/next scope. Do not start Optimizer mutation, Apply/Restore, benchmark/VRAD, Kubus, Analyzer, 2D or 3D feature work without a new assignment.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Narrow contract refactor with safety-boundary preservation.
+COMPUTER_USE: no; existing loopback service left unchanged.
+
 ## 2026-08-17 — System Check V1, UX-Runde 3: AMD-Quellen und Chipsatzkette
 
 STATUS: waiting_for_tristan

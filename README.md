@@ -58,10 +58,13 @@ See [`docs/BRANCHING.md`](docs/BRANCHING.md) for the branch policy and [`docs/RO
 ## Current next step
 
 The saved prototypes are inventoried in
-[`docs/PROTOTYPE_INVENTORY.md`](docs/PROTOTYPE_INVENTORY.md). The integrated
-[`iy-workflow`](docs/V1_LOCAL_WORKFLOW.md) now produces a read-only System
-Check, demo analysis, bounded replay, local viewer and review manifest. The next
-supported local start is `tools/dev/Start-V1Review.ps1`; it also provides the
+[`docs/PROTOTYPE_INVENTORY.md`](docs/PROTOTYPE_INVENTORY.md). The independent
+[`System Check / Optimizer boundary`](docs/SYSTEM_CHECK_OPTIMIZER_BOUNDARY.md)
+keeps read-only machine evidence separate from demo/replay work.
+`iy-system-check` can explicitly produce the primary planning input for the
+future Optimizer through `iy-optimizer-input`; `iy-workflow` remains the
+separate demo analysis, bounded replay, local viewer and review path. The next
+supported replay start is `tools/dev/Start-V1Review.ps1`; it also provides the
 reduced review surface and source-bound local review-state persistence.
 Optimizer apply/restore remains a separate later safety boundary.
 

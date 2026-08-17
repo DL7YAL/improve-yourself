@@ -57,16 +57,16 @@ def _system_evidence_details(item: dict[str, Any]) -> str:
 
 
 def render_review_surface(
-    system_path: Path,
+    system_path: Path | None,
     analysis_path: Path,
     replay_path: Path,
     viewer_path: Path,
     output_path: Path,
 ) -> Path:
-    system = _load(system_path)
     analysis = _load(analysis_path)
     replay = _load(replay_path)
-    if system.get("schema") != "iy.system_check/v1":
+    system = _load(system_path) if system_path is not None else None
+    if system is not None and system.get("schema") != "iy.system_check/v1":
         raise ValueError("expected iy.system_check/v1")
     if analysis.get("schema") != "iy.analysis/v1":
         raise ValueError("expected iy.analysis/v1")
@@ -82,16 +82,16 @@ def render_review_surface(
         f'<p><strong>Ergebnis:</strong> {html.escape(str(item.get("summary", "Nicht verfügbar.")))}</p>'
         f'<p>{html.escape(view["relevance"])}</p>{_system_evidence_details(item)}'
         f'<p><strong>Nächster Schritt:</strong> {html.escape(view["action"])}</p></article>'
-        for item in system.get("checks", [])
+        for item in (system or {}).get("checks", [])
         for view in [_system_user_view(item)]
     )
-    next_steps = system.get("user_summary", {}).get("next_steps", [])
+    next_steps = (system or {}).get("user_summary", {}).get("next_steps", [])
     system_actions = "".join(
         f'<li><strong>{html.escape(str(item.get("priority", "wichtig")).title())}: '
         f'{html.escape(str(item.get("label", "")))}</strong> — {html.escape(str(item.get("action", "")))}</li>'
         for item in next_steps
     ) or "<li>Keine wichtige oder kritische Aktion aus dem System Check.</li>"
-    readiness = system.get("user_summary", {}).get("anti_cheat_readiness", {})
+    readiness = (system or {}).get("user_summary", {}).get("anti_cheat_readiness", {})
     readiness_criteria = "".join(
         f'<li>{html.escape(str(item.get("label", "")))}: <strong>{html.escape(str(item.get("status", "Nicht prüfbar / unbekannt")))}</strong></li>'
         for item in readiness.get("criteria", [])
@@ -118,6 +118,16 @@ def render_review_surface(
     analysis_indicators = "".join(f"<li>{html.escape(str(value))}</li>" for value in analyzer_view.get("indicators", []))
     analysis_limits = "".join(f"<li>{html.escape(str(value))}</li>" for value in analyzer_view.get("limitations", []))
 
+    system_section = ""
+    if system is not None:
+        system_section = _SYSTEM_SECTION.format(
+            system_actions=system_actions,
+            anti_cheat_status=html.escape(str(readiness.get("status", "Nicht vollständig bestätigbar"))),
+            anti_cheat_message=html.escape(str(readiness.get("message", "Anti-Cheat-Readiness konnte nicht vollständig bestätigt werden."))),
+            anti_cheat_criteria=readiness_criteria,
+            system_cards=system_cards,
+        )
+
     document = _TEMPLATE.format(
         map_name=html.escape(str(analysis.get("map_name", "Unbekannte Karte"))),
         source_hash=html.escape(str(analysis.get("source_sha256", ""))[:12]),
@@ -127,11 +137,7 @@ def render_review_surface(
         quality_status=html.escape(str(assessment.get("status", quality.get("status", "Nicht prüfbar / unbekannt")))),
         quality_message=html.escape(str(assessment.get("message", "Datenqualität wird in den Details gezeigt."))),
         quality_action=html.escape(str(assessment.get("action", "Keine automatische Änderung wurde vorgenommen."))),
-        system_cards=system_cards,
-        system_actions=system_actions,
-        anti_cheat_status=html.escape(str(readiness.get("status", "Nicht vollständig bestätigbar"))),
-        anti_cheat_message=html.escape(str(readiness.get("message", "Anti-Cheat-Readiness konnte nicht vollständig bestätigt werden."))),
-        anti_cheat_criteria=readiness_criteria,
+        system_section=system_section,
         warnings=warnings,
         analysis_facts=analysis_facts or "<li>Keine Zusammenfassung verfügbar.</li>",
         analysis_indicators=analysis_indicators or "<li>Keine zusätzlichen Hinweise verfügbar.</li>",
@@ -142,6 +148,11 @@ def render_review_surface(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(document, encoding="utf-8")
     return output_path
+
+
+_SYSTEM_SECTION = '''<section class="card"><h2>Was jetzt wichtig ist</h2><ul>{system_actions}</ul></section>
+<section class="card boundary"><h2>Anti-Cheat-Readiness</h2><p><strong>{anti_cheat_status}</strong> — {anti_cheat_message}</p><ul>{anti_cheat_criteria}</ul></section>
+<section class="card"><h2>System Check</h2><div class="checks">{system_cards}</div></section>'''
 
 
 _TEMPLATE = '''<!doctype html><html lang="de"><head><meta charset="utf-8">
@@ -165,9 +176,7 @@ h1{{font-size:25px;margin:0 auto 0 0}}h2{{font-size:18px;margin:0 0 14px}}.muted
 <section class="metrics"><article class="metric"><strong>{kill_count}</strong><span class="muted">erkannte Kills</span></article>
 <article class="metric"><strong>{scene_count}</strong><span class="muted">Review-Szenen</span></article>
 <article class="metric"><strong>{quality_status}</strong><span class="muted">Datenqualität</span></article></section>
-<section class="card"><h2>Was jetzt wichtig ist</h2><ul>{system_actions}</ul></section>
-<section class="card boundary"><h2>Anti-Cheat-Readiness</h2><p><strong>{anti_cheat_status}</strong> — {anti_cheat_message}</p><ul>{anti_cheat_criteria}</ul></section>
-<section class="card"><h2>System Check</h2><div class="checks">{system_cards}</div></section>
+{system_section}
 <div class="layout"><section class="card"><h2>Sicher beobachtet</h2><ul>{analysis_facts}</ul><h2>Hinweise zur Prüfung</h2><ul>{analysis_indicators}</ul></section>
 <section class="card"><h2>Datenqualität und Grenzen</h2><p>{quality_message}</p><p><strong>Empfehlung:</strong> {quality_action}</p><ul>{analysis_limits}</ul></section></div>
 <section class="card"><h2>Technische Details</h2><p class="muted">Parserhinweise:</p><ul>{warnings}</ul></section>
