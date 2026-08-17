@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Tristan-PASS und Vorbereitung des Viewer-V1-Merge-Reviews
+
+STATUS: waiting_for_tristan
+TASK: Record the completed bounded visual acceptance, safely stop the local review service, and prepare the Viewer V1 branch for final review toward `main` without merging.
+BRANCH: `beast/2d-tactical-replay-viewer-v1` at `1b60ea6`.
+CHANGED: No product behavior, Viewer feature, benchmark, Kubus, Steam/SDK, VRAD or system setting changed. The local loopback `iy-review-server` process for the fresh Mirage artifact was controlledly stopped; no listener remains on `127.0.0.1:8877`. This entry and CURRENT record the user-owned visual acceptance only.
+VERIFIED: Tristan completed a full visual review of the updated real Mirage artifact and reports PASS: documented-dead players disappear at their kill tick along with direction lines; players without reliable death evidence remain visible; scene changes, frame navigation, scrubber, play/pause and speed behave understandably; radar positions, sight directions and event presentation are plausible; no relevant display, timing, rotation, scale or UX defect was found. The preceding technical evidence remains valid: fresh `READY_FOR_REVIEW` local Mirage workflow, event/state invariant failures `0`, 35/35 automated tests PASS, locked setup/dependency check and all five public CLI smoke-tests PASS. The working tree was clean before this documentation update.
+DECISIONS: 2D Tactical Replay Viewer V1 has passed its automated and bounded human visual acceptance. This closes only the V1 Viewer feature scope; it does not merge the branch, declare a wider product release, or affect the separately parked Workshop Tools/VRAD benchmark blocker.
+OPEN: `WAITING_FOR_TRISTAN — 2D Viewer V1 merge review`. The fresh remote comparison base is `origin/main` `de087d9a3db8e70a6e7295516adb5012f3065213`, advanced from the prior base only by the independent documentation commit `docs: clarify efficient worker acceptance` in `docs/AGENT_BASE.md`. Three-way merge simulation reports no text conflict; no merge or rebase was performed.
+NEXT: Perform a final no-merge review against the freshly checked `origin/main` `de087d9`, covering scope, unexpected/ignored artefacts, secrets, handoffs, diff and test state. Tristan retains the merge decision.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Acceptance handoff, controlled local service shutdown and merge-readiness preparation.
+COMPUTER_USE: no UI control; stopped prior loopback service only.
+
 ## 2026-08-17 — Viewer V1: evidenzbasierte Unterdrückung toter Spieler
 
 STATUS: waiting_for_tristan
