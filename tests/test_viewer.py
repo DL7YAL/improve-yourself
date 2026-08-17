@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from improve_yourself.viewer import render_viewer, world_to_radar
+from improve_yourself.viewer import active_players_at_tick, render_viewer, world_to_radar
 
 
 def replay_payload() -> dict:
@@ -26,6 +26,25 @@ def test_world_to_radar_rejects_invalid_scale() -> None:
         world_to_radar(0, 0, 0, 0, 0)
 
 
+def test_known_kill_hides_only_the_documented_victim_from_its_tick() -> None:
+    players = [
+        {"name": "Alive", "side": "CT"},
+        {"name": "Victim", "side": "T"},
+    ]
+    events = [{"tick": 200, "attacker": "Alive", "victim": "Victim", "weapon": "ak47"}]
+
+    assert [player["name"] for player in active_players_at_tick(players, events, 199)] == ["Alive", "Victim"]
+    assert [player["name"] for player in active_players_at_tick(players, events, 200)] == ["Alive"]
+    assert [player["name"] for player in active_players_at_tick(players, events, 300)] == ["Alive"]
+
+
+def test_missing_or_malformed_kill_evidence_does_not_hide_a_player() -> None:
+    players = [{"name": "Player", "side": "CT"}]
+    events = [{"tick": "200", "victim": "Player"}, {"tick": 200, "victim": ""}]
+
+    assert active_players_at_tick(players, events, 300) == players
+
+
 def test_renders_self_contained_html_and_escapes_script_end(tmp_path: Path) -> None:
     payload = replay_payload()
     payload["scenes"][0]["marker_player"] = "</script><script>alert(1)</script>"
@@ -43,6 +62,8 @@ def test_renders_self_contained_html_and_escapes_script_end(tmp_path: Path) -> N
     assert 'id="next-scene"' in html
     assert 'id="speed"' in html
     assert 'id="event-info"' in html
+    assert 'active_players' in html
+    assert 'dokumentierten Kill-Tick' in html
 
 
 def test_rejects_wrong_schema(tmp_path: Path) -> None:

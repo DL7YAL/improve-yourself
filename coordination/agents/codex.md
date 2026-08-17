@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Viewer V1: evidenzbasierte Unterdrückung toter Spieler
+
+STATUS: waiting_for_tristan
+TASK: Correct the failed visual-review finding that known-dead players remained visible, without inferring deaths from missing snapshots or changing the replay/analysis contract.
+BRANCH: `beast/2d-tactical-replay-viewer-v1` after prior evidence checkpoint `d79cdae`.
+CHANGED: `viewer.py` derives a viewer-only `active_players` list for each rendered frame. A player remains shown until a present, well-formed in-scene kill event names that player as its victim; at that exact tick and later frames the player marker and its direction line disappear. Missing snapshots, missing/malformed event ticks and blank victims never hide a player. The source `iy.replay/v1` JSON remains unchanged; only the self-contained Viewer model receives the derived display state. No optional death marker or other Viewer feature was added.
+VERIFIED: New automated tests prove that a victim is visible before the documented tick, hidden at and after it, and remains visible when kill evidence is malformed or absent. Full `Setup-V1.ps1` passes: locked dependencies, 35/35 tests and all five public CLI help-smokes. A fresh local real Mirage workflow is `READY_FOR_REVIEW` at `results/viewer-v1-mirage-death-state/2d70058ba006/workflow.json`, using the unchanged local demo hash `2d70058ba006fecebf804e499a13ebeab97308804b433723c0657bf7810927a2`, local `de_mirage.png` and transform `-3230/1713/5`. It has 11 scenes and 53 in-scene real kill records. Artifact-level validation compares raw replay frames, documented kills and the embedded viewer model: 28,160 raw player snapshots, 20,500 active player snapshots, 7,660 known-dead markers suppressed across 2,816 post-kill frames, and 0 state-invariant failures. Radar is embedded; Review artifact exists.
+DECISIONS: The failed visual point is corrected only through reliable supplied kill evidence. This is still a technical acceptance, not a substitute for Tristan's visual review. No VRAD/benchmark, Steam/SDK, Kubus or system change occurred.
+OPEN: `WAITING_FOR_TRISTAN — 2D Viewer V1 visual review`. Review the fresh loopback artifact, with special attention to the exact transition at kill ticks: no previously killed player marker or direction line should remain, while players lacking valid death evidence stay visible.
+NEXT: Keep only the updated loopback service running and wait for Tristan's bounded PASS/FAIL. Do not add another Viewer function first.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Focused state-correctness repair with real-artifact invariant validation.
+COMPUTER_USE: no UI control; loopback service only.
+
 ## 2026-08-17 — Viewer V1: vollständige reale Mirage-Review-Evidenz
 
 STATUS: waiting_for_tristan
