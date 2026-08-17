@@ -1,5 +1,74 @@
 # Codex
 
+## 2026-08-17 — Analyzer Excel Report V1: MERGE_RECOMMENDED, wartet auf Tristan
+
+STATUS: merge_recommended_waiting_for_tristan
+TASK: Complete the final no-merge review after Tristan's accepted real Excel report and provide an explicit merge recommendation.
+BRANCH: `beast/analyzer-excel-report-v1` at `5613a77b70d9a9767c467b3cf7006fb9c4d35b8e`; reviewed remote main `2d1dbb108a13d8ec1ea326f64687b564b40b2b62`.
+VERIFIED: Full `tools/dev/Setup-V1.ps1` is PASS: locked dependencies, 51/51 tests and all seven public CLI help smokes. `git diff --check` is clean. Scope diff contains only `.gitignore`, Excel-report generator, AWPy official-round/pre-match correction, its tests and required coordination handoffs. No tracked demo, generated result, XLSX or export artifact exists. The real local workbook remains ignored. Diff scan found no private Windows/demo path, credentials, private keys or secret value; references to scan terms inside handoff prose were reviewed as non-sensitive. `git merge-tree --write-tree` against the checked main base completes conflict-free (merge tree `ddf273f2fdc7720ca1440a7f6c5e6415c28add71`).
+DECISIONS: **MERGE_RECOMMENDED — WAITING_FOR_TRISTAN.** Tristan-PASS covers the real de_anubis report and the corrected round/pre-match behavior. No merge was performed.
+OPEN: Explicit Tristan merge authorization only.
+NEXT: Immediately before an authorized merge, recheck remote `main` from the network. If it remains `2d1dbb1`, merge/push only this branch and run the post-merge gate; if it advanced, repeat the scoped comparison first.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Integration integrity and privacy review.
+COMPUTER_USE: no.
+
+## 2026-08-17 — Analyzer Excel Report V1: Tristan-PASS, finaler No-Merge-Review
+
+STATUS: review_in_progress
+TASK: Record Tristan's acceptance of the corrected real Analyzer Excel Report V1, then complete the final no-merge review against current remote main.
+BRANCH: `beast/analyzer-excel-report-v1`, current review base `origin/main`/remote `main` `2d1dbb108a13d8ec1ea326f64687b564b40b2b62`.
+CHANGED: Tristan accepted the real de_anubis report: 42 visible rounds, 307 kills, 22 Multi-Kill scenes, 115 headshots and tick `165532 -> round 25`; the evidence-based non-match event exclusion is accepted as well. No new product function, report feature or merge was started.
+VERIFIED: Pending final repeat of full gate, scoped private-data/secret/generated-artifact scan and temporary-index merge simulation. Existing final evidence before this review is 51/51 tests, seven CLI smokes, formula-clean real XLSX and no private local-path/demo/Codex/AppData content in the workbook.
+DECISIONS: Tristan-PASS is final for the bounded Excel V1 user acceptance. Merge authority remains with Tristan.
+OPEN: `WAITING_FOR_TRISTAN` after the No-Merge review reports its recommendation.
+NEXT: If all scoped gates remain clean, report `MERGE_RECOMMENDED — WAITING_FOR_TRISTAN`; do not merge until Tristan explicitly authorizes it.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Final scoped integration review after human product acceptance.
+COMPUTER_USE: no.
+
+## 2026-08-17 — Analyzer Excel Report V1: FACEIT-/Pre-Match-Prüfung ergänzt
+
+STATUS: waiting_for_tristan_round_mapping_review
+TASK: Verify whether the former visible round zero was a FACEIT knife/warmup/pre-match event and add an evidence-based exclusion regression.
+BRANCH: `beast/analyzer-excel-report-v1`.
+CHANGED: `src/improve_yourself/awpy_adapter.py` now admits a kill to regular match metrics only when its resolved positive round number has a completed AWPy round-state record: valid start/official end boundary plus winner and end reason. Events without that evidence (including a source `round_num=0` pre-match/knife event) are excluded before player statistics, round totals and multi-kill scenes are built; an internal data-quality warning records any exclusion. `tests/test_awpy_adapter.py` covers a pre-match/knife row excluded from match kills and multi-kills, and a normal match with no exclusion or round zero.
+VERIFIED: The SHA-bound real de_anubis source has 42 complete AWPy regular rounds (1 through 42). Every one of its 307 raw kill rows has a positive round number backed by that completed round state. It therefore contains no confirmed FACEIT knife/warmup/pre-match kill, and no counts change after the protective filter: 307 kills, 22 scenes, 115 headshots, rounds 1 through 42. The fresh XLSX remains formula-clean and shows 42 rounds. Full `tools/dev/Setup-V1.ps1` is PASS: 51/51 tests and seven public CLI smokes.
+DECISIONS: Tick `165532` remains a genuine regular-round event in round 25, not a pre-match event. The new filter is evidence-based and not a blanket numeric shift.
+OPEN: `WAITING_FOR_TRISTAN — Analyzer Excel Report V1 round-mapping re-review`.
+NEXT: Tristan reviews only the same corrected local workbook. No merge or next product work before that bounded re-review.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Source-state validation and narrow parser regression coverage.
+COMPUTER_USE: no.
+
+## 2026-08-17 — Analyzer Excel Report V1: Round-Mapping-Korrektur für Wiederabnahme bereit
+
+STATUS: waiting_for_tristan_round_mapping_review
+TASK: Correct the visible external-report round zero only after proving the real source round semantics, then regenerate the same local de_anubis report.
+BRANCH: `beast/analyzer-excel-report-v1`.
+CHANGED: Corrected `src/improve_yourself/awpy_adapter.py` and added bounded adapter regressions in `tests/test_awpy_adapter.py`. AWPy's kill row at tick `165532` directly states `round_num=25`. Its parent round begins at `159427`, has gameplay `end=165442`, but its authoritative `official_end=165890`; the old tick-only code used the earlier boundary and produced fallback 0. The adapter now prefers a positive explicit per-kill source round and, if unavailable, uses `official_end` for the boundary fallback. The Excel generator also never displays an unassigned (`<1`) event as a regular match round; it omits it from regular match sheets and would disclose the omission in the data-quality hints.
+VERIFIED: Read-only source inspection proves that AWPy uses 1-based regular rounds, not a zero-based sequence. Fresh analysis of the same hash-bound local de_anubis input has exactly one mapping change: tick `165532`, DanuTu_ -> neeyanc1337, `0 -> 25`. It now contains only rounds 1 through 42, no kill or scene in round 0, 307 kills, 22 multi-kill scenes and 115 headshots. Every marker's count equals its same-round/player kill count. Fresh XLSX generation has no formula errors; visual rendering confirms the Runden sheet starts at 1 and the Kills sheet lists tick `165532` as round 25. Full `tools/dev/Setup-V1.ps1` is PASS with 49/49 tests and all seven CLI smokes; privacy scan remains 0 hits for local paths/demo names/Codex or AppData material. Generated analysis/report files remain ignored/local.
+DECISIONS: This is a focused source-mapping defect fix, not a blanket `round + 1` presentation transformation. No new Analyzer, report, benchmark/VRAD, Kubus, 3D/POV or Optimizer function was started.
+OPEN: `WAITING_FOR_TRISTAN — Analyzer Excel Report V1 round-mapping re-review`.
+NEXT: Tristan reviews only the corrected local XLSX round mapping. Do not merge or start a next product function until that bounded result.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Real parser-boundary diagnosis and bounded regression correction.
+COMPUTER_USE: no.
+
+## 2026-08-17 — Analyzer Excel Report V1 für Tristan-Review bereit
+
+STATUS: waiting_for_tristan_review
+TASK: Create an external-shareable `.xlsx` prototype solely from an existing valid local `iy.analysis/v1` result, without reanalyzing a demo or changing Analyzer logic.
+BRANCH: `beast/analyzer-excel-report-v1`, based on verified `main` `2d1dbb108a13d8ec1ea326f64687b564b40b2b62`.
+CHANGED: Added the bounded report generator `tools/report/Build-AnalyzerExcelReport.mjs` and ignored generated `outputs/` artifacts. The generator accepts a valid `iy.analysis/v1` JSON and produces the seven user-facing sheets: `Übersicht`, `Runden`, `Spieler`, `Kills`, `Multi-Kills & Szenen`, `Datenqualität`, and `Info`. It intentionally exports only contract-backed event fields. It never embeds the original demo, reads no system data and writes no local source path; `Info` exposes only Map and a truncated source identifier. Multi-Kill rows are explicitly described as review entry points, not cheat evidence. Missing channels are shown as limits and not a negative finding.
+VERIFIED: The fresh real report uses local map `de_anubis`, source identifier `446eec75822c…`, 43 rounds, 307 kills, 22 Multi-Kill scenes, 10 players and 115 headshots. E2E generation succeeded; workbook inspection confirms those computed overview values and finds zero formula errors. All seven rendered sheets were visually inspected for readable titles, fields, filters, formulas and constraints. Full `tools/dev/Setup-V1.ps1` regression is PASS: locked dependencies, 47/47 tests and all seven public CLI help smokes. `git diff --check` is PASS; tracked demo/result/report artifact scan is empty. The generated workbook stays ignored/local for review and is not committed.
+DECISIONS: This is report-only work; no Analyzer parser/pipeline/replay changes, no demo reanalysis, no network upload and no benchmark/VRAD, Kubus, 3D/POV or Optimizer mutation work occurred.
+OPEN: `WAITING_FOR_TRISTAN — Analyzer Excel Report V1 review`.
+NEXT: Tristan reviews the supplied local `.xlsx` only. On PASS, stop at the requested next decision boundary; on a concrete report finding, correct only that bounded issue. Do not merge or start another product strand without a new authorization.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Bounded data-contract report generation with privacy and visual workbook verification.
+COMPUTER_USE: no.
+
 ## 2026-08-17 — System Check / Optimizer Input V1 nach `main` gemergt
 
 STATUS: done
