@@ -25,6 +25,10 @@ def test_integrates_artifacts_and_writes_review_manifest(tmp_path: Path, monkeyp
         output.write_text("<html></html>", encoding="utf-8")
         return output
 
+    def fake_excel(analysis: Path, output: Path) -> Path:
+        output.write_bytes(b"xlsx")
+        return output
+
     def fake_preflight(source: Path, output: Path, max_bytes: int) -> Path:
         output.mkdir(parents=True)
         path = output / "preflight.json"
@@ -40,6 +44,7 @@ def test_integrates_artifacts_and_writes_review_manifest(tmp_path: Path, monkeyp
     monkeypatch.setattr(workflow, "preflight_demo", fake_preflight)
     monkeypatch.setattr(workflow, "export_replay", fake_replay)
     monkeypatch.setattr(workflow, "render_viewer", fake_viewer)
+    monkeypatch.setattr(workflow, "build_excel_report", fake_excel)
     monkeypatch.setattr(workflow, "render_review_surface", fake_review)
 
     manifest_path = workflow.run_workflow(demo, tmp_path / "output")
@@ -53,6 +58,7 @@ def test_integrates_artifacts_and_writes_review_manifest(tmp_path: Path, monkeyp
         "analysis": "analysis/analysis.json",
         "replay": "replay/replay.json", "viewer": "viewer.html",
         "review": "review.html",
+        "excel_report": "Improve-Yourself-Analyzer-Report.xlsx",
         "review_state": "review-state.json",
     }
 

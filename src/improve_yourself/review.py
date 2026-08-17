@@ -64,6 +64,7 @@ def render_review_surface(
     output_path: Path,
     *,
     preflight_path: Path | None = None,
+    excel_path: Path | None = None,
 ) -> Path:
     analysis = _load(analysis_path)
     replay = _load(replay_path)
@@ -102,6 +103,7 @@ def render_review_surface(
         for item in readiness.get("criteria", [])
     ) or "<li>Secure Boot und TPM 2.0 konnten nicht zusammengefasst werden.</li>"
     viewer_href = html.escape(viewer_path.relative_to(output_path.parent).as_posix(), quote=True)
+    excel_href = html.escape(excel_path.relative_to(output_path.parent).as_posix(), quote=True) if excel_path is not None else ""
     scene_index = {(int(scene.get("round_number", 0)), str(scene.get("marker_player", "")), int(scene.get("start_tick", 0))): index for index, scene in enumerate(replay.get("scenes", []))}
     scene_markers = ", ".join(html.escape(str(scene.get("marker_player", ""))) for scene in replay.get("scenes", []))
     grouped: dict[str, dict[int, list[dict[str, Any]]]] = {}
@@ -164,6 +166,7 @@ def render_review_surface(
             scene_markers=scene_markers,
             viewer_href=viewer_href,
             review_profile=html.escape(f"{review_profile.get('label', 'Kein Profil')} ({review_profile.get('version', '—')})"),
+            excel_link=(f'<a class="button" href="{excel_href}" download>Excel-Report exportieren</a>' if excel_href else ""),
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(document, encoding="utf-8")
@@ -193,7 +196,7 @@ h1{{font-size:25px;margin:0 auto 0 0}}h2{{font-size:18px;margin:0 0 14px}}.muted
 .button.small,.copy{{padding:7px 10px;font-size:13px;border:0;cursor:pointer;background:#58a6ff;color:#07111e;font-weight:800;border-radius:7px}}.player-group{{border-top:1px solid #334966;padding-top:10px;margin-top:14px}}.round-group{{margin:10px 0 0 12px}}.round-group h3{{font-size:15px}}.hint{{margin:8px 0;padding:10px;border-left:3px solid #ffca62;background:#0b1727;list-style:none}}.hint span,.hint small{{color:#b7c6d9;line-height:1.4}}.actions{{display:flex;gap:8px;margin:9px 0;flex-wrap:wrap}}
 .boundary{{border-color:#8b6b2d;background:#211c12;line-height:1.5}}#save{{border:0;cursor:pointer}}#save-status{{margin-left:12px}}@media(max-width:760px){{.layout{{grid-template-columns:1fr}}.scene-head,.scene-review{{grid-template-columns:1fr}}}}
 </style></head><body><main><header><div><h1>Improve Yourself · Match Review</h1>
-<div class="muted">{map_name} · Quelle {source_hash}</div></div><a class="button" href="{viewer_href}">Tactical Replay öffnen</a></header>
+<div class="muted">{map_name} · Quelle {source_hash}</div></div><a class="button" href="{viewer_href}">Tactical Replay öffnen</a>{excel_link}</header>
 <section class="metrics"><article class="metric"><strong>{kill_count}</strong><span class="muted">erkannte Kills</span></article>
 <article class="metric"><strong>{scene_count}</strong><span class="muted">Review-Szenen</span></article>
 <article class="metric"><strong>{quality_status}</strong><span class="muted">Datenqualität</span></article></section>

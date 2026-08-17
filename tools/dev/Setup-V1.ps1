@@ -24,7 +24,7 @@ function Invoke-Checked {
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $venvRoot = Join-Path $repositoryRoot '.venv'
 $venvPython = Join-Path $venvRoot 'Scripts\python.exe'
-$cliNames = @('iy-analyze', 'iy-system-check', 'iy-optimizer-input', 'iy-system-check-review', 'iy-workflow', 'iy-replay-viewer', 'iy-review-server', 'iy-analyzer-server')
+$cliNames = @('iy-analyze', 'iy-system-check', 'iy-optimizer-input', 'iy-system-check-review', 'iy-workflow', 'iy-replay-viewer', 'iy-review-server', 'iy-analyzer-server', 'iy-excel-report')
 $lockFile = Join-Path $repositoryRoot 'requirements.lock'
 
 if (-not (Test-Path -LiteralPath $lockFile -PathType Leaf)) {

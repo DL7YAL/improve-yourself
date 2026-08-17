@@ -14,7 +14,7 @@ authority.
    Its user entry point is `Improve Yourself.exe`.
 
 The build collects the application modules, their Python runtime dependencies,
-the bundled local map-overview resources and the external Preview README. It
+the bundled local map-overview and branding resources and the external Preview README. It
 does not collect repository metadata, virtual environments, demos, local
 reports/results, logs, coordination files or archives.
 
@@ -26,18 +26,13 @@ repository or `.venv` parent. From that copied directory verify:
 - `Improve Yourself.exe --demo <local-demo> --port <free-loopback-port>` starts
   a loopback-only Analyzer preflight;
 - `POST /api/start-analysis` returns JSON and reaches the Match Review;
-- the Tactical Replay opens from that review; and
+- the Tactical Replay and the locally generated Excel report open from that review; and
 - `Improve Yourself.exe --system-check` emits `iy.system_check/v1` and
   `iy.optimizer_input/v1` locally.
 
 Then scan the actual distribution for private paths, names, raw demos, system
 reports, credentials and generated artifacts before creating a ZIP.
 
-## Current packaging boundary
-
-The Analyzer Excel report generator currently imports
-`@oai/artifact-tool` from the development Node environment. It is not a
-runtime dependency shipped by this PyInstaller build. Do not label a ZIP as a
-complete Preview V1 distribution until that generator is replaced or packaged
-as an ordinary external runtime dependency and passed through the same clean
-distribution gate.
+The Excel report uses the pinned Python `openpyxl` dependency. It requires
+neither Microsoft Office nor Node.js and is therefore included in the same
+PyInstaller runtime as the Analyzer.

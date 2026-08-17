@@ -1,5 +1,20 @@
 # Codex
 
+## 2026-08-17 — Improve Yourself Preview V1 UI, Excel und EXE-Paket
+
+STATUS: waiting_for_tristan_final_package_review
+TASK: Finalize the approved Preview V1 UI, replace the non-portable Excel path and produce/test the external Windows distribution.
+BRANCH: `beast/analyzer-default-criteria-v1`.
+MODEL_PROFILE: terra
+MODEL_REASON: connected UI, local runtime and packaging integration
+COMPUTER_USE: no
+CHANGED: The canonical `improve-yourself-mark.svg` uses the segmented technical loading bar as the I in the Improve Yourself wordmark. The active Analyzer shell is Metallic/Midnight Blue and contains the visible Preview navigation: Analyzer, active read-only System Check and Optimizer Preview, Settings plus clearly disabled My Improvement/Benchmark future areas. The System Check tab calls only the loopback read-only API. Performance/Quality are presentation modes only; neither applies settings nor invents unknown values. `openpyxl==3.1.5` replaces the former Node development report runtime. `iy-excel-report` produces the existing fact-preserving report sheets, tables, filters, freeze panes and formats; workflow emits it automatically and Match Review offers its local download. Build now bundles the branding asset and portable Excel runtime.
+VERIFIED: Full normal `Setup-V1.ps1` PASS: lock installation, dependency check, 55 pytest tests and nine public CLI smokes including `iy-excel-report`. Real local de_anubis regression remains accepted: 42 regular rounds, 307 kills and 22 scenes; new report has first visible round 1, 309 Kills sheet rows including header/title, and `iy.analyzer_excel_report/v1`. Fresh external onedir and separately ZIP-extracted EXE tests PASS on loopback: branded preflight HTTP 200; `POST /api/start-analysis` HTTP 200 `application/json`; Match Review, Tactical Replay and Excel link HTTP 200; viewer keeps map and zoom; EXE System Check exits 0 and writes `iy.system_check/v1` and `iy.optimizer_input/v1`. The final ZIP content scan found no demos, results, system reports, `.git`, `.venv`, Node, Artifact Tool, developer paths, user names, handoffs or secrets. No Windows Application Control block occurred. ZIP SHA-256: `DBCFCB9817C0F89DE92EFE6A4CC9F314DC852981D8073951C8AE517F402DB74B`.
+DECISIONS: Preview retains no Apply/Restore, driver installation, registry/config write, BIOS/UEFI action, OC/undervolting, 3D POV or complete My Improvement/Benchmark feature. Excel is now a local package runtime, not a Node or development dependency.
+OPEN: `WAITING_FOR_TRISTAN — Improve Yourself Preview V1 final package review`.
+NEXT: Tristan reviews the ZIP package; do not merge or begin another product feature.
+COMMIT/PR: Pending final package commit.
+
 ## 2026-08-17 — Preview V1 Windows Packaging
 
 STATUS: blocked

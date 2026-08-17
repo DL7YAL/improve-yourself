@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .replay import export_replay
+from .excel_report import build_excel_report
 from .preflight import preflight_demo
 from .review import render_review_surface
 from .review_state import load_or_create_review_state
@@ -64,8 +65,10 @@ def run_workflow(
         replay_path, run_directory / "viewer.html", radar_path=radar_path,
         pos_x=pos_x, pos_y=pos_y, scale=scale,
     )
+    excel_path = build_excel_report(analysis_path, run_directory / "Improve-Yourself-Analyzer-Report.xlsx")
     review_path = render_review_surface(
-        None, analysis_path, replay_path, viewer_path, run_directory / "review.html", preflight_path=preflight_path
+        None, analysis_path, replay_path, viewer_path, run_directory / "review.html", preflight_path=preflight_path,
+        excel_path=excel_path,
     )
 
     artifacts = {
@@ -74,6 +77,7 @@ def run_workflow(
         "replay": replay_path.relative_to(run_directory).as_posix(),
         "viewer": viewer_path.relative_to(run_directory).as_posix(),
         "review": review_path.relative_to(run_directory).as_posix(),
+        "excel_report": excel_path.relative_to(run_directory).as_posix(),
         "review_state": state_path.relative_to(run_directory).as_posix(),
     }
     payload: dict[str, Any] = {

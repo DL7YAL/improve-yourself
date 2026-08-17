@@ -24,6 +24,7 @@ iy-system-check-review = "improve_yourself.system_review:main"
 iy-workflow = "improve_yourself.workflow:main"
 iy-review-server = "improve_yourself.review_server:main"
 iy-analyzer-server = "improve_yourself.analyzer_server:main"
+iy-excel-report = "improve_yourself.excel_report:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
