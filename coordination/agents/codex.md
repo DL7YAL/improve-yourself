@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Finaler Viewer-V1-No-Merge-Review: MERGE_RECOMMENDED
+
+STATUS: ready_for_review
+TASK: Apply the Tristan-authorized one-line redaction of the private local demo pathname, then repeat the short final no-merge review against `origin/main`.
+BRANCH: `beast/2d-tactical-replay-viewer-v1` at `c4e0c1af2c132ff61d0fa5150cf386d7503ba900`; `origin/main` freshly rechecked at unchanged `de087d9a3db8e70a6e7295516adb5012f3065213`.
+CHANGED: Only the previously identified concrete local demo pathname and filename in the historical Viewer evidence handoff was replaced with permitted non-private evidence: `de_mirage`, source-hash prefix `2d70058ba006…` and existing aggregates. No Viewer, test, pipeline/replay, benchmark/VRAD, Kubus or other documentation content changed.
+VERIFIED: Final branch-diff scan finds 0 private local demo pathname references, 0 tracked demo files, 0 tracked generated artifacts and 0 secret-indicator matches. `git diff --check origin/main...HEAD` passes. The working tree is clean. Three-way merge simulation has 0 conflict markers. Full `Setup-V1.ps1` passes locked dependency consistency, 35/35 tests and all five public CLI help-smokes. The earlier full review remains valid: Viewer-V1 functional scope and Tristan's visual PASS are correctly documented; `de087d9` is the independent non-functional AGENT_BASE clarification and creates no conflict or contradiction.
+DECISIONS: **MERGE_RECOMMENDED.** All specified review criteria are satisfied; no remaining technical, privacy, secret, Foundation-regression or merge-conflict blocker was found.
+OPEN: WAITING_FOR_TRISTAN for an explicit merge authorization. No merge has been performed.
+NEXT: If Tristan grants merge authority, recheck that `origin/main` is still `de087d9` (or perform a fresh scoped review if it moved), then merge and push only this Viewer V1 branch.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Narrow authorized privacy redaction and evidence-based final merge-readiness review.
+COMPUTER_USE: no.
+
 ## 2026-08-17 — Finaler Viewer-V1-No-Merge-Review: Datenschutz-Blocker
 
 STATUS: blocked
