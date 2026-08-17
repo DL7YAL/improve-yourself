@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Tristan 2D-radar acceptance and V1-foundation reassessment
+
+STATUS: ready_for_review
+TASK: Make the pre-existing local Mirage review available for Tristan, record the human 2D-radar acceptance, then reassess the documented V1-foundation exit condition without reopening the parked benchmark blocker.
+BRANCH: `dev/v1-foundation`
+CHANGED: No Analyzer, Replay, Radar, benchmark, Kubus, Steam, SDK, VRAD, Hammer, GPU, driver, registry, Adrenalin, smoke, geometry or controller data changed. The existing `results/workflow/b7532c82381b/` `READY_FOR_REVIEW` manifest and its pre-generated Viewer/Review artefacts were served unchanged through `iy-review-server` on loopback only. The service was then controlledly stopped; no listener remains on `127.0.0.1:8765`.
+VERIFIED: The local Review page and review-state API each returned HTTP 200 while running, restricted to `127.0.0.1`, with seven scenes and `iy.review_state/v1`. Tristan completed the manual visual acceptance: all seven real Mirage scenes have plausible/correct player positions and view-direction lines; no obvious mirror, rotation, major translation or scale defect was observed; no scene was marked faulty. The prior automatic proof remains current: 33/33 tests, lockfile setup/dependency check, five public CLI help-smokes and a complete real-demo `iy.pipeline/v1` PASS.
+DECISIONS: The bounded human 2D acceptance gate is closed PASS. The V1-foundation exit condition is now satisfied: coherent consolidated structure, reproducible setup and runnable baseline without active legacy-prototype-folder dependency, plus both automated and human 2D validation. Therefore `dev/v1-foundation` is READY_FOR_REVIEW toward `main`. This is not a merge, release or whole-V1-product declaration: Tristan retains the merge decision, and the broader V1 roadmap (including future Optimizer mutation/restore design) is separate.
+OPEN: The only unchanged external runtime blocker is the parked Workshop Tools/VRAD preflight asset/mount failure, which prevents benchmark Full Compile and marker-synchronized camera acceptance but does not invalidate the V1 Analyzer/2D Foundation proof. Do not retry it without a new official SDK/Valve input, a changed build or explicit approval.
+NEXT: Tristan reviews/decides the Foundation-to-`main` merge boundary. Independently, wait for material official SDK/Valve evidence before resuming the benchmark; no Kubus expansion.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Human-acceptance handoff and evidence-based foundation completion assessment; no system or product behavior change.
+COMPUTER_USE: no UI input; existing local loopback review service only.
+
 ## 2026-08-17 — Post-manual-control environment recheck
 
 STATUS: waiting_for_tristan
