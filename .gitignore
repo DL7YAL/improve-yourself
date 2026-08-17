@@ -59,6 +59,7 @@ recordings/
 reports/
 results/
 output/
+outputs/
 exports/
 *.html
 

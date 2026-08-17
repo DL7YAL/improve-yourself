@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Analyzer Excel Report V1 für Tristan-Review bereit
+
+STATUS: waiting_for_tristan_review
+TASK: Create an external-shareable `.xlsx` prototype solely from an existing valid local `iy.analysis/v1` result, without reanalyzing a demo or changing Analyzer logic.
+BRANCH: `beast/analyzer-excel-report-v1`, based on verified `main` `2d1dbb108a13d8ec1ea326f64687b564b40b2b62`.
+CHANGED: Added the bounded report generator `tools/report/Build-AnalyzerExcelReport.mjs` and ignored generated `outputs/` artifacts. The generator accepts a valid `iy.analysis/v1` JSON and produces the seven user-facing sheets: `Übersicht`, `Runden`, `Spieler`, `Kills`, `Multi-Kills & Szenen`, `Datenqualität`, and `Info`. It intentionally exports only contract-backed event fields. It never embeds the original demo, reads no system data and writes no local source path; `Info` exposes only Map and a truncated source identifier. Multi-Kill rows are explicitly described as review entry points, not cheat evidence. Missing channels are shown as limits and not a negative finding.
+VERIFIED: The fresh real report uses local map `de_anubis`, source identifier `446eec75822c…`, 43 rounds, 307 kills, 22 Multi-Kill scenes, 10 players and 115 headshots. E2E generation succeeded; workbook inspection confirms those computed overview values and finds zero formula errors. All seven rendered sheets were visually inspected for readable titles, fields, filters, formulas and constraints. Full `tools/dev/Setup-V1.ps1` regression is PASS: locked dependencies, 47/47 tests and all seven public CLI help smokes. `git diff --check` is PASS; tracked demo/result/report artifact scan is empty. The generated workbook stays ignored/local for review and is not committed.
+DECISIONS: This is report-only work; no Analyzer parser/pipeline/replay changes, no demo reanalysis, no network upload and no benchmark/VRAD, Kubus, 3D/POV or Optimizer mutation work occurred.
+OPEN: `WAITING_FOR_TRISTAN — Analyzer Excel Report V1 review`.
+NEXT: Tristan reviews the supplied local `.xlsx` only. On PASS, stop at the requested next decision boundary; on a concrete report finding, correct only that bounded issue. Do not merge or start another product strand without a new authorization.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Bounded data-contract report generation with privacy and visual workbook verification.
+COMPUTER_USE: no.
+
 ## 2026-08-17 — System Check / Optimizer Input V1 nach `main` gemergt
 
 STATUS: done
