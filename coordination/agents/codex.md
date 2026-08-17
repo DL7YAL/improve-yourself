@@ -1,5 +1,18 @@
 # Codex
 
+## 2026-08-17 — Analyzer Excel Report V1: MERGE_RECOMMENDED, wartet auf Tristan
+
+STATUS: merge_recommended_waiting_for_tristan
+TASK: Complete the final no-merge review after Tristan's accepted real Excel report and provide an explicit merge recommendation.
+BRANCH: `beast/analyzer-excel-report-v1` at `5613a77b70d9a9767c467b3cf7006fb9c4d35b8e`; reviewed remote main `2d1dbb108a13d8ec1ea326f64687b564b40b2b62`.
+VERIFIED: Full `tools/dev/Setup-V1.ps1` is PASS: locked dependencies, 51/51 tests and all seven public CLI help smokes. `git diff --check` is clean. Scope diff contains only `.gitignore`, Excel-report generator, AWPy official-round/pre-match correction, its tests and required coordination handoffs. No tracked demo, generated result, XLSX or export artifact exists. The real local workbook remains ignored. Diff scan found no private Windows/demo path, credentials, private keys or secret value; references to scan terms inside handoff prose were reviewed as non-sensitive. `git merge-tree --write-tree` against the checked main base completes conflict-free (merge tree `ddf273f2fdc7720ca1440a7f6c5e6415c28add71`).
+DECISIONS: **MERGE_RECOMMENDED — WAITING_FOR_TRISTAN.** Tristan-PASS covers the real de_anubis report and the corrected round/pre-match behavior. No merge was performed.
+OPEN: Explicit Tristan merge authorization only.
+NEXT: Immediately before an authorized merge, recheck remote `main` from the network. If it remains `2d1dbb1`, merge/push only this branch and run the post-merge gate; if it advanced, repeat the scoped comparison first.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Integration integrity and privacy review.
+COMPUTER_USE: no.
+
 ## 2026-08-17 — Analyzer Excel Report V1: Tristan-PASS, finaler No-Merge-Review
 
 STATUS: review_in_progress
