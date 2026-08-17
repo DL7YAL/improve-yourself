@@ -133,6 +133,9 @@ def test_desktop_preflight_keeps_replay_available_and_supports_demo_switching(tm
     assert ".app{width:100%;max-width:none" in html
     assert ".optimizer-grid{display:grid" in html
     assert "Empfehlungen / Bewertung" in html
+    assert "Installiert:" in html
+    assert "Offizieller Stand:" in html
+    assert "BIOS/UEFI:" in html
 
     server = create_server(tmp_path / "server", 0)
     try:

@@ -1,5 +1,15 @@
 # Codex
 
+## 2026-08-17 — Preview V1.1: strukturierte Read-only-Systembewertung
+
+STATUS: partial
+TASK: Make the already available read-only System Check evidence understandable in the V1.1 Optimizer entry without introducing an Apply/Restore path.
+CHANGED: The System Check view and Optimizer presentation now distinguish installed and official GPU/chipset driver versions, show the evaluation separately, and expose only an already-evidenced official HTTPS manufacturer link. BIOS/UEFI is explicitly shown as informational only: no version recommendation and no change are made. Output values are HTML-escaped before display.
+VERIFIED: `pytest -q` PASS (59) and `git diff --check` PASS.
+OPEN: The remaining V1.1 work is local profile storage plus Analyzer/Profile/Replay UX consolidation; no package was built.
+NEXT: Implement the approved user-controlled, local profile storage path safely.
+COMMIT/PR: Pending this checkpoint commit and push.
+
 ## 2026-08-17 — Preview V1.1: verbindliches Variante-3-Branding-Checkpoint
 
 STATUS: partial
