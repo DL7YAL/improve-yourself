@@ -34,7 +34,7 @@ def build_preflight_payload(
     regular_numbers = _regular_round_numbers(rounds)
     regular = [row for row in rounds if int(_value(row, ("round_num", "round_number"), 0) or 0) in regular_numbers]
     winner_counts = Counter(str(_value(row, ("winner",), "")).lower() for row in regular)
-    player_stats: dict[str, dict[str, Any]] = defaultdict(lambda: {"kills": 0, "deaths": 0, "headshots": 0, "sides": Counter()})
+    player_stats: dict[str, dict[str, Any]] = defaultdict(lambda: {"kills": 0, "deaths": 0, "headshots": 0, "first_side": ""})
     for row in kill_rows:
         number = _value(row, ("round_num", "round_number"))
         try:
@@ -47,13 +47,13 @@ def build_preflight_payload(
         if attacker:
             player_stats[attacker]["kills"] += 1
             player_stats[attacker]["headshots"] += int(bool(_value(row, ("headshot",), False)))
-            player_stats[attacker]["sides"][str(_value(row, ("attacker_side",), "")).lower()] += 1
+            player_stats[attacker]["first_side"] = player_stats[attacker]["first_side"] or str(_value(row, ("attacker_side",), "")).lower()
         if victim:
             player_stats[victim]["deaths"] += 1
-            player_stats[victim]["sides"][str(_value(row, ("victim_side",), "")).lower()] += 1
+            player_stats[victim]["first_side"] = player_stats[victim]["first_side"] or str(_value(row, ("victim_side",), "")).lower()
     players = []
     for name, stats in player_stats.items():
-        side = stats["sides"].most_common(1)[0][0] if stats["sides"] else ""
+        side = stats["first_side"]
         players.append({"name": name, "side": _side_label(side), "kills": stats["kills"], "deaths": stats["deaths"], "headshots": stats["headshots"]})
     players.sort(key=lambda item: (-item["kills"], item["name"].casefold()))
     actual_available = [*available]

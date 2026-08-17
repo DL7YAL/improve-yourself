@@ -74,7 +74,13 @@ def main() -> int:
         root = args.output.resolve(); root.mkdir(parents=True, exist_ok=True)
         preflight = preflight_demo(args.demo, root / "preflight", args.max_mib * 1024 * 1024)
         render_preflight(preflight, root / "analyzer.html")
-        server = AnalyzerServer(("127.0.0.1", args.port), args.demo.resolve(), root, preflight, {"max_bytes": args.max_mib * 1024 * 1024, "max_frames": args.max_frames, "radar_path": args.radar, "pos_x": args.pos_x, "pos_y": args.pos_y, "scale": args.scale})
+        data = json.loads(preflight.read_text(encoding="utf-8")); radar = args.radar
+        if radar is None:
+            maps = Path.home() / ".awpy" / "maps"; overview = maps / f"{data['match']['map_name']}.png"; metadata = maps / "map-data.json"
+            if overview.is_file() and metadata.is_file():
+                transform = json.loads(metadata.read_text(encoding="utf-8")).get(data["match"]["map_name"], {})
+                radar = overview; args.pos_x = transform.get("pos_x", args.pos_x); args.pos_y = transform.get("pos_y", args.pos_y); args.scale = transform.get("scale", args.scale)
+        server = AnalyzerServer(("127.0.0.1", args.port), args.demo.resolve(), root, preflight, {"max_bytes": args.max_mib * 1024 * 1024, "max_frames": args.max_frames, "radar_path": radar, "pos_x": args.pos_x, "pos_y": args.pos_y, "scale": args.scale})
     except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError) as error: parser.error(str(error))
     print(f"Analyzer preflight: http://127.0.0.1:{server.server_port}/analyzer.html")
     print("Only this local machine can connect. Press Ctrl+C to stop.")
