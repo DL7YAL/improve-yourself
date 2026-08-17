@@ -53,6 +53,47 @@ def _round_for_kill(row: dict[str, Any], tick: int, rounds: list[dict[str, Any]]
     return _round_for_tick(tick, rounds)
 
 
+def _regular_round_numbers(rounds: list[dict[str, Any]]) -> set[int]:
+    """Return only completed regular rounds with a usable AWPy round state."""
+    numbers: set[int] = set()
+    for round_row in rounds:
+        number = _value(round_row, ("round_num", "round_number"))
+        start = _value(round_row, ("start", "start_tick"))
+        end = _value(round_row, ("official_end", "end", "end_tick"))
+        winner = _value(round_row, ("winner",))
+        reason = _value(round_row, ("reason",))
+        try:
+            if int(number) >= 1 and int(start) <= int(end) and isinstance(winner, str) and winner and isinstance(reason, str) and reason:
+                numbers.add(int(number))
+        except (TypeError, ValueError):
+            continue
+    return numbers
+
+
+def _regular_kills(kill_rows: list[dict[str, Any]], rounds: list[dict[str, Any]]) -> tuple[list[Kill], int]:
+    """Exclude events without completed regular-round evidence from match metrics."""
+    regular_rounds = _regular_round_numbers(rounds)
+    kills: list[Kill] = []
+    excluded = 0
+    for row in kill_rows:
+        tick = int(_value(row, ("tick",), 0) or 0)
+        round_number = _round_for_kill(row, tick, rounds)
+        if round_number not in regular_rounds:
+            excluded += 1
+            continue
+        kills.append(
+            Kill(
+                round_number=round_number,
+                tick=tick,
+                attacker=str(_value(row, ("attacker_name", "attacker"), "") or "").strip(),
+                victim=str(_value(row, ("victim_name", "victim", "user_name"), "") or "").strip(),
+                weapon=str(_value(row, ("weapon",), "") or "").strip(),
+                headshot=bool(_value(row, ("headshot",), False)),
+            )
+        )
+    return kills, excluded
+
+
 def _read_optional_channel(demo: Any, channel: str) -> tuple[Any, str | None]:
     """Awpy computes some channels lazily and may raise when their event is absent."""
     try:
@@ -68,19 +109,7 @@ class AwpyAdapter:
         header = getattr(demo, "header", {}) or {}
         rounds = _records(getattr(demo, "rounds", None))
         kill_rows = _records(getattr(demo, "kills", None))
-        kills: list[Kill] = []
-        for row in kill_rows:
-            tick = int(_value(row, ("tick",), 0) or 0)
-            kills.append(
-                Kill(
-                    round_number=_round_for_kill(row, tick, rounds),
-                    tick=tick,
-                    attacker=str(_value(row, ("attacker_name", "attacker"), "") or "").strip(),
-                    victim=str(_value(row, ("victim_name", "victim", "user_name"), "") or "").strip(),
-                    weapon=str(_value(row, ("weapon",), "") or "").strip(),
-                    headshot=bool(_value(row, ("headshot",), False)),
-                )
-            )
+        kills, excluded_pre_match = _regular_kills(kill_rows, rounds)
 
         available = ["rounds", "kills"]
         missing: list[str] = []
@@ -99,6 +128,8 @@ class AwpyAdapter:
         if "footsteps" in missing:
             status = "limited"
             warnings.append("Footstep-Ereignisse fehlen; soundbezogene Marker sind deaktiviert.")
+        if excluded_pre_match:
+            warnings.append(f"{excluded_pre_match} Ereignis(se) außerhalb regulärer Matchrunden wurden ausgeschlossen.")
         if not rounds or not kill_rows:
             status = "not_assessable"
             warnings.append("Zentrale Runden- oder Killdaten fehlen.")

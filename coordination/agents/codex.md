@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Analyzer Excel Report V1: FACEIT-/Pre-Match-Prüfung ergänzt
+
+STATUS: waiting_for_tristan_round_mapping_review
+TASK: Verify whether the former visible round zero was a FACEIT knife/warmup/pre-match event and add an evidence-based exclusion regression.
+BRANCH: `beast/analyzer-excel-report-v1`.
+CHANGED: `src/improve_yourself/awpy_adapter.py` now admits a kill to regular match metrics only when its resolved positive round number has a completed AWPy round-state record: valid start/official end boundary plus winner and end reason. Events without that evidence (including a source `round_num=0` pre-match/knife event) are excluded before player statistics, round totals and multi-kill scenes are built; an internal data-quality warning records any exclusion. `tests/test_awpy_adapter.py` covers a pre-match/knife row excluded from match kills and multi-kills, and a normal match with no exclusion or round zero.
+VERIFIED: The SHA-bound real de_anubis source has 42 complete AWPy regular rounds (1 through 42). Every one of its 307 raw kill rows has a positive round number backed by that completed round state. It therefore contains no confirmed FACEIT knife/warmup/pre-match kill, and no counts change after the protective filter: 307 kills, 22 scenes, 115 headshots, rounds 1 through 42. The fresh XLSX remains formula-clean and shows 42 rounds. Full `tools/dev/Setup-V1.ps1` is PASS: 51/51 tests and seven public CLI smokes.
+DECISIONS: Tick `165532` remains a genuine regular-round event in round 25, not a pre-match event. The new filter is evidence-based and not a blanket numeric shift.
+OPEN: `WAITING_FOR_TRISTAN — Analyzer Excel Report V1 round-mapping re-review`.
+NEXT: Tristan reviews only the same corrected local workbook. No merge or next product work before that bounded re-review.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Source-state validation and narrow parser regression coverage.
+COMPUTER_USE: no.
+
 ## 2026-08-17 — Analyzer Excel Report V1: Round-Mapping-Korrektur für Wiederabnahme bereit
 
 STATUS: waiting_for_tristan_round_mapping_review
