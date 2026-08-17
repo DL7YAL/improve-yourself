@@ -81,6 +81,18 @@ OPEN: WAITING_FOR_TRISTAN. The smallest reproducible next diagnostic step would 
 NEXT: On explicit approval, run that isolated preflight once, capture output, then close Workshop Tools without retaining configuration changes. If it reports a concrete unsupported capability, decide the smallest official remedy from that result; otherwise retain the evidence as an SDK/VRAD compatibility blocker for Valve/AMD. Only after GPU baking can start: Full Compile, then the marker-synchronized Inferno `TRANSITION_EXIT` camera comparison with the static validated pose `0 3450 600 / 35 90 0`.
 COMMIT/PR: Pending status-only checkpoint after diff/test review; no product source files changed.
 
+## 2026-08-17 — Executed VRAD GPU-raytracing preflight
+
+STATUS: waiting_for_tristan
+TASK: Run the explicitly approved one-shot VRAD `check_raytracing_support.vrad3` preflight and capture the complete output and exit status before deciding on Full Compile.
+BRANCH: `dev/v1-foundation`
+CHANGED: No repository source, map, smoke, geometry, controller, Steam, driver, registry, AMD Adrenalin, Hammer or CS2 configuration was changed. The permitted executable test refreshed only normal Tools thumbnail/resource-cache artefacts.
+VERIFIED: A first direct invocation from `game/bin/win64` exited `1` before GPU initialization because it could not locate a gameinfo file. The same exact preflight command was then run from the installed CS2 game context (`game/csgo`): `vrad3.exe -script check_raytracing_support.vrad3 -vulkan -gpuraytracing`. Its complete console result was: `VRAD3 - Distributed Lighting Tool`; build `pc64 Aug 12 2026 14:24:12`; working directory `.../game/csgo`; `Vulkan Physical Device: AMD Radeon RX 7900 XTX`; one non-fatal capability note (`VK_EXT_extended_dynamic_state_2 does not support extendedDynamicState2PatchControlPoints, disabling.`); then `Failed to read .../game/csgo/check_raytracing_support.vrad3`; exit code `1`. The exact expected GPU is therefore detected by VRAD itself. The script is absent as a loose file from the verified CS2/SDK installation. Installed `pak01_dir.vpk` indexes were also inspected read-only and did not reveal the asset string; the shipped installation provides no `vpk.exe` lister.
+DIAGNOSIS: This converts the generic Hammer dialog into a reproducible, non-GPU failure: the helper reaches Vulkan and selects the RX 7900 XTX, but cannot read the `check_raytracing_support.vrad3` asset needed to complete the bake-capability test. DXR, Vulkan RT extensions, adapter selection, Steam launch options, and the tools-viewer renderer are not the proximate blocker. The remaining cause is a missing/unmounted SDK preflight asset or an SDK/VRAD mounting-context defect. Since Steam has already validated App 730 and SDK App 745, repeating validation blindly is unlikely to create new evidence.
+OPEN: WAITING_FOR_TRISTAN. Full Compile cannot proceed because Hammer will receive the same failed preflight status. No configuration or driver modification is justified.
+NEXT: Preserve the captured output and request/approve a targeted official CS2 Workshop-Tools SDK update/repair or Valve support clarification specifically for `check_raytracing_support.vrad3` and VRAD's mounted-script context. After that asset is demonstrably readable, rerun the same preflight; only on exit `0` run Full Compile and the marker-synchronized Inferno `TRANSITION_EXIT` camera comparison.
+COMMIT/PR: Pending status-only checkpoint after diff/test review; no product source files changed.
+
 ## 2026-08-17 — Fade recovery and Inferno camera measurement
 
 STATUS: blocked
