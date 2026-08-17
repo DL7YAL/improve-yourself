@@ -41,7 +41,7 @@ class AnalyzerServer(ThreadingHTTPServer):
     def __init__(self, address: tuple[str, int], demo: Path, output_root: Path, preflight_path: Path, workflow_args: dict[str, Any]):
         self.directory = output_root
         self.demo, self.output_root, self.preflight_path, self.workflow_args = demo, output_root, preflight_path, workflow_args
-        self.lock = Lock(); self.analysis_started = False
+        self.lock = Lock(); self.analysis_started = False; self.review_url: str | None = None
         super().__init__(address, AnalyzerHandler)
 
 
@@ -49,20 +49,23 @@ class AnalyzerHandler(SimpleHTTPRequestHandler):
     server: AnalyzerServer
     def __init__(self, *args: Any, **kwargs: Any): super().__init__(*args, directory=str(args[2].directory), **kwargs)
     def log_message(self, format: str, *args: Any) -> None: return
+    def _json(self, status: HTTPStatus, payload: dict[str, Any]) -> None:
+        body = json.dumps(payload).encode("utf-8")
+        self.send_response(status); self.send_header("Content-Type", "application/json; charset=utf-8"); self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
     def do_POST(self) -> None:
-        if self.path != "/api/start-analysis": self.send_error(HTTPStatus.NOT_FOUND); return
+        if self.path != "/api/start-analysis": self._json(HTTPStatus.NOT_FOUND, {"error": "Endpoint nicht gefunden."}); return
         with self.server.lock:
-            if self.server.analysis_started: self.send_error(HTTPStatus.CONFLICT, "analysis already started"); return
+            if self.server.review_url: self._json(HTTPStatus.OK, {"review_url": self.server.review_url, "reused": True}); return
+            if self.server.analysis_started: self._json(HTTPStatus.CONFLICT, {"error": "Analyse läuft bereits lokal. Bitte kurz warten."}); return
             self.server.analysis_started = True
             try:
                 manifest = run_workflow(self.server.demo, self.server.output_root, preflight_path=self.server.preflight_path, **self.server.workflow_args)
                 run = manifest.parent.name
-                body = json.dumps({"review_url": f"/{run}/review.html"}).encode("utf-8")
-                self.send_response(HTTPStatus.OK); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
+                self.server.review_url = f"/{run}/review.html"
+                self._json(HTTPStatus.OK, {"review_url": self.server.review_url})
             except Exception as error:
                 self.server.analysis_started = False
-                body = json.dumps({"error": str(error)}).encode("utf-8")
-                self.send_response(HTTPStatus.BAD_REQUEST); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
+                self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
 
 
 def main() -> int:
