@@ -76,6 +76,11 @@ def render_review_surface(
         f'{html.escape(str(item.get("label", "")))}</strong> — {html.escape(str(item.get("action", "")))}</li>'
         for item in next_steps
     ) or "<li>Keine wichtige oder kritische Aktion aus dem System Check.</li>"
+    readiness = system.get("user_summary", {}).get("anti_cheat_readiness", {})
+    readiness_criteria = "".join(
+        f'<li>{html.escape(str(item.get("label", "")))}: <strong>{html.escape(str(item.get("status", "Nicht prüfbar / unbekannt")))}</strong></li>'
+        for item in readiness.get("criteria", [])
+    ) or "<li>Secure Boot und TPM 2.0 konnten nicht zusammengefasst werden.</li>"
     scenes = "".join(
         f'<li class="scene" data-scene-id="{html.escape(scene_id(scene), quote=True)}">'
         f'<div class="scene-head"><span>Runde {int(scene.get("round_number", 0))}</span>'
@@ -109,6 +114,9 @@ def render_review_surface(
         quality_action=html.escape(str(assessment.get("action", "Keine automatische Änderung wurde vorgenommen."))),
         system_cards=system_cards,
         system_actions=system_actions,
+        anti_cheat_status=html.escape(str(readiness.get("status", "Nicht vollständig bestätigbar"))),
+        anti_cheat_message=html.escape(str(readiness.get("message", "Anti-Cheat-Readiness konnte nicht vollständig bestätigt werden."))),
+        anti_cheat_criteria=readiness_criteria,
         warnings=warnings,
         analysis_facts=analysis_facts or "<li>Keine Zusammenfassung verfügbar.</li>",
         analysis_indicators=analysis_indicators or "<li>Keine zusätzlichen Hinweise verfügbar.</li>",
@@ -143,6 +151,7 @@ h1{{font-size:25px;margin:0 auto 0 0}}h2{{font-size:18px;margin:0 0 14px}}.muted
 <article class="metric"><strong>{scene_count}</strong><span class="muted">Review-Szenen</span></article>
 <article class="metric"><strong>{quality_status}</strong><span class="muted">Datenqualität</span></article></section>
 <section class="card"><h2>Was jetzt wichtig ist</h2><ul>{system_actions}</ul></section>
+<section class="card boundary"><h2>Anti-Cheat-Readiness</h2><p><strong>{anti_cheat_status}</strong> — {anti_cheat_message}</p><ul>{anti_cheat_criteria}</ul></section>
 <section class="card"><h2>System Check</h2><div class="checks">{system_cards}</div></section>
 <div class="layout"><section class="card"><h2>Sicher beobachtet</h2><ul>{analysis_facts}</ul><h2>Hinweise zur Prüfung</h2><ul>{analysis_indicators}</ul></section>
 <section class="card"><h2>Datenqualität und Grenzen</h2><p>{quality_message}</p><p><strong>Empfehlung:</strong> {quality_action}</p><ul>{analysis_limits}</ul></section></div>

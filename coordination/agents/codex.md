@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Anti-Cheat-Readiness: Secure Boot und TPM 2.0 nachgeschärft
+
+STATUS: waiting_for_tristan
+TASK: Correct the UX-review finding by reliably determining Secure Boot and TPM 2.0 read-only when possible, visibly grouping them as Anti-Cheat-Readiness, and retaining an honest unknown fallback.
+BRANCH: `beast/system-check-analyzer-output-v1` after `ab06725`.
+CHANGED: The existing read-only Windows inventory now records its evidence source. Secure Boot first uses `Confirm-SecureBootUEFI` and falls back to the Windows Secure Boot state value when the cmdlet cannot read it. TPM first uses `Get-Tpm` and, if it exposes no object, falls back to read-only Windows `tpmtool getdeviceinformation` with English/German boolean/version parsing. Secure Boot and TPM are labelled `Anti-Cheat-Readiness`; their user-facing summaries now say `Secure Boot ist aktiviert` and `TPM 2.0 ist vorhanden und bereit` only with positive evidence. `user_summary.anti_cheat_readiness` is exactly one of `bestätigt`, `Aufmerksamkeit erforderlich`, or `Nicht vollständig bestätigbar`; the last state names both the relevance and manual Windows-Security path while explicitly not inferring deactivation. No BIOS/UEFI, Secure Boot, TPM, registry or other system setting was changed.
+VERIFIED: Direct read-only diagnostics on this Windows system find `Confirm-SecureBootUEFI` permission-denied but the Windows state value `1`; `tpmtool getdeviceinformation` returns exit 0 with TPM present, version 2.0 and ready. The new real System Check therefore reports Anti-Cheat-Readiness `bestätigt`, Secure Boot `OK` from `SecureBootStateRegistry`, and TPM 2.0 `OK` from `tpmtool getdeviceinformation`. New tests cover confirmed, unmet and unknown security readiness plus rendered presentation. Full `Setup-V1.ps1` passes dependency consistency, 37/37 tests and all five public CLI smoke-tests. Fresh local real workflow `results/workflow-output-ux-anti-cheat/446eec75822c/workflow.json` is `iy.workflow/v1`, `READY_FOR_REVIEW`; generated output remains ignored/local.
+DECISIONS: No blanket "Anti-Cheat Ready" claim is made: only the two evaluated criteria are confirmed, and an unknown required criterion prevents a fully confirmed aggregate. The Analyzer output work is otherwise unchanged. No Optimizer, driver, registry write, Steam/Workshop/VRAD, benchmark, Kubus or feature expansion occurred.
+OPEN: `WAITING_FOR_TRISTAN — System Check / Analyzer UX review` for the corrected local user view. Beast does not claim Tristan's final UX PASS.
+NEXT: Serve only the fresh workflow on loopback and give Tristan the exact local URL. Do not add further functionality before the result.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Bounded read-only Windows capability diagnosis and safety-critical user-output correction.
+COMPUTER_USE: no UI control; loopback review service only.
+
 ## 2026-08-17 — System Check / Analyzer Output V1: technische UX-Fertigmeldung
 
 STATUS: waiting_for_tristan

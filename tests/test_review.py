@@ -15,7 +15,9 @@ def test_renders_reduced_review_surface_and_escapes_content(tmp_path: Path) -> N
     source_hash = "a" * 64
     system = write(tmp_path / "system.json", {"schema": "iy.system_check/v1", "user_summary": {"next_steps": [
         {"label": "Anzeige", "priority": "wichtig", "action": "Aktive Bildwiederholrate prüfen."}
-    ]}, "checks": [
+    ], "anti_cheat_readiness": {"status": "bestätigt", "message": "Secure Boot und TPM 2.0 bestätigt.", "criteria": [
+        {"label": "Secure Boot", "status": "OK"}, {"label": "TPM 2.0", "status": "OK"}
+    ]}}, "checks": [
         {"label": "CPU <fast>", "status": "OK", "summary": "Detected & safe", "user_view": {
             "status": "OK", "priority": "informativ", "relevance": "Kein Handlungsbedarf.", "action": "Keine Aktion erforderlich."
         }}
@@ -46,6 +48,8 @@ def test_renders_reduced_review_surface_and_escapes_content(tmp_path: Path) -> N
     assert "Sicher beobachtet" in document
     assert "Kein Cheat-Nachweis." in document
     assert "Datenqualität und Grenzen" in document
+    assert "Anti-Cheat-Readiness" in document
+    assert "Secure Boot und TPM 2.0 bestätigt." in document
 
 
 def test_rejects_mismatched_sources(tmp_path: Path) -> None:
