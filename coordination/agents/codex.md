@@ -1,5 +1,20 @@
 # Codex
 
+## 2026-08-17 — Desktop-Host-Lifecycle und Wide-Desktop-UI (Zwischenstand)
+
+STATUS: partial — waiting_for_tristan_control_release
+TASK: Correct the native Desktop host lifecycle and apply the approved wide metallic desktop layout before the final EXE gate.
+BRANCH: `beast/analyzer-default-criteria-v1` at `a2f3349` plus uncommitted bounded changes.
+MODEL_PROFILE: terra
+MODEL_REASON: Windows host lifecycle and responsive product UI integration
+COMPUTER_USE: yes
+ROOT_CAUSE: `pywebview.start()` initializes the WinForms backend, whose implementation starts a dedicated STA GUI thread and returns immediately. The former `finally` block then immediately shut down Improve's own loopback server. This is a deterministic lifecycle error, not a GPU, security, browser or Analyzer-data issue.
+CHANGED: The host now starts explicitly with EdgeChromium, waits for the native `shown` event, then keeps the server/worker alive until the native `closed` event. No sleep-based workaround is used. The existing Preflight shell is widened to full desktop width with responsive card/grid behavior; Analyzer T/CT data remains compact; System Check gains a responsive facts grid; Optimizer displays the existing read-only system facts as side-by-side `Mein System` and `Empfehlungen / Bewertung` panels. The existing disabled future areas, local profiles, Demo switching and replay zoom/pan remain unchanged.
+VERIFIED: `pytest -q` PASS (57 tests), `pip check` PASS, compile PASS and `git diff --check` PASS. New unit evidence covers the native-event lifecycle call, forced EdgeChromium use, full-width layout, optimizer grid and Demo/Replay continuity. A fresh `Improve-Yourself-Preview-V1-HostFix` onedir build was generated. Direct bounded launch remains alive for 20 seconds; a visible launched instance is currently open.
+OPEN: The user entered input in the visible Improve window while Codex was beginning the Computer-Use visual observation. Codex stopped all app input immediately. The 10 cold starts, size/maximize visual checks, normal shutdown checks and full EXE E2E gate are not yet claimed.
+NEXT: Tristan closes or explicitly releases the currently open Improve window. Then run the required visible 10/10 fresh-distribution cold-start loop, desktop-width observations at required sizes, and the complete no-browser E2E path before any final ZIP or SEND_READY claim.
+COMMIT/PR: Pending checkpoint commit after this handoff update.
+
 ## 2026-08-17 — Native Desktop Preview / Tactical-Replay-Pan
 
 STATUS: blocked

@@ -130,6 +130,9 @@ def test_desktop_preflight_keeps_replay_available_and_supports_demo_switching(tm
     assert "Andere Demo auswählen" in html
     assert "window.pywebview.api.choose_demo" in html
     assert "Lokales Nutzerprofil" in html
+    assert ".app{width:100%;max-width:none" in html
+    assert ".optimizer-grid{display:grid" in html
+    assert "Empfehlungen / Bewertung" in html
 
     server = create_server(tmp_path / "server", 0)
     try:

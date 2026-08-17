@@ -53,7 +53,14 @@ def run_desktop_app(output_root: Path, *, port: int = 0, initial_demo: Path | No
     )
     bridge.window = window
     try:
-        webview.start()
+        # On Windows the WinForms backend creates its STA UI thread and then
+        # returns from start().  The loopback server must therefore live until
+        # the native window is actually closed, not merely until that call
+        # returns.
+        webview.start(gui="edgechromium", debug=False, private_mode=True)
+        if not window.events.shown.wait(15):
+            raise RuntimeError("Das Improve-Yourself-Fenster konnte nicht initialisiert werden.")
+        window.events.closed.wait()
     finally:
         server.shutdown(); server.server_close(); worker.join(timeout=5)
     return 0
