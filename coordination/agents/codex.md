@@ -2,7 +2,7 @@
 
 ## 2026-08-17 — Desktop-Host-Kaltstart: belegte Ursache und Minimalfix
 
-STATUS: partial — host_fix_regression_in_progress
+STATUS: blocked — visual_desktop_gate_pending
 TASK: Diagnose the packaged Desktop cold start, apply only the evidence-backed host fix, then restart the final distribution gate.
 BRANCH: `beast/analyzer-default-criteria-v1`; started at `31cf12492d95e0c2383f965b431584f00066331a`.
 MODEL_PROFILE: terra
@@ -10,10 +10,10 @@ MODEL_REASON: Windows host lifecycle and responsive product UI integration
 COMPUTER_USE: yes
 ROOT_CAUSE: A console/debug build of the same frozen launcher captured PyWebView recursively enumerating the public `DesktopBridge.window` reference supplied through `js_api`. It traversed `window.native` and invoked WebView2 COM members outside their STA thread. The captured errors are `CoreWebView2 can only be accessed from the UI thread`, COM `E_NOINTERFACE`, and a nested `AccessibilityObject` traversal ending in `maximum recursion depth exceeded`. This directly explains the native host hang/failed cold start; it is not a server-readiness, port, resource, security-policy or Analyzer-data fault.
 CHANGED: `DesktopBridge.server` and `.window` are now `_server` and `_window`, respectively. Only the intended callable `choose_demo` remains public to PyWebView. No Analyzer, UI, replay, Excel, System Check, Optimizer, data, packaging content or system setting changed.
-VERIFIED: New unit regression asserts that bridge runtime references are private; `pytest -q` PASS (58), compile PASS and `git diff --check` PASS. A fresh normal PyInstaller-onedir rebuild launched as a responsive `IMPROVE YOURSELF · PREVIEW V1` native process, with live Edge WebView2 child and a dedicated `127.0.0.1` listener after eight seconds. The diagnosis process was terminated after capture; no diagnostic process remains.
-OPEN: The previous final candidate ZIP remains diagnostic only. The complete release gate is not yet re-run and no `SEND_READY` claim exists.
-NEXT: Commit this isolated host-fix checkpoint, create a fresh standard ZIP from it, freshly unpack it, and restart Kaltstart 1/10 before all later UI/E2E gates.
-COMMIT/PR: Pending the isolated host-fix checkpoint commit; no merge.
+VERIFIED: New unit regression asserts that bridge runtime references are private; `pytest -q` PASS (58), compile PASS and `git diff --check` PASS. Commit `ea6076e` is pushed. A fresh normal build was packed to a 2,951-entry standard ZIP, SHA-256 `6B59C9383D13F7483F57B53DBEC7B8E44053F10AB1DEBD288C5EC9E16D563A82`, and Windows `Expand-Archive` unpacked it. The exact extracted EXE passed 10/10 cold starts: responsive native title `IMPROVE YOURSELF · PREVIEW V1` and a distinct `127.0.0.1` listener each time. A real de_anubis EXE run served preflight HTTP 200, `POST /api/start-analysis` HTTP 200 JSON, review HTTP 200, Tactical Replay and Excel output; the bundled `--system-check` emitted `iy.system_check/v1` and `iy.optimizer_input/v1` with exit 0. `CloseMainWindow()` shut down the live test instance normally with no remaining process or its listener. ZIP entry scan excluded demos, outputs/results, system reports, `.git`, `.venv`, handoffs and person/agent names.
+OPEN: The product host failure is fixed, but the final visual desktop gates are not independently observed: maximized, 1920x1080, smaller window, wide surface use and Tactical Replay Zoom/Pan. Computer Use could not enumerate the native Improve window in its current desktop context even while Windows reported it alive, responsive and with a native window handle. No `SEND_READY` claim exists.
+NEXT: Provide a targetable native desktop context or have Tristan perform the specified visual screen-size and Zoom/Pan checks, then record the result and only then create the final named ZIP/send decision.
+COMMIT/PR: `ea6076e` pushed; this updated handoff is pending commit; no merge.
 
 ## 2026-08-17 — Native Desktop Preview / Tactical-Replay-Pan
 
