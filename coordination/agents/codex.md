@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Viewer V1 nach `main` gemergt und Post-Merge-Gate PASS
+
+STATUS: done
+TASK: Merge the Tristan-approved Viewer V1 branch only after immediately reconfirming the reviewed remote main head, then run the full post-merge gate and record the final state.
+BRANCH: `main`.
+CHANGED: `origin/main` was immediately rechecked and still equalled `de087d9a3db8e70a6e7295516adb5012f3065213`. Local `main` was fast-forwarded to that exact remote head and merged with `beast/2d-tactical-replay-viewer-v1` using an explicit no-fast-forward merge. Merge commit `e4553f24e4fc14022fc2e053a6f926b04fb92801` has parents `de087d9` and `081c948`; it was pushed to `origin/main`. No benchmark/VRAD, Kubus, Steam/SDK, system or unrelated product work was mixed into the merge.
+VERIFIED: Full post-merge `Setup-V1.ps1` is PASS: locked dependency consistency, 35/35 automated tests and help-smokes for `iy-analyze`, `iy-system-check`, `iy-workflow`, `iy-replay-viewer` and `iy-review-server`. `git diff --check HEAD^1..HEAD` passes. Post-merge scans find 0 concrete private demo paths, 0 tracked demo files, 0 tracked generated artifacts and 0 secret-indicator matches. The local non-ignored worktree is clean, and remote `main` equals merge commit `e4553f2`. `git fsck --no-reflogs` reports only older unreferenced historical checkpoint objects (benchmark graybox, Workshop-status and launcher checkpoints), not a current reference/worktree inconsistency.
+DECISIONS: 2D Tactical Replay Viewer V1 is DONE: its implementation, technical gates and Tristan's bounded visual PASS are now integrated in `main`. This does not change the separately parked Workshop Tools/VRAD blocker or authorize any follow-up feature work.
+OPEN: None for Viewer V1.
+NEXT: WAITING_FOR_NEXT_ASSIGNMENT. Do not begin new work autonomously.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Authorized merge execution and full post-merge verification.
+COMPUTER_USE: no.
+
 ## 2026-08-17 — Finaler Viewer-V1-No-Merge-Review: MERGE_RECOMMENDED
 
 STATUS: ready_for_review
