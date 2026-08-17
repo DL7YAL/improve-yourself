@@ -19,6 +19,8 @@ def test_builds_deterministic_bounded_multikill_scene() -> None:
     assert len(scene["frames"]) <= 10
     assert scene["frames"][-1]["tick"] == 9_000
     assert scene["frames"][0]["players"][0]["yaw"] == 5.0
+    assert [event["tick"] for event in scene["events"]] == [100, 2_000, 9_000]
+    assert all(event["marker_multikill"] for event in scene["events"])
 
 
 def test_rejects_non_positive_frame_budget() -> None:

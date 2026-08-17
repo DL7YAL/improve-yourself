@@ -1,5 +1,89 @@
 # Codex
 
+## 2026-08-17 — Finaler Viewer-V1-No-Merge-Review: MERGE_RECOMMENDED
+
+STATUS: ready_for_review
+TASK: Apply the Tristan-authorized one-line redaction of the private local demo pathname, then repeat the short final no-merge review against `origin/main`.
+BRANCH: `beast/2d-tactical-replay-viewer-v1` at `c4e0c1af2c132ff61d0fa5150cf386d7503ba900`; `origin/main` freshly rechecked at unchanged `de087d9a3db8e70a6e7295516adb5012f3065213`.
+CHANGED: Only the previously identified concrete local demo pathname and filename in the historical Viewer evidence handoff was replaced with permitted non-private evidence: `de_mirage`, source-hash prefix `2d70058ba006…` and existing aggregates. No Viewer, test, pipeline/replay, benchmark/VRAD, Kubus or other documentation content changed.
+VERIFIED: Final branch-diff scan finds 0 private local demo pathname references, 0 tracked demo files, 0 tracked generated artifacts and 0 secret-indicator matches. `git diff --check origin/main...HEAD` passes. The working tree is clean. Three-way merge simulation has 0 conflict markers. Full `Setup-V1.ps1` passes locked dependency consistency, 35/35 tests and all five public CLI help-smokes. The earlier full review remains valid: Viewer-V1 functional scope and Tristan's visual PASS are correctly documented; `de087d9` is the independent non-functional AGENT_BASE clarification and creates no conflict or contradiction.
+DECISIONS: **MERGE_RECOMMENDED.** All specified review criteria are satisfied; no remaining technical, privacy, secret, Foundation-regression or merge-conflict blocker was found.
+OPEN: WAITING_FOR_TRISTAN for an explicit merge authorization. No merge has been performed.
+NEXT: If Tristan grants merge authority, recheck that `origin/main` is still `de087d9` (or perform a fresh scoped review if it moved), then merge and push only this Viewer V1 branch.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Narrow authorized privacy redaction and evidence-based final merge-readiness review.
+COMPUTER_USE: no.
+
+## 2026-08-17 — Finaler Viewer-V1-No-Merge-Review: Datenschutz-Blocker
+
+STATUS: blocked
+TASK: Fully review `beast/2d-tactical-replay-viewer-v1` against the freshly fetched `origin/main` `de087d9` without merging.
+BRANCH: `beast/2d-tactical-replay-viewer-v1` reviewed at `9d6bca3abeb57ef1df1e491aacc3e78849b9d258`; `origin/main` reviewed at `de087d9a3db8e70a6e7295516adb5012f3065213`.
+CHANGED: No Viewer, product, benchmark, Kubus, system or generated-result change was made. This handoff records the review result only; no merge, rebase or conflict-resolution mutation occurred.
+VERIFIED: The complete range from merge-base `e614389` contains exactly six intended tracked files: CURRENT, Codex handoff, replay/viewer implementation and their tests (131 additions, 10 deletions). `git diff --check origin/main...HEAD` passes. The working tree has no non-ignored change; ignored content is limited to `.venv/`, `.pytest_cache/`, Python caches and `results/`. No tracked `.dem`, `.zst`, archive, log or generated-result artifact exists. A tracked-text secret scan has no private-key, API-key, token or password assignment match. `pytest -q` passes 35/35. Tristan's full V1 visual PASS is correctly recorded: known-dead players/direction lines hide at documented kill ticks, unsupported deaths remain visible, and radar/event/navigation/playback behavior is accepted. `origin/main` `de087d9` changes only `docs/AGENT_BASE.md` (`docs: clarify efficient worker acceptance`), so it creates neither functional behavior divergence nor a contradictory product/handoff rule. `git merge-tree` reports no conflict markers for the three-way merge projection.
+DIAGNOSIS: One explicit merge criterion fails: the branch diff contains one concrete absolute local demo pathname including its filename in the historical Viewer evidence handoff. The raw demo is not tracked and no match contents, player names or detailed match records are committed, but that pathname is still a private local demo reference and must not enter `main` under this review scope.
+DECISIONS: **MERGE_BLOCKED.** The only blocker is documentation privacy hygiene, not Viewer functionality, tests, Foundation regression, main compatibility, secrets or merge conflict.
+OPEN: Replace the concrete local demo pathname with a non-private evidence description (map, source hash prefix and aggregate counts are sufficient), then rerun the short no-merge diff/secret/status/test review against the then-current `origin/main`. Do not merge before that passes.
+NEXT: WAITING_FOR_TRISTAN for authorization to perform that narrowly scoped documentation-only privacy cleanup, or for Tristan to choose another approved redaction wording.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Full repository merge-readiness review with confidentiality and compatibility checks.
+COMPUTER_USE: no.
+
+## 2026-08-17 — Tristan-PASS und Vorbereitung des Viewer-V1-Merge-Reviews
+
+STATUS: waiting_for_tristan
+TASK: Record the completed bounded visual acceptance, safely stop the local review service, and prepare the Viewer V1 branch for final review toward `main` without merging.
+BRANCH: `beast/2d-tactical-replay-viewer-v1` at `1b60ea6`.
+CHANGED: No product behavior, Viewer feature, benchmark, Kubus, Steam/SDK, VRAD or system setting changed. The local loopback `iy-review-server` process for the fresh Mirage artifact was controlledly stopped; no listener remains on `127.0.0.1:8877`. This entry and CURRENT record the user-owned visual acceptance only.
+VERIFIED: Tristan completed a full visual review of the updated real Mirage artifact and reports PASS: documented-dead players disappear at their kill tick along with direction lines; players without reliable death evidence remain visible; scene changes, frame navigation, scrubber, play/pause and speed behave understandably; radar positions, sight directions and event presentation are plausible; no relevant display, timing, rotation, scale or UX defect was found. The preceding technical evidence remains valid: fresh `READY_FOR_REVIEW` local Mirage workflow, event/state invariant failures `0`, 35/35 automated tests PASS, locked setup/dependency check and all five public CLI smoke-tests PASS. The working tree was clean before this documentation update.
+DECISIONS: 2D Tactical Replay Viewer V1 has passed its automated and bounded human visual acceptance. This closes only the V1 Viewer feature scope; it does not merge the branch, declare a wider product release, or affect the separately parked Workshop Tools/VRAD benchmark blocker.
+OPEN: `WAITING_FOR_TRISTAN — 2D Viewer V1 merge review`. The fresh remote comparison base is `origin/main` `de087d9a3db8e70a6e7295516adb5012f3065213`, advanced from the prior base only by the independent documentation commit `docs: clarify efficient worker acceptance` in `docs/AGENT_BASE.md`. Three-way merge simulation reports no text conflict; no merge or rebase was performed.
+NEXT: Perform a final no-merge review against the freshly checked `origin/main` `de087d9`, covering scope, unexpected/ignored artefacts, secrets, handoffs, diff and test state. Tristan retains the merge decision.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Acceptance handoff, controlled local service shutdown and merge-readiness preparation.
+COMPUTER_USE: no UI control; stopped prior loopback service only.
+
+## 2026-08-17 — Viewer V1: evidenzbasierte Unterdrückung toter Spieler
+
+STATUS: waiting_for_tristan
+TASK: Correct the failed visual-review finding that known-dead players remained visible, without inferring deaths from missing snapshots or changing the replay/analysis contract.
+BRANCH: `beast/2d-tactical-replay-viewer-v1` after prior evidence checkpoint `d79cdae`.
+CHANGED: `viewer.py` derives a viewer-only `active_players` list for each rendered frame. A player remains shown until a present, well-formed in-scene kill event names that player as its victim; at that exact tick and later frames the player marker and its direction line disappear. Missing snapshots, missing/malformed event ticks and blank victims never hide a player. The source `iy.replay/v1` JSON remains unchanged; only the self-contained Viewer model receives the derived display state. No optional death marker or other Viewer feature was added.
+VERIFIED: New automated tests prove that a victim is visible before the documented tick, hidden at and after it, and remains visible when kill evidence is malformed or absent. Full `Setup-V1.ps1` passes: locked dependencies, 35/35 tests and all five public CLI help-smokes. A fresh local real Mirage workflow is `READY_FOR_REVIEW` at `results/viewer-v1-mirage-death-state/2d70058ba006/workflow.json`, using the unchanged local demo hash `2d70058ba006fecebf804e499a13ebeab97308804b433723c0657bf7810927a2`, local `de_mirage.png` and transform `-3230/1713/5`. It has 11 scenes and 53 in-scene real kill records. Artifact-level validation compares raw replay frames, documented kills and the embedded viewer model: 28,160 raw player snapshots, 20,500 active player snapshots, 7,660 known-dead markers suppressed across 2,816 post-kill frames, and 0 state-invariant failures. Radar is embedded; Review artifact exists.
+DECISIONS: The failed visual point is corrected only through reliable supplied kill evidence. This is still a technical acceptance, not a substitute for Tristan's visual review. No VRAD/benchmark, Steam/SDK, Kubus or system change occurred.
+OPEN: `WAITING_FOR_TRISTAN — 2D Viewer V1 visual review`. Review the fresh loopback artifact, with special attention to the exact transition at kill ticks: no previously killed player marker or direction line should remain, while players lacking valid death evidence stay visible.
+NEXT: Keep only the updated loopback service running and wait for Tristan's bounded PASS/FAIL. Do not add another Viewer function first.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Focused state-correctness repair with real-artifact invariant validation.
+COMPUTER_USE: no UI control; loopback service only.
+
+## 2026-08-17 — Viewer V1: vollständige reale Mirage-Review-Evidenz
+
+STATUS: waiting_for_tristan
+TASK: Produce a fresh complete Viewer-V1 visual-review artifact from an existing real local demo and a matching approved local radar resource, without changing the existing architecture or data contract.
+BRANCH: `beast/2d-tactical-replay-viewer-v1` at pushed checkpoint `95f06a9`.
+CHANGED: No further feature was added after the accepted Viewer-V1 checkpoint. Read-only inventory identified a real local `de_mirage` evidence input (source hash `2d70058ba006…`); the existing local Awpy resource `C:\Users\tleik\.awpy\maps\de_mirage.png` is used with the already documented transform `pos_x=-3230`, `pos_y=1713`, `scale=5`. The raw demo remains local and uncommitted; generated workflow/review artifacts remain ignored and local.
+VERIFIED: Fresh local `iy-workflow` result `results/viewer-v1-mirage/2d70058ba006/workflow.json` is `iy.workflow/v1`, `READY_FOR_REVIEW`, and preserves the local-only/read-only/no-change policy. Its source hash is `2d70058ba006fecebf804e499a13ebeab97308804b433723c0657bf7810927a2`. Analysis identifies `de_mirage` and 201 real kill events; the generated `iy.replay/v1` contains 11 scenes, all 11 with associated derived events (53 event records total). The self-contained 4.3 MB `viewer.html` embeds the local radar and contains the V1 scene/frame navigation, range scrubber, playback/speed, scene/event context and data-quality notices. `tools/dev/Setup-V1.ps1` is PASS: locked dependency consistency, 33/33 tests and help-smokes for all five public CLIs. Kubus V0 was used only within its frozen allowlist: completed `text_stats` job `job-20260817T052031766-23ff26` was independently accepted by Beast; no Kubus feature changed.
+DECISIONS: This is technical evidence, not a claimed visual acceptance. The suitable current Mirage/radar pair removes the prior evidence gap without inventing positions, direction, map metadata or radar geometry. No VRAD/benchmark action and no Kubus infrastructure change occurred.
+OPEN: `WAITING_FOR_TRISTAN — 2D Viewer V1 visual review`. Tristan must visually assess the live local page for plausible Mirage player placement and view-direction lines, navigation/playback and event context. No additional Viewer V1 function is to be added before that result.
+NEXT: Keep the loopback service running and give Tristan the exact local review URL. On Tristan PASS/FAIL, record only that bounded human result; preserve the external Workshop Tools/VRAD blocker as separately parked.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Bounded local real-demo evidence creation and regression validation without contract or system changes.
+COMPUTER_USE: no UI control; loopback service only.
+
+## 2026-08-17 — 2D Tactical Replay Viewer V1 implementation checkpoint
+
+STATUS: running
+TASK: Upgrade the merged Foundation viewer into a practical local tactical review tool while retaining `iy.replay/v1` and using Kubus V0 without extending it.
+BRANCH: `beast/2d-tactical-replay-viewer-v1` from current `main` `e614389`.
+CHANGED: `iy.replay/v1` scenes now carry only reliably derived in-range kill-event records (tick, attacker, victim, weapon, headshot and marker-multikill relation). The self-contained viewer adds explicit scene/frame forward-back controls, direct slider scrubbing, speed selection, current tick/frame and compact event/scene context. It states honestly that death status is not inferred from absent snapshots. No analyzer, radar transform, benchmark, Kubus, system or network behavior changed.
+VERIFIED: 33/33 tests pass, including new replay-event and viewer-control assertions. A real local Anubis workflow completed as `READY_FOR_REVIEW` under ignored `results/viewer-v1-workflow/446eec75822c/`: 22 scenes and 108 derived kill events. Kubus productive job `job-20260817T052031766-23ff26` was DONE by `worker-01` for read-only `text_stats` on the existing Tactical-Replay reference input; result 637 lines, 969 words, 19,519 characters, SHA-256 `487e1910…`. Beast independently confirmed 637 lines and 19,519 characters; follow-up integrity audit has 0 errors (25 jobs, 24 healthy, 1 preserved warning).
+OPEN: The historical Mirage replay remains usable for radar positioning but predates the new event field; its original local demo hash is no longer present, so it must not be represented as a current Viewer-V1 event run. The real Anubis Viewer-V1 run has events but no approved local Anubis radar resource. Continue technical review without inventing radar data; final Tristan visual UX review waits for an honestly suitable current viewer artifact.
+NEXT: Commit this tested checkpoint, then perform additional bounded viewer-state validation and prepare Tristan's loopback review only when the current artifact can satisfy the visual radar scope without fabrication.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Focused viewer implementation, real-demo validation and responsible Kubus-result acceptance.
+COMPUTER_USE: no
+
 ## 2026-08-17 — `dev/v1-foundation` merged into `main`
 
 STATUS: done
