@@ -3,6 +3,7 @@ from copy import deepcopy
 from improve_yourself.validation import validate_analysis_payload
 from improve_yourself.model import DataQuality, Kill, Multikill
 from improve_yourself.service import build_analysis_user_view
+from improve_yourself.criteria import DEFAULT_PROFILE, default_review_hints
 
 
 def valid_payload() -> dict:
@@ -77,3 +78,14 @@ def test_user_summary_separates_facts_hints_and_missing_channels() -> None:
     assert any("3 Kills" in value for value in view["facts"])
     assert "kein Cheat-Nachweis" in view["indicators"][0]
     assert "Schritt-Ereignisse fehlen" in view["limitations"][0]
+
+
+def test_default_profile_emits_transparent_multikill_review_hints() -> None:
+    marker = Multikill(4, "Player", 3, 100, 9000, ["A", "B", "C"])
+    hint = default_review_hints([marker])[0]
+
+    assert DEFAULT_PROFILE["version"] == "v1"
+    assert hint["criterion_id"] == "round_multikill"
+    assert hint["threshold"]["value"] == 3
+    assert hint["observed_facts"]["kill_count"] == 3
+    assert hint["verdict"] == "review_hint"

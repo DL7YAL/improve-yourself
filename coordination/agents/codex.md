@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Analyzer Default Criteria / Filter V1 für Tristan-Review bereit
+
+STATUS: waiting_for_tristan_review
+TASK: Add a small versioned Improve default criteria profile that derives transparent review hints from existing Analyzer facts and exposes them in the Excel report without changing raw facts.
+BRANCH: `beast/analyzer-default-criteria-v1`, based on merged main `2cd358c`.
+CHANGED: Added `criteria.py` with extensible `iy.default_review/v1`. Its first criterion, `round_multikill`, requires the existing kills/rounds facts and uses the explicit threshold `kill_count >= 3`. Analysis artifacts retain raw kills and multikills and add a profile descriptor plus non-verdict review hints containing criterion, threshold and observed facts. The Excel report shows active profile/version and adds filterable category, criterion, threshold and observed-facts columns to the existing scenes table.
+VERIFIED: Fresh real de_anubis analysis remains 307 kills, 22 scenes, 42 regular rounds and 115 headshots. It emits 22 transparent `round_multikill` hints, each with its existing round/player/tick/victim facts. The fresh local workbook is formula-clean and visually shows profile/version and all evidence columns. `pytest` is PASS with 52 tests. Missing sound, sightline, calls, aim, timing and opponent-perspective data are not inferred or assessed.
+DECISIONS: Profile defaults are review selection, not truth or a cheat verdict. The profile is data-driven and can gain criteria later without changing the raw parser; no arbitrary user-rule catalogue was added.
+OPEN: `WAITING_FOR_TRISTAN — Analyzer default criteria / filter review`.
+NEXT: Tristan reviews only the real local Excel example. Do not merge or start another product function before the bounded result.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Narrow product logic/data-contract extension with explicit evidence boundaries.
+COMPUTER_USE: no.
+
 ## 2026-08-17 — Analyzer Excel Report V1 nach `main` gemergt
 
 STATUS: done

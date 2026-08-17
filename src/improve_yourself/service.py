@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from .awpy_adapter import AwpyAdapter
+from .criteria import DEFAULT_PROFILE, default_review_hints
 from .domain import round_multikills
 from .importer import materialize_demo
 from .model import AnalysisResult
@@ -74,6 +75,8 @@ def analyze(source: Path, output_directory: Path, max_bytes: int = 2_000_000_000
         available_channels=sorted(channels),
     )
     payload = result.to_dict()
+    payload["review_profile"] = DEFAULT_PROFILE
+    payload["review_hints"] = default_review_hints(result.multikills)
     payload["user_view"] = build_analysis_user_view(kills, result.multikills, quality)
     output_directory.mkdir(parents=True, exist_ok=True)
     destination = output_directory / f"{checksum[:12]}.analysis.json"
