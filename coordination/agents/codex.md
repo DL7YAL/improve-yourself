@@ -36,14 +36,26 @@ COMMIT/PR: Pending checkpoint commit and push after final diff/test/sync verific
 
 ## 2026-08-17 — Workshop Tools / Hammer startup recheck
 
-STATUS: waiting_for_tristan
+STATUS: superseded
 TASK: Resume marker-synchronized Inferno-camera validation after the `9ecd909` checkpoint.
 BRANCH: `dev/v1-foundation`
 CHANGED: No product, map, controller, smoke, geometry, Steam or SDK files changed.
 VERIFIED: Steam is running. `cs2.exe -tools` starts Workshop Tools successfully and exposes the Asset Browser plus its Hammer tool entry. Starting Hammer from that entry reproduces `hammer.exe - Systemfehler`: `vstdlib.dll` is missing. Direct SDK-Hammer start reproduces the same error. This is an installed-tool runtime failure, not a repository build failure; the last verified repository state remains `9ecd909`, 33/33 tests and Full Compile `22 compiled, 0 failed, 1 skipped`.
 OPEN: WAITING_FOR_TRISTAN. Repairing/verifying the Steam SDK installation can change installed third-party files and was not performed.
 NEXT: Tristan repairs the Workshop Tools/CS2 SDK or explicitly approves Steam file verification. Then start Hammer through Workshop Tools, run Full Compile, log the automatic camera pose at Inferno `TRANSITION_EXIT`, compare it with static `0 3450 600 / 35 90 0`, and change only camera application/timing if needed.
-COMMIT/PR: Pending status-only checkpoint after test/diff review.
+COMMIT/PR: Superseded by the 2026-08-17 Steam repair and Hammer recheck below.
+
+## 2026-08-17 — Steam repair, Hammer recovery and Full-Compile recheck
+
+STATUS: waiting_for_tristan
+TASK: Repair the documented Workshop Tools start failure, then resume the required Full Compile before the Inferno `TRANSITION_EXIT` camera comparison.
+BRANCH: `dev/v1-foundation`
+CHANGED: No repository source, map, smoke, geometry or controller changes. Steam was explicitly authorized to validate/repair installed third-party files. CS2 App 730 and the separately installed Counter-Strike: Global Offensive - SDK App 745 were both validated through Steam.
+VERIFIED: Steam showed CS2 validation progressing from 8% to 88% and returning to `SPIELEN`; the SDK validation also returned installed/current. `cs2.exe -tools` again opened Asset Browser, and selecting `Hammer (Map Editor)` now started Hammer successfully (the earlier `vstdlib.dll` system error no longer occurred). `improve_yourself_benchmark.vmap` loads in Hammer. Full Compile was explicitly selected and started, but Hammer stopped before the actual compiler pipeline with `GPU Lightmap Baking`: `GPU ray tracing support required for GPU lightmap baking. If you're seeing this message despite having ray tracing-capable graphics hardware, try updating your graphics driver.`
+DIAGNOSIS: The Steam/Workshop Tools startup blocker is resolved. The active blocker is now Hammer's required GPU-Raytracing Lightmap-Baking capability; this is an installed graphics/runtime prerequisite, not a repository test, camera, smoke, or geometry failure. No Full Compile result and no new runtime camera evidence exists from this recheck.
+OPEN: WAITING_FOR_TRISTAN. A GPU driver update or another official baking/runtime configuration is a system-level decision and was not attempted. The measured static Inferno proof remains `setpos_exact 0 3450 600; setang_exact 35 90 0`; the automatic marker-synchronized comparison remains pending.
+NEXT: Tristan supplies or approves the GPU-/driver or documented baking-setup remedy. Then run Full Compile, launch the rebuilt map, instrument/record the automatic Inferno `TRANSITION_EXIT` applied camera pose, compare it with the static validated pose, and change only camera application/timing if warranted. Do not change smoke or geometry before that comparison.
+COMMIT/PR: Pending a status-only checkpoint after diff review; no source files changed.
 
 ## 2026-08-17 — Fade recovery and Inferno camera measurement
 
