@@ -17,6 +17,22 @@ from .system_check import SYSTEM_CHECK_SCHEMA
 OPTIMIZER_INPUT_SCHEMA = "iy.optimizer_input/v1"
 
 
+def _planning_item(check: dict[str, Any]) -> dict[str, Any]:
+    user_view = check.get("user_view") if isinstance(check.get("user_view"), dict) else {}
+    return {
+        "id": check.get("id"),
+        "label": check.get("label"),
+        "observed_state": check.get("summary"),
+        "technical_status": check.get("status"),
+        "classification": check.get("classification", "not_implemented"),
+        "assessment_status": user_view.get("status", "Nicht prüfbar / unbekannt"),
+        "priority": user_view.get("priority", "informativ"),
+        "recommendation": user_view.get("action", "Keine automatische Änderung wurde vorgenommen."),
+        "relevance": user_view.get("relevance", "Keine zusätzliche Bewertung verfügbar."),
+        "evidence": check.get("evidence", {}),
+    }
+
+
 def build_optimizer_input(system_check: dict[str, Any]) -> dict[str, Any]:
     """Validate and project explicit System Check evidence for optimizer planning.
 
@@ -32,6 +48,7 @@ def build_optimizer_input(system_check: dict[str, Any]) -> dict[str, Any]:
     checks = system_check.get("checks")
     if not isinstance(checks, list):
         raise ValueError("system check checks must be a list")
+    planning_items = [_planning_item(check) for check in checks if isinstance(check, dict)]
     return {
         "schema": OPTIMIZER_INPUT_SCHEMA,
         "generated_at_utc": datetime.now(UTC).isoformat(),
@@ -42,7 +59,12 @@ def build_optimizer_input(system_check: dict[str, Any]) -> dict[str, Any]:
             "changes_applied": False,
         },
         "system_summary": system_check.get("user_summary", {}),
-        "checks": checks,
+        "planning_items": planning_items,
+        "optimizer_readiness": {
+            "input_complete": True,
+            "unknown_or_unreadable_items": [item["id"] for item in planning_items if item["classification"] in {"technically_investigated_not_reliably_readable", "not_implemented"}],
+            "automatic_apply_authorized": False,
+        },
         "policy": {
             "planning_input_only": True,
             "changes_applied": False,

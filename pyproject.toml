@@ -20,6 +20,7 @@ iy-analyze = "improve_yourself.cli:main"
 iy-replay-viewer = "improve_yourself.viewer:main"
 iy-system-check = "improve_yourself.system_check:main"
 iy-optimizer-input = "improve_yourself.optimizer_input:main"
+iy-system-check-review = "improve_yourself.system_review:main"
 iy-workflow = "improve_yourself.workflow:main"
 iy-review-server = "improve_yourself.review_server:main"
 

@@ -68,6 +68,13 @@ supported replay start is `tools/dev/Start-V1Review.ps1`; it also provides the
 reduced review surface and source-bound local review-state persistence.
 Optimizer apply/restore remains a separate later safety boundary.
 
+For a separate local System Check / Optimizer Input review after explicitly
+generating both JSON artifacts:
+
+```powershell
+.venv\Scripts\iy-system-check-review results\system-check.json results\optimizer-input.json --serve --port 8879
+```
+
 ## Demo Analyzer V1 foundation
 
 Local, traceable processing of CS2 demos. Automated markers are review cues and

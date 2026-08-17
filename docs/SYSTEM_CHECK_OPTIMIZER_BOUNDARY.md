@@ -36,3 +36,6 @@ removing it as an automatic product dependency.
 
 Both commands are local and read-only. `iy-optimizer-input` is an input handoff
 for a future optimizer planner, not permission to apply a profile.
+
+The complete V1 coverage and the AMD/NVIDIA evidence boundary are maintained in
+[`SYSTEM_CHECK_V1_MATRIX.md`](SYSTEM_CHECK_V1_MATRIX.md).

@@ -17,13 +17,14 @@ def test_evaluates_complete_read_only_baseline() -> None:
     })
     assert payload["schema"] == "iy.system_check/v1"
     assert payload["policy"] == {"read_only": True, "changes_applied": False, "elevation_requested": False}
-    assert payload["summary"] == {OK: 9, REVIEW: 2, ACTION_REQUIRED: 0}
+    assert payload["summary"] == {OK: 9, REVIEW: 3, ACTION_REQUIRED: 0}
     by_id = {item["id"]: item for item in payload["checks"]}
     assert by_id["gpu"]["user_view"]["status"] == "OK"
     assert by_id["gpu_driver"]["user_view"]["status"] == "OK"
     assert by_id["gpu_driver"]["evidence"]["official_version"] == "26.7.1"
     assert by_id["chipset_driver"]["user_view"]["status"] == "Nicht prüfbar / unbekannt"
-    assert by_id["amd_adrenalin"]["evidence"]["global_settings"] == "investigated_not_reliably_decodable"
+    assert by_id["graphics_settings_profile"]["classification"] == "technically_investigated_not_reliably_readable"
+    assert by_id["graphics_settings_profile"]["evidence"]["setting_matrix"][0]["effective_value"] == "unknown"
     assert by_id["motherboard"]["user_view"]["priority"] == "optional"
     assert by_id["secure_boot"]["user_view"]["area"] == "Anti-Cheat-Readiness"
     assert payload["user_summary"]["anti_cheat_readiness"]["status"] == "bestätigt"

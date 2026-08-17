@@ -16,6 +16,12 @@ OK = "OK"
 REVIEW = "REVIEW"
 ACTION_REQUIRED = "ACTION_REQUIRED"
 
+RELIABLY_CHECKED = "reliably_automatically_checked"
+RELIABLY_EVALUATED = "reliably_evaluated"
+RECOGNIZED_ONLY = "recognized_only"
+INVESTIGATED_UNKNOWN = "technically_investigated_not_reliably_readable"
+NOT_IMPLEMENTED = "not_implemented"
+
 _AMD_RX_7900_XTX_URL = "https://www.amd.com/en/support/downloads/drivers.html/graphics/radeon-rx/radeon-rx-7000-series/amd-radeon-rx-7900-xtx.html"
 _GIGABYTE_X870_GAMING_X_WIFI7_URL = "https://www.gigabyte.com/us/Motherboard/X870-GAMING-X-WIFI7-rev-1x/sp"
 _AMD_X870_CHIPSET_URL = "https://www.amd.com/en/support/downloads/drivers.html/chipsets/am5/x870.html"
@@ -121,11 +127,39 @@ def _presentation(check_id: str, status: str, *, detail: str | None = None) -> d
     }
 
 
-def _result(check_id: str, label: str, status: str, summary: str, evidence: dict[str, Any], *, detail: str | None = None) -> dict[str, Any]:
+def _result(
+    check_id: str, label: str, status: str, summary: str, evidence: dict[str, Any], *,
+    detail: str | None = None, classification: str = RELIABLY_CHECKED,
+) -> dict[str, Any]:
     return {
         "id": check_id, "label": label, "status": status, "summary": summary, "evidence": evidence,
-        "user_view": _presentation(check_id, status, detail=detail),
+        "classification": classification, "user_view": _presentation(check_id, status, detail=detail),
     }
+
+
+def _graphics_profile_matrix(provider: str | None, *, cs2_observed: bool) -> list[dict[str, Any]]:
+    """Return a vendor-neutral matrix without guessing undocumented settings."""
+    settings = (
+        ("latency", "Latenzfunktion (z. B. Anti-Lag)"),
+        ("upscaling", "Treiber-Upscaling (z. B. RSR)"),
+        ("frame_pacing", "FPS-Limit / Frame-Pacing (z. B. Chill)"),
+        ("sync", "Synchronisation (z. B. Enhanced Sync / VSync)"),
+        ("sharpening", "Bildschärfung"),
+        ("quality_overrides", "Erweiterte Qualitäts-Overrides"),
+        ("game_tuning", "Spielbezogenes GPU-Tuning"),
+    )
+    return [{
+        "id": setting_id,
+        "label": label,
+        "provider": provider,
+        "global_value": "unknown",
+        "cs2_override": "unknown",
+        "effective_value": "unknown",
+        "reliably_readable": False,
+        "classification": INVESTIGATED_UNKNOWN,
+        "source": "No documented, locally available read-only value source in this V1 build.",
+        "cs2_application_observed": cs2_observed,
+    } for setting_id, label in settings]
 
 
 def evaluate_system_facts(facts: dict[str, Any]) -> dict[str, Any]:
@@ -188,6 +222,7 @@ def evaluate_system_facts(facts: dict[str, Any]) -> dict[str, Any]:
          "official_version": current_version, "official_source": gpu_catalog.get("source"),
          "checked_at_utc": gpu_catalog.get("checked_at_utc")},
         detail="Der aktuelle Herstellerstand war bei dieser Prüfung nicht zuverlässig verfügbar. Den Stand auf der offiziellen Hersteller-Supportseite manuell vergleichen; keine Änderung wurde vorgenommen.",
+        classification=RELIABLY_EVALUATED if installed_version and current_version else INVESTIGATED_UNKNOWN,
     ))
 
     chipset = facts.get("amd_chipset") or {}
@@ -211,17 +246,29 @@ def evaluate_system_facts(facts: dict[str, Any]) -> dict[str, Any]:
          "installed_version": chipset_version, "official_version": official_chipset_version,
          "official_source": chipset_catalog.get("source"), "checked_at_utc": chipset_catalog.get("checked_at_utc")},
         detail="Der Chipsatz oder sein offizieller Herstellerstand war bei dieser Prüfung nicht zuverlässig bestimmbar. Ohne eindeutige Zuordnung wird keine Aktualität geraten; keine Änderung wurde vorgenommen.",
+        classification=RELIABLY_EVALUATED if chipset_identity.get("name") and chipset_version and official_chipset_version else INVESTIGATED_UNKNOWN,
     ))
 
     adrenalin = facts.get("amd_adrenalin") or {}
+    graphics_profiles = facts.get("graphics_profiles") or {}
+    provider = graphics_profiles.get("provider") or ("AMD" if adrenalin.get("installed") else None)
+    cs2_observed = graphics_profiles.get("cs2_application_observed") is True
+    source_classes = graphics_profiles.get("sources_examined") or [
+        "active AMD display-driver UMD configuration", "AMD CN GameReport/cs2.exe",
+        "AMD CN steamdata/730", "AMD ADLX runtime availability",
+    ]
     checks.append(_result(
-        "amd_adrenalin", "Grafikeinstellungen und Spielprofil", REVIEW,
-        "AMD Software und ein CS2-bezogenes lokales Berichtartefakt sind erkannt; die tatsächlich wirksamen globalen und CS2-Profilschalter sind aus den untersuchten lokalen Daten nicht belastbar dekodierbar." if adrenalin.get("installed") else "AMD Software/Adrenalin konnte nicht zuverlässig erkannt werden.",
-        {"provider": "AMD", "installed": adrenalin.get("installed"), "version": adrenalin.get("version"),
-         "global_settings": "investigated_not_reliably_decodable", "cs2_profile": "observed_not_reliably_decodable",
-         "sources_examined": ["active AMD display-driver UMD configuration", "AMD CN GameReport/cs2.exe", "AMD CN steamdata/730", "AMD ADLX runtime"],
-         "read_api": "native AMD ADLX runtime present; no shipped read-only binding"},
-        detail="AMD Software > Gaming > Grafik bzw. das CS2-Spielprofil manuell prüfen. Die lokalen AMD-Daten enthalten teils binäre oder nicht dokumentiert codierte Werte; Improve interpretiert sie nicht als Fakten und ändert keine AMD-Adrenalin-Einstellungen.",
+        "graphics_settings_profile", "Grafikeinstellungen und Spielprofil", REVIEW,
+        "AMD Software ist erkannt; CS2 wurde von AMD lokal beobachtet. Die tatsächlich wirksamen globalen und CS2-Profilschalter sind ohne dokumentierten read-only Wertpfad nicht belastbar auslesbar." if adrenalin.get("installed") and cs2_observed else
+        ("AMD Software ist erkannt; ein CS2-spezifischer Profilwert konnte nicht belastbar festgestellt werden." if adrenalin.get("installed") else "Kein unterstützter Hersteller-Profilerfassungsweg wurde erkannt."),
+        {"provider": provider, "software_detected": bool(adrenalin.get("installed")), "software_version": adrenalin.get("version"),
+         "cs2_application_observed": cs2_observed, "cs2_profile_status": "not_reliably_determinable",
+         "global_settings_status": INVESTIGATED_UNKNOWN, "effective_settings_status": INVESTIGATED_UNKNOWN,
+         "sources_examined": source_classes,
+         "manual_snapshot": {"available": provider == "AMD", "requires_user_export": provider == "AMD", "documented_format": "AMD Software Snap Settings ZIP", "automatically_readable_in_v1": False},
+         "setting_matrix": _graphics_profile_matrix(provider, cs2_observed=cs2_observed)},
+        detail="AMD Software > Gaming > das CS2-Spielprofil manuell prüfen. Für eine spätere, ausdrücklich bereitgestellte AMD-Snap-Settings-Datei ist ein dokumentierter Importleser separat zu spezifizieren; Improve importiert sie nicht in AMD Software und interpretiert keine undokumentierten Registry-/Binärwerte.",
+        classification=INVESTIGATED_UNKNOWN,
     ))
 
     displays = facts.get("displays") or []
@@ -231,6 +278,15 @@ def evaluate_system_facts(facts: dict[str, Any]) -> dict[str, Any]:
     if rates and max(rates) < 120:
         display_summary += " Für den CS2-Fokus sollte die aktive Anzeigeeinstellung geprüft werden."
     checks.append(_result("display", "Anzeige", display_status, display_summary, {"active_displays": [{key: d.get(key) for key in ("name", "width", "height", "refresh_hz")} for d in displays]}))
+
+    monitors = facts.get("monitors") or []
+    checks.append(_result(
+        "monitor", "Monitorerkennung", OK if monitors else REVIEW,
+        f"{len(monitors)} Monitor(e) erkannt." if monitors else "Monitorbezeichnung konnte nicht zuverlässig automatisch erkannt werden.",
+        {"monitors": [{"name": monitor.get("name")} for monitor in monitors]},
+        detail="In Windows Einstellungen > System > Anzeige den verwendeten Monitor prüfen. Ein unbekannter Name bedeutet nicht, dass kein Monitor verbunden ist.",
+        classification=RELIABLY_CHECKED if monitors else INVESTIGATED_UNKNOWN,
+    ))
 
     for check_id, label in (("secure_boot", "Secure Boot"), ("tpm", "TPM 2.0")):
         value = facts.get(check_id)
@@ -291,6 +347,7 @@ $bios = Get-CimInstance Win32_BIOS | Select-Object -First 1
 $computer = Get-CimInstance Win32_ComputerSystem
 $gpus = @(Get-CimInstance Win32_VideoController | ForEach-Object { @{name=$_.Name;driver_version=$_.DriverVersion;driver_date=[string]$_.DriverDate} })
 $displays = @(Get-CimInstance Win32_VideoController | Where-Object { $_.CurrentHorizontalResolution -and $_.CurrentVerticalResolution -and $_.CurrentRefreshRate } | ForEach-Object { @{name=$_.Name;width=$_.CurrentHorizontalResolution;height=$_.CurrentVerticalResolution;refresh_hz=$_.CurrentRefreshRate} })
+$monitors = @(); try { $monitors = @(Get-CimInstance -Namespace root\wmi -ClassName WmiMonitorID -ErrorAction Stop | ForEach-Object { $name = -join ($_.UserFriendlyName | Where-Object { $_ -ne 0 } | ForEach-Object { [char]$_ }); if ($name) { @{name=$name} } }) } catch {}
 $installed = @(Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue)
 $amdSoftware = $installed | Where-Object { $_.DisplayName -eq 'AMD Software' } | Select-Object -First 1
 $amdChipset = $installed | Where-Object { $_.DisplayName -eq 'AMD Chipset Software' } | Select-Object -First 1
@@ -308,7 +365,7 @@ if ($null -eq $tpm) { try { $tpmTool=& "$env:SystemRoot\System32\tpmtool.exe" ge
  cpu=@{name=$cpu.Name;logical_processors=$computer.NumberOfLogicalProcessors}
  memory=@{total_gb=[math]::Round($computer.TotalPhysicalMemory/1GB,1)}
  motherboard=@{manufacturer=$board.Manufacturer;product=$board.Product;bios_version=$bios.SMBIOSBIOSVersion;bios_date=[string]$bios.ReleaseDate}
- gpus=$gpus;displays=$displays;amd_software=@{installed=($null -ne $amdSoftware);name=$amdSoftware.DisplayName;version=$amdSoftware.DisplayVersion};amd_chipset=@{name=$amdChipset.DisplayName;version=$amdChipset.DisplayVersion};amd_adrenalin=@{installed=($null -ne $amdSoftware);version=$amdSoftware.DisplayVersion};secure_boot=$secureBoot;secure_boot_source=$secureBootSource;tpm=$tpm;tpm_version=$tpmVersion;tpm_source=$tpmSource
+ gpus=$gpus;displays=$displays;monitors=$monitors;amd_software=@{installed=($null -ne $amdSoftware);name=$amdSoftware.DisplayName;version=$amdSoftware.DisplayVersion};amd_chipset=@{name=$amdChipset.DisplayName;version=$amdChipset.DisplayVersion};amd_adrenalin=@{installed=($null -ne $amdSoftware);version=$amdSoftware.DisplayVersion};secure_boot=$secureBoot;secure_boot_source=$secureBootSource;tpm=$tpm;tpm_version=$tpmVersion;tpm_source=$tpmSource
 } | ConvertTo-Json -Depth 6 -Compress
 '''
 
@@ -325,6 +382,21 @@ def collect_windows_facts(timeout_seconds: int = 20) -> dict[str, Any]:
         message = completed.stderr.strip() or "Windows inventory failed"
         raise RuntimeError(message)
     facts = json.loads(completed.stdout)
+    amd_cn = Path.home() / "AppData" / "Local" / "AMD" / "CN"
+    game_report = amd_cn / "GameReport" / "cs2.exe" / "gpa.bin"
+    steam_metadata = amd_cn / "steamdata" / "730.json"
+    adlx_runtime = any((Path.home() / "AppData" / "Local" / "AMD").glob("**/ADLX*.dll"))
+    facts["graphics_profiles"] = {
+        "provider": "AMD" if (facts.get("amd_adrenalin") or {}).get("installed") else None,
+        "cs2_application_observed": game_report.is_file() or steam_metadata.is_file(),
+        "sources_examined": [
+            "AMD display-driver UMD configuration (undocumented values not decoded)",
+            "AMD CN GameReport/cs2.exe (application observation only)",
+            "AMD CN steamdata/730 (store metadata only)",
+            "AMD ADLX runtime availability" if adlx_runtime else "AMD ADLX runtime not locally exposed to this build",
+            "AMD Software Snap Settings (manual export; no supplied snapshot parser contract)",
+        ],
+    }
     facts["chipset"] = detect_chipset(facts.get("motherboard") or {})
     facts["gpu_driver_catalog"] = collect_official_gpu_driver_catalog(facts.get("gpus") or [])
     facts["chipset_driver_catalog"] = collect_official_chipset_catalog(facts["chipset"])
