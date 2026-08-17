@@ -15,6 +15,20 @@ This file records decisions that should not be repeatedly reopened without a con
 - V2/V3 ideas are documented and deferred unless they are necessary for V1.
 - Existing prototypes are reference material, not parallel active products.
 
+## Benchmark multi-map transition design — locked
+
+- **Decision:** The benchmark sequence remains a visually continuous three-environment run rather than three hard-cut scenes. The intended order is Nuke Outside -> Ancient B -> Inferno Apps/A. Nuke transitions into Ancient by driving the camera into a smoke until vision is fully obscured; the Ancient scene should emerge around the B-ramp/water area so water/reflection rendering is part of the measured workload. The camera then travels through the Ancient B area toward Red Room. Red Room's red visual identity must be consciously visible before a flashbang produces a full white-out; the actual scene switch happens inside that flash and the Inferno sequence begins around the Apps lower stair/entrance area. Camera height, direction, motion and dominant color/texture should be matched across the hidden transitions so the run reads as one continuous movement.
+- **Reason:** If three different CS2 environments are used, hard cuts would make the benchmark feel like three unrelated clips and would remove much of the value of choosing multiple environments. Smoke and flash are natural CS2 occlusion events that can hide the technical scene switches while also remaining meaningful rendering workload. Ancient water/reflections add a deliberately distinct graphics stressor.
+- **Impact:** These transitions are an essential benchmark design and acceptance criterion, not optional polish. A transition is not considered finished if a normal viewer immediately perceives a hard map cut. The current `nuke_outside`, `ancient_b` and `inferno_apps_a` controller scenes must be refined to implement and validate this continuous camera concept without compromising reproducibility of the measured sections.
+- **Date:** 2026-08-16
+
+## Benchmark agent-model variety — optional, cost-bounded
+
+- **Decision:** The benchmark may use a fixed, visually varied selection of common CT/T agent models instead of only standard bot models, but only when The Beast judges the change to be low-cost, reliable and free of meaningful new asset, dependency or reproducibility risk. The selection must be deterministic across benchmark runs; no random model assignment. Full coverage of every available agent model is explicitly out of scope.
+- **Reason:** A small amount of model/material variety can make the benchmark look more representative and may add modest rendering diversity, but it is not important enough to consume significant implementation time or destabilize the benchmark.
+- **Impact:** The Beast has discretion to include a small fixed set of common agent variants when implementation is cheap and clean. If it requires substantial extra work, asset handling, Workshop dependencies or troubleshooting, keep the current standard models and consider the item complete. This is a bonus/polish item and must not delay multi-map transitions, camera work, measurement quality or release readiness.
+- **Date:** 2026-08-17
+
 ## Decision format
 
 When a new decision is added, record:

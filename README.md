@@ -57,4 +57,44 @@ See [`docs/BRANCHING.md`](docs/BRANCHING.md) for the branch policy and [`docs/RO
 
 ## Current next step
 
-Inventory the saved prototypes, classify each component as **keep / revise / discard / defer**, and move only the approved parts into the new V1 development branch.
+The saved prototypes are inventoried in
+[`docs/PROTOTYPE_INVENTORY.md`](docs/PROTOTYPE_INVENTORY.md). The integrated
+[`iy-workflow`](docs/V1_LOCAL_WORKFLOW.md) now produces a read-only System
+Check, demo analysis, bounded replay, local viewer and review manifest. The next
+supported local start is `tools/dev/Start-V1Review.ps1`; it also provides the
+reduced review surface and source-bound local review-state persistence.
+Optimizer apply/restore remains a separate later safety boundary.
+
+## Demo Analyzer V1 foundation
+
+Local, traceable processing of CS2 demos. Automated markers are review cues and
+never proof of cheating.
+
+### Start
+
+```powershell
+.\tools\dev\Setup-V1.ps1
+.venv\Scripts\iy-analyze "D:\Path\match.dem.zst" --output results
+```
+
+The setup helper requires Python 3.13, installs the exact versions from
+`requirements.lock`, installs this project in editable mode without resolving a
+second dependency set, checks dependency consistency, runs the automated tests,
+and smoke-tests the CLI. It reuses a valid existing `.venv` and refuses an
+existing environment created with another Python version instead of deleting or
+replacing it. Use `-SkipTests` only when a separate test run is intentionally
+scheduled.
+
+The importer supports `.dem`, `.dem.zst`, and `.dem.bz2`. Compressed files are
+materialized only temporarily and deleted automatically after analysis.
+
+For a repeatable real-demo regression that keeps raw matches and detailed
+results local, see [`docs/DEMO_REGRESSION.md`](docs/DEMO_REGRESSION.md).
+
+### V1 analysis rules
+
+- A multi-kill is at least three kills by one player across the entire round.
+- Missing optional event channels must not abort parsing.
+- Missing footsteps are disclosed as a material data limitation.
+- Results use the versioned `iy.analysis/v1` schema.
+- Original demos and voice content are not stored in analysis results.

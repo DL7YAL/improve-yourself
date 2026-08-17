@@ -1,0 +1,2 @@
+*.vmap binary
+scripts/benchmark_controller.js -text
