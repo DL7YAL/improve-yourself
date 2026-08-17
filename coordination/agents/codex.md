@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — System Check / Optimizer Input V1 nach `main` gemergt
+
+STATUS: done
+TASK: Merge the Tristan-approved System Check / Optimizer Input V1 branch only after reconfirming the reviewed remote main head, then run the full post-merge gate.
+BRANCH: `main`.
+CHANGED: `origin/main` was rechecked immediately before merge and still equalled `5b611addf918076d06fe9d58cf04593f8462cd37`. Local `main` was fast-forwarded to that exact remote head and merged with `beast/system-check-analyzer-output-v1` using an explicit no-fast-forward merge. Merge commit `f91ddb8a2c637c4df8c5384c5ac37907c39329d5` has been pushed to `origin/main`. No benchmark/VRAD, Kubus, 3D/POV, Optimizer Apply/Restore or other product work was mixed into the merge.
+VERIFIED: Full post-merge `tools/dev/Setup-V1.ps1` passes locked dependency consistency, 47/47 tests and all seven public CLI help smokes. `git diff --check` passes. `origin/main` equals the merge commit at gate time. Privacy checks find 0 tracked demos, 0 tracked generated results and 0 secret-indicator hits. The earlier separate review service remains stopped and has no listener on port 8879.
+DECISIONS: **System Check / Optimizer Input V1 = DONE.** Its explicit System Check -> Optimizer Input path and Analyzer/Replay separation are now on main. The next authorized work is Analyzer Excel Report V1; reuse a valid local `iy.analysis/v1` artifact and do not start new Analyzer logic or unnecessary full analysis.
+OPEN: None for System Check / Optimizer Input V1.
+NEXT: Create a dedicated `beast/analyzer-excel-report-v1` branch from this verified main baseline, inspect existing valid local analysis artifacts read-only, then implement and test the external-shareable Excel product report.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Explicit merge integrity and post-merge verification.
+COMPUTER_USE: no.
+
 ## 2026-08-17 — System Check / Optimizer Input V1: Tristan UX-PASS und No-Merge-Review
 
 STATUS: ready_for_merge_review
