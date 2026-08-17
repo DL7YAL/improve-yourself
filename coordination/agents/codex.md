@@ -57,6 +57,18 @@ OPEN: WAITING_FOR_TRISTAN. A GPU driver update or another official baking/runtim
 NEXT: Tristan supplies or approves the GPU-/driver or documented baking-setup remedy. Then run Full Compile, launch the rebuilt map, instrument/record the automatic Inferno `TRANSITION_EXIT` applied camera pose, compare it with the static validated pose, and change only camera application/timing if warranted. Do not change smoke or geometry before that comparison.
 COMMIT/PR: Pending a status-only checkpoint after diff review; no source files changed.
 
+## 2026-08-17 — Read-only GPU/DXR diagnosis for GPU Lightmap Baking
+
+STATUS: waiting_for_tristan
+TASK: Determine, without changing any driver, registry, AMD Adrenalin or Hammer setting, whether the actual adapter and DirectX raytracing prerequisites explain Hammer's GPU Lightmap Baking refusal.
+BRANCH: `dev/v1-foundation`
+CHANGED: No repository, Steam, driver, AMD Adrenalin, registry or Hammer-setting changes. DxDiag was opened locally with online WHQL signature checking declined.
+VERIFIED: Windows reports one active display adapter: `AMD Radeon RX 7900 XTX` (PCI `VEN_1002&DEV_744C`), status `OK`, driver `32.0.31035.1003`, driver date 2026-07-24, 24,533 MB VRAM, 1920x1080 at 240 Hz. `cs2.exe -tools` is active on this single-adapter system. DxDiag reports DirectX 12, Direct3D DDI 12, feature levels through `12_2`, driver model `WDDM 3.2`, `DirectX 12 Ultimate: Aktiviert`, Direct3D acceleration enabled and `Es wurden keine Probleme gefunden`. Feature Level 12_2 requires DXR Tier 1.1; therefore the local adapter/runtime exposes the required DirectX raytracing capability.
+DIAGNOSIS: The `GPU ray tracing support required` dialog is not explained by an absent RX 7900 XTX, by missing DX12/DXR support, or by a visibly failed display driver. It is now a Hammer/CS2 GPU-Lightmap-Baking detection or configuration-path issue that needs a narrower Hammer-side read-only diagnosis before treating a driver update as a remedy.
+OPEN: WAITING_FOR_TRISTAN. No driver install/update, registry edit, Adrenalin change or compile-setting change was attempted.
+NEXT: With a new explicit scope, inspect Hammer/CS2's relevant local configuration and compile logs read-only for the exact raytracing-device detection path; only then decide whether an official driver or baking-configuration remedy is warranted. Preserve the no-smoke/no-geometry constraint until Full Compile can run and the marker-synchronized camera comparison resumes.
+COMMIT/PR: Pending status-only checkpoint after diff review; no source files changed.
+
 ## 2026-08-17 — Fade recovery and Inferno camera measurement
 
 STATUS: blocked
