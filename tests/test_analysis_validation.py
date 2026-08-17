@@ -6,6 +6,7 @@ from improve_yourself.model import DataQuality, Kill, Multikill
 from improve_yourself.service import build_analysis_user_view
 from improve_yourself.criteria import DEFAULT_PROFILE, default_review_hints
 from improve_yourself.preflight import build_preflight_payload
+from improve_yourself.analyzer_server import _render_preflight_v1, create_server
 
 
 def valid_payload() -> dict:
@@ -112,3 +113,27 @@ def test_preflight_exposes_only_real_scoreboard_and_profile_capabilities(tmp_pat
     sound = next(item for item in payload["criteria"] if item["id"] == "sound_information")
     assert active["status"] == "assessable"
     assert sound["status"] == "not_implemented"
+
+
+def test_desktop_preflight_keeps_replay_available_and_supports_demo_switching(tmp_path: Path) -> None:
+    demo = tmp_path / "match.dem"
+    demo.write_bytes(b"demo")
+    payload = build_preflight_payload(
+        demo, {"map_name": "de_mirage"},
+        [{"round_num": 1, "start": 10, "official_end": 100, "winner": "ct", "reason": "ct_killed"}],
+        [{"round_num": 1, "attacker_name": "A", "attacker_side": "ct", "victim_name": "B", "victim_side": "t", "headshot": True}],
+        ["rounds", "kills"], ["footsteps"], [], positions_available=True, view_angles_available=True,
+    )
+    output = _render_preflight_v1(payload, tmp_path / "analyzer.html")
+    html = output.read_text(encoding="utf-8")
+    assert 'data-tab="replay" disabled' not in html
+    assert "Andere Demo auswählen" in html
+    assert "window.pywebview.api.choose_demo" in html
+    assert "Lokales Nutzerprofil" in html
+
+    server = create_server(tmp_path / "server", 0)
+    try:
+        assert server.server_address[0] == "127.0.0.1"
+        assert "Noch keine Review-Szene" in (tmp_path / "server" / "analyzer.html").read_text(encoding="utf-8")
+    finally:
+        server.server_close()

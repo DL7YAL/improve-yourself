@@ -1,5 +1,21 @@
 # Codex
 
+## 2026-08-17 — Native Desktop Preview / Tactical-Replay-Pan
+
+STATUS: blocked
+TASK: Implement the approved native Preview shell, post-analysis demo switching and 2D replay pan, then validate a clean Windows distribution without changing Analyzer facts or system settings.
+BRANCH: `beast/analyzer-default-criteria-v1`.
+MODEL_PROFILE: terra
+MODEL_REASON: desktop runtime, packaging and UI integration
+COMPUTER_USE: no
+CHANGED: `Improve Yourself.exe` now uses the version-pinned `pywebview==6.2.1` shell instead of opening a default browser. It starts a dedicated dynamic loopback server on `127.0.0.1`, waits for that server before creating the embedded window, exposes only a native `.dem`/`.dem.zst`/`.dem.bz2` chooser, and shuts down the listener when the window loop returns. The Analyzer shell can select another demo in the same session, has an active Tactical Replay empty state, retains local analysis profiles and a small local display-name setting, and keeps My Improvement/Benchmark disabled. The existing replay transform now supports bounded pointer drag/pan while zoomed; reset restores exact 100% zoom and zero pan. The build script packages WebView/CLR runtime components and the external README describes the native-window start.
+VERIFIED: `pytest -q` PASS (57 tests), `pip check` PASS, `compileall` PASS, launcher `--help` PASS and `git diff --check` PASS. The native source and onedir launcher both created embedded Edge WebView2 child processes, bound only a dynamic `127.0.0.1` listener, served `analyzer.html` with HTTP 200 and had no listener after controlled process termination. A separate clean onedir contained only `_internal`, `Improve Yourself.exe`, `README.md`; it contained no demo, output, result, `.git`, `.venv`, coordination or runtime-data directory. The standard .NET ZIP `dist/Improve-Yourself-Preview-V1-Desktop.zip` is valid: 183,845,287 bytes, 2,951 entries, SHA-256 `9EE39FB884F63745E92AD83BC0F917E4B9A14B39D3A4A6E7828507E50C93F86D`, and Windows `Expand-Archive` succeeds.
+BLOCKER: The unattended process-launch check of the freshly extracted EXE creates `Improve Yourself Data` but exits before the loopback listener can be fetched. This differs from the source/onedir foreground check where WebView2 plus the loopback preflight were live. The captured pywebview diagnostics identify repeated WinForms accessibility/COM UI-thread exceptions against the installed WebView2 runtime. This is a desktop-host runtime stability failure, so the fresh ZIP is diagnostic only and must not be sent.
+DECISIONS: No Analyzer, replay-fact, system-check, optimizer, benchmark, VRAD or Kubus behavior was changed. No browser is deliberately launched, no cloud/upload exists, and no security control was changed.
+OPEN: `NOT_SEND_READY — native Desktop/WebView host is not stable in the clean EXE unattended launch gate`.
+NEXT: Reproduce the extracted EXE in a visible interactive Windows session, identify the smallest pywebview/WebView2 host compatibility correction, then repeat the full EXE Analysis → Match Review → Tactical Replay → Excel → second-demo switch gate before packaging.
+COMMIT/PR: Pending checkpoint commit after final repository status check.
+
 ## 2026-08-17 — Preview V1 ZIP re-review
 
 STATUS: waiting_for_tristan_zip_re_review

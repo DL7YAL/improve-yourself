@@ -19,12 +19,12 @@ system settings.
 
 ## Start
 
-Unpack `Improve-Yourself-Preview-V1.zip`, then double-click **Improve
-Yourself.exe**. Select a local `.dem`, `.dem.zst` or `.dem.bz2` file in the
-dialog. Improve Yourself starts a local-only review page in the default browser.
-Choose the profile, inspect the preflight, then select **Analyse starten**. The
-resulting Match Review links to the relevant Tactical Replay scenes. Original
-demos remain local.
+Unpack the Preview ZIP, then double-click **Improve Yourself.exe**. Improve
+Yourself opens as its own desktop window; no browser address or external
+website is needed. Select a local `.dem`, `.dem.zst` or `.dem.bz2` file in the
+native dialog. Choose the profile, inspect the preflight, then select
+**Analyse starten**. The resulting Match Review links to the relevant Tactical
+Replay scenes. Original demos remain local.
 
 The original-demo/tick review requires Counter-Strike 2 to be installed and is
 a transparent manual review step. The System Check and Optimizer Input are

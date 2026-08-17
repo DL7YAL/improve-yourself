@@ -65,6 +65,10 @@ def test_renders_self_contained_html_and_escapes_script_end(tmp_path: Path) -> N
     assert 'id="zoom-in"' in html
     assert 'ZOOM_MIN=.5,ZOOM_MAX=3' in html
     assert "ctx.scale(zoom,zoom)" in html
+    assert "512+panX,512+panY" in html
+    assert "pointerdown" in html
+    assert "function resetView()" in html
+    assert "clampPan()" in html
     assert 'id="event-info"' in html
     assert 'active_players' in html
     assert 'Utility: Rauch' in html
