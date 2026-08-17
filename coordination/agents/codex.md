@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — `dev/v1-foundation` merged into `main`
+
+STATUS: done
+TASK: Merge the Tristan-approved reviewed Foundation branch into the immediately rechecked remote `main`, push `main`, and preserve the merge evidence without combining unrelated work.
+BRANCH: `main`
+CHANGED: Immediately before mutation, `origin/main` was rechecked and still equalled the reviewed `96e13771e33d9625f7e80d3790a464d8c557b6a9`. A local `main` was created directly from that commit and merged with `dev/v1-foundation` using an explicit no-fast-forward merge. No VRAD, benchmark, Kubus, Steam, SDK, hardware, configuration or generated-result work was performed.
+VERIFIED: Merge commit `2f6d4c3e308f78ebb9a2a41999f79da0dbd466f6` has parents `96e1377` (`main` base) and `e643d23` (`dev/v1-foundation` final review). Merge diff validation passes and post-merge `pytest -q` passes 33/33. The working tree is clean except for ignored local result/cache directories.
+DECISIONS: V1 Foundation is now integrated into `main` under Tristan's explicit merge approval. This completes the Foundation branch boundary only; it does not change the parked external Workshop Tools/VRAD benchmark blocker, revive Kubus work, or declare the wider V1 roadmap complete.
+OPEN: `WAITING_FOR_TRISTAN` remains only for the separately parked official SDK/Valve VRAD asset/mount remedy. Do not retry the preflight or Full Compile without a changed official tools build, new evidence or explicit approval.
+NEXT: Push this documentation checkpoint to `origin/main`, then continue Improve Yourself only on newly authorized, non-benchmark work or await material SDK/Valve evidence for the parked benchmark.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Authorized source-control integration with immediate remote-head verification and post-merge validation.
+COMPUTER_USE: no
+
 ## 2026-08-17 — Final `dev/v1-foundation` review toward `main`
 
 STATUS: ready_for_review
