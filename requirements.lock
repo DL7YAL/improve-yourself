@@ -24,6 +24,7 @@ pyarrow==25.0.1
 Pygments==2.20.0
 pyparsing==3.3.2
 pytest==8.4.2
+pyinstaller==6.17.0
 python-dateutil==2.9.0.post0
 requests==2.34.2
 scipy==1.18.0

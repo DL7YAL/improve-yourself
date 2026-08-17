@@ -1,5 +1,15 @@
 # Codex
 
+## 2026-08-17 — Preview V1 Windows Packaging
+
+STATUS: blocked
+TASK: Produce the approved reproducible PyInstaller onedir Preview V1 package without a Python installation, then execute its clean-distribution gate.
+BRANCH: `beast/analyzer-default-criteria-v1`.
+CHANGED: `requirements.lock` pins PyInstaller 6.17.0. `tools/build/Build-Preview-V1.ps1` builds `dist/Improve-Yourself-Preview-V1/Improve Yourself/`, packages the application, dependencies, local map overviews and external README, and excludes repository/development output through the build boundary. `Improve Yourself.exe` opens a local demo picker for the Analyzer and supports a read-only `--system-check` path producing System Check plus Optimizer Input. The preflight UI rejects non-JSON analysis responses with an actionable HTTP error instead of blindly parsing HTML. `docs/PREVIEW_V1_PACKAGING.md` documents the build and gate.
+VERIFIED: Lock install reports PyInstaller 6.17.0; `pytest -q` is PASS (54 tests). A fresh copied onedir test ran `Improve Yourself.exe` outside the repository: Analyzer preflight HTTP 200, profile visible, `POST /api/start-analysis` HTTP 200 with `application/json` and real review URL. Its System Check smoke exited 0 and emitted `iy.system_check/v1` and `iy.optimizer_input/v1`. Distribution scan: 2,738 files / 457.12 MiB; no raw demos, output/result/system-report files, `.git`, absolute user/developer paths or Tristan/Codex/agent names in shipped external text after README correction. No Windows Application Control block occurred.
+BLOCKER: The current Analyzer Excel generator imports `@oai/artifact-tool` from a development-only Node runtime. It is neither a standard packaged dependency nor included in the PyInstaller distribution, so the requested complete external Excel path cannot pass honestly. No bypass, Node/Codex runtime copy, ZIP or SEND_READY claim was made.
+NEXT: Replace or package the Excel report generator as an ordinary external runtime dependency, then rerun the clean-distribution Analyzer → Replay → Excel and privacy gate before creating `Improve-Yourself-Preview-V1.zip`.
+
 ## 2026-08-17 — Analyzer V1 konsolidierte UX / Tactical Replay Utility / My Improvement
 
 STATUS: waiting_for_tristan_review

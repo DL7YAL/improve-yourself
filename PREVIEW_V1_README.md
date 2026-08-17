@@ -13,30 +13,23 @@ system settings.
 - 2D Tactical Replay with positions, view direction, documented kills, utility
   evidence and map zoom controls
 - Copyable original-demo/tick review command for Counter-Strike
-- Analyzer Excel report
 - Read-only System Check and Optimizer Input preview
 
 ## Start
 
-Install Python 3.13, then open PowerShell in this folder and run:
+Unpack `Improve-Yourself-Preview-V1.zip`, then double-click **Improve
+Yourself.exe**. Select a local `.dem`, `.dem.zst` or `.dem.bz2` file in the
+dialog. Improve Yourself starts a local-only review page in the default browser.
+Choose the profile, inspect the preflight, then select **Analyse starten**. The
+resulting Match Review links to the relevant Tactical Replay scenes. Original
+demos remain local.
 
-```powershell
-.\tools\dev\Setup-V1.ps1
-.\tools\dev\Start-V1Review.ps1 -Demo 'C:\Path\to\match.dem.zst'
-```
-
-The analyzer starts a local-only review page. Choose the profile, inspect the
-preflight, then select **Analyse starten**. The resulting Match Review links to
-the relevant Tactical Replay scenes. Original demos remain local.
-
-For an Excel report, run the analyzer and use:
-
-```powershell
-node tools\report\Build-AnalyzerExcelReport.mjs <analysis.json> <report.xlsx>
-```
-
-For the read-only System Check / Optimizer Input preview, see
-`docs/SYSTEM_CHECK_OPTIMIZER_BOUNDARY.md`.
+The original-demo/tick review requires Counter-Strike 2 to be installed and is
+a transparent manual review step. The System Check and Optimizer Input are
+read-only technical preview components. They can be generated locally with
+`Improve Yourself.exe --system-check`; the resulting JSON files stay in the
+local `Improve Yourself Data` folder. This Preview does not present a finished
+Optimizer Apply/Restore function.
 
 ## Important limits
 
@@ -50,6 +43,10 @@ For the read-only System Check / Optimizer Input preview, see
   neutral grid otherwise.
 - Original-demo tick navigation is a transparent manual review workflow, not
   an automatic in-game controller.
+- The repository's Analyzer Excel Report is not included in this Windows
+  package yet: its current generator depends on a development-only Node
+  artifact runtime. It must be replaced by a packageable report generator before
+  this preview can be distributed as the complete announced feature set.
 
 ## Privacy
 
