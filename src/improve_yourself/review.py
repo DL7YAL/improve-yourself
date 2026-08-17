@@ -16,7 +16,10 @@ def _load(path: Path) -> dict[str, Any]:
 
 
 def _status_class(value: str) -> str:
-    return {"OK": "ok", "REVIEW": "review", "ACTION_REQUIRED": "action"}.get(value, "review")
+    return {
+        "OK": "ok", "Hinweis": "review", "Verbesserung empfohlen": "action", "Problem": "action",
+        "Nicht prüfbar / unbekannt": "review", "REVIEW": "review", "ACTION_REQUIRED": "action",
+    }.get(value, "review")
 
 
 def _user_quality_warnings(quality: dict[str, Any]) -> list[str]:
@@ -28,6 +31,16 @@ def _user_quality_warnings(quality: dict[str, Any]) -> list[str]:
     if warnings and not readable:
         return ["Ein optionaler Datenkanal konnte nicht geladen werden; die betroffene Analyse bleibt eingeschränkt."]
     return readable
+
+
+def _system_user_view(item: dict[str, Any]) -> dict[str, str]:
+    view = item.get("user_view")
+    if isinstance(view, dict):
+        return {key: str(view.get(key, "")) for key in ("status", "priority", "relevance", "action")}
+    return {
+        "status": str(item.get("status", "REVIEW")), "priority": "informativ",
+        "relevance": "Technische Detailansicht; Nutzerbewertung liegt nicht vor.", "action": "Keine automatische Änderung wurde vorgenommen.",
+    }
 
 
 def render_review_surface(
@@ -50,12 +63,19 @@ def render_review_surface(
         raise ValueError("analysis and replay source hashes differ")
 
     system_cards = "".join(
-        f'<article class="check {_status_class(str(item.get("status", "")))}">'
+        f'<article class="check {_status_class(view["status"])}">'
         f'<div><strong>{html.escape(str(item.get("label", "")))}</strong>'
-        f'<span>{html.escape(str(item.get("status", "REVIEW")))}</span></div>'
-        f'<p>{html.escape(str(item.get("summary", "")))}</p></article>'
+        f'<span>{html.escape(view["status"]) } · {html.escape(view["priority"])}</span></div>'
+        f'<p>{html.escape(view["relevance"])}</p><p><strong>Nächster Schritt:</strong> {html.escape(view["action"])}</p></article>'
         for item in system.get("checks", [])
+        for view in [_system_user_view(item)]
     )
+    next_steps = system.get("user_summary", {}).get("next_steps", [])
+    system_actions = "".join(
+        f'<li><strong>{html.escape(str(item.get("priority", "wichtig")).title())}: '
+        f'{html.escape(str(item.get("label", "")))}</strong> — {html.escape(str(item.get("action", "")))}</li>'
+        for item in next_steps
+    ) or "<li>Keine wichtige oder kritische Aktion aus dem System Check.</li>"
     scenes = "".join(
         f'<li class="scene" data-scene-id="{html.escape(scene_id(scene), quote=True)}">'
         f'<div class="scene-head"><span>Runde {int(scene.get("round_number", 0))}</span>'
@@ -72,6 +92,11 @@ def render_review_surface(
     if not warnings:
         warnings = "<li>Keine Parserwarnung gemeldet.</li>"
     viewer_href = html.escape(viewer_path.relative_to(output_path.parent).as_posix(), quote=True)
+    analyzer_view = analysis.get("user_view") if isinstance(analysis.get("user_view"), dict) else {}
+    assessment = analyzer_view.get("assessment") if isinstance(analyzer_view.get("assessment"), dict) else {}
+    analysis_facts = "".join(f"<li>{html.escape(str(value))}</li>" for value in analyzer_view.get("facts", []))
+    analysis_indicators = "".join(f"<li>{html.escape(str(value))}</li>" for value in analyzer_view.get("indicators", []))
+    analysis_limits = "".join(f"<li>{html.escape(str(value))}</li>" for value in analyzer_view.get("limitations", []))
 
     document = _TEMPLATE.format(
         map_name=html.escape(str(analysis.get("map_name", "Unbekannte Karte"))),
@@ -79,9 +104,15 @@ def render_review_surface(
         source_hash_full=html.escape(str(analysis.get("source_sha256", "")), quote=True),
         kill_count=len(analysis.get("kills", [])),
         scene_count=len(replay.get("scenes", [])),
-        quality_status=html.escape(str(quality.get("status", "not_assessable"))),
+        quality_status=html.escape(str(assessment.get("status", quality.get("status", "Nicht prüfbar / unbekannt")))),
+        quality_message=html.escape(str(assessment.get("message", "Datenqualität wird in den Details gezeigt."))),
+        quality_action=html.escape(str(assessment.get("action", "Keine automatische Änderung wurde vorgenommen."))),
         system_cards=system_cards,
+        system_actions=system_actions,
         warnings=warnings,
+        analysis_facts=analysis_facts or "<li>Keine Zusammenfassung verfügbar.</li>",
+        analysis_indicators=analysis_indicators or "<li>Keine zusätzlichen Hinweise verfügbar.</li>",
+        analysis_limits=analysis_limits or warnings,
         scenes=scenes,
         viewer_href=viewer_href,
     )
@@ -111,9 +142,12 @@ h1{{font-size:25px;margin:0 auto 0 0}}h2{{font-size:18px;margin:0 0 14px}}.muted
 <section class="metrics"><article class="metric"><strong>{kill_count}</strong><span class="muted">erkannte Kills</span></article>
 <article class="metric"><strong>{scene_count}</strong><span class="muted">Review-Szenen</span></article>
 <article class="metric"><strong>{quality_status}</strong><span class="muted">Datenqualität</span></article></section>
+<section class="card"><h2>Was jetzt wichtig ist</h2><ul>{system_actions}</ul></section>
 <section class="card"><h2>System Check</h2><div class="checks">{system_cards}</div></section>
-<div class="layout"><section class="card"><h2>Datenqualität</h2><ul>{warnings}</ul></section>
-<section class="card"><h2>Szenen</h2><ul class="scenes">{scenes}</ul></section></div>
+<div class="layout"><section class="card"><h2>Sicher beobachtet</h2><ul>{analysis_facts}</ul><h2>Hinweise zur Prüfung</h2><ul>{analysis_indicators}</ul></section>
+<section class="card"><h2>Datenqualität und Grenzen</h2><p>{quality_message}</p><p><strong>Empfehlung:</strong> {quality_action}</p><ul>{analysis_limits}</ul></section></div>
+<section class="card"><h2>Technische Details</h2><p class="muted">Parserhinweise:</p><ul>{warnings}</ul></section>
+<section class="card"><h2>Szenen</h2><ul class="scenes">{scenes}</ul></section>
 <section class="card"><button id="save" class="button" type="button">Review-Stand speichern</button><span id="save-status" class="muted">Lokaler Review-Dienst wird geprüft …</span></section>
 <section class="card boundary"><strong>Menschliche Prüfung erforderlich.</strong> Automatische Marker sind Review-Hinweise und kein Cheat-Nachweis. Sichtlinie, Sound, Utility, Calls, Timing und Gegnerperspektive müssen im Kontext geprüft werden.</section>
 </main><script>const SOURCE_HASH="{source_hash_full}";const statusEl=document.querySelector('#save-status');

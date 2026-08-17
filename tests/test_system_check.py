@@ -13,6 +13,10 @@ def test_evaluates_complete_read_only_baseline() -> None:
     assert payload["schema"] == "iy.system_check/v1"
     assert payload["policy"] == {"read_only": True, "changes_applied": False, "elevation_requested": False}
     assert payload["summary"] == {OK: 8, REVIEW: 0, ACTION_REQUIRED: 0}
+    by_id = {item["id"]: item for item in payload["checks"]}
+    assert by_id["gpu"]["user_view"]["status"] == "Hinweis"
+    assert by_id["gpu"]["user_view"]["priority"] == "informativ"
+    assert by_id["motherboard"]["user_view"]["priority"] == "optional"
 
 
 def test_discloses_missing_and_actionable_facts() -> None:
@@ -23,6 +27,11 @@ def test_discloses_missing_and_actionable_facts() -> None:
     assert by_id["secure_boot"]["status"] == ACTION_REQUIRED
     assert by_id["tpm"]["status"] == REVIEW
     assert payload["summary"][REVIEW] > 0
+    assert by_id["memory"]["user_view"]["status"] == "Verbesserung empfohlen"
+    assert by_id["display"]["user_view"]["priority"] == "wichtig"
+    assert by_id["secure_boot"]["user_view"]["status"] == "Problem"
+    assert "Keine Änderung wurde vorgenommen." in by_id["secure_boot"]["user_view"]["action"]
+    assert payload["user_summary"]["next_steps"][0]["priority"] == "kritisch"
 
 
 def test_unknown_security_values_never_become_false() -> None:
@@ -32,3 +41,5 @@ def test_unknown_security_values_never_become_false() -> None:
     assert by_id["tpm"]["status"] == REVIEW
     assert by_id["secure_boot"]["evidence"]["enabled"] is None
     assert by_id["tpm"]["evidence"]["enabled"] is None
+    assert by_id["secure_boot"]["user_view"]["status"] == "Nicht prüfbar / unbekannt"
+    assert "kein negativer Befund" in by_id["secure_boot"]["user_view"]["relevance"]

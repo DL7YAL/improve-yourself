@@ -14,8 +14,50 @@ REVIEW = "REVIEW"
 ACTION_REQUIRED = "ACTION_REQUIRED"
 
 
+def _presentation(check_id: str, status: str) -> dict[str, str]:
+    if status == OK and check_id == "gpu":
+        return {
+            "status": "Hinweis", "priority": "informativ",
+            "relevance": "Der installierte Treiber wurde erkannt; seine Aktualität wird nicht automatisch bewertet.",
+            "action": "Nur bei konkreten Grafikproblemen den Herstellerstand manuell vergleichen. Keine automatische Änderung wurde vorgenommen.",
+        }
+    if status == REVIEW:
+        action = {
+            "secure_boot": "Bei Bedarf in Windows-Sicherheit oder UEFI manuell prüfen. Keine Änderung wurde vorgenommen.",
+            "tpm": "Bei Bedarf in Windows-Sicherheit oder UEFI manuell prüfen. Keine Änderung wurde vorgenommen.",
+        }.get(check_id, "Keine Aktion nötig, solange die Information nicht für eine Entscheidung benötigt wird.")
+        return {
+            "status": "Nicht prüfbar / unbekannt", "priority": "wichtig" if check_id in {"secure_boot", "tpm"} else "informativ",
+            "relevance": "Die Information fehlt; daraus wird kein negativer Befund abgeleitet.", "action": action,
+        }
+    if status == ACTION_REQUIRED:
+        if check_id in {"secure_boot", "tpm"}:
+            return {
+                "status": "Problem", "priority": "kritisch",
+                "relevance": "Kann die Anti-Cheat-Bereitschaft beeinflussen.",
+                "action": "Vor dem Spielen manuell prüfen und bei Bedarf nach Hersteller-/Windows-Anleitung aktivieren. Keine Änderung wurde vorgenommen.",
+            }
+        actions = {
+            "memory": "Für CS2 mehr Arbeitsspeicher einplanen oder andere speicherintensive Programme schließen. Keine Änderung wurde vorgenommen.",
+            "display": "In Windows und im Monitor-Menü prüfen, ob die höchste unterstützte Bildwiederholrate aktiv ist. Keine Änderung wurde vorgenommen.",
+        }
+        return {
+            "status": "Verbesserung empfohlen", "priority": "wichtig",
+            "relevance": "Kann die praktische Nutzung oder Spielbereitschaft beeinträchtigen.",
+            "action": actions.get(check_id, "Manuell prüfen; keine automatische Änderung wurde vorgenommen."),
+        }
+    return {
+        "status": "OK", "priority": "optional" if check_id == "motherboard" else "informativ",
+        "relevance": "Kein Handlungsbedarf aus dieser Prüfung.",
+        "action": "Keine Aktion erforderlich.",
+    }
+
+
 def _result(check_id: str, label: str, status: str, summary: str, evidence: dict[str, Any]) -> dict[str, Any]:
-    return {"id": check_id, "label": label, "status": status, "summary": summary, "evidence": evidence}
+    return {
+        "id": check_id, "label": label, "status": status, "summary": summary, "evidence": evidence,
+        "user_view": _presentation(check_id, status),
+    }
 
 
 def evaluate_system_facts(facts: dict[str, Any]) -> dict[str, Any]:
@@ -76,12 +118,25 @@ def evaluate_system_facts(facts: dict[str, Any]) -> dict[str, Any]:
         checks.append(_result(check_id, label, status, summary, {"enabled": value}))
 
     counts = {status: sum(c["status"] == status for c in checks) for status in (OK, REVIEW, ACTION_REQUIRED)}
+    user_checks = [check["user_view"] for check in checks]
+    priority_order = {"kritisch": 0, "wichtig": 1, "optional": 2, "informativ": 3}
+    next_steps = [
+        {"label": check["label"], "priority": check["user_view"]["priority"], "action": check["user_view"]["action"]}
+        for check in sorted(checks, key=lambda value: priority_order[value["user_view"]["priority"]])
+        if check["user_view"]["status"] not in {"OK", "Nicht prüfbar / unbekannt"}
+    ]
     return {
         "schema": SYSTEM_CHECK_SCHEMA,
         "generated_at_utc": datetime.now(UTC).isoformat(),
         "platform": "windows",
         "policy": {"read_only": True, "changes_applied": False, "elevation_requested": False},
         "summary": counts,
+        "user_summary": {
+            "counts": {status: sum(item["status"] == status for item in user_checks) for status in (
+                "OK", "Hinweis", "Verbesserung empfohlen", "Problem", "Nicht prüfbar / unbekannt"
+            )},
+            "next_steps": next_steps,
+        },
         "checks": checks,
     }
 

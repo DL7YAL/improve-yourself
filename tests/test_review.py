@@ -13,12 +13,18 @@ def write(path: Path, payload: dict) -> Path:
 
 def test_renders_reduced_review_surface_and_escapes_content(tmp_path: Path) -> None:
     source_hash = "a" * 64
-    system = write(tmp_path / "system.json", {"schema": "iy.system_check/v1", "checks": [
-        {"label": "CPU <fast>", "status": "OK", "summary": "Detected & safe"}
+    system = write(tmp_path / "system.json", {"schema": "iy.system_check/v1", "user_summary": {"next_steps": [
+        {"label": "Anzeige", "priority": "wichtig", "action": "Aktive Bildwiederholrate prüfen."}
+    ]}, "checks": [
+        {"label": "CPU <fast>", "status": "OK", "summary": "Detected & safe", "user_view": {
+            "status": "OK", "priority": "informativ", "relevance": "Kein Handlungsbedarf.", "action": "Keine Aktion erforderlich."
+        }}
     ]})
     analysis = write(tmp_path / "analysis.json", {
         "schema": "iy.analysis/v1", "source_sha256": source_hash, "map_name": "de_mirage",
         "kills": [{}, {}], "data_quality": {"status": "limited", "warnings": ["footsteps: KeyError: raw", "No <sound>"]},
+        "user_view": {"facts": ["2 Kills wurden gelesen."], "indicators": ["Kein Cheat-Nachweis."],
+                      "limitations": ["Schritt-Ereignisse fehlen."], "assessment": {"status": "Hinweis", "message": "Teilweise Daten.", "action": "Nicht hineininterpretieren."}},
     })
     replay = write(tmp_path / "replay.json", {
         "schema": "iy.replay/v1", "source_sha256": source_hash,
@@ -35,6 +41,11 @@ def test_renders_reduced_review_surface_and_escapes_content(tmp_path: Path) -> N
     assert "kein Cheat-Nachweis" in document
     assert "KeyError" not in document
     assert "No &lt;sound&gt;" in document
+    assert "Was jetzt wichtig ist" in document
+    assert "Aktive Bildwiederholrate prüfen." in document
+    assert "Sicher beobachtet" in document
+    assert "Kein Cheat-Nachweis." in document
+    assert "Datenqualität und Grenzen" in document
 
 
 def test_rejects_mismatched_sources(tmp_path: Path) -> None:

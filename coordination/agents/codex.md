@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — System Check / Analyzer Output V1: technische UX-Fertigmeldung
+
+STATUS: waiting_for_tristan
+TASK: Make existing read-only System Check and Demo Analyzer output understandable, prioritized and actionable without rebuilding their technical analysis or changing system state.
+BRANCH: `beast/system-check-analyzer-output-v1` from `main` `5b611ad`.
+CHANGED: System Check retains `iy.system_check/v1` technical status/evidence and adds additive user presentation per check: one of `OK`, `Hinweis`, `Verbesserung empfohlen`, `Problem` or `Nicht prüfbar / unbekannt`, plus priority (`kritisch`, `wichtig`, `optional`, `informativ`), relevance and a concrete manual action. It never claims a missing fact is negative or performs a change. Analyzer retains `iy.analysis/v1` raw facts and adds an additive `user_view` that separates secure facts, review hints and limitations; it keeps the explicit no-cheat-proof boundary. The existing workflow review page now makes "Was jetzt wichtig ist", facts, hints and data limits primary, while parser details remain secondary.
+VERIFIED: New unit coverage verifies actionable/unknown System states, priority order, manual-action wording, Analyzer fact/hint/limitation separation, and rendered user sections. Full `Setup-V1.ps1` passes dependency consistency, 36/36 tests and help-smokes for all five public CLIs. Real read-only System Check yielded 8 checks with user categories `OK` 5, `Hinweis` 1 and `Nicht prüfbar / unbekannt` 2; no system change was applied. A representative local real `de_anubis` analysis yielded 307 kills, 22 Multi-Kill review scenes and `Hinweis` data quality caused by one honestly shown limitation; the no-cheat-proof disclaimer is present. Fresh local integrated workflow `results/workflow-output-ux-v1/446eec75822c/workflow.json` is `iy.workflow/v1`, `READY_FOR_REVIEW`, and its generated review page contains priority, fact, hint, limitation and technical-detail sections, no automatic-change claim and the human-review boundary. Generated data remains ignored/local. Diff check passes; no tracked demo/result artifact or secret-indicator match exists.
+DECISIONS: The output improvement is additive presentation only: schemas, raw evidence, read-only policy and existing parsing/domain rules remain intact. No Optimizer, driver, registry, Steam/Workshop/VRAD, benchmark, 3D Viewer, Kubus or cloud work occurred.
+OPEN: `WAITING_FOR_TRISTAN — System Check / Analyzer UX review`. Tristan must judge whether the local review makes good/bad/important/action/uncertainty immediately understandable and appropriately non-alarmist. Beast does not claim that UX PASS.
+NEXT: Start the existing loopback-only review service for the fresh workflow and give Tristan the exact local URL. After PASS/FAIL, record only that bounded outcome; do not add further output features first.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Focused presentation-layer implementation with real local evidence and safety-boundary preservation.
+COMPUTER_USE: no UI control; local loopback review service only.
+
 ## 2026-08-17 — Viewer V1 nach `main` gemergt und Post-Merge-Gate PASS
 
 STATUS: done
