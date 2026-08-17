@@ -34,6 +34,17 @@ OPEN: BLOCKED on runtime placement evidence. Do not claim Ancient/Inferno visual
 NEXT: Convert and inspect the newly authored object transforms together with their referenced mesh data, then derive one directly observable camera target from the compiled placement. Re-run Full Compile and capture Ancient water/Red Room and Inferno stairs only after that coordinate is proven.
 COMMIT/PR: Pending checkpoint commit and push after final diff/test/sync verification.
 
+## 2026-08-17 — Workshop Tools / Hammer startup recheck
+
+STATUS: waiting_for_tristan
+TASK: Resume marker-synchronized Inferno-camera validation after the `9ecd909` checkpoint.
+BRANCH: `dev/v1-foundation`
+CHANGED: No product, map, controller, smoke, geometry, Steam or SDK files changed.
+VERIFIED: Steam is running. `cs2.exe -tools` starts Workshop Tools successfully and exposes the Asset Browser plus its Hammer tool entry. Starting Hammer from that entry reproduces `hammer.exe - Systemfehler`: `vstdlib.dll` is missing. Direct SDK-Hammer start reproduces the same error. This is an installed-tool runtime failure, not a repository build failure; the last verified repository state remains `9ecd909`, 33/33 tests and Full Compile `22 compiled, 0 failed, 1 skipped`.
+OPEN: WAITING_FOR_TRISTAN. Repairing/verifying the Steam SDK installation can change installed third-party files and was not performed.
+NEXT: Tristan repairs the Workshop Tools/CS2 SDK or explicitly approves Steam file verification. Then start Hammer through Workshop Tools, run Full Compile, log the automatic camera pose at Inferno `TRANSITION_EXIT`, compare it with static `0 3450 600 / 35 90 0`, and change only camera application/timing if needed.
+COMMIT/PR: Pending status-only checkpoint after test/diff review.
+
 ## 2026-08-17 — Fade recovery and Inferno camera measurement
 
 STATUS: blocked
