@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Final `dev/v1-foundation` review toward `main`
+
+STATUS: ready_for_review
+TASK: Perform the final no-merge review of `dev/v1-foundation` against the current remote `main`, including scope, working tree, local artefacts, secrets, handoffs, tests and documented V1-foundation exit criteria.
+BRANCH: `dev/v1-foundation` at `3a4ad8c` during validation; current remote `main` reviewed at `96e13771e33d9625f7e80d3790a464d8c557b6a9` (`Add Codex handoff channel`).
+CHANGED: No product, benchmark, Kubus, Steam, SDK, VRAD, Hammer, system or generated-result data changed. Remote `main` was fetched read-only into `FETCH_HEAD` solely to establish the real merge comparison. This entry records the review result only; no merge was performed.
+VERIFIED: `main` is the direct merge-base of the branch. The review range contains 57 intentional project files (3,826 additions / 22 deletions), including the consolidated V1 package, tests, locked dependencies, reproducible tools and versioned benchmark sources. `git diff --check FETCH_HEAD...HEAD` passes. The worktree has no untracked non-ignored files; ignored local content is limited to `.venv/`, `results/` and ordinary test/Python caches. No tracked generated/private result paths (demos, reports, HTML, logs, local configuration or secrets) are present. A tracked-text secret-indicator scan found no API token, private-key, password or API-key assignment pattern. `git fsck --no-reflogs` found only three classified unreachable historical checkpoint commits, not a ref or worktree inconsistency. `Setup-V1.ps1` passes on final HEAD: dependency consistency, 33/33 tests and help-smokes for all five shipped CLI entry points; Python `compileall` passes. The benchmark VMAP is the expected 401,300-byte versioned binary source and explicitly has `binary -diff -merge` attributes. The active source/tool legacy scan found only explanatory documentation/manifest wording, no imported or executed legacy-prototype runtime.
+DECISIONS: All documented V1-foundation exit criteria are met: reviewed consolidation, coherent clean module structure, reproducible locked setup, runnable baseline and no active legacy-folder dependency. The real-demo `iy.pipeline/v1` PASS and Tristan's seven-scene Mirage 2D-radar PASS close the automated and bounded human proof. The still-parked Workshop Tools/VRAD asset-mount issue is separately documented as a benchmark compile/runtime blocker, not a Foundation merge blocker.
+OPEN: No final-review blocker found. The broader V1 roadmap and the benchmark's external VRAD blocker remain separate from this Foundation merge decision.
+NEXT: Recommendation to Tristan: merge `dev/v1-foundation` into the reviewed `main` base after a final remote-head recheck at merge time; do not combine that merge with a VRAD retry, benchmark source change or Kubus work.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Repository-wide final review and merge-readiness assessment with source, test, artefact and secret boundaries.
+COMPUTER_USE: no
+
 ## 2026-08-17 — Tristan 2D-radar acceptance and V1-foundation reassessment
 
 STATUS: ready_for_review
