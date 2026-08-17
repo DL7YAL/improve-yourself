@@ -25,12 +25,19 @@ def test_integrates_artifacts_and_writes_review_manifest(tmp_path: Path, monkeyp
         output.write_text("<html></html>", encoding="utf-8")
         return output
 
-    def fake_review(system: Path | None, analysis: Path, replay: Path, viewer: Path, output: Path) -> Path:
+    def fake_preflight(source: Path, output: Path, max_bytes: int) -> Path:
+        output.mkdir(parents=True)
+        path = output / "preflight.json"
+        path.write_text(json.dumps({"source_sha256": hashlib.sha256(b"demo").hexdigest()}), encoding="utf-8")
+        return path
+
+    def fake_review(system: Path | None, analysis: Path, replay: Path, viewer: Path, output: Path, **kwargs: object) -> Path:
         assert system is None
         output.write_text("<html></html>", encoding="utf-8")
         return output
 
     monkeypatch.setattr(workflow, "analyze", fake_analyze)
+    monkeypatch.setattr(workflow, "preflight_demo", fake_preflight)
     monkeypatch.setattr(workflow, "export_replay", fake_replay)
     monkeypatch.setattr(workflow, "render_viewer", fake_viewer)
     monkeypatch.setattr(workflow, "render_review_surface", fake_review)
@@ -42,6 +49,7 @@ def test_integrates_artifacts_and_writes_review_manifest(tmp_path: Path, monkeyp
     assert payload["policy"]["changes_applied"] is False
     assert payload["policy"]["automated_cheat_verdict"] is False
     assert payload["artifacts"] == {
+        "preflight": "preflight/" + hashlib.sha256(b"demo").hexdigest()[:12] + ".preflight.json",
         "analysis": "analysis/analysis.json",
         "replay": "replay/replay.json", "viewer": "viewer.html",
         "review": "review.html",

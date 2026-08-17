@@ -3,11 +3,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from .replay import export_replay
+from .preflight import preflight_demo
 from .review import render_review_surface
 from .review_state import load_or_create_review_state
 from .service import analyze
@@ -34,6 +36,7 @@ def run_workflow(
     pos_x: float = 0,
     pos_y: float = 0,
     scale: float = 1,
+    preflight_path: Path | None = None,
 ) -> Path:
     demo = demo.resolve()
     if not demo.is_file():
@@ -42,6 +45,16 @@ def run_workflow(
     run_directory = output_root.resolve() / source_hash[:12]
     run_directory.mkdir(parents=True, exist_ok=True)
 
+    if preflight_path is None:
+        preflight_path = preflight_demo(demo, run_directory / "preflight", max_bytes=max_bytes)
+    preflight_payload = json.loads(preflight_path.read_text(encoding="utf-8"))
+    if preflight_payload.get("source_sha256") != source_hash:
+        raise ValueError("preflight and demo source hashes differ")
+    local_preflight = run_directory / "preflight" / f"{source_hash[:12]}.preflight.json"
+    local_preflight.parent.mkdir(parents=True, exist_ok=True)
+    if preflight_path.resolve() != local_preflight.resolve():
+        shutil.copyfile(preflight_path, local_preflight)
+    preflight_path = local_preflight
     analysis_path = analyze(demo, run_directory / "analysis", max_bytes=max_bytes)
     replay_path = export_replay(demo, analysis_path, run_directory / "replay", max_frames=max_frames)
     replay_payload = json.loads(replay_path.read_text(encoding="utf-8"))
@@ -52,10 +65,11 @@ def run_workflow(
         pos_x=pos_x, pos_y=pos_y, scale=scale,
     )
     review_path = render_review_surface(
-        None, analysis_path, replay_path, viewer_path, run_directory / "review.html"
+        None, analysis_path, replay_path, viewer_path, run_directory / "review.html", preflight_path=preflight_path
     )
 
     artifacts = {
+        "preflight": preflight_path.relative_to(run_directory).as_posix(),
         "analysis": analysis_path.relative_to(run_directory).as_posix(),
         "replay": replay_path.relative_to(run_directory).as_posix(),
         "viewer": viewer_path.relative_to(run_directory).as_posix(),

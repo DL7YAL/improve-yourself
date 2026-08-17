@@ -1,5 +1,17 @@
 # Codex
 
+## 2026-08-17 — Analyzer V1 Workflow / Profil / Preflight / Review für Tristan bereit
+
+STATUS: waiting_for_tristan_review
+TASK: Align the existing local Analyzer, 2D Replay and Excel basis to the V1 flow Profile → Demo Preflight → explicit Analysis → grouped human Review; do not change raw analysis facts or make a verdict.
+BRANCH: `beast/analyzer-default-criteria-v1`, based on merged main `2cd358c`.
+CHANGED: The active `Improve Default V1` profile is now data-driven and structures the planned criterion families without inventing thresholds. New `iy.analyzer_preflight/v1` derives only real pre-analysis facts: map, completed regular rounds, CT/T round score, player kill/death/headshot scoreboard, available/missing channels and per-criterion capability. `iy-analyzer-server` is loopback-only and shows this page before an explicit `Analyse starten` POST runs the existing workflow. The final review groups existing hints player → round → tick, links the specific scene in the 2D Tactical Replay, and provides a copyable, deliberately manual CS2 `playdemo …; demo_gototick …` review command. The Excel generator retains fact sheets and adds filterable `Review-Hinweise` ordered player → round → tick. The supported launcher now opens the preflight, while non-interactive `iy-workflow` remains available for technical artifact generation.
+VERIFIED: Fresh real local de_anubis preflight: 42 regular rounds, CT 25 / T 17 from documented round winners, 10 players, positions/view angles/kills/rounds available, footsteps unavailable. Its explicit local start request returned HTTP 200 and generated the existing fact-preserving analysis/replay/review artifacts (307 kills, 22 scenes, 115 headshots, 22 transparent hints). The report includes the new review sheet and formula scan has 0 errors. Full `tools/dev/Setup-V1.ps1` PASS: locked dependencies, 53 pytest tests, and all eight public CLI help smokes.
+DECISIONS: CT/T are shown as sides because the source has no reliable named-team field. CS2 review stays intentionally manual and copyable: Improve does not claim to place a compressed/local demo automatically into CS2 or to navigate a tick automatically. Missing data is not a negative result. Only `round_multikill` is active; all other requested families are visibly `not_implemented`, not simulated.
+OPEN: `WAITING_FOR_TRISTAN — Analyzer V1 workflow / profile / review UX`. No merge.
+NEXT: Tristan reviews the local preflight and generated result. Do not start another product function before the UX result.
+COMMIT/PR: Pending final diff/privacy check and review-ready checkpoint commit.
+
 ## 2026-08-17 — Analyzer Default Criteria / Filter V1 für Tristan-Review bereit
 
 STATUS: waiting_for_tristan_review

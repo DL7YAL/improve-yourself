@@ -23,6 +23,7 @@ iy-optimizer-input = "improve_yourself.optimizer_input:main"
 iy-system-check-review = "improve_yourself.system_review:main"
 iy-workflow = "improve_yourself.workflow:main"
 iy-review-server = "improve_yourself.review_server:main"
+iy-analyzer-server = "improve_yourself.analyzer_server:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

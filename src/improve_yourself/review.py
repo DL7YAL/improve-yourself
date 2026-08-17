@@ -62,9 +62,12 @@ def render_review_surface(
     replay_path: Path,
     viewer_path: Path,
     output_path: Path,
+    *,
+    preflight_path: Path | None = None,
 ) -> Path:
     analysis = _load(analysis_path)
     replay = _load(replay_path)
+    preflight = _load(preflight_path) if preflight_path is not None else {}
     system = _load(system_path) if system_path is not None else None
     if system is not None and system.get("schema") != "iy.system_check/v1":
         raise ValueError("expected iy.system_check/v1")
@@ -74,6 +77,8 @@ def render_review_surface(
         raise ValueError("expected iy.replay/v1")
     if analysis.get("source_sha256") != replay.get("source_sha256"):
         raise ValueError("analysis and replay source hashes differ")
+    if preflight and preflight.get("source_sha256") != analysis.get("source_sha256"):
+        raise ValueError("preflight and analysis source hashes differ")
 
     system_cards = "".join(
         f'<article class="check {_status_class(view["status"])}">'
@@ -96,23 +101,36 @@ def render_review_surface(
         f'<li>{html.escape(str(item.get("label", "")))}: <strong>{html.escape(str(item.get("status", "Nicht prüfbar / unbekannt")))}</strong></li>'
         for item in readiness.get("criteria", [])
     ) or "<li>Secure Boot und TPM 2.0 konnten nicht zusammengefasst werden.</li>"
-    scenes = "".join(
-        f'<li class="scene" data-scene-id="{html.escape(scene_id(scene), quote=True)}">'
-        f'<div class="scene-head"><span>Runde {int(scene.get("round_number", 0))}</span>'
-        f'<strong>{html.escape(str(scene.get("marker_player", "")))}</strong>'
-        f'<small>{len(scene.get("frames", []))} Frames · Tick {int(scene.get("start_tick", 0))}–{int(scene.get("end_tick", 0))}</small></div>'
-        f'<div class="scene-review"><select aria-label="Review-Status">'
-        f'<option value="unreviewed">Ungeprüft</option><option value="reviewed">Geprüft</option>'
-        f'<option value="discarded">Verworfen</option><option value="clip-worthy">Clipwürdig</option></select>'
-        f'<textarea maxlength="2000" rows="2" placeholder="Optionale Notiz" aria-label="Review-Notiz"></textarea></div></li>'
-        for scene in replay.get("scenes", [])
-    ) or '<li class="empty">Keine Multi-Kill-Szenen in dieser Demo.</li>'
+    viewer_href = html.escape(viewer_path.relative_to(output_path.parent).as_posix(), quote=True)
+    scene_index = {(int(scene.get("round_number", 0)), str(scene.get("marker_player", "")), int(scene.get("start_tick", 0))): index for index, scene in enumerate(replay.get("scenes", []))}
+    scene_markers = ", ".join(html.escape(str(scene.get("marker_player", ""))) for scene in replay.get("scenes", []))
+    grouped: dict[str, dict[int, list[dict[str, Any]]]] = {}
+    for hint in analysis.get("review_hints", []):
+        facts = hint.get("observed_facts", {}) if isinstance(hint, dict) else {}
+        player = str(facts.get("player", "Unbekannt"))
+        grouped.setdefault(player, {}).setdefault(int(facts.get("round_number", 0)), []).append(hint)
+    demo_command_name = str(preflight.get("source_name", analysis.get("source_name", "demo"))).removesuffix(".zst").removesuffix(".dem")
+    review_groups = []
+    for player in sorted(grouped, key=str.casefold):
+        rounds = []
+        for round_number, hints in sorted(grouped[player].items()):
+            entries = []
+            for hint in sorted(hints, key=lambda value: int(value.get("observed_facts", {}).get("first_tick", 0))):
+                facts = hint.get("observed_facts", {})
+                tick = int(facts.get("first_tick", 0))
+                index = scene_index.get((round_number, player, tick))
+                tactical = f'<a class="button small" href="{viewer_href}?scene={index}">Tactical Replay öffnen</a>' if index is not None else '<span class="muted">Kein 2D-Szenenartefakt verfügbar.</span>'
+                command = f'playdemo "{demo_command_name}"; demo_gototick {tick}'
+                entries.append(f'<li class="hint"><strong>Tick {tick}</strong> · {html.escape(str(hint.get("criterion_label", "Review-Hinweis")))}<br><span>{html.escape(str(hint.get("message", "Vorhandene Fakten im Kontext prüfen.")))}</span><div class="actions">{tactical}<button class="copy" data-command="{html.escape(command, quote=True)}">CS2-Befehl kopieren</button></div><small>Originaldemo: Demo in den von CS2 verwendeten Demo-Ordner legen, CS2 starten und diesen vollständigen Konsolenbefehl ausführen. Die Tick-Navigation bleibt bewusst manuell prüfbar.</small></li>')
+            rounds.append(f'<section class="round-group"><h3>Runde {round_number}</h3><ul>{"".join(entries)}</ul></section>')
+        review_groups.append(f'<section class="player-group"><h2>{html.escape(player)}</h2>{"".join(rounds)}</section>')
+    scenes = "".join(review_groups) or '<p class="empty">Keine Review-Hinweise aus den aktiv bewertbaren Kriterien.</p>'
     quality = analysis.get("data_quality") or {}
     warnings = "".join(f"<li>{html.escape(value)}</li>" for value in _user_quality_warnings(quality))
     if not warnings:
         warnings = "<li>Keine Parserwarnung gemeldet.</li>"
-    viewer_href = html.escape(viewer_path.relative_to(output_path.parent).as_posix(), quote=True)
     analyzer_view = analysis.get("user_view") if isinstance(analysis.get("user_view"), dict) else {}
+    review_profile = analysis.get("review_profile") if isinstance(analysis.get("review_profile"), dict) else {}
     assessment = analyzer_view.get("assessment") if isinstance(analyzer_view.get("assessment"), dict) else {}
     analysis_facts = "".join(f"<li>{html.escape(str(value))}</li>" for value in analyzer_view.get("facts", []))
     analysis_indicators = "".join(f"<li>{html.escape(str(value))}</li>" for value in analyzer_view.get("indicators", []))
@@ -141,9 +159,11 @@ def render_review_surface(
         warnings=warnings,
         analysis_facts=analysis_facts or "<li>Keine Zusammenfassung verfügbar.</li>",
         analysis_indicators=analysis_indicators or "<li>Keine zusätzlichen Hinweise verfügbar.</li>",
-        analysis_limits=analysis_limits or warnings,
-        scenes=scenes,
-        viewer_href=viewer_href,
+            analysis_limits=analysis_limits or warnings,
+            scenes=scenes,
+            scene_markers=scene_markers,
+            viewer_href=viewer_href,
+            review_profile=html.escape(f"{review_profile.get('label', 'Kein Profil')} ({review_profile.get('version', '—')})"),
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(document, encoding="utf-8")
@@ -170,20 +190,22 @@ h1{{font-size:25px;margin:0 auto 0 0}}h2{{font-size:18px;margin:0 0 14px}}.muted
 .scene{{padding:11px 0;border-bottom:1px solid #26374d}}.scene-head{{display:grid;grid-template-columns:90px 1fr auto;gap:12px;align-items:center}}
 .scene-review{{display:grid;grid-template-columns:150px 1fr;gap:10px;margin-top:9px}}select,textarea{{background:#0b1727;color:#edf3fb;border:1px solid #334966;border-radius:7px;padding:8px}}textarea{{resize:vertical}}
 .button{{display:inline-block;background:#58a6ff;color:#07111e;text-decoration:none;font-weight:800;border-radius:9px;padding:11px 16px}}
+.button.small,.copy{{padding:7px 10px;font-size:13px;border:0;cursor:pointer;background:#58a6ff;color:#07111e;font-weight:800;border-radius:7px}}.player-group{{border-top:1px solid #334966;padding-top:10px;margin-top:14px}}.round-group{{margin:10px 0 0 12px}}.round-group h3{{font-size:15px}}.hint{{margin:8px 0;padding:10px;border-left:3px solid #ffca62;background:#0b1727;list-style:none}}.hint span,.hint small{{color:#b7c6d9;line-height:1.4}}.actions{{display:flex;gap:8px;margin:9px 0;flex-wrap:wrap}}
 .boundary{{border-color:#8b6b2d;background:#211c12;line-height:1.5}}#save{{border:0;cursor:pointer}}#save-status{{margin-left:12px}}@media(max-width:760px){{.layout{{grid-template-columns:1fr}}.scene-head,.scene-review{{grid-template-columns:1fr}}}}
 </style></head><body><main><header><div><h1>Improve Yourself · Match Review</h1>
 <div class="muted">{map_name} · Quelle {source_hash}</div></div><a class="button" href="{viewer_href}">Tactical Replay öffnen</a></header>
 <section class="metrics"><article class="metric"><strong>{kill_count}</strong><span class="muted">erkannte Kills</span></article>
 <article class="metric"><strong>{scene_count}</strong><span class="muted">Review-Szenen</span></article>
 <article class="metric"><strong>{quality_status}</strong><span class="muted">Datenqualität</span></article></section>
+<section class="card"><strong>Aktives Analyseprofil:</strong> {review_profile}</section>
 {system_section}
 <div class="layout"><section class="card"><h2>Sicher beobachtet</h2><ul>{analysis_facts}</ul><h2>Hinweise zur Prüfung</h2><ul>{analysis_indicators}</ul></section>
 <section class="card"><h2>Datenqualität und Grenzen</h2><p>{quality_message}</p><p><strong>Empfehlung:</strong> {quality_action}</p><ul>{analysis_limits}</ul></section></div>
 <section class="card"><h2>Technische Details</h2><p class="muted">Parserhinweise:</p><ul>{warnings}</ul></section>
-<section class="card"><h2>Szenen</h2><ul class="scenes">{scenes}</ul></section>
+<section class="card"><h2>Review-Hinweise</h2><p class="muted">Nach Spieler, Runde und Tick gruppiert. Ein Hinweis beschreibt vorhandene Fakten, keine Schuld oder Absicht.</p><div class="scenes">{scenes}</div><small class="muted">Szenenmarker: {scene_markers}</small></section>
 <section class="card"><button id="save" class="button" type="button">Review-Stand speichern</button><span id="save-status" class="muted">Lokaler Review-Dienst wird geprüft …</span></section>
 <section class="card boundary"><strong>Menschliche Prüfung erforderlich.</strong> Automatische Marker sind Review-Hinweise und kein Cheat-Nachweis. Sichtlinie, Sound, Utility, Calls, Timing und Gegnerperspektive müssen im Kontext geprüft werden.</section>
 </main><script>const SOURCE_HASH="{source_hash_full}";const statusEl=document.querySelector('#save-status');
 function controls(){{return [...document.querySelectorAll('.scene')].map(el=>({{el,scene_id:el.dataset.sceneId,state:el.querySelector('select').value,note:el.querySelector('textarea').value}}))}}
 async function loadState(){{try{{const response=await fetch('/api/review-state',{{cache:'no-store'}});if(!response.ok)throw new Error('API nicht verfügbar');const data=await response.json();const byId=new Map(data.scenes.map(x=>[x.scene_id,x]));for(const c of controls()){{const item=byId.get(c.scene_id);if(item){{c.el.querySelector('select').value=item.state;c.el.querySelector('textarea').value=item.note}}}}statusEl.textContent='Gespeicherter lokaler Review-Stand geladen.'}}catch(error){{statusEl.textContent='Zum Speichern über iy-review-server öffnen; die statische Ansicht bleibt lesbar.'}}}}
-document.querySelector('#save').onclick=async()=>{{statusEl.textContent='Speichert …';const payload={{schema:'iy.review_state/v1',source_sha256:SOURCE_HASH,scenes:controls().map(c=>({{scene_id:c.scene_id,state:c.state,note:c.note}}))}};try{{const response=await fetch('/api/review-state',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(payload)}});const data=await response.json();if(!response.ok)throw new Error(data.error||'Speichern fehlgeschlagen');statusEl.textContent='Review-Stand lokal gespeichert.'}}catch(error){{statusEl.textContent='Speichern nicht möglich: '+error.message}}}};loadState();</script></body></html>'''
+document.querySelector('#save').onclick=async()=>{{statusEl.textContent='Speichert …';const payload={{schema:'iy.review_state/v1',source_sha256:SOURCE_HASH,scenes:controls().map(c=>({{scene_id:c.scene_id,state:c.state,note:c.note}}))}};try{{const response=await fetch('/api/review-state',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(payload)}});const data=await response.json();if(!response.ok)throw new Error(data.error||'Speichern fehlgeschlagen');statusEl.textContent='Review-Stand lokal gespeichert.'}}catch(error){{statusEl.textContent='Speichern nicht möglich: '+error.message}}}};document.querySelectorAll('.copy').forEach(button=>button.onclick=async()=>{{try{{await navigator.clipboard.writeText(button.dataset.command);button.textContent='Befehl kopiert';}}catch(error){{button.textContent=button.dataset.command;}}}});loadState();</script></body></html>'''

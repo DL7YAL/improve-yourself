@@ -133,6 +133,7 @@ const replay=MODEL.replay,radar=MODEL.radar,canvas=document.querySelector('#canv
 const sceneEl=document.querySelector('#scene'),frameEl=document.querySelector('#frame'),playEl=document.querySelector('#play'),speedEl=document.querySelector('#speed'),eventEl=document.querySelector('#event-info'),sceneInfoEl=document.querySelector('#scene-info');let playing=false,timer=null,img=null;
 document.querySelector('#map').textContent=replay.map_name;document.querySelector('#quality').textContent=`${replay.scenes.length} Szenen · ${replay.data_quality.omitted_incomplete_player_snapshots} ausgelassene Snapshots`;
 replay.scenes.forEach((s,i)=>sceneEl.add(new Option(`Runde ${s.round_number} · ${s.marker_player} · ${s.events?.length||0} Kills`,i)));
+const requestedScene=Number(new URLSearchParams(location.search).get('scene'));if(Number.isInteger(requestedScene)&&requestedScene>=0&&requestedScene<replay.scenes.length)sceneEl.value=String(requestedScene);
 if(radar.data_uri){img=new Image();img.onload=draw;img.src=radar.data_uri}else document.querySelector('#notice').textContent='Kein Radar eingebettet – relative Weltansicht.';
 function scene(){return replay.scenes[Number(sceneEl.value)||0]}function frame(){return scene()?.frames[Number(frameEl.value)||0]}
 function project(p,players){if(img)return[(p.x-radar.pos_x)/radar.scale*canvas.width/img.naturalWidth,(radar.pos_y-p.y)/radar.scale*canvas.height/img.naturalHeight];

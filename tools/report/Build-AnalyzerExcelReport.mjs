@@ -34,9 +34,10 @@ const roundSheet = workbook.worksheets.add("Runden");
 const playerSheet = workbook.worksheets.add("Spieler");
 const killSheet = workbook.worksheets.add("Kills");
 const sceneSheet = workbook.worksheets.add("Multi-Kills & Szenen");
+const hintSheet = workbook.worksheets.add("Review-Hinweise");
 const qualitySheet = workbook.worksheets.add("Datenqualität");
 const infoSheet = workbook.worksheets.add("Info");
-for (const sheet of [overview, roundSheet, playerSheet, killSheet, sceneSheet, qualitySheet, infoSheet]) sheet.showGridLines = false;
+for (const sheet of [overview, roundSheet, playerSheet, killSheet, sceneSheet, hintSheet, qualitySheet, infoSheet]) sheet.showGridLines = false;
 
 const palette = { navy: "#102A43", blue: "#1F5A94", sky: "#DCEEFF", pale: "#F5F9FD", border: "#C9D7E6", amber: "#FFF2CC", red: "#FCE4D6", green: "#E2F0D9", text: "#172B4D", white: "#FFFFFF" };
 const title = (sheet, text, range) => {
@@ -125,6 +126,14 @@ header(sceneSheet, "A2:J2"); body(sceneSheet, `A3:J${scenes.length + 2}`); scene
 sceneSheet.tables.add(`A2:J${scenes.length + 2}`, true, "ScenesTable"); sceneSheet.freezePanes.freezeRows(2);
 sceneSheet.getRange("A:A").format.columnWidth = 12; sceneSheet.getRange("B:B").format.columnWidth = 22; sceneSheet.getRange("C:E").format.columnWidth = 14; sceneSheet.getRange("F:F").format.columnWidth = 42; sceneSheet.getRange("G:H").format.columnWidth = 24; sceneSheet.getRange("I:I").format.columnWidth = 18; sceneSheet.getRange("J:J").format.columnWidth = 46; sceneSheet.getRange(`F3:J${scenes.length + 2}`).format.wrapText = true;
 
+title(hintSheet, "Review-Hinweise · Spieler → Runde → Tick", "A1:H1");
+hintSheet.getRange("A2:H2").values = [["Spieler", "Runde", "Tick", "Kategorie", "Auslösendes Kriterium", "Schwelle", "Beobachtete Fakten", "Review-Aktion"]];
+const hints = (analysis.review_hints || []).slice().sort((a, b) => String(a.observed_facts?.player || "").localeCompare(String(b.observed_facts?.player || ""), "de") || Number(a.observed_facts?.round_number || 0) - Number(b.observed_facts?.round_number || 0) || Number(a.observed_facts?.first_tick || 0) - Number(b.observed_facts?.first_tick || 0));
+const hintRows = hints.length ? hints.map((hint) => { const facts = hint.observed_facts || {}; return [facts.player || "Unbekannt", facts.round_number || "—", facts.first_tick || "—", hint.category || "review_hint", hint.criterion_label || hint.criterion_id || "Unbekannt", hint.threshold ? `${hint.threshold.field} ${hint.threshold.operator} ${hint.threshold.value}` : "—", hint.message || "Vorhandene Fakten im Kontext prüfen.", "Tactical Replay öffnen; Originaldemo mit Tick im CS2-Kontext prüfen"]; }) : [["Keine aktiven Hinweise", "—", "—", "—", "—", "—", "Für dieses Profil und diese Demo wurden keine bewertbaren Hinweise erzeugt.", "—"]];
+hintSheet.getRange(`A3:H${hintRows.length + 2}`).values = hintRows;
+header(hintSheet, "A2:H2"); body(hintSheet, `A3:H${hintRows.length + 2}`); hintSheet.tables.add(`A2:H${hintRows.length + 2}`, true, "ReviewHintsTable"); hintSheet.freezePanes.freezeRows(2);
+hintSheet.getRange("A:A").format.columnWidth = 24; hintSheet.getRange("B:C").format.columnWidth = 13; hintSheet.getRange("D:E").format.columnWidth = 27; hintSheet.getRange("F:F").format.columnWidth = 18; hintSheet.getRange("G:H").format.columnWidth = 48; hintSheet.getRange(`G3:H${hintRows.length + 2}`).format.wrapText = true;
+
 title(qualitySheet, "Datenqualität · was verfügbar ist und was fehlt", "A1:D1");
 section(qualitySheet, "Bewertung", "A3:D3");
 qualitySheet.getRange("A4:B6").values = [["Status", analysis.data_quality?.status || "unbekannt"], ["Einordnung", userView.assessment?.status || "Nicht prüfbar / unbekannt"], ["Empfehlung", userView.assessment?.action || "Keine automatische Interpretation."]];
@@ -171,7 +180,7 @@ const keyCheck = await workbook.inspect({ kind: "table", range: "Übersicht!A1:H
 const formulaErrors = await workbook.inspect({ kind: "match", searchTerm: "#REF!|#DIV/0!|#VALUE!|#NAME\\?|#N/A", options: { useRegex: true, maxResults: 50 }, summary: "Analyzer report formula error scan" });
 const previewDir = path.join(path.dirname(outputPath), "previews");
 await fs.mkdir(previewDir, { recursive: true });
-for (const sheetName of ["Übersicht", "Runden", "Spieler", "Kills", "Multi-Kills & Szenen", "Datenqualität", "Info"]) {
+for (const sheetName of ["Übersicht", "Runden", "Spieler", "Kills", "Multi-Kills & Szenen", "Review-Hinweise", "Datenqualität", "Info"]) {
   const preview = await workbook.render({ sheetName, autoCrop: "all", scale: 1, format: "png" });
   await fs.writeFile(path.join(previewDir, `${sheetName.replaceAll(" ", "-").replaceAll("&", "and")}.png`), new Uint8Array(await preview.arrayBuffer()));
 }

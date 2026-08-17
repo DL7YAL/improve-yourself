@@ -1,9 +1,11 @@
 from copy import deepcopy
+from pathlib import Path
 
 from improve_yourself.validation import validate_analysis_payload
 from improve_yourself.model import DataQuality, Kill, Multikill
 from improve_yourself.service import build_analysis_user_view
 from improve_yourself.criteria import DEFAULT_PROFILE, default_review_hints
+from improve_yourself.preflight import build_preflight_payload
 
 
 def valid_payload() -> dict:
@@ -89,3 +91,24 @@ def test_default_profile_emits_transparent_multikill_review_hints() -> None:
     assert hint["threshold"]["value"] == 3
     assert hint["observed_facts"]["kill_count"] == 3
     assert hint["verdict"] == "review_hint"
+
+
+def test_preflight_exposes_only_real_scoreboard_and_profile_capabilities(tmp_path: Path) -> None:
+    demo = tmp_path / "match.dem"
+    demo.write_bytes(b"demo")
+    rounds = [
+        {"round_num": 1, "start": 10, "official_end": 100, "winner": "ct", "reason": "ct_killed"},
+        {"round_num": 2, "start": 110, "official_end": 200, "winner": "t", "reason": "target_bombed"},
+    ]
+    kills = [
+        {"round_num": 1, "attacker_name": "A", "attacker_side": "ct", "victim_name": "B", "victim_side": "t", "headshot": True},
+        {"round_num": 0, "attacker_name": "Knife", "victim_name": "B", "headshot": False},
+    ]
+    payload = build_preflight_payload(demo, {"map_name": "de_mirage"}, rounds, kills, ["rounds", "kills"], ["footsteps"], [], positions_available=True, view_angles_available=True)
+    assert payload["match"]["regular_rounds"] == 2
+    assert payload["match"]["teams"] == [{"id": "ct", "label": "CT", "rounds_won": 1}, {"id": "t", "label": "T", "rounds_won": 1}]
+    assert payload["match"]["players"] == [{"name": "A", "side": "CT", "kills": 1, "deaths": 0, "headshots": 1}, {"name": "B", "side": "T", "kills": 0, "deaths": 1, "headshots": 0}]
+    active = next(item for item in payload["criteria"] if item["id"] == "round_multikill")
+    sound = next(item for item in payload["criteria"] if item["id"] == "sound_information")
+    assert active["status"] == "assessable"
+    assert sound["status"] == "not_implemented"

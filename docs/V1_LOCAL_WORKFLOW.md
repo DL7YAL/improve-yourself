@@ -16,26 +16,26 @@ For Mirage with the local Awpy radar:
   -PosX -3230 -PosY 1713 -Scale 5
 ```
 
-The launcher validates input paths and numeric limits, runs the idempotent
-locked Python 3.13 setup without deleting an existing environment, executes the
-workflow, validates the returned manifest, prints the exact local review URL
-and then runs the loopback service in the foreground. `Ctrl+C` stops it. It does
-not silently open a browser, hide logs, upload data, elevate privileges or apply
-system/Optimizer changes.
+The launcher validates input paths and numeric limits, prepares the idempotent
+locked Python 3.13 baseline and starts a loopback-only Analyzer V1 session.
+It first shows the active profile and a read-only Demo-Preflight. Only the
+explicit **Analyse starten** action runs the existing analysis/replay workflow.
+`Ctrl+C` stops the local service. It does not silently open a browser, hide logs,
+upload data, elevate privileges or apply system/Optimizer changes.
 
 `-SkipSetup` is intended only when the baseline was already prepared and
-verified. `-NoServe` performs and validates the workflow but intentionally does
-not start the HTTP service; it exists for reproducible smoke tests and artifact
-generation.
+verified. For non-interactive artifact generation, invoke `iy-workflow`
+directly; the supported product launcher intentionally keeps the explicit
+Preflight-before-Analyse step interactive.
 
-`iy-workflow` connects the first usable local demo/replay path without applying
+`iy-workflow` executes the post-Preflight local demo/replay path without applying
 any system optimization or running a System Check:
 
 1. analyze one explicit local demo into `iy.analysis/v1`;
 2. export bounded Multi-Kill scenes into `iy.replay/v1`;
 3. create a self-contained local 2D viewer;
-4. create a reduced local review start page with data quality, scene list and
-   viewer link;
+4. create a local review page with grouped review hints, Tactical-Replay links
+   and a manual CS2 original-demo command for each relevant tick;
 5. write an `iy.workflow/v1` manifest linking those artifacts.
 
 ```powershell

@@ -42,8 +42,7 @@ $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $setupScript = Join-Path $PSScriptRoot 'Setup-V1.ps1'
-$workflowCli = Join-Path $repositoryRoot '.venv\Scripts\iy-workflow.exe'
-$reviewCli = Join-Path $repositoryRoot '.venv\Scripts\iy-review-server.exe'
+$analyzerCli = Join-Path $repositoryRoot '.venv\Scripts\iy-analyzer-server.exe'
 
 if (-not (Test-Path -LiteralPath $Demo -PathType Leaf)) {
     throw "Demo does not exist: $Demo"
@@ -69,19 +68,20 @@ try {
         }
     }
 
-    foreach ($entryPoint in @($workflowCli, $reviewCli)) {
+    foreach ($entryPoint in @($analyzerCli)) {
         if (-not (Test-Path -LiteralPath $entryPoint -PathType Leaf)) {
             throw "Required entry point is missing: $entryPoint. Run without -SkipSetup."
         }
     }
 
-    $workflowArguments = @(
+    $analyzerArguments = @(
         $demoPath, '--output', $OutputRoot,
         '--max-mib', [string]$MaxMiB,
-        '--max-frames', [string]$MaxFrames
+        '--max-frames', [string]$MaxFrames,
+        '--port', [string]$Port
     )
     if ($Radar) {
-        $workflowArguments += @(
+        $analyzerArguments += @(
             '--radar', $radarPath,
             '--pos-x', $PosX.ToString([Globalization.CultureInfo]::InvariantCulture),
             '--pos-y', $PosY.ToString([Globalization.CultureInfo]::InvariantCulture),
@@ -89,37 +89,11 @@ try {
         )
     }
 
-    Write-Host '==> Run local V1 workflow' -ForegroundColor Cyan
-    $workflowOutput = @(& $workflowCli @workflowArguments)
+    if ($NoServe) { throw 'NoServe is no longer supported for the interactive preflight; use iy-workflow for non-interactive artifact generation.' }
+    Write-Host '==> Start local Analyzer V1 preflight' -ForegroundColor Cyan
+    & $analyzerCli @analyzerArguments
     if ($LASTEXITCODE -ne 0) {
-        throw "Workflow failed with exit code $LASTEXITCODE."
-    }
-    $manifestText = @($workflowOutput | Where-Object { $_ -and $_.Trim() })[-1]
-    if (-not $manifestText -or -not (Test-Path -LiteralPath $manifestText -PathType Leaf)) {
-        throw 'Workflow did not return a valid manifest path.'
-    }
-    $manifestPath = (Resolve-Path -LiteralPath $manifestText).Path
-    $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-    if ($manifest.schema -ne 'iy.workflow/v1' -or $manifest.status -ne 'READY_FOR_REVIEW') {
-        throw 'Workflow manifest is not ready for review.'
-    }
-
-    $reviewUrl = "http://127.0.0.1:$Port/review.html"
-    Write-Host ''
-    Write-Host 'READY FOR HUMAN REVIEW' -ForegroundColor Green
-    Write-Host "Manifest: $manifestPath"
-    Write-Host "Review:   $reviewUrl" -ForegroundColor Cyan
-    Write-Host 'Local-only service; no data is uploaded and no system setting was changed.'
-
-    if ($NoServe) {
-        Write-Host 'NoServe selected; review service was not started.' -ForegroundColor Yellow
-        return
-    }
-
-    Write-Host 'Press Ctrl+C to stop the local review service.' -ForegroundColor Yellow
-    & $reviewCli $manifestPath --port ([string]$Port)
-    if ($LASTEXITCODE -ne 0) {
-        throw "Review service failed with exit code $LASTEXITCODE."
+        throw "Analyzer service failed with exit code $LASTEXITCODE."
     }
 }
 finally {
