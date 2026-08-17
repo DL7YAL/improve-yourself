@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — System Check / Optimizer Input V1: Tristan UX-PASS und No-Merge-Review
+
+STATUS: ready_for_merge_review
+TASK: Record Tristan's System Check / Optimizer Input V1 UX PASS, stop the local review service, and complete the final no-merge review without starting the approved next product priority early.
+BRANCH: `beast/system-check-analyzer-output-v1` at `1932614` before this status checkpoint; `origin/main` freshly verified at `5b611addf918076d06fe9d58cf04593f8462cd37`.
+CHANGED: Tristan accepted the separated system-diagnosis/optimizer-input architecture, Secure Boot/TPM, monitor/resolution/Hz, GPU/driver, chipset/currentness, fact/evaluation/unknown distinction, no-Apply boundary, and the accepted AMD-profile unknown state. The `iy-system-check-review` listener was cleanly interrupted after its successful review. No new product feature was started.
+VERIFIED: Direct post-stop check finds zero listeners on loopback port 8879. `git fetch origin` confirms the reviewed main SHA above is unchanged and is the branch merge base. Relevant closure gate passes: 47/47 tests and `pip check`; `git diff --check origin/main...HEAD` passes. Branch diff has no tracked demos, generated results or secret-indicator hits. The local real system/optimizer artifacts remain ignored. The complete test/CLI gate from `1932614` remains the immediately preceding evidence: dependency consistency, 47/47 tests and seven public CLI smokes.
+DECISIONS: System Check / Optimizer Input V1 is functionally and visually accepted. Do not begin Analyzer Excel Report V1 until an explicit merge authorization has been executed cleanly; do not merge autonomously now.
+OPEN: `WAITING_FOR_TRISTAN — System Check / Optimizer Input V1 merge review`.
+NEXT: Obtain Tristan's merge authorization. Immediately before merge, recheck `origin/main`; only if unchanged, merge/push this branch, run the post-merge gate, then begin the separately authorized Analyzer Excel Report V1.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Merge-boundary validation and evidence-preserving handoff.
+COMPUTER_USE: no; stopped loopback service only.
+
 ## 2026-08-17 — System Check / Optimizer Input V1: technische Abschlussprüfung
 
 STATUS: waiting_for_tristan
