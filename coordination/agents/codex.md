@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Kubus freeze and V1-foundation proof audit
+
+STATUS: review
+TASK: Reproducibly freeze the accepted Kubus V0 state, then close all locally executable V1-foundation proof checks without reopening the parked Workshop-Tools/VRAD diagnosis.
+BRANCH: `dev/v1-foundation` (Improve Yourself); Kubus is separately committed at local Foundry commit `3c8c717`.
+CHANGED: No product, benchmark, VRAD, Steam, driver, registry, Hammer, Smoke, geometry or controller source changed. Kubus V0 remains feature-frozen after its committed practical-use revalidation; its integrity audit remains reproducible. Project-status documentation now records the current proof evidence only. Local pipeline outputs and the real demo remain ignored.
+VERIFIED: Kubus integrity audit at `2026-08-17T04:47:32` returned exit `0` (`24` jobs, `23` healthy, `1` prior warning, `0` errors); its pre-existing untracked `shared/input/improve-v1-inventory/` was preserved. Improve Yourself is clean at `a552c83`. `pytest -q` passes `33/33`. `Setup-V1.ps1` passes Python-3.13 lockfile installation, dependency consistency, all tests and help-smokes for `iy-analyze`, `iy-system-check`, `iy-workflow`, `iy-replay-viewer` and `iy-review-server`. The complete `Run-V1Pipeline.ps1` run is PASS in `results/pipeline/20260817T044946-446eec75822c/pipeline-evidence.json`: schema `iy.pipeline/v1`, clean commit `a552c83`, SHA-256 `446eec75822c0cae5ca020296ad900307e573302b81c8beb5b5daa98623058b6`, `de_anubis`, 307 kills, 22 round-wide multikills, valid analysis contract/invariants and a correctly disclosed limited result (missing `footsteps`, two warnings). It records no demo path, player name or detailed kill data.
+DECISIONS: Kubus V0 is frozen for practical use: do not begin a Kubus/worker feature or worker-count extension. The narrow V1-foundation exit condition is met by coherent consolidated structure, reproducible setup and runnable baseline with no active legacy-folder dependency. The outstanding local human visual acceptance is not silently converted into an automated claim. The VRAD SDK asset/mount blocker remains parked; do not rerun its preflight or touch its configuration without a new official tools build, new evidence or Tristan's explicit approval.
+OPEN: (a) No further automated V1-foundation proof gap was found after the successful full pipeline. The bounded 2D real-radar sight check remains WAITING_FOR_TRISTAN because browser navigation cannot cross the local URL-policy boundary. (b) The only external compile/runtime proof gap is the parked Workshop Tools/VRAD asset-mount blocker: `check_raytracing_support.vrad3` cannot be read although VRAD selected the RX 7900 XTX. It prevents Full Compile and the marker-synchronized Nuke/Ancient/Inferno acceptance, not the V1 Analyzer baseline.
+NEXT: Commit/push this status-only proof checkpoint after final diff/test review. Then keep Improve Yourself priority on reviewable product gaps; resume the benchmark only after a material official SDK/Valve change or explicit new scope.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Repository-level proof audit, local regression validation and narrow status handoff; no system or product-behavior change.
+COMPUTER_USE: no
+
 STATUS: partial
 TASK: V1 consolidation: supported local launcher and startup validation
 BRANCH: `dev/v1-foundation`
