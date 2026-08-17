@@ -1,6 +1,8 @@
 from copy import deepcopy
 
 from improve_yourself.validation import validate_analysis_payload
+from improve_yourself.model import DataQuality, Kill, Multikill
+from improve_yourself.service import build_analysis_user_view
 
 
 def valid_payload() -> dict:
@@ -64,3 +66,14 @@ def test_invalid_marker_identity_is_reported_without_crashing() -> None:
     payload["multikills"][0]["player"] = ["not", "a", "name"]
     errors = validate_analysis_payload(payload)
     assert "multikills[0].player must be a non-empty string" in errors
+
+
+def test_user_summary_separates_facts_hints_and_missing_channels() -> None:
+    kills = [Kill(1, tick, "Player", f"Victim-{tick}") for tick in (10, 20, 30)]
+    markers = [Multikill(1, "Player", 3, 10, 30, ["Victim-10", "Victim-20", "Victim-30"])]
+    view = build_analysis_user_view(kills, markers, DataQuality("limited", ["footsteps"], []))
+
+    assert view["assessment"]["status"] == "Hinweis"
+    assert any("3 Kills" in value for value in view["facts"])
+    assert "kein Cheat-Nachweis" in view["indicators"][0]
+    assert "Schritt-Ereignisse fehlen" in view["limitations"][0]
