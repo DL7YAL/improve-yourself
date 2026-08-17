@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-17 — Post-manual-control environment recheck
+
+STATUS: waiting_for_tristan
+TASK: Safely re-establish the actual Windows/Steam/Workshop-Tools state after Tristan's manual control, then resume only the already approved Improve Yourself proof work.
+BRANCH: `dev/v1-foundation`
+CHANGED: No product, benchmark, Steam, SDK, VRAD, Hammer, renderer, GPU, driver, registry, Adrenalin, Smoke, geometry or controller setting changed. No Workshop Tools, Hammer, VRAD preflight or Full Compile was launched. Kubus V0 remains frozen and was not touched.
+VERIFIED: Read-only process inspection at 2026-08-17 04:53 UTC finds Steam running (fresh process start 04:38 UTC) but no `cs2.exe`, `hammer.exe`, `vrad3.exe` or relevant compiler process. The registered Steam root is `E:\Program Files (x86)\Steam`. CS2 App 730 manifest remains build `24701871`, `UpdateResult 0`, all Download/Stage byte counts `0`; SDK App 745 remains build/target `11399846` with the same zero-byte state. Their `LastPlayed` values and manifest write times changed consistently with the manual clean close, but build/depot state did not. No `check_raytracing_support.vrad3` loose asset exists, and no relevant VRAD/Hammer/script file has a modification time newer than the documented parked state. Improve Yourself is clean and synchronized at `f53457f`; `git diff --check` passes.
+DIAGNOSIS: The environmental state is materially unchanged from the parked external SDK asset/mount blocker. The only newer facts are a cleanly ended Tool session and a fresh Steam process, neither of which supplies a new SDK build, readable preflight asset or supported remediation. Repeating the already failing VRAD preflight or Full Compile would add no evidence.
+OPEN: WAITING_FOR_TRISTAN for the bounded real 2D-radar visual acceptance (local browser URL-policy boundary) and independently for an official CS2 Workshop Tools/SDK update, Valve support response, or explicit newly scoped remedy for the VRAD asset/mount blocker. The first item is the remaining V1 proof acceptance gate; the second blocks only the benchmark runtime compile/camera proof.
+NEXT: Tristan can perform the bounded 2D visual review when available. For the benchmark, first compare a future official CS2/SDK build or support guidance against the recorded build IDs; only with material new evidence or explicit approval run the single VRAD preflight again, and only after preflight exit `0` run Full Compile.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Read-only Windows/Steam state verification plus a narrow proof-handoff update; no product or system behavior change.
+COMPUTER_USE: no UI input; process, manifest and file-state inspection only.
+
 ## 2026-08-17 — Kubus freeze and V1-foundation proof audit
 
 STATUS: review
