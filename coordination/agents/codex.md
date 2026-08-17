@@ -1,5 +1,20 @@
 # Codex
 
+## 2026-08-17 — Preview V1 ZIP re-review
+
+STATUS: waiting_for_tristan_zip_re_review
+TASK: Investigate the reported external ZIP extraction failure without changing product code or package contents.
+BRANCH: `beast/analyzer-default-criteria-v1` at `bc149ec` (no product commit for this packaging-only repair).
+MODEL_PROFILE: terra
+MODEL_REASON: final distribution integrity diagnosis
+COMPUTER_USE: no
+VERIFIED: Original `Improve-Yourself-Preview-V1.zip` is locally valid and byte-identical to the previously reported artifact: 180,549,744 bytes, SHA-256 `DBCFCB9817C0F89DE92EFE6A4CC9F314DC852981D8073951C8AE517F402DB74B`, `PK` signature, .NET `ZipFile.OpenRead` PASS (2,769 entries) and Windows `Expand-Archive` PASS. The reported external failure therefore cannot be reproduced from the local original and is consistent with a damaged transfer/download copy.
+CHANGED: No product code or onedir content changed. Created a separately named standard ZIP directly with `System.IO.Compression.ZipFile.CreateFromDirectory`: `dist/Improve-Yourself-Preview-V1-Windows.zip`.
+RE-VERIFIED: New ZIP: 180,296,000 bytes / 171.94 MiB, SHA-256 `C03F5B8684E209EDA9B75F2F44A366E977D5583B68F0238526BDE12D1461B825`; .NET ZIP opening PASS, 2,739 entries, root `Improve Yourself.exe` present, forbidden-content scan 0. Fresh Windows `Expand-Archive` PASS into a new directory, then the exact extracted EXE started and served the local branded Analyzer UI at `127.0.0.1:8897` with HTTP 200 and `Analyse starten` present. The test listener was stopped. Privacy/path scan remains clean for raw demos, results, system reports, `.git`, `.venv`, Node, Artifact Tool, handoffs and project-specific developer identifiers.
+OPEN: `WAITING_FOR_TRISTAN — ZIP re-review`.
+NEXT: Tristan downloads/opens only `Improve-Yourself-Preview-V1-Windows.zip`, verifies the SHA-256 before unpacking if possible, then confirms normal Windows extraction.
+COMMIT/PR: Packaging-status documentation pending.
+
 ## 2026-08-17 — Improve Yourself Preview V1 UI, Excel und EXE-Paket
 
 STATUS: waiting_for_tristan_final_package_review
