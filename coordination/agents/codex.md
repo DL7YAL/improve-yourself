@@ -90,6 +90,21 @@ OPEN: BLOCKED on runtime placement evidence. Do not claim Ancient/Inferno visual
 NEXT: Convert and inspect the newly authored object transforms together with their referenced mesh data, then derive one directly observable camera target from the compiled placement. Re-run Full Compile and capture Ancient water/Red Room and Inferno stairs only after that coordinate is proven.
 COMMIT/PR: Pending checkpoint commit and push after final diff/test/sync verification.
 
+## 2026-08-20 — 3D / POV V1 technical preflight
+
+STATUS: blocked
+TASK: Technical preflight A-F before any 3D/POV product implementation
+BRANCH: `dev/v1-foundation`
+CHANGED: Added `docs/3D_POV_V1_PREFLIGHT.md` and updated only the 3D workstream in `coordination/CURRENT.md`; no analyzer, replay, renderer, benchmark, map, utility, Steam, Hammer, or system state changed.
+VERIFIED: Rebased the audit onto the current remote foundation before finalizing it. Inspected the active `iy.analysis/v1`, `iy.replay/v1`, workflow/viewer code and evidence, the legacy Tactical Replay parser and preserved real Mirage replay artifact, local Awpy 2.0.2 Anubis triangle data, and official Panda3D/Qt embedding/deployment documentation. The current branch already has a validated scene-only 2D contract and human Mirage radar PASS, but not full-match playback. Local `de_anubis.tri` contains 808,000 triangles with plausible bounds, while Awpy ties the resource set to build id 17595823 and supplies no accepted current-version/distribution proof. Current post-rebase repository regression suite passes: `33 passed in 1.60s`; `git diff --check` passes.
+DECISIONS: Recommend Panda3D only as the first disposable integration spike behind `ReplayRenderer`; do not bind the product contract to it. PySide6/Qt Quick 3D remains the fallback if Qt is first accepted as the native app shell. Final preflight status is `3D_POV_V1_BLOCKED`.
+OPEN: `iy.replay/v1` is sampled Multi-Kill scenes rather than full-match state; there is no central `ReplayController` or stable player-ID proof; current replay serialization does not contain the event/utility fields claimed by `docs/2D_VIEWER_FOUNDATION.md`; Anubis geometry currency/provenance/distribution is unresolved; and the accepted product surface is still HTML/loopback rather than a native desktop shell.
+NEXT: Implement Phase A only: evolve the existing replay contract to full-match canonical state and regression-test field/event/utility availability, tick identity, and player identity against the existing real Anubis input. Do not start a renderer until the data and geometry gates pass.
+MODEL_PROFILE: gpt-5.6-sol
+MODEL_REASON: Architecture preflight with a 34-commit remote divergence, conflicting evidence between documentation and serialization code, and distribution/provenance gates.
+COMPUTER_USE: no
+COMMIT/PR: Preflight documentation commit on `dev/v1-foundation`; no merge authorized
+
 ## 2026-08-17 — Workshop Tools / Hammer startup recheck
 
 STATUS: superseded
