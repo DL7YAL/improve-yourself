@@ -157,6 +157,25 @@ MODEL_REASON: Bounded controller implementation and deterministic timing/state t
 COMPUTER_USE: no
 COMMIT/PR: Controller checkpoint on `dev/v1-foundation`; no merge authorized
 
+## 2026-08-20 — 3D / POV V1 Slice B2 2D migration
+
+STATUS: done
+SLICE: B — shared control complete
+BRANCH: `dev/v1-foundation`
+CHANGED: Added `tactical_2d.py` as the renderer-only projection from validated `ReplayStore` frames and `ReplayController` contexts. `iy-replay-viewer` now accepts canonical `iy.replay/v2` manifests as well as compatibility `iy.replay/v1`, exposes scene/focus-player and requested/resolved tick state, and visibly disables automatic playback when timing is unavailable. Added migration/sampling/viewer tests and updated Slice-B/2D documentation. No 3D renderer, asset, camera, sightline, Benchmark, Optimizer or System Check change.
+DATA EVIDENCE: Real private Anubis v2 store (source `446eec75822c…`) contains 42 rounds/22 scenes. Event-preserving uniform display sampling retains scene boundaries and every event-bearing frame while capping ordinary intermediate draws. Self-contained V2 viewer is 11,503,307 bytes (10.97 MiB) and generated in 5.93 seconds; ignored/local only.
+ASSET EVIDENCE: n/a for Slice B. No Anubis geometry/radar asset was accepted or added.
+VERIFIED: 55/55 tests pass before final setup; focused tests prove controller scene resolution, stable identity/focus, omission only of non-renderable state, boundary/event-preserving sampling, V1 compatibility, V2 viewer source/tick/timing markers and script-tag escaping. Real V2 viewer generation passes below the 10-second first-view target. Automated screenshot was unavailable because no Edge/Chrome/Firefox binary is installed; no new visual-acceptance claim is made, and the previously accepted canvas projection/drawing code is unchanged.
+REGRESSIONS: `iy.replay/v1` input and all existing Analyzer/viewer/workflow/review/System Check/benchmark behavior remain supported and green in the repository suite.
+RISKS: The self-contained V2 viewer intentionally embeds scene windows, not all 252,401 full-match frames. Full truth remains in the hash-verified store. Real wall-clock playback remains unavailable without evidenced timing. A new human visual check is still required if the preserved canvas rendering itself is changed later.
+DECISIONS: Browser receives a renderer projection, not a second demo interpretation. Preserve all event-bearing frames even if that exceeds the nominal 256-frame display target. V1 compatibility remains until broader product migration is accepted.
+OPEN: Slice B is complete. An accepted distributable Anubis map asset, transform and LOS proof do not yet exist; renderer work must not begin before that gate.
+NEXT: Execute Slice C Asset Gate only: inventory candidate Anubis assets, establish provenance/distribution status, hashes, coordinate transform and known-point/LOS validation. Stop for Tristan if acceptance or licensing requires a product decision.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Bounded cross-contract viewer migration with compatibility and real-artifact performance validation.
+COMPUTER_USE: no; headless browser unavailable
+COMMIT/PR: Slice B completion checkpoint on `dev/v1-foundation`; no merge authorized
+
 ## 2026-08-17 — Workshop Tools / Hammer startup recheck
 
 STATUS: superseded

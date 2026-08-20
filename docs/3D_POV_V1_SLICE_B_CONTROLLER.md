@@ -1,6 +1,6 @@
 # 3D / POV V1 — Slice B1 shared ReplayController
 
-Status: `CONTROLLER_COMPLETE — 2D migration pending`
+Status: `SLICE_B_COMPLETE`
 
 Date: 2026-08-20
 
@@ -38,6 +38,16 @@ Consequences:
 - real ignored Anubis store smoke: 42 rounds, 22 scenes, scene seek resolves to its exact observed tick, timing unavailable, `play()` correctly blocked;
 - existing `iy.replay/v1` viewer remains unchanged and green.
 
+## 2D migration result
+
+The existing `iy-replay-viewer` now accepts either the compatibility `iy.replay/v1` JSON artifact or the canonical `iy.replay/v2` manifest. For V2 it constructs an `iy.tactical_2d_projection/v1` through `ReplayStore` and `ReplayController`; the browser receives renderer-ready coordinates and never parses or reinterprets demo state.
+
+The V2 view exposes scene and focus-player selection, requested/resolved tick labels, the shared-truth source marker and the explicit timing-unavailable state. Scene projection preserves the first frame, last frame and all event-bearing frames; additional frames are uniformly sampled to a maximum target of 256 per scene. This keeps canonical event identity while avoiding an impractical full-state HTML export.
+
+Real Anubis result: 42-round/22-scene store rendered to a self-contained 11.0 MiB viewer in 5.93 seconds. The prior unsampled prototype was approximately 91.9 MB and was not retained as a repository artifact. Generated HTML remains ignored/local.
+
+The local machine does not expose an installed Edge, Chrome or Firefox binary for an automated screenshot, so this slice has structural/HTML/runtime-generation validation but no new human visual acceptance claim. The already accepted V1 canvas projection/drawing code is preserved.
+
 ## Next
 
-Migrate the existing 2D tactical view's state consumption to `ReplayController` plus `iy.replay/v2`, initially proving seek/scrub/scene/player/view synchronization. Keep automatic playback visibly unavailable for this real demo until a trusted timebase is added. Do not add 3D rendering in that migration.
+Begin Slice C only: establish an accepted, distributable Anubis asset manifest with checksums, coordinate transform and known-point/LOS proof. Do not begin the renderer until that asset gate passes.

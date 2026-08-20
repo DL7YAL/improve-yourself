@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from improve_yourself.viewer import render_viewer, world_to_radar
+from test_replay_controller import _store
 
 
 def replay_payload() -> dict:
@@ -46,3 +47,16 @@ def test_rejects_wrong_schema(tmp_path: Path) -> None:
     source.write_text('{"schema":"wrong","coordinate_space":"cs2_world","scenes":[]}', encoding="utf-8")
     with pytest.raises(ValueError, match="iy.replay/v1"):
         render_viewer(source, tmp_path / "viewer.html")
+
+
+def test_renders_v2_store_with_controller_state_and_timing_boundary(tmp_path: Path) -> None:
+    store_root = tmp_path / "store"
+    store_root.mkdir()
+    store = _store(store_root, tick_rate=None)
+    result = render_viewer(store.manifest_path, tmp_path / "viewer-v2.html")
+    html = result.read_text(encoding="utf-8")
+    assert '"source_schema":"iy.replay/v2"' in html
+    assert '"requested_tick":14,"resolved_tick":12' in html
+    assert '"timing_available":false' in html
+    assert "Zeitbasis nicht verfügbar" in html
+    assert "gemeinsame Replay-Wahrheit v2" in html

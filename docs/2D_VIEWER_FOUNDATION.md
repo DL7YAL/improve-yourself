@@ -76,3 +76,14 @@ directions. Without a radar it deliberately falls back to a relative grid.
 The Source radar projection is `(world_x - pos_x) / scale` and
 `(pos_y - world_y) / scale`; contract tests pin both Mirage transform corners.
 The visual world-to-radar check remains separate from these math and HTML tests.
+
+## Canonical V2 migration
+
+`iy-replay-viewer` also accepts an `iy.replay/v2` manifest. This path loads only
+validated round chunks through `ReplayStore` and resolves scene/focus state
+through the shared `ReplayController`. A renderer-only tactical projection is
+embedded into the self-contained HTML; the browser does not parse demo state.
+
+When the manifest has no evidenced tick rate, automatic playback is visibly
+disabled while scene selection, player focus and canonical tick scrubbing stay
+available. The compatibility `iy.replay/v1` input remains supported.

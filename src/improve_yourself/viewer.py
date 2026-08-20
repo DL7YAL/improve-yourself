@@ -8,6 +8,10 @@ from pathlib import Path
 from typing import Any
 
 from .replay import REPLAY_SCHEMA
+from .replay_contract import REPLAY_V2_SCHEMA
+from .replay_controller import ReplayController
+from .replay_store import ReplayStore
+from .tactical_2d import TACTICAL_2D_PROJECTION_SCHEMA, build_tactical_2d_projection
 
 
 def world_to_radar(x: float, y: float, pos_x: float, pos_y: float, scale: float) -> tuple[float, float]:
@@ -18,8 +22,8 @@ def world_to_radar(x: float, y: float, pos_x: float, pos_y: float, scale: float)
 
 
 def _validate_replay(payload: dict[str, Any]) -> None:
-    if payload.get("schema") != REPLAY_SCHEMA:
-        raise ValueError(f"expected {REPLAY_SCHEMA} replay payload")
+    if payload.get("schema") not in (REPLAY_SCHEMA, TACTICAL_2D_PROJECTION_SCHEMA):
+        raise ValueError(f"expected {REPLAY_SCHEMA} or {REPLAY_V2_SCHEMA} replay payload")
     if payload.get("coordinate_space") != "cs2_world":
         raise ValueError("viewer requires cs2_world coordinates")
     if not isinstance(payload.get("scenes"), list):
@@ -44,6 +48,9 @@ def render_viewer(
     scale: float = 1,
 ) -> Path:
     payload = json.loads(replay_path.read_text(encoding="utf-8"))
+    if payload.get("schema") == REPLAY_V2_SCHEMA:
+        store = ReplayStore(replay_path)
+        payload = build_tactical_2d_projection(store, ReplayController(store))
     _validate_replay(payload)
     if radar_path is not None and scale <= 0:
         raise ValueError("radar scale must be positive")
@@ -66,7 +73,7 @@ def render_viewer(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Create a self-contained iy.replay/v1 2D viewer")
+    parser = argparse.ArgumentParser(description="Create a self-contained iy.replay/v1 or iy.replay/v2 2D viewer")
     parser.add_argument("replay", type=Path)
     parser.add_argument("--output", type=Path, default=Path("results/replay/viewer.html"))
     parser.add_argument("--radar", type=Path)
@@ -97,23 +104,25 @@ input[type=range]{flex:1;min-width:180px}.stage{position:relative;aspect-ratio:1
 canvas{width:100%;height:100%;background:#07101a;border-radius:8px}.pill{color:#a9bed7;font-size:13px}.warn{color:#ffc56e}
 </style></head><body><main class="shell">
 <div class="bar"><h1>Improve Yourself · 2D Replay</h1><span id="map" class="pill"></span><span id="quality" class="pill"></span></div>
-<section class="card bar"><label>Szene <select id="scene"></select></label><button id="play">▶ Abspielen</button><input id="frame" type="range" min="0" value="0"><span id="tick" class="pill"></span></section>
+<section class="card bar"><label>Szene <select id="scene"></select></label><label id="player-wrap" hidden>Spieler <select id="player"></select></label><button id="play">▶ Abspielen</button><input id="frame" type="range" min="0" value="0"><span id="tick" class="pill"></span></section>
 <section class="card stage"><canvas id="canvas" width="1024" height="1024"></canvas></section>
 <section class="card meta"><span class="pill">T = orange · CT = blau · Linie = Blickrichtung</span><span id="notice" class="pill warn"></span></section>
 </main><script>const MODEL=__IY_VIEWER_MODEL__;
 const replay=MODEL.replay,radar=MODEL.radar,canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d');
-const sceneEl=document.querySelector('#scene'),frameEl=document.querySelector('#frame'),playEl=document.querySelector('#play');let playing=false,timer=null,img=null;
-document.querySelector('#map').textContent=replay.map_name;document.querySelector('#quality').textContent=`${replay.scenes.length} Szenen · ${replay.data_quality.omitted_incomplete_player_snapshots} ausgelassene Snapshots`;
+const sceneEl=document.querySelector('#scene'),frameEl=document.querySelector('#frame'),playEl=document.querySelector('#play'),playerEl=document.querySelector('#player');let playing=false,timer=null,img=null;
+const isV2=replay.source_schema==='iy.replay/v2',timingAvailable=!isV2||replay.controller.timing_available;
+document.querySelector('#map').textContent=replay.map_name;document.querySelector('#quality').textContent=isV2?`${replay.scenes.length} Szenen · gemeinsame Replay-Wahrheit v2`:`${replay.scenes.length} Szenen · ${replay.data_quality.omitted_incomplete_player_snapshots} ausgelassene Snapshots`;
 replay.scenes.forEach((s,i)=>sceneEl.add(new Option(`Runde ${s.round_number} · ${s.marker_player}`,i)));
+if(isV2){document.querySelector('#player-wrap').hidden=false;playerEl.add(new Option('Kein Spieler gewählt',''));replay.players.forEach(p=>playerEl.add(new Option(p.display_name,p.player_id)));if(!timingAvailable){playEl.disabled=true;playEl.textContent='▶ Zeitbasis nicht verfügbar';document.querySelector('#notice').textContent='Navigation ist exakt; automatische Wiedergabe ist ohne belegte Tickrate deaktiviert.'}}
 if(radar.data_uri){img=new Image();img.onload=draw;img.src=radar.data_uri}else document.querySelector('#notice').textContent='Kein Radar eingebettet – relative Weltansicht.';
 function scene(){return replay.scenes[Number(sceneEl.value)||0]}function frame(){return scene()?.frames[Number(frameEl.value)||0]}
 function project(p,players){if(img)return[(p.x-radar.pos_x)/radar.scale*canvas.width/img.naturalWidth,(radar.pos_y-p.y)/radar.scale*canvas.height/img.naturalHeight];
  const xs=players.map(q=>q.x),ys=players.map(q=>q.y),minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys),span=Math.max(maxX-minX,maxY-minY,1);return[100+(p.x-minX)/span*824,924-(p.y-minY)/span*824]}
 function draw(){ctx.clearRect(0,0,1024,1024);if(img)ctx.drawImage(img,0,0,1024,1024);else{ctx.strokeStyle='#1c3046';for(let n=0;n<=1024;n+=128){ctx.beginPath();ctx.moveTo(n,0);ctx.lineTo(n,1024);ctx.stroke();ctx.beginPath();ctx.moveTo(0,n);ctx.lineTo(1024,n);ctx.stroke()}}
- const f=frame();if(!f)return;document.querySelector('#tick').textContent=`Tick ${f.tick} · Frame ${Number(frameEl.value)+1}/${scene().frames.length}`;
- for(const p of f.players){const [x,y]=project(p,f.players),color=p.side.toUpperCase()==='CT'?'#55aaff':'#ff9f43',a=p.yaw*Math.PI/180;ctx.strokeStyle=color;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*34,y-Math.sin(a)*34);ctx.stroke();ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();ctx.font='16px system-ui';ctx.fillStyle='#fff';ctx.fillText(p.name,x+14,y-12)}}
+ const f=frame();if(!f)return;const s=scene(),frameIndex=Number(frameEl.value),requested=frameIndex===0?(s.requested_tick??f.tick):f.tick,resolved=f.tick;document.querySelector('#tick').textContent=isV2?`Tick ${resolved} · angefordert ${requested} · Frame ${frameIndex+1}/${s.frames.length}`:`Tick ${f.tick} · Frame ${frameIndex+1}/${s.frames.length}`;
+ for(const p of f.players){const [x,y]=project(p,f.players),color=p.side.toUpperCase()==='CT'?'#55aaff':'#ff9f43',a=p.yaw*Math.PI/180,selected=!playerEl.value||playerEl.value===p.player_id;ctx.globalAlpha=selected?1:.35;ctx.strokeStyle=color;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*34,y-Math.sin(a)*34);ctx.stroke();ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();ctx.font='16px system-ui';ctx.fillStyle='#fff';ctx.fillText(p.name,x+14,y-12)}ctx.globalAlpha=1}
 function reset(){playing=false;clearInterval(timer);playEl.textContent='▶ Abspielen';const s=scene();frameEl.max=Math.max(0,(s?.frames.length||1)-1);frameEl.value=0;draw()}
-sceneEl.onchange=reset;frameEl.oninput=draw;playEl.onclick=()=>{playing=!playing;playEl.textContent=playing?'⏸ Pause':'▶ Abspielen';clearInterval(timer);if(playing)timer=setInterval(()=>{const max=Number(frameEl.max);frameEl.value=Number(frameEl.value)>=max?0:Number(frameEl.value)+1;draw()},100)};reset();</script></body></html>'''
+sceneEl.onchange=()=>{const s=scene();if(isV2)playerEl.value=s.focus_player_id||'';reset()};playerEl.onchange=draw;frameEl.oninput=draw;playEl.onclick=()=>{if(!timingAvailable)return;playing=!playing;playEl.textContent=playing?'⏸ Pause':'▶ Abspielen';clearInterval(timer);if(playing)timer=setInterval(()=>{const max=Number(frameEl.max);frameEl.value=Number(frameEl.value)>=max?0:Number(frameEl.value)+1;draw()},100)};if(isV2)playerEl.value=scene()?.focus_player_id||'';reset();</script></body></html>'''
 
 
 if __name__ == "__main__":
