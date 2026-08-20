@@ -29,6 +29,13 @@ This file records decisions that should not be repeatedly reopened without a con
 - **Impact:** The Beast has discretion to include a small fixed set of common agent variants when implementation is cheap and clean. If it requires substantial extra work, asset handling, Workshop dependencies or troubleshooting, keep the current standard models and consider the item complete. This is a bonus/polish item and must not delay multi-map transitions, camera work, measurement quality or release readiness.
 - **Date:** 2026-08-17
 
+## 3D / POV V1 view and replay boundary — locked
+
+- **Decision:** Tactical Replay V1 uses one canonical tick-based replay truth for 2D, First Person POV and one fixed Third-Person Analysis Camera. Evidence-qualified sightline visualization is mandatory V1 functionality. The Third-Person camera is a deterministic analysis preset, not a freecam/orbit/cinematic system. The views do not parse or independently reinterpret demo state, and missing state or map evidence is never invented.
+- **Reason:** Tick-preserving comparison across views is the product value of 3D/POV. A single replay contract prevents semantic drift, while fixed analytical cameras and qualified sightlines provide spatial learning value without expanding V1 into a game-engine or cinematic system.
+- **Impact:** The incompatible full-match contract is introduced as `iy.replay/v2`; `iy.replay/v1` remains a compatibility path until 2D migration is proven. First Person, fixed Third Person and sightlines are acceptance requirements. Freecam, orbit, cinematic direction, inferred geometry/state and renderer-owned playback are deferred and must not enter V1 implementation.
+- **Date:** 2026-08-20
+
 ## Decision format
 
 When a new decision is added, record:

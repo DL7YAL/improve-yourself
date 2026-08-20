@@ -105,6 +105,21 @@ MODEL_REASON: Architecture preflight with a 34-commit remote divergence, conflic
 COMPUTER_USE: no
 COMMIT/PR: Preflight documentation commit on `dev/v1-foundation`; no merge authorized
 
+## 2026-08-20 — 3D / POV V1 closed implementation specification
+
+STATUS: done
+TASK: Close the agreed 3D/POV Blueprint V1 into an implementation-ready specification without changing product code
+BRANCH: `dev/v1-foundation`
+CHANGED: Added `docs/3D_POV_V1_IMPLEMENTATION_SPEC.md`; recorded the locked 3D view/replay boundary in `docs/DECISIONS.md`; moved only the 3D workstream in `coordination/CURRENT.md` to `READY_FOR_IMPLEMENTATION`. No Analyzer, Replay, Viewer, Renderer, Benchmark, Optimizer, System Check, map asset, dependency, Steam/Hammer, or runtime code/state changed.
+VERIFIED: The specification defines all five required blocks: asset specification, shared `iy.replay/v2` ReplayFrame model, V1 test matrix, slice handoff/strict COMPLETE criteria, and fixed/adaptable/deferred V1/V2 scope. Mandatory First Person POV, deterministic fixed Third-Person Analysis Camera and evidence-qualified sightlines all consume one ReplayController and one tick truth. Proposed modules, schemas, identity hierarchy, data flow, interpolation prohibitions, asset failure states, real-Anubis acceptance, packaging/performance guardrails, risks and first slice are explicit. Repository regression and specification-structure checks are run before commit.
+DECISIONS: Settled product boundary is recorded, not reopened. `iy.replay/v2` is the incompatible canonical full-match contract; `iy.replay/v1` remains compatibility-only until 2D migration passes. Renderer choice remains behind `ReplayRenderer`; Slice A adds no renderer dependency. Freecam/orbit/cinematic camera and inferred data/geometry remain deferred.
+OPEN: Implementation has not started. Anubis asset currency/distribution and the accepted native shell remain later gates; they do not block Slice A's contract/capability work.
+NEXT: Implement Slice A only: immutable `iy.replay/v2` types, full-match builder/validator/store, stable identity and capability reporting, then run the private real-Anubis regression while keeping the entire current suite green.
+MODEL_PROFILE: gpt-5.6-sol
+MODEL_REASON: Closing cross-module replay, camera, asset, testing, packaging and scope contracts with long-lived compatibility consequences.
+COMPUTER_USE: no
+COMMIT/PR: Specification commit on `dev/v1-foundation`; no merge authorized
+
 ## 2026-08-17 — Workshop Tools / Hammer startup recheck
 
 STATUS: superseded
