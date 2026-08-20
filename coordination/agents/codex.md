@@ -139,6 +139,24 @@ MODEL_REASON: New canonical persisted contract over 2.5 million real states with
 COMPUTER_USE: no
 COMMIT/PR: Slice A implementation commit on `dev/v1-foundation`; no merge authorized
 
+## 2026-08-20 — 3D / POV V1 Slice B1 shared controller
+
+STATUS: done
+SLICE: B1 — shared ReplayController; 2D migration remains next
+BRANCH: `dev/v1-foundation`
+CHANGED: Added `replay_controller.py`, seven focused controller tests, read-only round descriptor access on `ReplayStore`, `docs/3D_POV_V1_SLICE_B_CONTROLLER.md`, and current/handoff status. No renderer, camera implementation, sightline, map asset, Benchmark, Optimizer, System Check or legacy `iy.replay/v1` behavior changed.
+DATA EVIDENCE: Direct `demoparser2.parse_header()` inspection of private real Anubis source `446eec75822c…` found format/version, patch, server, map and directory metadata, but no tick rate, playback duration or equivalent trusted timebase. Real manifest remains correctly `tick_rate=null`.
+VERIFIED: 51/51 tests pass; full `Setup-V1.ps1` passes dependency consistency and five public CLI help smokes; `compileall` and `git diff --check` pass. Real ignored Anubis store smoke loaded 42 rounds/22 scenes, resolved a scene seek at its exact canonical tick and confirmed that time-based `play()` is explicitly blocked while deterministic navigation remains available.
+REGRESSIONS: Existing Analyzer, `iy.replay/v1` viewer, workflow, review, System Check and benchmark tests remain green and unchanged.
+RISKS: Automatic wall-clock playback cannot be truthfully enabled for the real reference until a trusted timebase exists. Listener callbacks are synchronous by design in this core and renderer/UI scheduling remains outside this slice.
+DECISIONS: Do not infer FACEIT/CS2 64 Hz. Unknown timing is an explicit capability boundary: seek/scrub/event navigation work; play/advance raise `PlaybackTimingUnavailable`. Global demo-tick gaps between rounds remain canonical rather than being collapsed.
+OPEN: Existing 2D Tactical Replay still consumes compatibility `iy.replay/v1`; therefore cross-view shared-consumption proof is not complete. First Person, fixed Third Person and sightlines remain mandatory later V1 slices, not implemented here.
+NEXT: Migrate only the existing 2D tactical view's state/input path to `ReplayController` and `iy.replay/v2`; prove scene, player and requested/resolved tick synchronization and expose timing-unavailable state. Do not add a 3D renderer in that slice.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Bounded controller implementation and deterministic timing/state tests on the established replay contract.
+COMPUTER_USE: no
+COMMIT/PR: Controller checkpoint on `dev/v1-foundation`; no merge authorized
+
 ## 2026-08-17 — Workshop Tools / Hammer startup recheck
 
 STATUS: superseded

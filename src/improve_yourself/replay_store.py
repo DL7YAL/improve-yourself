@@ -28,6 +28,12 @@ class ReplayStore:
     def round_numbers(self) -> tuple[int, ...]:
         return tuple(sorted(self._rounds))
 
+    def round_descriptor(self, round_number: int) -> dict[str, Any]:
+        try:
+            return dict(self._rounds[round_number])
+        except KeyError as error:
+            raise KeyError(f"round {round_number} is not available") from error
+
     def load_round(self, round_number: int) -> dict[str, Any]:
         if round_number in self._cache:
             return self._cache[round_number]
