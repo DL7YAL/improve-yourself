@@ -1,10 +1,10 @@
 # 3D / POV V1 — Slice C Anubis Asset Gate
 
-Status: `BLOCKED — product/licensing route required`
+Status: `SLICE_C_COMPLETE — local-only route`
 
 Date: 2026-08-20
 
-No map geometry was copied, extracted, converted, committed or accepted during this gate. No renderer work began.
+Tristan authorized the recommended current-build local-only route with `next`. No map geometry is committed or distributed. No renderer work began during this gate.
 
 ## Candidate inventory
 
@@ -76,3 +76,41 @@ Tristan must choose one permitted route before Slice C can complete:
 3. keep Anubis 3D unavailable until an acceptable asset exists.
 
 No renderer, camera, player proxy or sightline implementation may begin before this decision and the resulting asset passes the complete gate.
+
+## Local-only route result
+
+The authorized route was executed against installed CS2 build `24828357`:
+
+- Valve's installed `resourceinfo.exe` proved the VPK contains `world_physics.vmdl_c` with a 29,535,764-byte PHYS block;
+- ValveResourceFormat CLI `19.2.6339+c72208352f5bf62f1482447ed166c548f303f8fa` was downloaded into ignored local storage and verified against its published Windows-x64 archive SHA-256 `53E7E8DAC1DDD876078346DE709C8DBE613A967E94CD0C969AA34C61EC07680D`;
+- only `world_physics.vmdl_c` was decompiled locally;
+- 27 normal world-physics groups were retained;
+- player/nav/grenade clips, pass-bullets, window/water and sky groups were excluded;
+- no Valve textures or materials were copied into the derivative;
+- the replay-space render GLB has identity transform and neutral collision geometry;
+- the visibility `.tri` contains 673,869 triangles.
+
+Local ignored bundle:
+
+- `render_mesh.glb`: 77,560,564 bytes, SHA-256 `9AD0036D7BDFB9E6A5DFD821FEFC52E6D12CB34EEEB44202F7E32FA4D5542AA6`;
+- `visibility_mesh.tri`: 24,259,284 bytes, SHA-256 `D667D72898680B5C5E559C8BF39535D4C1F0E72EBA4224FEC55608BDD606639F`;
+- manifest SHA-256 after verification: `D39B9BE7A86EC85599F9B1658995A7F2BF87C8EE622412B3F3E8A4F88FA56013`;
+- distribution: `local_only`;
+- transform: scale 1, rotation `[0,0,0]`, translation `[0,0,0]`;
+- machine assessment: `available` in 0.141 seconds.
+
+Validation against real replay `446eec75822c…`:
+
+- geometry bounds match the established Anubis candidate bounds;
+- all 2,523,998 observed positions remain inside bounds;
+- 25,439 sampled replay positions visually follow the top-down corridors and playable areas without mirror, quarter-turn or translation mismatch;
+- 10,289 sampled positions pass the perspective height/floor plausibility check;
+- the known visible pair remains visible;
+- the known blocked pair remains blocked;
+- normal load, hash validation and missing-file behavior are tested.
+
+For this exact local machine/build, `map_geometry=verified`. For any packaged or other-machine run without this matching local bundle, it remains unavailable. A CS2 build/hash change invalidates the bundle and requires regeneration/revalidation.
+
+## Next
+
+Slice D may now begin as a minimal renderer protocol/native-embed spike using only this ignored local bundle. It must not package the asset or silently turn the local-only result into a distribution decision.

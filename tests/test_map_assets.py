@@ -61,3 +61,10 @@ def test_path_escape_fails_integrity(tmp_path) -> None:
     payload["render_mesh"]["path"] = "../outside.mesh"
     path.write_text(json.dumps(payload), encoding="utf-8")
     assert assess_map_asset(path, "de_anubis").availability == "integrity_failed"
+
+
+def test_missing_manifest_or_mesh_is_reported(tmp_path) -> None:
+    assert assess_map_asset(tmp_path / "missing.json", "de_anubis").availability == "missing"
+    path = _manifest(tmp_path)
+    (tmp_path / "visibility.tri").unlink()
+    assert assess_map_asset(path, "de_anubis").availability == "missing"

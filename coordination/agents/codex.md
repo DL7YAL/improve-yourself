@@ -195,6 +195,25 @@ MODEL_REASON: Evidence-led asset integrity/provenance gate with product and dist
 COMPUTER_USE: no
 COMMIT/PR: Slice C blocked-gate checkpoint on `dev/v1-foundation`; no merge authorized
 
+## 2026-08-21 — 3D / POV V1 Slice C local-only completion
+
+STATUS: done
+SLICE: C — local-only Anubis asset gate complete
+BRANCH: `dev/v1-foundation`
+CHANGED: Added tested GLB-to-replay-space local derivative support and `Build-LocalAnubisAsset.py`; extended missing-asset coverage and updated the Slice-C/current handoff. Generated ValveResourceFormat tool, extracted physics GLB, render GLB, visibility TRI, manifests and validation PNGs remain below ignored `results/local-map-assets/`. No geometry or third-party binary is tracked/pushed.
+DATA EVIDENCE: Real replay `446eec75822c…`; all 2,523,998 observed positions inside geometry bounds. Top-down overlay sampled 25,439 positions; perspective floor/height overlay sampled 10,289 positions. No mirror, quarter-turn or translation mismatch observed; player paths follow the physics corridors/floors.
+ASSET EVIDENCE: Installed CS2 build `24828357`, VPK SHA `BCA91CEE…`. ValveResourceFormat CLI 19.2 Windows-x64 archive matched published SHA `53E7E8DA…`. Local bundle retains 27 normal world groups / 673,869 triangles and excludes clip/pass-bullets/water/sky groups. `render_mesh.glb` 77,560,564 bytes SHA `9AD0036D…`; `visibility_mesh.tri` 24,259,284 bytes SHA `D667D728…`; verified manifest SHA `D39B9BE7…`; identity transform; distribution `local_only`.
+VERIFIED: Known visible pair remains true and known blocked pair false on current geometry. Real `assess_map_asset()` returns `available` in 0.141 s. Unit coverage includes world-only filtering, replay-space identity GLB, triangle output, schema/map/distribution/version/hash/path/missing gates. Full suite/setup pending final checkpoint run.
+REGRESSIONS: No replay, 2D viewer, Analyzer, Benchmark, Optimizer or System Check behavior changed.
+RISKS: Asset is valid only for this installed build/hash and must never be packaged or treated as distributable. Current collision mesh lacks authored materials and dynamic geometry. Any CS2 build/hash change invalidates the acceptance.
+DECISIONS: Tristan's `next` accepted the explicitly recommended current-build local-only route. This is not approval for redistribution. For the matching local run `map_geometry=verified`; elsewhere it remains unavailable.
+OPEN: No Slice-C technical blocker for this local run. Final product distribution still needs a separate rights-approved asset route.
+NEXT: Begin Slice D only: minimal `ReplayRenderer` protocol and disposable native embed spike using the ignored local bundle; prove load, deterministic frame/camera updates, resize and dispose. Do not package geometry or add overlays/events yet.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Current-build local asset derivation with coordinate, integrity, LOS and distribution-boundary validation.
+COMPUTER_USE: no
+COMMIT/PR: Slice C completion checkpoint on `dev/v1-foundation`; no merge authorized
+
 ## 2026-08-17 — Workshop Tools / Hammer startup recheck
 
 STATUS: superseded
