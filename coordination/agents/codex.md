@@ -120,6 +120,25 @@ MODEL_REASON: Closing cross-module replay, camera, asset, testing, packaging and
 COMPUTER_USE: no
 COMMIT/PR: Specification commit on `dev/v1-foundation`; no merge authorized
 
+## 2026-08-20 — 3D / POV V1 Slice A canonical truth
+
+STATUS: done
+SLICE: A — canonical replay truth
+BRANCH: `dev/v1-foundation`
+CHANGED: Added immutable `iy.replay/v2` contracts, full-match Awpy builder, manifest/chunk validators, capability reporting, hash-verified read-only `ReplayStore`, 11 new tests, the reproducible `Run-ReplayV2Regression.ps1` path and `docs/3D_POV_V1_SLICE_A.md`. Existing `iy.replay/v1`, 2D viewer, Analyzer behavior, Benchmark, Optimizer, System Check, UI, dependencies and renderer state are unchanged.
+DATA EVIDENCE: Private real `de_anubis` source SHA-256 `446eec75822c…`; 42 rounds, 252,401 frames, 2,524,000 player states, 10 Steam identities, 8,429 normalized events, 300,424 active utility states and 22 scene references. Zero unresolved real player snapshots. Generated 43-file store is approximately 56.9 MB and remains ignored/local.
+ASSET EVIDENCE: n/a for Slice A. `map_geometry=unavailable`; no map asset or renderer dependency was added.
+VERIFIED: `44 passed in 0.98s`; `compileall` passes. The public PowerShell regression path rebuilt the real match from the private compressed demo, validated the manifest and all 42 round-chunk hashes/invariants, emitted `iy.replay_regression/v1` with `status=PASS`, and preserved exact event ticks and evidenced utility lifetimes.
+REGRESSIONS: Existing Analyzer, `iy.replay/v1`, viewer, workflow, review, system-check and benchmark-transition tests remain green within the 44-test suite.
+RISKS: Real tick rate is absent (`null`) and must not be guessed before speed-based playback. Player/view/weapon/velocity and utility-lifetime capabilities are partial due real nulls/row absence. Alive state is only observed-row health-derived. Grenade source has 3,479,155 trajectory points but Slice A does not materialize them. Flash effect, sound and map geometry remain unavailable.
+DECISIONS: Use compressed per-round chunks behind the unchanged logical `iy.replay/v2` contract to avoid a multi-gigabyte in-memory/full JSON artifact. Do not claim full capability where real rows are incomplete. Do not introduce a `64 Hz` default.
+OPEN: Canonical tick-rate evidence is required before ReplayController speed semantics. Full dead/inactive-state reconstruction, trajectory materialization, flash evidence and asset geometry remain their explicitly scheduled later work.
+NEXT: Begin Slice B with a bounded tick-rate evidence task, then implement the single ReplayController and migrate existing 2D state consumption to `iy.replay/v2`; no 3D renderer yet.
+MODEL_PROFILE: gpt-5.6-sol
+MODEL_REASON: New canonical persisted contract over 2.5 million real states with compatibility, memory, identity and evidence-quality consequences.
+COMPUTER_USE: no
+COMMIT/PR: Slice A implementation commit on `dev/v1-foundation`; no merge authorized
+
 ## 2026-08-17 — Workshop Tools / Hammer startup recheck
 
 STATUS: superseded
