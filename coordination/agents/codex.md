@@ -176,6 +176,25 @@ MODEL_REASON: Bounded cross-contract viewer migration with compatibility and rea
 COMPUTER_USE: no; headless browser unavailable
 COMMIT/PR: Slice B completion checkpoint on `dev/v1-foundation`; no merge authorized
 
+## 2026-08-20 — 3D / POV V1 Slice C asset gate
+
+STATUS: blocked
+SLICE: C — Anubis asset gate
+BRANCH: `dev/v1-foundation`
+CHANGED: Added machine-enforced `iy.map_asset/v1` assessment (`map_assets.py`), six synthetic gate tests and `docs/3D_POV_V1_SLICE_C_ASSET_GATE.md`. No Valve/Awpy geometry was copied, extracted, converted or committed; no renderer/camera/sightline/Benchmark/System Check/Optimizer code changed.
+DATA EVIDENCE: Real replay `446eec75822c…` has 2,523,998 observed player positions, all inside old Awpy triangle bounds. Replay bounds X `-1971.9473..1803.9713`, Y `-1759.9688..2771.7646`, Z `-191.9688..188.1563`. An Awpy BVH check at round 1/tick 6401 yields one visible and one blocked controlled pair in unchanged replay coordinates.
+ASSET EVIDENCE: Local Awpy `de_anubis.tri`: build `17595823` (2025-03-04), 29,088,000 bytes, 808,000 triangles, SHA-256 `3DA37BBC33A9E9B2C469E9E39F1FF0A31A6EFE4212D10026516C803B708D9787`; technically compatible but stale/unapproved. Installed CS2 App 730 is build `24828357`; current `de_anubis.vpk` is 269,890,099 bytes, SHA-256 `BCA91CEE11592C65C2869C599769232F29335458376ED90431A013B58C938E07`; current but not extracted/converted/accepted. Awpy's MIT code license does not by itself establish rights for game-derived geometry; Valve terms do not justify an inferred product redistribution grant.
+VERIFIED: Six focused map-asset tests pass: accepted synthetic local bundle, version mismatch, distribution block, wrong map, hash mismatch and path escape. Old geometry bounds and two-sided LOS behavior are reproducible. Full suite/setup pending final checkpoint run.
+REGRESSIONS: No existing replay/viewer/analyzer/runtime behavior changed.
+RISKS: Accepting the stale triangle soup would overclaim build parity. Extracting or distributing current Valve geometry without a chosen permitted route would overclaim authority. The current VPK also lacks an accepted derivative render/visibility mesh and known-point visual proof.
+DECISIONS: None silently made. `map_geometry` remains `unavailable`; no placeholder geometry and no renderer start.
+OPEN: Tristan must choose: (1) authorize current-build local-only extraction/derivative, never committed/distributed; (2) provide/approve a distributable controlled derivative with documented rights; or (3) retain Anubis 3D as unavailable.
+NEXT: Wait for Tristan's asset-provenance route. If local-only is approved, extract/derive only into ignored local storage, bind it to build/hash, then perform transform, known-point and LOS acceptance before any Slice D work.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Evidence-led asset integrity/provenance gate with product and distribution boundary.
+COMPUTER_USE: no
+COMMIT/PR: Slice C blocked-gate checkpoint on `dev/v1-foundation`; no merge authorized
+
 ## 2026-08-17 — Workshop Tools / Hammer startup recheck
 
 STATUS: superseded
