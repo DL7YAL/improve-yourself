@@ -1,5 +1,17 @@
 # Codex
 
+## 2026-08-21 — Verified TP camera obstruction adjustment
+
+STATUS: done
+TASK: Execute only the documented next slice: verified visibility-mesh query boundary and fixed Third-Person camera-to-anchor obstruction adjustment, with clear/blocked/unknown behavior and no overlay or replay reinterpretation.
+BRANCH: `dev/v1-foundation`
+CHANGED: Added `visibility_mesh.py` with evidence-state/result protocol, unavailable implementation and read-only chunked `.tri` segment queries. Extended the fixed TP camera with verified last-intersection adjustment plus 8 Source Unit safety margin and diagnostics. Bound the existing disposable Panda spike to the same verified geometry and cached pose. Added focused tests and this evidence note; updated CURRENT/handoff. No replay schema/controller, benchmark, smoke, geometry, asset, Optimizer/System Check, overlay, model or packaging change.
+VERIFIED: 12/12 focused renderer/visibility tests and 75/75 complete tests pass. The verified local Anubis controls reproduce `clear` for `(-259.6265,-1595.3811,52.0313)`→`(-508.1600,-1589.8218,66.0312)` and `blocked` with last fraction `0.9189757397145473` for the documented blocked endpoint `(-527.9521,2207.1423,89.0313)`. Native tick-4659 TP replay check returns `clear`, no adjustment, resize and dispose PASS. Synthetic multiple-wall proof selects the last hit; blocked movement is collinear and clear/unknown preserve the fixed pose.
+DECISIONS: Unknown geometry remains unknown and does not masquerade as clear; only verified blocked evidence adjusts the camera. Adjustment cannot change target/angle or choose a cinematic alternative. Local derivatives and screenshots remain ignored. The query is chunked and correct for this slice; acceleration remains an adaptable renderer concern if playback profiling later requires it.
+OPEN: Sightline evaluation/visualization and smoke evidence remain unimplemented. The real checked tick was clear, while controlled real and synthetic blocked cases prove the adjustment input path; no claim of broad runtime camera acceptance is made.
+NEXT: Implement only canonical `SightlineResult` evaluation from one ReplayFrame and the same verified VisibilityGeometry, with exact tick/player identity and visible/occluded/unknown evidence. Keep smoke unknown unless canonical evidence proves the selected V1 approximation; do not render the overlay yet.
+COMPUTER_USE: Timed local native renderer proof only; no external transmission or persistent setting change.
+
 ## 2026-08-21 — Slice D renderer protocol and native embed proof
 
 STATUS: done

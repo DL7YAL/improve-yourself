@@ -10,6 +10,7 @@ from improve_yourself.renderer import (
     third_person_camera,
 )
 from improve_yourself.replay_contract import PlayerState, ReplayFrame, Vec3
+from improve_yourself.visibility_mesh import SegmentObstruction, UnknownVisibilityGeometry
 
 
 def _frame(*, active=True, alive=True, position=Vec3(100.0, 200.0, 10.0), yaw=90.0, pitch=0.0):
@@ -41,6 +42,38 @@ def test_fixed_third_person_camera_matches_v1_formula():
     assert pose.target.x == pytest.approx(100.0)
     assert pose.target.y == pytest.approx(520.0)
     assert pose.target.z == pytest.approx(74.0)
+    assert pose.obstruction_state == "unknown"
+
+
+class _Geometry:
+    def __init__(self, result):
+        self.result = result
+
+    def segment_obstruction(self, start, end):
+        return self.result
+
+
+def test_third_person_camera_moves_past_last_obstruction_only_along_fixed_segment():
+    pose = third_person_camera(
+        _frame(), "p1", visibility_geometry=_Geometry(SegmentObstruction("blocked", 0.5)), safety_margin=8.0
+    )
+    # Base camera (100, 40, 146) moves toward anchor (100, 200, 74), never sideways.
+    assert pose.origin.x == pytest.approx(100.0)
+    segment_length = (160.0**2 + 72.0**2) ** 0.5
+    fraction = 0.5 + 8.0 / segment_length
+    assert pose.origin.y == pytest.approx(40.0 + 160.0 * fraction)
+    assert pose.origin.z == pytest.approx(146.0 - 72.0 * fraction)
+    assert pose.camera_adjusted is True
+    assert pose.obstruction_state == "blocked"
+
+
+def test_third_person_camera_preserves_fixed_pose_for_clear_or_unknown_geometry():
+    clear = third_person_camera(_frame(), "p1", visibility_geometry=_Geometry(SegmentObstruction("clear")))
+    unknown = third_person_camera(_frame(), "p1", visibility_geometry=UnknownVisibilityGeometry())
+    assert clear.origin == unknown.origin == third_person_camera(_frame(), "p1").origin
+    assert clear.obstruction_state == "clear"
+    assert unknown.obstruction_state == "unknown"
+    assert clear.camera_adjusted is unknown.camera_adjusted is False
 
 
 @pytest.mark.parametrize(

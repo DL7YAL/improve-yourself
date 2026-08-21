@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Literal, Protocol, runtime_checkable
 
 from .replay_contract import PlayerState, ReplayFrame, Vec3
+from .visibility_mesh import ObstructionState, VisibilityGeometry
 
 ViewMode = Literal["first_person", "third_person"]
 
@@ -18,6 +19,7 @@ class CameraPose:
     pitch_deg: float
     roll_deg: float = 0.0
     camera_adjusted: bool = False
+    obstruction_state: ObstructionState = "unknown"
 
 
 class CameraUnavailable(ValueError):
@@ -90,17 +92,38 @@ def third_person_camera(
     eye_height: float = 64.0,
     follow_distance: float = 160.0,
     vertical_offset: float = 72.0,
+    visibility_geometry: VisibilityGeometry | None = None,
+    safety_margin: float = 8.0,
 ) -> CameraPose:
     first_person = first_person_camera(frame, player_id, eye_height=eye_height)
     forward = _forward(first_person.yaw_deg, first_person.pitch_deg)
     anchor = first_person.origin
     origin = _offset(anchor, forward, -follow_distance)
     origin = Vec3(origin.x, origin.y, origin.z + vertical_offset)
+    obstruction_state: ObstructionState = "unknown"
+    camera_adjusted = False
+    if visibility_geometry is not None:
+        obstruction = visibility_geometry.segment_obstruction(origin, anchor)
+        obstruction_state = obstruction.state
+        if obstruction.state == "blocked":
+            if obstruction.last_hit_fraction is None:
+                raise ValueError("blocked visibility result requires a hit fraction")
+            if not 0.0 < obstruction.last_hit_fraction < 1.0:
+                raise ValueError("visibility hit fraction must be inside the camera segment")
+            if safety_margin < 0.0:
+                raise ValueError("camera safety margin cannot be negative")
+            segment = Vec3(anchor.x - origin.x, anchor.y - origin.y, anchor.z - origin.z)
+            segment_length = math.sqrt(segment.x * segment.x + segment.y * segment.y + segment.z * segment.z)
+            fraction = min(1.0, obstruction.last_hit_fraction + safety_margin / segment_length)
+            origin = _offset(origin, segment, fraction)
+            camera_adjusted = True
     return CameraPose(
         origin=origin,
         target=_offset(anchor, forward, 320.0),
         yaw_deg=first_person.yaw_deg,
         pitch_deg=first_person.pitch_deg,
+        camera_adjusted=camera_adjusted,
+        obstruction_state=obstruction_state,
     )
 
 

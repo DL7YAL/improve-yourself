@@ -5,6 +5,7 @@ from pathlib import Path
 from .map_assets import assess_map_asset
 from .renderer import ReplayRenderer, ViewMode, first_person_camera, third_person_camera
 from .replay_contract import ReplayFrame
+from .visibility_mesh import TriVisibilityMesh
 
 
 class PandaReplayRenderer:
@@ -29,6 +30,8 @@ class PandaReplayRenderer:
         self._player_id: str | None = None
         self._view_mode: ViewMode = "first_person"
         self._map = None
+        self._visibility = None
+        self._camera_pose = None
         self._disposed = False
 
     def _require_live(self) -> None:
@@ -53,30 +56,38 @@ class PandaReplayRenderer:
         model.setTwoSided(True)
         self._base.camLens.setNearFar(1.0, 20000.0)
         self._map = model
+        self._visibility = TriVisibilityMesh.from_verified_manifest(manifest_path, "de_anubis")
 
     def set_frame(self, frame: ReplayFrame) -> None:
         self._require_live()
         self._frame = frame
+        self._camera_pose = None
 
     def set_camera_player(self, player_id: str) -> None:
         self._require_live()
         self._player_id = player_id
+        self._camera_pose = None
 
     def set_view_mode(self, mode: ViewMode) -> None:
         self._require_live()
         if mode not in ("first_person", "third_person"):
             raise ValueError(f"unsupported V1 view mode: {mode}")
         self._view_mode = mode
+        self._camera_pose = None
 
     def render(self) -> None:
         self._require_live()
         if self._map is None or self._frame is None or self._player_id is None:
             raise RuntimeError("map, canonical frame and camera player are required before render")
-        pose = (
-            first_person_camera(self._frame, self._player_id)
-            if self._view_mode == "first_person"
-            else third_person_camera(self._frame, self._player_id)
-        )
+        if self._camera_pose is None:
+            self._camera_pose = (
+                first_person_camera(self._frame, self._player_id)
+                if self._view_mode == "first_person"
+                else third_person_camera(
+                    self._frame, self._player_id, visibility_geometry=self._visibility
+                )
+            )
+        pose = self._camera_pose
         camera = self._base.camera
         camera.setPos(pose.origin.x, pose.origin.y, pose.origin.z)
         camera.lookAt(pose.target.x, pose.target.y, pose.target.z)

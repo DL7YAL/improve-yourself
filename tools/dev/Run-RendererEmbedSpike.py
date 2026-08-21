@@ -90,7 +90,8 @@ def main() -> int:
     root.after(int(args.seconds * 1000), close)
     root.after(0, draw)
     root.mainloop()
-    print(json.dumps({"status": "PASS", "tick": chosen.tick, "player_id": player.player_id, "view": "third_person", "sizes": sizes, "resize": len(sizes) >= 2, "dispose": True}))
+    pose = renderer._camera_pose
+    print(json.dumps({"status": "PASS", "tick": chosen.tick, "player_id": player.player_id, "view": "third_person", "obstruction_state": pose.obstruction_state, "camera_adjusted": pose.camera_adjusted, "sizes": sizes, "resize": len(sizes) >= 2, "dispose": True}))
     return 0
 
 
