@@ -46,10 +46,18 @@ def render_viewer(
     pos_x: float = 0,
     pos_y: float = 0,
     scale: float = 1,
+    scenes: list[dict[str, Any]] | None = None,
 ) -> Path:
     payload = json.loads(replay_path.read_text(encoding="utf-8"))
     if payload.get("schema") == REPLAY_V2_SCHEMA:
         store = ReplayStore(replay_path)
+        if scenes is not None:
+            store.manifest["scenes"] = [
+                {"scene_id": item["scene_id"], "round_number": item["round_number"],
+                 "tick": item["review_tick"], "end_tick": item["end_tick"],
+                 "focus_player_id": item.get("focus_player_id")}
+                for item in scenes
+            ]
         payload = build_tactical_2d_projection(store, ReplayController(store))
     _validate_replay(payload)
     if radar_path is not None and scale <= 0:

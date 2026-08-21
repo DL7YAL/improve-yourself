@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-21 — Improve Yourself Experimental consolidation
+
+STATUS: waiting_for_tristan
+TASK: Consolidate the existing real Analyzer/Review/Tactical Replay foundation into one early tester-facing Experimental workflow without restarting or pulling excluded V2/V3/benchmark/Optimizer/video work into scope.
+BRANCH: `dev/v1-foundation`
+CHANGED: Real demo import now ends at `READY_FOR_SELECTION` with an objective no-scene preflight exposing map, rounds, parser PASS, basic event count and named CT/T line-ups. Explicit analysis then applies Full Demo/Player Select and a local Review/Highlight/Coaching/Custom profile to the existing indicator->rule->profile->merged-scene engine. Added safe atomic `iy.analysis_profile/v1` local JSON storage and compact Custom rule toggles/details. Completed outputs now include neutral Review, Timeline, exact CS2 commands, a Tactical Replay projected from the same ReplayStore/selected scenes and `iy.analysis_report/v1`. Removed the visible Clip-worthy review choice in favor of neutral Follow-up while retaining legacy read compatibility. Consolidated Tk shell uses Improve Yourself / Make Up Your Mind. / Experimental, a native dark title bar, disclosed workflow/source/hash/profile path and disabled dependent controls before load. No 3D/POV, benchmark, Optimizer/System Check, OBS/video, ML or CS2 display-setting change.
+VERIFIED: 119/119 tests, locked dependency check, eight CLI smokes, compile and diff check PASS. Visible Windows QA confirmed a single dark surface including native title bar, fixed branding/claim, pending preflight identity and disabled initial actions; the window closed cleanly. Existing real Ancient source truth `c183dd61…` reopened and reran through the new downstream path: 18 rounds, 10 players, 235 objective indicators/rule matches, 54 merged scenes, Timeline/Review, 28,335,824-byte Tactical Replay and 54-scene neutral report; first scene remains `r1-t3654-0` / tick 3654, already runtime-accepted in CS2. The original demo is absent at known direct paths, so no new parse is claimed; prior real Awpy/hash/runtime evidence plus current canonical-store rerun is the evidence chain. Release-hygiene search found no new personal paths, secrets, demos or generated results in tracked changes.
+DECISIONS: Preflight is parse/replay evidence only and emits zero rule scenes. Profile filtering retains indicators and selects named objective rules; no profile is a suspect engine. Tactical Replay scenes are a derived projection over the same canonical frames and chosen analysis scenes, not a second demo interpretation. `clip-worthy` remains validation-only for old saved state and is absent from current UI. Local profile location is shown and user-controlled; no cloud/account layer.
+OPEN: First complete product review, final packaging/installer and merge acceptance require Tristan. The known Hammer/VRAD SDK blocker remains unrelated and parked. Original Ancient `.dem` would be required only for a fresh parser rerun, not to validate the preserved hash-bound replay truth.
+NEXT: None before review. Stop feature development and remain `WAITING_FOR_TRISTAN`.
+MODEL_PROFILE: terra
+MODEL_REASON: Cross-component workflow consolidation, state separation, local persistence, UI and real-evidence validation.
+COMPUTER_USE: yes; the Experimental Windows shell was visually checked, the native light title-bar defect was found and corrected with dark DWM presentation, then rechecked and closed. No CS2/Steam/system setting interaction.
+
 ## 2026-08-21 — Shared Base full-status synchronization
 
 STATUS: done

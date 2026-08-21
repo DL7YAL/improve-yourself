@@ -39,6 +39,13 @@ def test_rejects_unknown_scene_state_and_long_note() -> None:
         validate_review_state(base, "a" * 64, expected)
 
 
+def test_neutral_follow_up_state_is_supported() -> None:
+    expected = {scene_id(scenes()[0])}
+    payload = initial_review_state("a" * 64, scenes())
+    payload["scenes"][0]["state"] = "follow-up"
+    assert validate_review_state(payload, "a" * 64, expected)["scenes"][0]["state"] == "follow-up"
+
+
 def test_loopback_server_round_trip_and_origin_guard(tmp_path: Path) -> None:
     server = ReviewServer(("127.0.0.1", 0), tmp_path, "a" * 64, scenes())
     thread = threading.Thread(target=server.serve_forever, daemon=True)

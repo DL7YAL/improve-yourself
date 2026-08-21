@@ -12,7 +12,7 @@ Dieser Abschnitt ist der gemeinsame Einstiegspunkt für den aktuell gepushten Ar
 
 - Branch: `dev/v1-foundation`
 - Letzter vor dieser Basissynchronisierung gepushter Implementierungscommit: `4d4c161cf3dc10a6202253a7ee3ebf49fe31ecf3`
-- Reproduzierbares Gate: 113/113 Tests, Abhängigkeitsprüfung, acht öffentliche CLI-Smokes, Python-Compile und `git diff --check` PASS.
+- Reproduzierbares Gate: 119/119 Tests, Abhängigkeitsprüfung, acht öffentliche CLI-Smokes, Python-Compile und `git diff --check` PASS.
 - Öffentliche Einstiege: `iy-analyze`, `iy-system-check`, `iy-workflow`, `iy-replay-viewer`, `iy-review-server`, `iy-analysis-flow`, `iy-demo-workflow`, `iy-analyzer-shell`.
 - Generierte Demo-, Replay-, Ergebnis- und lokale Runtime-Dateien bleiben ignoriert und werden nicht als personenbezogene oder maschinenspezifische Repository-Artefakte gepusht.
 
@@ -49,7 +49,7 @@ Dieser Abschnitt ist der gemeinsame Einstiegspunkt für den aktuell gepushten Ar
 
 ### Aktuell nächster freigegebener Engineering-Schritt
 
-In der Analyzer-Shell workflowabhängige Bedienelemente bis zum erfolgreichen Laden deaktivieren und danach Manifestbasename, Quelldemo-Basename beziehungsweise `nicht zugeordnet` und einen gekürzten Source-Hash sichtbar anzeigen. `Demo auswählen` und `Vorhandene Analyse öffnen` bleiben immer verfügbar. Validierungs-, Parser-, Szenen-, Review-, Benchmark- und System-Check-Semantik bleiben unverändert.
+Der zusammenhängende Stand `Improve Yourself – Experimental` ist engineering-seitig abgeschlossen: objektiver Demo-Preflight, Auswahl, lokale Profile/Rules, zusammengeführte Szenen, neutrales Review, Tactical Replay, Report und CS2-Tick sind verbunden. Vollständige Spezifikation und Evidenz stehen in `docs/EXPERIMENTAL_V1.md`. Status: `WAITING_FOR_TRISTAN` für den ersten vollständigen Produktreview. Bis dahin keine weitere Feature-Erweiterung; `main` bleibt ohne ausdrückliche Review-/Merge-Freigabe unverändert.
 
 ## Grundprinzip
 

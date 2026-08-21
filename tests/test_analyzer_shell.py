@@ -54,6 +54,26 @@ def _write_result(root: Path, selected: tuple[str, ...] = (), source_hash: str =
     return path
 
 
+def _write_preflight(root: Path) -> Path:
+    path = _write_result(root)
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    manifest["status"] = "READY_FOR_SELECTION"
+    manifest["profile"] = None
+    manifest["preflight"] = {
+        "map_id": "de_ancient", "rounds": 1, "teams": {"CT": ["CT One", "CT Two"], "T": ["T One"]},
+        "roster": [
+            {"player_id": "ct1", "display_name": "CT One", "initial_team": "CT"},
+            {"player_id": "ct2", "display_name": "CT Two", "initial_team": "CT"},
+            {"player_id": "t1", "display_name": "T One", "initial_team": "T"},
+        ],
+        "parser_status": "PASS", "basic_event_count": 0,
+    }
+    manifest["counts"] = {"players": 3, "rounds": 1, "basic_events": 0, "scenes": 0}
+    manifest["artifacts"] = {key: value for key, value in manifest["artifacts"].items() if key in {"analysis", "replay_v2"}}
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    return path
+
+
 def test_shell_import_and_selection_reuse_existing_workflow(tmp_path: Path) -> None:
     demo = tmp_path / "match.dem"
     demo.write_bytes(b"real demo placeholder")
@@ -63,7 +83,7 @@ def test_shell_import_and_selection_reuse_existing_workflow(tmp_path: Path) -> N
         calls.append((source.name, ()))
         return _write_result(output / "run")
 
-    def rerender(manifest: Path, *, player_ids: tuple[str, ...]) -> Path:
+    def rerender(manifest: Path, *, player_ids: tuple[str, ...], profile) -> Path:
         calls.append(("rerender", player_ids))
         return _write_result(manifest.parent, player_ids)
 
@@ -80,6 +100,31 @@ def test_shell_import_and_selection_reuse_existing_workflow(tmp_path: Path) -> N
     assert selected.selection_mode == "player_select"
     assert selected.selected_ids == ("ct1", "ct2")
     assert calls == [("match.dem", ()), ("rerender", ("ct1", "ct2"))]
+
+
+def test_shell_import_stops_at_objective_preflight_before_analysis(tmp_path: Path) -> None:
+    demo = tmp_path / "match.dem"
+    demo.write_bytes(b"demo")
+    calls: list[str] = []
+
+    def runner(_source: Path, output: Path, *, max_bytes: int) -> Path:
+        calls.append("preflight")
+        return _write_preflight(output / "run")
+
+    def rerender(manifest: Path, *, player_ids: tuple[str, ...], profile) -> Path:
+        calls.append(f"analyze:{profile.profile_id}")
+        return _write_result(manifest.parent, player_ids)
+
+    controller = AnalyzerShellController(tmp_path / "output", runner=runner, rerenderer=rerender)
+    preflight = controller.import_demo(demo)
+    assert preflight.status == "READY_FOR_SELECTION"
+    assert preflight.scene_count == 0
+    assert preflight.basic_event_count == 0
+    assert [player.display_name for player in preflight.players] == ["CT One", "CT Two", "T One"]
+    assert calls == ["preflight"]
+    review = controller.analyze_selection()
+    assert review.status == "READY_FOR_REVIEW"
+    assert calls == ["preflight", "analyze:review_v1"]
 
 
 def test_shell_full_demo_reset_and_validation(tmp_path: Path) -> None:
@@ -178,7 +223,7 @@ def test_shell_revalidates_before_rerender_and_does_not_call_renderer_on_change(
     manifest_path = _write_result(tmp_path / "run")
     called = False
 
-    def rerenderer(_manifest: Path, *, player_ids: tuple[str, ...]) -> Path:
+    def rerenderer(_manifest: Path, *, player_ids: tuple[str, ...], profile) -> Path:
         nonlocal called
         called = True
         return manifest_path

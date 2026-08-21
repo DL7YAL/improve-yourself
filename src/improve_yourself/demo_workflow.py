@@ -5,18 +5,21 @@ import hashlib
 import json
 from pathlib import Path
 
-from .analysis_flow import PlayerSelection, build_from_store, render_analysis_review
+from .analysis_flow import AnalysisProfile, PlayerSelection, build_from_store, render_analysis_review
 from .replay_builder import export_replay_v2
 from .replay_store import ReplayStore
 from .service import analyze
+from .viewer import render_viewer
 
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _write_flow_artifacts(root: Path, replay_path: Path, selection: PlayerSelection) -> tuple[dict, dict]:
-    flow = build_from_store(ReplayStore(replay_path), selection)
+def _write_flow_artifacts(
+    root: Path, replay_path: Path, selection: PlayerSelection, profile: AnalysisProfile = AnalysisProfile()
+) -> tuple[dict, dict]:
+    flow = build_from_store(ReplayStore(replay_path), selection, profile)
     flow_path = root / "analysis-flow.json"
     flow_path.write_text(json.dumps(flow, ensure_ascii=False, indent=2), encoding="utf-8")
     timeline_path = root / "timeline.json"
@@ -27,16 +30,27 @@ def _write_flow_artifacts(root: Path, replay_path: Path, selection: PlayerSelect
     review_path = render_analysis_review(flow, root / "review.html")
     commands_path = root / "cs2-review-commands.txt"
     commands_path.write_text("\n".join(scene["review"]["command"] for scene in flow["scenes"]) + "\n", encoding="utf-8")
+    tactical_path = render_viewer(replay_path, root / "tactical-replay.html", scenes=flow["scenes"])
+    report_path = root / "report.json"
+    report_path.write_text(json.dumps({
+        "schema": "iy.analysis_report/v1", "source": flow["source"], "selection": flow["selection"],
+        "profile": flow["profile"], "rounds": flow["rounds"],
+        "counts": {"players": len(flow["roster"]), "indicators": len(flow["indicators"]), "rule_matches": len(flow["rule_matches"]), "scenes": len(flow["scenes"])},
+        "scenes": flow["scenes"],
+        "interpretation_boundary": "Scenes match selected criteria; interpretation remains with the user.",
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
     artifacts = {
         "analysis_flow": flow_path.name,
         "timeline": timeline_path.name,
         "review": review_path.name,
         "cs2_review_commands": commands_path.name,
+        "tactical_replay": tactical_path.name,
+        "report": report_path.name,
     }
     return flow, artifacts
 
 
-def run_demo_workflow(demo: Path, output_root: Path, *, player_ids: tuple[str, ...] = (), max_bytes: int = 2_000_000_000) -> Path:
+def preflight_demo_workflow(demo: Path, output_root: Path, *, max_bytes: int = 2_000_000_000) -> Path:
     demo = demo.resolve()
     if not demo.is_file():
         raise FileNotFoundError(f"demo does not exist: {demo}")
@@ -45,17 +59,36 @@ def run_demo_workflow(demo: Path, output_root: Path, *, player_ids: tuple[str, .
     root.mkdir(parents=True, exist_ok=True)
     analysis_path = analyze(demo, root / "analysis", max_bytes=max_bytes)
     replay_path = export_replay_v2(demo, analysis_path, root / "replay-v2")
-    selection = PlayerSelection("player_select", tuple(dict.fromkeys(player_ids))) if player_ids else PlayerSelection()
-    flow, flow_artifacts = _write_flow_artifacts(root, replay_path, selection)
+    store = ReplayStore(replay_path)
+    chunks = [store.load_round(number) for number in store.round_numbers]
+    teams: dict[str, set[str]] = {"CT": set(), "T": set()}
+    initial: dict[str, str] = {}
+    event_count = 0
+    for chunk in chunks:
+        for frame in chunk["frames"]:
+            event_count += len(frame.get("events", []))
+            for state in frame.get("players", []):
+                if state.get("team") in teams:
+                    initial.setdefault(state["player_id"], state["team"])
+    roster = [{
+        "player_id": player["player_id"], "display_name": player.get("display_name") or player["player_id"],
+        "initial_team": initial.get(player["player_id"], "unknown"),
+    } for player in store.manifest["players"]]
+    for player in roster:
+        if player["initial_team"] in teams:
+            teams[player["initial_team"]].add(player["display_name"])
     artifacts = {
         "analysis": analysis_path.relative_to(root).as_posix(), "replay_v2": replay_path.relative_to(root).as_posix(),
-        **flow_artifacts,
     }
     manifest = {
-        "schema": "iy.demo_workflow/v1", "status": "READY_FOR_REVIEW", "source_sha256": source_hash,
+        "schema": "iy.demo_workflow/v1", "status": "READY_FOR_SELECTION", "source_sha256": source_hash,
         "source_demo_name": demo.name,
-        "parser": flow["source"]["parser"], "selection": flow["selection"], "profile": flow["profile"],
-        "counts": {"players": len(flow["roster"]), "indicators": len(flow["indicators"]), "rule_matches": len(flow["rule_matches"]), "scenes": len(flow["scenes"])},
+        "parser": store.manifest["source"]["parser"], "selection": {"mode": "full_demo", "player_ids": []},
+        "profile": None,
+        "preflight": {"map_id": store.manifest["source"]["map_id"], "rounds": len(store.round_numbers),
+                      "teams": {side: sorted(names) for side, names in teams.items()}, "roster": roster,
+                      "parser_status": "PASS", "basic_event_count": event_count},
+        "counts": {"players": len(roster), "rounds": len(store.round_numbers), "basic_events": event_count, "scenes": 0},
         "artifacts": artifacts,
         "policy": {"real_demo_required": True, "fake_results": False, "automated_cheat_verdict": False, "local_only": True},
     }
@@ -64,7 +97,14 @@ def run_demo_workflow(demo: Path, output_root: Path, *, player_ids: tuple[str, .
     return path
 
 
-def rerender_demo_workflow(manifest_path: Path, *, player_ids: tuple[str, ...] = ()) -> Path:
+def run_demo_workflow(demo: Path, output_root: Path, *, player_ids: tuple[str, ...] = (), max_bytes: int = 2_000_000_000) -> Path:
+    manifest = preflight_demo_workflow(demo, output_root, max_bytes=max_bytes)
+    return rerender_demo_workflow(manifest, player_ids=player_ids)
+
+
+def rerender_demo_workflow(
+    manifest_path: Path, *, player_ids: tuple[str, ...] = (), profile: AnalysisProfile = AnalysisProfile()
+) -> Path:
     manifest_path = manifest_path.resolve()
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if manifest.get("schema") != "iy.demo_workflow/v1":
@@ -72,8 +112,10 @@ def rerender_demo_workflow(manifest_path: Path, *, player_ids: tuple[str, ...] =
     root = manifest_path.parent
     replay_path = root / manifest["artifacts"]["replay_v2"]
     selection = PlayerSelection("player_select", tuple(dict.fromkeys(player_ids))) if player_ids else PlayerSelection()
-    flow, flow_artifacts = _write_flow_artifacts(root, replay_path, selection)
+    flow, flow_artifacts = _write_flow_artifacts(root, replay_path, selection, profile)
+    manifest["status"] = "READY_FOR_REVIEW"
     manifest["selection"] = flow["selection"]
+    manifest["profile"] = flow["profile"]
     manifest["counts"] = {
         "players": len(flow["roster"]),
         "indicators": len(flow["indicators"]),

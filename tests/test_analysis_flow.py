@@ -1,6 +1,6 @@
 import pytest
 
-from improve_yourself.analysis_flow import PlayerSelection, build_analysis_flow, render_analysis_review
+from improve_yourself.analysis_flow import AnalysisProfile, PlayerSelection, build_analysis_flow, render_analysis_review
 
 
 def _fixture():
@@ -42,6 +42,24 @@ def test_player_selection_validates_and_filters_by_involvement():
         build_analysis_flow(manifest, chunks, selection=PlayerSelection("player_select", ()))
     with pytest.raises(ValueError, match="unknown"):
         build_analysis_flow(manifest, chunks, selection=PlayerSelection("player_select", ("missing",)))
+
+
+def test_profile_filters_named_rules_without_changing_indicators() -> None:
+    manifest, chunks = _fixture()
+    flow = build_analysis_flow(
+        manifest, chunks,
+        profile=AnalysisProfile("headshots", "custom", enabled_rule_ids=("objective_headshot",)),
+    )
+    assert len(flow["indicators"]) > len(flow["rule_matches"])
+    assert {match["rule_id"] for match in flow["rule_matches"]} == {"objective_headshot"}
+    assert flow["profile"]["purpose"] == "custom"
+    none = build_analysis_flow(
+        manifest, chunks,
+        profile=AnalysisProfile("none", "custom", enabled_rule_ids=()),
+    )
+    assert none["indicators"]
+    assert none["rule_matches"] == []
+    assert none["scenes"] == []
 
 
 def test_roster_preserves_names_lineups_and_review_controls(tmp_path):

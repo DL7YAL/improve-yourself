@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 REVIEW_STATE_SCHEMA = "iy.review_state/v1"
-ALLOWED_STATES = {"unreviewed", "reviewed", "discarded", "clip-worthy"}
+ALLOWED_STATES = {"unreviewed", "reviewed", "discarded", "follow-up", "clip-worthy"}
 MAX_NOTE_LENGTH = 2_000
 
 

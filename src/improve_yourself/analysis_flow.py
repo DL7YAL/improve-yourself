@@ -26,6 +26,7 @@ class AnalysisProfile:
     pre_ticks: int = 128
     post_ticks: int = 256
     merge_gap_ticks: int = 96
+    enabled_rule_ids: tuple[str, ...] | None = None
 
 
 def _truthy(value: Any) -> bool:
@@ -128,6 +129,7 @@ def build_analysis_flow(
             "player_ids": item["player_ids"], "event_ids": item["event_ids"], "anchor_type": item["type"],
         }
         for item in selected_indicators
+        if profile.enabled_rule_ids is None or f"objective_{item['type']}" in profile.enabled_rule_ids
     ]
     matches.sort(key=lambda item: (item["round_number"], item["tick"], item["rule_id"]))
 
@@ -181,9 +183,13 @@ def build_analysis_flow(
     }
 
 
-def build_from_store(store: ReplayStore, selection: PlayerSelection = PlayerSelection()) -> dict[str, Any]:
+def build_from_store(
+    store: ReplayStore,
+    selection: PlayerSelection = PlayerSelection(),
+    profile: AnalysisProfile = AnalysisProfile(),
+) -> dict[str, Any]:
     chunks = [store.load_round(number) for number in store.round_numbers]
-    return build_analysis_flow(store.manifest, chunks, selection=selection)
+    return build_analysis_flow(store.manifest, chunks, selection=selection, profile=profile)
 
 
 def render_analysis_review(payload: dict[str, Any], output: Path) -> Path:
@@ -194,7 +200,7 @@ def render_analysis_review(payload: dict[str, Any], output: Path) -> Path:
 
 
 _REVIEW_HTML = '''<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Improve Yourself Demo Review</title><style>
-body{font:15px system-ui;background:#08111e;color:#edf3fb;margin:0;padding:24px}main{max-width:1100px;margin:auto}.card{background:#111f32;border:1px solid #2a3d58;border-radius:12px;padding:16px;margin:14px 0}button,select{background:#162842;color:#fff;border:1px solid #496382;border-radius:7px;padding:8px;margin:4px}.teams{display:grid;grid-template-columns:1fr 1fr;gap:12px}.scene{border-top:1px solid #2a3d58;padding:12px 0}.pill{display:inline-block;background:#263b58;border-radius:99px;padding:4px 9px;margin:3px}.muted{color:#9eb1c9}code{color:#8bd5ff}.ok{color:#8fe3ad}.error{color:#ff9c9c}@media(max-width:650px){.teams{grid-template-columns:1fr}}</style></head><body><main><h1>Demo → Review</h1><div id="summary" class="card"></div><section class="card"><h2>Teams & Spielerauswahl</h2><div class="teams"><div><h3>CT</h3><div id="ct"></div></div><div><h3>T</h3><div id="t"></div></div></div><p><button id="full">Full Demo</button><button id="ctAll">CT</button><button id="tAll">T</button><button id="reset">Reset</button></p><select id="player"></select><button id="add">+ Add Player</button><div id="chosen"></div></section><section class="card"><h2>Timeline / Szenen</h2><p id="cs2status" class="muted">CS2-Review ist über die lokale Analyzer-Shell verfügbar.</p><div id="scenes"></div></section></main><script>const data=__DATA__,selected=new Set();let mode='full_demo';const byId=new Map(data.roster.map(p=>[p.player_id,p]));
+body{font:15px system-ui;background:#08111e;color:#edf3fb;margin:0;padding:24px}main{max-width:1100px;margin:auto}.card{background:#111f32;border:1px solid #2a3d58;border-radius:12px;padding:16px;margin:14px 0}button,select,.button{background:#162842;color:#fff;border:1px solid #496382;border-radius:7px;padding:8px;margin:4px;text-decoration:none;display:inline-block}.teams{display:grid;grid-template-columns:1fr 1fr;gap:12px}.scene{border-top:1px solid #2a3d58;padding:12px 0}.pill{display:inline-block;background:#263b58;border-radius:99px;padding:4px 9px;margin:3px}.muted{color:#9eb1c9}code{color:#8bd5ff}.ok{color:#8fe3ad}.error{color:#ff9c9c}@media(max-width:650px){.teams{grid-template-columns:1fr}}</style></head><body><main><h1>Improve Yourself – Experimental</h1><p>Make Up Your Mind.</p><p><a class="button" href="tactical-replay.html">Tactical Replay öffnen</a><a class="button" href="report.json">Report öffnen</a></p><div id="summary" class="card"></div><section class="card"><h2>Teams & Spielerauswahl</h2><div class="teams"><div><h3>CT</h3><div id="ct"></div></div><div><h3>T</h3><div id="t"></div></div></div><p><button id="full">Full Demo</button><button id="ctAll">CT</button><button id="tAll">T</button><button id="reset">Reset</button></p><select id="player"></select><button id="add">+ Add Player</button><div id="chosen"></div></section><section class="card"><h2>Timeline / Szenen</h2><p class="muted">Die Szene entspricht den gewählten Kriterien. Die Interpretation bleibt beim Nutzer.</p><p id="cs2status" class="muted">CS2-Review ist über die lokale Analyzer-Shell verfügbar.</p><div id="scenes"></div></section></main><script>const data=__DATA__,selected=new Set();let mode='full_demo';const byId=new Map(data.roster.map(p=>[p.player_id,p]));
 function team(side){return data.roster.filter(p=>p.initial_team===side).map(p=>p.display_name).join(' · ')||'Keine belegte Line-up'}ct.textContent=team('CT');t.textContent=team('T');
 function draw(){summary.textContent=`${data.source.map_id} · ${data.roster.length} Spieler · ${data.scenes.length} zusammengeführte Szenen · ${mode==='full_demo'?'Full Demo':selected.size+' Spieler gewählt'}`;chosen.innerHTML=[...selected].map(id=>`<span class="pill">${byId.get(id)?.display_name||id}</span>`).join('');player.innerHTML='';for(const p of data.roster.filter(p=>!selected.has(p.player_id)))player.add(new Option(`${p.display_name} · ${p.teams.join('/')}`,p.player_id));const visible=data.scenes.filter(s=>mode==='full_demo'||s.player_ids.some(id=>selected.has(id)));scenes.innerHTML=visible.map(s=>`<div class="scene"><strong>Runde ${s.round_number} · ${s.anchor_types.join(', ')}</strong><div class="muted">Kontext ${s.start_tick}–${s.end_tick} · Marker ${s.marker_ticks.join(', ')}</div><code>${s.review.command}</code><button onclick="openCs2('${s.scene_id}',${s.review.tick})">In CS2 öffnen</button></div>`).join('')||'<p>Keine Szenen für diese Auswahl.</p>'}
 async function openCs2(scene_id,tick){cs2status.className='muted';cs2status.textContent=`Prüfe CS2 für Tick ${tick} …`;try{const response=await fetch('/api/cs2/tick',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scene_id,tick})});const result=await response.json();if(!response.ok)throw new Error(result.error||'CS2-Review fehlgeschlagen');cs2status.className='ok';cs2status.textContent=`Gesendet: ${result.demo_name} · Tick ${result.tick}`;}catch(error){cs2status.className='error';cs2status.textContent=`Nicht geöffnet: ${error.message}`;}}

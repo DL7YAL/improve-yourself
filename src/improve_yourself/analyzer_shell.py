@@ -1,23 +1,27 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
 import hashlib
 import json
 import re
 import threading
 import webbrowser
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Callable
 
+from .analysis_flow import AnalysisProfile
 from .cs2_review_coordinator import Cs2ReviewCoordinator, ReviewCoordinatorServer, ReviewPreflight
-from .demo_workflow import rerender_demo_workflow, run_demo_workflow
+from .demo_workflow import preflight_demo_workflow, rerender_demo_workflow
+from .local_profiles import OBJECTIVE_RULES, LocalProfileStore
 from .replay_store import ReplayStore
 
 
 _SOURCE_HASH = re.compile(r"[0-9a-f]{64}")
-_REQUIRED_ARTIFACTS = (
-    "analysis", "replay_v2", "analysis_flow", "timeline", "review", "cs2_review_commands"
+_BASE_ARTIFACTS = ("analysis", "replay_v2")
+_REVIEW_ARTIFACTS = (
+    "analysis_flow", "timeline", "review", "cs2_review_commands"
 )
 
 
@@ -29,6 +33,16 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _enable_dark_titlebar(root) -> None:
+    if not hasattr(ctypes, "windll"):
+        return
+    root.update_idletasks()
+    enabled = ctypes.c_int(1)
+    ctypes.windll.dwmapi.DwmSetWindowAttribute(
+        ctypes.windll.user32.GetParent(root.winfo_id()), 20, ctypes.byref(enabled), ctypes.sizeof(enabled)
+    )
+
+
 def validate_existing_workflow(manifest_path: Path) -> Path:
     """Fail-closed validation for an explicitly selected local workflow."""
     manifest_path = manifest_path.resolve()
@@ -37,8 +51,9 @@ def validate_existing_workflow(manifest_path: Path) -> Path:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if not isinstance(manifest, dict) or manifest.get("schema") != "iy.demo_workflow/v1":
         raise ValueError("expected iy.demo_workflow/v1 manifest")
-    if manifest.get("status") != "READY_FOR_REVIEW":
-        raise ValueError("workflow is not READY_FOR_REVIEW")
+    status = manifest.get("status")
+    if status not in {"READY_FOR_SELECTION", "READY_FOR_REVIEW"}:
+        raise ValueError("workflow is not READY_FOR_SELECTION or READY_FOR_REVIEW")
     source_hash = manifest.get("source_sha256")
     if not isinstance(source_hash, str) or _SOURCE_HASH.fullmatch(source_hash) is None:
         raise ValueError("source_sha256 must be 64 lowercase hexadecimal characters")
@@ -51,7 +66,9 @@ def validate_existing_workflow(manifest_path: Path) -> Path:
     if not isinstance(artifacts, dict):
         raise ValueError("workflow artifacts must be an object")
     resolved: dict[str, Path] = {}
-    for name in _REQUIRED_ARTIFACTS:
+    required = _BASE_ARTIFACTS + (_REVIEW_ARTIFACTS if status == "READY_FOR_REVIEW" else ())
+    optional = tuple(name for name in ("tactical_replay", "report") if name in artifacts)
+    for name in required + optional:
         relative = artifacts.get(name)
         if not isinstance(relative, str) or not relative:
             raise ValueError(f"required artifact is missing: {name}")
@@ -71,8 +88,21 @@ def validate_existing_workflow(manifest_path: Path) -> Path:
     store = ReplayStore(resolved["replay_v2"])
     if store.manifest["source"]["sha256"] != source_hash:
         raise ValueError("replay source metadata differs from workflow")
-    for round_number in store.round_numbers:
-        store.load_round(round_number)
+    loaded_chunks = [store.load_round(round_number) for round_number in store.round_numbers]
+
+    if status == "READY_FOR_SELECTION":
+        preflight = manifest.get("preflight")
+        if not isinstance(preflight, dict) or preflight.get("parser_status") != "PASS":
+            raise ValueError("workflow demo preflight is not valid")
+        if preflight.get("map_id") != store.manifest["source"]["map_id"] or preflight.get("rounds") != len(store.round_numbers):
+            raise ValueError("workflow demo preflight differs from replay")
+        roster = preflight.get("roster")
+        if not isinstance(roster, list) or {item.get("player_id") for item in roster if isinstance(item, dict)} != {item["player_id"] for item in store.manifest["players"]}:
+            raise ValueError("workflow demo preflight roster differs from replay")
+        event_count = sum(len(frame.get("events", [])) for chunk in loaded_chunks for frame in chunk["frames"])
+        if preflight.get("basic_event_count") != event_count:
+            raise ValueError("workflow demo preflight event count differs from replay")
+        return manifest_path
 
     flow = json.loads(resolved["analysis_flow"].read_text(encoding="utf-8"))
     if flow.get("schema") != "iy.analysis_flow/v1" or flow.get("source", {}).get("sha256") != source_hash:
@@ -87,6 +117,12 @@ def validate_existing_workflow(manifest_path: Path) -> Path:
         raise ValueError("workflow counts differ from analysis flow")
     if not resolved["review"].read_text(encoding="utf-8").strip():
         raise ValueError("review artifact is empty")
+    if "report" in resolved:
+        report = json.loads(resolved["report"].read_text(encoding="utf-8"))
+        if report.get("schema") != "iy.analysis_report/v1" or report.get("source", {}).get("sha256") != source_hash:
+            raise ValueError("report source metadata differs from workflow")
+    if "tactical_replay" in resolved and not resolved["tactical_replay"].read_text(encoding="utf-8").strip():
+        raise ValueError("tactical replay artifact is empty")
     return manifest_path
 
 
@@ -107,6 +143,12 @@ class ShellResult:
     scene_count: int
     map_id: str
     source_demo_name: str
+    source_sha256: str
+    status: str
+    round_count: int
+    basic_event_count: int
+    parser_status: str
+    profile_id: str
 
 
 class AnalyzerShellController:
@@ -114,12 +156,16 @@ class AnalyzerShellController:
         self,
         output_root: Path,
         *,
-        runner: Callable[..., Path] = run_demo_workflow,
+        runner: Callable[..., Path] = preflight_demo_workflow,
         rerenderer: Callable[..., Path] = rerender_demo_workflow,
+        profile_store: LocalProfileStore | None = None,
     ) -> None:
         self.output_root = output_root
         self._runner = runner
         self._rerenderer = rerenderer
+        self.profile_store = profile_store or LocalProfileStore(output_root / "profiles")
+        self.profiles = {profile.profile_id: profile for profile in self.profile_store.list_profiles()}
+        self.profile_id = "review_v1"
         self.result: ShellResult | None = None
         self.selected_ids: list[str] = []
         self.selection_mode = "full_demo"
@@ -199,9 +245,25 @@ class AnalyzerShellController:
         if self.selection_mode == "player_select" and not self.selected_ids:
             raise ValueError("Player Select requires at least one player")
         manifest_path = self.validate_current_workflow()
-        manifest = self._rerenderer(manifest_path, player_ids=tuple(self.selected_ids))
+        manifest = self._rerenderer(
+            manifest_path, player_ids=tuple(self.selected_ids), profile=self.profiles[self.profile_id]
+        )
         self.result = self._load(manifest)
         return self.result
+
+    def select_profile(self, profile_id: str) -> None:
+        if profile_id not in self.profiles:
+            raise ValueError(f"unknown local analysis profile: {profile_id}")
+        self.profile_id = profile_id
+
+    def update_custom_rules(self, enabled_rule_ids: tuple[str, ...]) -> Path:
+        profile = self.profiles.get(self.profile_id)
+        if profile is None or profile.purpose != "custom":
+            raise ValueError("rule toggles are editable only for a Custom profile")
+        updated = replace(profile, enabled_rule_ids=tuple(rule for rule in OBJECTIVE_RULES if rule in enabled_rule_ids))
+        path = self.profile_store.save(updated)
+        self.profiles[updated.profile_id] = updated
+        return path
 
     def validate_current_workflow(self) -> Path:
         return validate_existing_workflow(self._require_result().manifest_path)
@@ -218,20 +280,31 @@ class AnalyzerShellController:
         if manifest.get("schema") != "iy.demo_workflow/v1":
             raise ValueError("expected iy.demo_workflow/v1 manifest")
         root = manifest_path.parent
-        flow = json.loads((root / manifest["artifacts"]["analysis_flow"]).read_text(encoding="utf-8"))
+        if manifest["status"] == "READY_FOR_REVIEW":
+            flow = json.loads((root / manifest["artifacts"]["analysis_flow"]).read_text(encoding="utf-8"))
+            roster, scenes, selection = flow["roster"], flow["scenes"], flow["selection"]
+            map_id = flow["source"].get("map_id")
+            round_count = len(flow.get("rounds", ())) or int(manifest.get("counts", {}).get("rounds", 0))
+        else:
+            preflight = manifest["preflight"]
+            roster, scenes, selection = preflight["roster"], [], manifest["selection"]
+            map_id, round_count = preflight["map_id"], int(preflight["rounds"])
         players = tuple(
             ShellPlayer(item["player_id"], item["display_name"], item["initial_team"])
-            for item in flow["roster"]
+            for item in roster
         )
         return ShellResult(
             manifest_path=manifest_path,
-            review_path=root / manifest["artifacts"]["review"],
+            review_path=root / manifest["artifacts"].get("review", "review.html"),
             players=players,
-            selected_ids=tuple(flow["selection"]["player_ids"]),
-            selection_mode=flow["selection"]["mode"],
-            scene_count=len(flow["scenes"]),
-            map_id=str(flow["source"].get("map_id") or "unknown"),
+            selected_ids=tuple(selection["player_ids"]), selection_mode=selection["mode"],
+            scene_count=len(scenes), map_id=str(map_id or "unknown"),
             source_demo_name=str(manifest.get("source_demo_name") or ""),
+            source_sha256=str(manifest["source_sha256"]), status=str(manifest["status"]),
+            round_count=round_count,
+            basic_event_count=int(manifest.get("preflight", {}).get("basic_event_count", 0)),
+            parser_status=str(manifest.get("preflight", {}).get("parser_status", "PASS")),
+            profile_id=str((manifest.get("profile") or {}).get("profile_id") or ""),
         )
 
 
@@ -244,9 +317,21 @@ class AnalyzerShellApp:
         self.ttk = ttk
         self.controller = controller
         self.root = tk.Tk()
-        self.root.title("Improve Yourself — Demo Analyzer")
-        self.root.geometry("860x620")
+        self.root.title("Improve Yourself – Experimental")
+        self.root.geometry("980x760")
+        self.root.configure(background="#080d15")
+        _enable_dark_titlebar(self.root)
+        style = ttk.Style(self.root)
+        style.theme_use("clam")
+        style.configure(".", background="#101824", foreground="#e8edf5", fieldbackground="#151f2e")
+        style.configure("TFrame", background="#080d15")
+        style.configure("TLabel", background="#080d15", foreground="#e8edf5")
+        style.configure("TLabelframe", background="#101824", foreground="#e8edf5")
+        style.configure("TLabelframe.Label", background="#101824", foreground="#e8edf5")
+        style.configure("TButton", background="#1d2a3a", foreground="#e8edf5", padding=7)
         self.status = tk.StringVar(value="Echte CS2-Demo auswählen")
+        self.identity = tk.StringVar(value="Keine lokale Analyse geladen")
+        self.demo_preflight = tk.StringVar(value="Demo-Preflight ausstehend")
         self.player_by_label: dict[str, str] = {}
         self.review_server: ReviewCoordinatorServer | None = None
         self.netcon_status = tk.StringVar(value="○ Lokale CS2-Verbindung: noch nicht geprüft")
@@ -256,13 +341,17 @@ class AnalyzerShellApp:
 
         frame = ttk.Frame(self.root, padding=18)
         frame.pack(fill="both", expand=True)
-        ttk.Label(frame, text="Demo Analyzer", font=("Segoe UI", 20, "bold")).pack(anchor="w")
+        ttk.Label(frame, text="Improve Yourself", font=("Segoe UI", 23, "bold")).pack(anchor="w")
+        ttk.Label(frame, text="Make Up Your Mind. · Experimental", font=("Segoe UI", 11)).pack(anchor="w")
         ttk.Label(frame, textvariable=self.status).pack(anchor="w", pady=(4, 14))
         source_actions = ttk.Frame(frame)
         source_actions.pack(fill="x")
         ttk.Button(source_actions, text="Demo auswählen", command=self._choose_demo).pack(side="left")
         ttk.Button(source_actions, text="Vorhandene Analyse öffnen", command=self._open_existing).pack(side="left", padx=8)
-        ttk.Button(source_actions, text="Quelldemo zuordnen", command=self._link_source).pack(side="left")
+        self.link_button = ttk.Button(source_actions, text="Quelldemo zuordnen", command=self._link_source, state="disabled")
+        self.link_button.pack(side="left")
+        ttk.Label(frame, textvariable=self.identity).pack(anchor="w", pady=(8, 0))
+        ttk.Label(frame, textvariable=self.demo_preflight).pack(anchor="w", pady=(2, 4))
 
         teams = ttk.Frame(frame)
         teams.pack(fill="x", pady=14)
@@ -273,20 +362,55 @@ class AnalyzerShellApp:
 
         controls = ttk.Frame(frame)
         controls.pack(fill="x", pady=8)
-        ttk.Button(controls, text="Full Demo", command=self._full).pack(side="left")
-        ttk.Button(controls, text="CT", command=lambda: self._team("CT")).pack(side="left", padx=4)
-        ttk.Button(controls, text="T", command=lambda: self._team("T")).pack(side="left", padx=4)
-        ttk.Button(controls, text="Reset", command=self._reset).pack(side="left", padx=4)
-        self.player = ttk.Combobox(controls, state="readonly", width=36)
+        self.workflow_widgets = []
+        for text, command in (("Full Demo", self._full), ("CT", lambda: self._team("CT")), ("T", lambda: self._team("T")), ("Reset", self._reset)):
+            button = ttk.Button(controls, text=text, command=command, state="disabled")
+            button.pack(side="left", padx=4 if text != "Full Demo" else 0)
+            self.workflow_widgets.append(button)
+        self.player = ttk.Combobox(controls, state="disabled", width=32)
         self.player.pack(side="left", padx=(18, 4))
-        ttk.Button(controls, text="+ Add Player", command=self._add).pack(side="left")
+        self.add_button = ttk.Button(controls, text="+ Add Player", command=self._add, state="disabled")
+        self.add_button.pack(side="left")
+        self.workflow_widgets.extend((self.player, self.add_button))
+
+        profile_row = ttk.Frame(frame)
+        profile_row.pack(fill="x", pady=6)
+        ttk.Label(profile_row, text="Analyseprofil").pack(side="left")
+        self.profile = ttk.Combobox(profile_row, state="disabled", width=24, values=tuple(controller.profiles))
+        self.profile.set("review_v1")
+        self.profile.pack(side="left", padx=8)
+        self.profile.bind("<<ComboboxSelected>>", self._select_profile)
+        self.workflow_widgets.append(self.profile)
+        self.rules = ttk.Label(profile_row, text="Objektive V1-Regeln · Details per Profil")
+        self.rules.pack(side="left", padx=8)
+        rules_frame = ttk.LabelFrame(frame, text="Rules", padding=8)
+        rules_frame.pack(fill="x", pady=5)
+        self.rule_vars: dict[str, tk.BooleanVar] = {}
+        self.rule_checks = []
+        labels = {
+            "objective_kill": "Kill", "objective_multi_kill": "Multi-Kill", "objective_headshot": "Headshot",
+            "objective_wallbang": "Wallbang", "objective_smoke_kill": "Smoke-Kill",
+            "objective_blind_kill": "Blind-Kill", "objective_entry": "Entry",
+        }
+        for rule_id in OBJECTIVE_RULES:
+            variable = tk.BooleanVar(value=True)
+            check = ttk.Checkbutton(rules_frame, text=labels[rule_id], variable=variable, command=self._save_custom_rules)
+            check.pack(side="left", padx=5)
+            check.bind("<Double-Button-1>", lambda _event, value=rule_id: self._show_rule_details(value))
+            self.rule_vars[rule_id] = variable
+            self.rule_checks.append(check)
+        self.workflow_widgets.extend(self.rule_checks)
+        ttk.Label(frame, text=f"Lokale Profile: {controller.profile_store.root}").pack(anchor="w", pady=(0, 5))
 
         self.chosen = ttk.Label(frame, text="Full Demo")
         self.chosen.pack(anchor="w", pady=8)
         actions = ttk.Frame(frame)
         actions.pack(fill="x", pady=8)
-        ttk.Button(actions, text="Analyse starten", command=self._analyze).pack(side="left")
-        ttk.Button(actions, text="CS2 prüfen", command=self._preflight).pack(side="left", padx=8)
+        self.analyze_button = ttk.Button(actions, text="Analyse starten", command=self._analyze, state="disabled")
+        self.analyze_button.pack(side="left")
+        self.cs2_button = ttk.Button(actions, text="CS2 prüfen", command=self._preflight, state="disabled")
+        self.cs2_button.pack(side="left", padx=8)
+        self.workflow_widgets.extend((self.analyze_button, self.cs2_button))
         self.review_button = ttk.Button(actions, text="Review öffnen", command=self._open_review, state="disabled")
         self.review_button.pack(side="left")
         preflight = ttk.LabelFrame(frame, text="CS2-Readiness", padding=10)
@@ -356,6 +480,9 @@ class AnalyzerShellApp:
             self._preflight()
 
     def _draw(self, result: ShellResult) -> None:
+        for widget in self.workflow_widgets:
+            widget.configure(state="readonly" if widget in (self.player, self.profile) else "normal")
+        self.link_button.configure(state="normal")
         for box in (self.ct, self.t):
             for child in box.winfo_children():
                 child.destroy()
@@ -372,8 +499,44 @@ class AnalyzerShellApp:
             "Gewählt: " + ", ".join(selected_names) if selected_names else "Player Select · keine Spieler gewählt"
         )
         self.chosen.configure(text=selection_text)
-        self.status.set(f"{result.map_id} · {len(result.players)} Spieler · {result.scene_count} Szenen")
+        source_name = result.source_demo_name or "nicht zugeordnet"
+        self.identity.set(f"Workflow: {result.manifest_path.name} · Quelle: {source_name} · SHA-256: {result.source_sha256[:12]}…")
+        self.demo_preflight.set(
+            f"Demo-Preflight: {result.parser_status} · {result.map_id} · {result.round_count} Runden · "
+            f"{len(result.players)} Spieler · {result.basic_event_count} grundlegende Events"
+        )
+        phase = "Auswahl bereit" if result.status == "READY_FOR_SELECTION" else f"{result.scene_count} Szenen · Review bereit"
+        self.status.set(f"{result.map_id} · {phase}")
+        self.cs2_button.configure(state="normal" if result.status == "READY_FOR_REVIEW" else "disabled")
+        self._select_profile()
         self._reset_preflight()
+
+    def _select_profile(self, _event=None) -> None:
+        self.controller.select_profile(self.profile.get())
+        profile = self.controller.profiles[self.controller.profile_id]
+        rules = profile.enabled_rule_ids if profile.enabled_rule_ids is not None else ("alle objektiven V1-Regeln",)
+        self.rules.configure(text=f"{profile.purpose.title()} · " + ", ".join(rules))
+        enabled = set(OBJECTIVE_RULES if profile.enabled_rule_ids is None else profile.enabled_rule_ids)
+        for rule_id, variable in self.rule_vars.items():
+            variable.set(rule_id in enabled)
+        for check in self.rule_checks:
+            check.configure(state="normal" if profile.purpose == "custom" else "disabled")
+
+    def _save_custom_rules(self) -> None:
+        enabled = tuple(rule_id for rule_id, variable in self.rule_vars.items() if variable.get())
+        path = self.controller.update_custom_rules(enabled)
+        self.rules.configure(text=f"Custom · lokal gespeichert: {path.name}")
+
+    def _show_rule_details(self, rule_id: str) -> None:
+        from tkinter import messagebox
+
+        messagebox.showinfo(
+            "Regeldetails",
+            f"{rule_id}\n\nObjektiver, aus der Demo belegter Szenenanker. "
+            "Mehrere Marker derselben Situation werden zu einer Szene zusammengeführt. "
+            "Die Interpretation bleibt beim Nutzer.",
+            parent=self.root,
+        )
 
     def _full(self) -> None:
         self.controller.set_full_demo()
