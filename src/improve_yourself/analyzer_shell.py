@@ -9,6 +9,7 @@ import re
 import sys
 import threading
 import webbrowser
+import math
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Callable
@@ -17,6 +18,7 @@ from .analysis_flow import AnalysisProfile
 from .cs2_review_coordinator import Cs2ReviewCoordinator, ReviewCoordinatorServer, ReviewPreflight
 from .demo_workflow import preflight_demo_workflow, rerender_demo_workflow
 from .embedded_review import EmbeddedReviewSession
+from .embedded_tactical import EmbeddedTacticalSession
 from .local_profiles import OBJECTIVE_RULES, LocalProfileStore
 from .replay_store import ReplayStore
 from .system_check import run_system_check
@@ -415,6 +417,18 @@ class AnalyzerShellApp:
         self.embedded_scene_context = tk.StringVar(value="")
         self.embedded_scene_players = tk.StringVar(value="")
         self.embedded_scene_rules = tk.StringVar(value="")
+        self.embedded_tactical: EmbeddedTacticalSession | None = None
+        self.tactical_scene_title = tk.StringVar(value="Keine Szene ausgewählt")
+        self.tactical_scene_context = tk.StringVar(value="")
+        self.tactical_scene_note = tk.StringVar(value="Keine Review-Notiz")
+        self.tactical_frame_status = tk.StringVar(value="")
+        self.tactical_action_status = tk.StringVar(value="Tactical Replay wird aus einer Review-Szene geöffnet.")
+        self.tactical_frame_index = 0
+        self.tactical_zoom = 1.0
+        self.tactical_pan = [0.0, 0.0]
+        self.tactical_drag_origin: tuple[int, int] | None = None
+        self.tactical_syncing_selection = False
+        self.tactical_ignore_selection_event = False
 
         shell = ttk.Frame(self.root, style="Content.TFrame")
         shell.pack(fill="both", expand=True)
@@ -442,27 +456,38 @@ class AnalyzerShellApp:
         tk.Label(sidebar, text="LOCAL · PRIVATE · READ-ONLY WHERE MARKED", background=_THEME["deep"], foreground=_THEME["muted"], wraplength=205, justify="left", font=("Segoe UI", 8)).pack(side="bottom", anchor="w", padx=18, pady=18)
 
         frame = self.pages["Analyzer / Review"]
-        ttk.Label(frame, text="Analyzer / Review", font=("Segoe UI", 24, "bold")).pack(anchor="w")
-        ttk.Label(frame, text="Demo → Parser → Auswahl → Profil → Regeln → Szenen → Review", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 3))
-        ttk.Label(frame, textvariable=self.status, foreground=_THEME["ice"]).pack(anchor="w", pady=(0, 14))
-        source_actions = ttk.Frame(frame)
+        analyzer_header = ttk.Frame(frame, style="Content.TFrame")
+        analyzer_header.pack(fill="x", pady=(0, 12))
+        ttk.Label(analyzer_header, text="Analyzer / Review", font=("Segoe UI", 24, "bold")).pack(side="left")
+        ttk.Label(analyzer_header, textvariable=self.status, foreground=_THEME["ice"]).pack(side="right")
+        ttk.Label(frame, text="Demo → Parser → Auswahl → Profil → Regeln → Szenen → Review", foreground=_THEME["muted"]).pack(anchor="w", pady=(0, 12))
+
+        analyzer_top = ttk.Frame(frame, style="Content.TFrame")
+        analyzer_top.pack(fill="x")
+        source_card = ttk.Frame(analyzer_top, style="Card.TFrame", padding=16)
+        source_card.pack(side="left", fill="both", expand=True, padx=(0, 6))
+        ttk.Label(source_card, text="DEMO & DATENQUELLE", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w")
+        source_actions = ttk.Frame(source_card, style="CardInner.TFrame")
         source_actions.pack(fill="x")
         ttk.Button(source_actions, text="Demo auswählen", style="Primary.TButton", command=self._choose_demo).pack(side="left")
         ttk.Button(source_actions, text="Vorhandene Analyse öffnen", command=self._open_existing).pack(side="left", padx=8)
         self.link_button = ttk.Button(source_actions, text="Quelldemo zuordnen", command=self._link_source, state="disabled")
         self.link_button.pack(side="left")
-        ttk.Label(frame, textvariable=self.identity).pack(anchor="w", pady=(8, 0))
-        ttk.Label(frame, textvariable=self.demo_preflight).pack(anchor="w", pady=(2, 4))
+        ttk.Label(source_card, textvariable=self.identity, style="Muted.TLabel", wraplength=470, justify="left").pack(anchor="w", pady=(10, 0))
+        ttk.Label(source_card, textvariable=self.demo_preflight, style="Card.TLabel", wraplength=470, justify="left").pack(anchor="w", pady=(4, 0))
 
-        teams = ttk.Frame(frame)
-        teams.pack(fill="x", pady=14)
-        self.ct = ttk.LabelFrame(teams, text="CT", padding=10)
-        self.ct.pack(side="left", fill="both", expand=True, padx=(0, 6))
-        self.t = ttk.LabelFrame(teams, text="T", padding=10)
-        self.t.pack(side="left", fill="both", expand=True, padx=(6, 0))
+        teams = ttk.Frame(analyzer_top, style="Content.TFrame")
+        teams.pack(side="left", fill="both", expand=True, padx=(6, 0))
+        self.ct = ttk.LabelFrame(teams, text="CT LINE-UP", padding=10)
+        self.ct.pack(side="left", fill="both", expand=True, padx=(0, 4))
+        self.t = ttk.LabelFrame(teams, text="T LINE-UP", padding=10)
+        self.t.pack(side="left", fill="both", expand=True, padx=(4, 0))
 
-        controls = ttk.Frame(frame)
-        controls.pack(fill="x", pady=8)
+        selection_card = ttk.Frame(frame, style="Card.TFrame", padding=16)
+        selection_card.pack(fill="x", pady=(12, 0))
+        ttk.Label(selection_card, text="SPIELERAUSWAHL & ANALYSEPROFIL", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w")
+        controls = ttk.Frame(selection_card, style="CardInner.TFrame")
+        controls.pack(fill="x", pady=(10, 4))
         self.workflow_widgets = []
         for text, command in (("Full Demo", self._full), ("CT", lambda: self._team("CT")), ("T", lambda: self._team("T")), ("Reset", self._reset)):
             button = ttk.Button(controls, text=text, command=command, state="disabled")
@@ -474,7 +499,7 @@ class AnalyzerShellApp:
         self.add_button.pack(side="left")
         self.workflow_widgets.extend((self.player, self.add_button))
 
-        profile_row = ttk.Frame(frame)
+        profile_row = ttk.Frame(selection_card, style="CardInner.TFrame")
         profile_row.pack(fill="x", pady=6)
         ttk.Label(profile_row, text="Analyseprofil").pack(side="left")
         self.profile = ttk.Combobox(profile_row, state="disabled", width=24, values=tuple(controller.profiles))
@@ -505,10 +530,13 @@ class AnalyzerShellApp:
         self.workflow_widgets.extend(self.rule_checks)
         ttk.Label(self.pages["Rules"], text=f"Lokale Profile: {controller.profile_store.root}", foreground=_THEME["muted"]).pack(anchor="w", pady=(10, 5))
 
-        self.chosen = ttk.Label(frame, text="Full Demo")
-        self.chosen.pack(anchor="w", pady=8)
-        actions = ttk.Frame(frame)
-        actions.pack(fill="x", pady=8)
+        self.chosen = ttk.Label(selection_card, text="Full Demo", style="Muted.TLabel")
+        self.chosen.pack(anchor="w", pady=(4, 0))
+        review_strip = ttk.Frame(frame, style="Content.TFrame")
+        review_strip.pack(fill="x", pady=(12, 0))
+        actions = ttk.Frame(review_strip, style="Card.TFrame", padding=14)
+        actions.pack(side="left", fill="both", expand=True, padx=(0, 6))
+        ttk.Label(actions, text="ANALYSE & REVIEW", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w", pady=(0, 8))
         self.analyze_button = ttk.Button(actions, text="Analyse starten", command=self._analyze, state="disabled")
         self.analyze_button.pack(side="left")
         self.cs2_button = ttk.Button(actions, text="CS2 prüfen", command=self._preflight, state="disabled")
@@ -516,8 +544,8 @@ class AnalyzerShellApp:
         self.workflow_widgets.extend((self.analyze_button, self.cs2_button))
         self.review_button = ttk.Button(actions, text="Review anzeigen", command=self._open_review, state="disabled")
         self.review_button.pack(side="left")
-        preflight = ttk.LabelFrame(frame, text="CS2-Readiness", padding=10)
-        preflight.pack(fill="x", pady=10)
+        preflight = ttk.LabelFrame(review_strip, text="CS2-READINESS", padding=12)
+        preflight.pack(side="left", fill="both", expand=True, padx=(6, 0))
         for variable in (self.netcon_status, self.demo_status, self.filename_status, self.preflight_message):
             ttk.Label(preflight, textvariable=variable).pack(anchor="w")
         self._build_embedded_review(frame)
@@ -586,6 +614,7 @@ class AnalyzerShellApp:
         buttons.pack(fill="x", pady=(14, 0))
         self.ttk.Button(buttons, text="Status & Notiz speichern", command=self._save_embedded_review).pack(side="left")
         self.ttk.Button(buttons, text="In CS2 ansehen", style="Primary.TButton", command=self._open_embedded_in_cs2).pack(side="left", padx=8)
+        self.ttk.Button(buttons, text="Tactical Replay", command=self._open_tactical_from_review).pack(side="left")
         self.ttk.Button(buttons, text="Vorherige", command=lambda: self._step_embedded_scene(-1)).pack(side="left", padx=(16, 4))
         self.ttk.Button(buttons, text="Nächste", command=lambda: self._step_embedded_scene(1)).pack(side="left")
         self.ttk.Label(
@@ -602,6 +631,13 @@ class AnalyzerShellApp:
 
     def _build_dashboard_page(self) -> None:
         page = self.pages["Dashboard"]
+        try:
+            dashboard_path = Path(__file__).with_name("assets") / "improve-yourself-wordmark-v3.png"
+            self.dashboard_brand_image = self.tk.PhotoImage(file=str(dashboard_path))
+            self.tk.Label(page, image=self.dashboard_brand_image, background=_THEME["night"]).pack(anchor="w")
+            self.ttk.Label(page, text="MAKE UP YOUR MIND.", foreground=_THEME["ice"], font=("Segoe UI Semibold", 9)).pack(anchor="w", pady=(0, 14))
+        except self.tk.TclError:
+            self.dashboard_brand_image = None
         self.ttk.Label(page, text="Dashboard", font=("Segoe UI", 24, "bold")).pack(anchor="w")
         self.ttk.Label(page, text="Lokaler Einstieg und aktueller Arbeitsstand", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
         grid = self.ttk.Frame(page, style="Content.TFrame")
@@ -660,13 +696,66 @@ class AnalyzerShellApp:
 
     def _build_tactical_page(self) -> None:
         page = self.pages["Tactical Replay"]
-        self.ttk.Label(page, text="Tactical Replay", font=("Segoe UI", 24, "bold")).pack(anchor="w")
-        card = self.ttk.Frame(page, style="Card.TFrame", padding=24)
-        card.pack(fill="x", pady=(18, 0))
-        self.ttk.Label(card, text="Eine gemeinsame Replay-Wahrheit", style="Card.TLabel", font=("Segoe UI Semibold", 15)).pack(anchor="w")
-        self.ttk.Label(card, text="Nach der Analyse wird der echte Tactical-Replay-HTML-Export zusammen mit Timeline, Report und CS2-Ticks erzeugt. Der Review-Einstieg bleibt im Analyzer freigegeben, sobald die lokale CS2-Prüfung bestanden ist.", style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(8, 0))
-        self.tactical_button = self.ttk.Button(card, text="Tactical Replay öffnen", command=lambda: self._open_artifact("tactical_replay"), state="disabled")
-        self.tactical_button.pack(anchor="w", pady=(14, 0))
+        header = self.ttk.Frame(page, style="Content.TFrame")
+        header.pack(fill="x")
+        self.tactical_back_button = self.ttk.Button(header, text="← Zurück zum Review", command=self._return_to_embedded_review, state="disabled")
+        self.tactical_back_button.pack(side="left")
+        self.ttk.Label(header, text="Tactical Replay", font=("Segoe UI", 24, "bold")).pack(side="left", padx=16)
+        self.ttk.Label(header, text="GEMEINSAME REPLAY-WAHRHEIT", foreground=_THEME["ice"], font=("Segoe UI Semibold", 9)).pack(side="right")
+        context_bar = self.ttk.Frame(page, style="Card.TFrame", padding=(14, 10))
+        context_bar.pack(fill="x", pady=(10, 10))
+        self.ttk.Label(context_bar, textvariable=self.tactical_scene_title, style="Card.TLabel", font=("Segoe UI Semibold", 12)).pack(side="left")
+        self.ttk.Label(context_bar, textvariable=self.tactical_scene_context, style="Muted.TLabel").pack(side="right")
+        self.ttk.Label(page, textvariable=self.tactical_scene_note, foreground=_THEME["muted"]).pack(anchor="w", pady=(0, 8))
+
+        body = self.ttk.Frame(page, style="Content.TFrame")
+        body.pack(fill="both", expand=True)
+        scene_panel = self.ttk.Frame(body, style="Card.TFrame", padding=12)
+        scene_panel.pack(side="left", fill="y", padx=(0, 8))
+        self.ttk.Label(scene_panel, text="SZENEN", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w")
+        self.tactical_scene_list = self.tk.Listbox(
+            scene_panel, width=25, background=_THEME["deep"], foreground=_THEME["ink"],
+            selectbackground=_THEME["metal"], selectforeground=_THEME["ink"],
+            borderwidth=0, highlightthickness=1, highlightbackground=_THEME["line"],
+            activestyle="none", font=("Segoe UI", 9),
+        )
+        self.tactical_scene_list.pack(fill="both", expand=True, pady=(8, 0))
+        self.tactical_scene_list.bind("<<ListboxSelect>>", self._select_tactical_scene)
+
+        map_panel = self.ttk.Frame(body, style="Card.TFrame", padding=8)
+        map_panel.pack(side="left", fill="both", expand=True)
+        frame_row = self.ttk.Frame(map_panel, style="CardInner.TFrame")
+        frame_row.pack(fill="x", pady=(0, 8))
+        self.ttk.Label(frame_row, text="SZENENFRAME", style="Card.TLabel").pack(side="left")
+        self.tactical_frame = self.ttk.Scale(frame_row, from_=0, to=0, command=self._set_tactical_frame)
+        self.tactical_frame.pack(side="left", fill="x", expand=True, padx=10)
+        self.ttk.Label(frame_row, textvariable=self.tactical_frame_status, style="Muted.TLabel").pack(side="right")
+
+        self.tactical_canvas = self.tk.Canvas(
+            map_panel, background=_THEME["deep"], borderwidth=1, relief="solid",
+            highlightthickness=1, highlightbackground=_THEME["line"], cursor="fleur",
+        )
+        self.tactical_canvas.pack(fill="both", expand=True)
+        self.tactical_canvas.bind("<Configure>", lambda _event: self._draw_tactical_canvas())
+        self.tactical_canvas.bind("<MouseWheel>", self._wheel_tactical)
+        self.tactical_canvas.bind("<ButtonPress-1>", self._start_tactical_pan)
+        self.tactical_canvas.bind("<B1-Motion>", self._drag_tactical_pan)
+
+        controls = self.ttk.Frame(page, style="Card.TFrame", padding=(12, 10))
+        controls.pack(fill="x", pady=(10, 0))
+        self.tactical_prev_button = self.ttk.Button(controls, text="Vorherige Szene", command=lambda: self._step_tactical_scene(-1), state="disabled")
+        self.tactical_prev_button.pack(side="left")
+        self.tactical_next_button = self.ttk.Button(controls, text="Nächste Szene", command=lambda: self._step_tactical_scene(1), state="disabled")
+        self.tactical_next_button.pack(side="left", padx=6)
+        self.ttk.Button(controls, text="In CS2 ansehen", style="Primary.TButton", command=self._open_tactical_in_cs2).pack(side="left", padx=(12, 0))
+        self.ttk.Button(controls, text="−", command=lambda: self._zoom_tactical(0.85)).pack(side="left", padx=(18, 4))
+        self.ttk.Button(controls, text="+", command=lambda: self._zoom_tactical(1.18)).pack(side="left")
+        self.ttk.Button(controls, text="Ansicht zurücksetzen", command=self._reset_tactical_view).pack(side="left", padx=6)
+        self.tactical_button = self.ttk.Button(
+            controls, text="HTML-Export im Browser (Fallback)", command=lambda: self._open_artifact("tactical_replay"), state="disabled"
+        )
+        self.tactical_button.pack(side="right")
+        self.ttk.Label(page, textvariable=self.tactical_action_status, foreground=_THEME["muted"]).pack(anchor="w", pady=(5, 0))
 
     def run(self) -> None:
         self.root.mainloop()
@@ -945,6 +1034,211 @@ class AnalyzerShellApp:
             self._start_review(self._coordinator())
         except Exception as error:
             self.embedded_cs2_status.set(f"Browser-Fallback nicht geöffnet: {error}")
+
+    def _open_tactical_from_review(self) -> None:
+        if self.embedded_review is None or self.embedded_scene_id is None:
+            return
+        self._save_embedded_review()
+        try:
+            manifest_path = self.controller.validate_current_workflow()
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.embedded_tactical = EmbeddedTacticalSession(
+                manifest_path.parent / manifest["artifacts"]["replay_v2"],
+                manifest_path.parent / manifest["artifacts"]["analysis_flow"],
+                str(manifest["source_sha256"]),
+            )
+            self.embedded_tactical.select_scene(self.embedded_scene_id)
+            self.tactical_frame_index = 0
+            self.tactical_zoom = 1.0
+            self.tactical_pan = [0.0, 0.0]
+            self.tactical_back_button.configure(state="normal")
+            self.tactical_prev_button.configure(state="normal")
+            self.tactical_next_button.configure(state="normal")
+            self.tactical_action_status.set("Szene aus dem Analyzer Review übernommen; keine neue Analyse ausgeführt.")
+            self._show_page("Tactical Replay")
+            self._draw_tactical_scene()
+        except Exception as error:
+            self.embedded_cs2_status.set(f"Tactical Replay nicht geöffnet: {error}")
+
+    def _return_to_embedded_review(self) -> None:
+        if self.embedded_tactical and self.embedded_tactical.selected_scene_id:
+            self._sync_review_scene(self.embedded_tactical.selected_scene_id)
+        self._show_page("Analyzer / Review")
+        self.embedded_review_frame.tkraise()
+
+    def _sync_review_scene(self, scene_id: str) -> None:
+        if self.embedded_review is None:
+            return
+        index = next(
+            (position for position, scene in enumerate(self.embedded_review.scenes) if scene.scene_id == scene_id),
+            None,
+        )
+        if index is None:
+            raise ValueError("tactical scene is not present in embedded review")
+        self.embedded_scene_list.selection_clear(0, self.tk.END)
+        self.embedded_scene_list.selection_set(index)
+        self.embedded_scene_list.activate(index)
+        self.embedded_scene_list.see(index)
+        self._draw_embedded_scene(index)
+
+    def _step_tactical_scene(self, delta: int) -> None:
+        if self.embedded_tactical is None:
+            return
+        scene = self.embedded_tactical.step_scene(delta)
+        self._sync_review_scene(scene["scene_id"])
+        self.tactical_frame_index = 0
+        self._draw_tactical_scene()
+
+    def _select_tactical_scene(self, _event=None) -> None:
+        if self.tactical_ignore_selection_event:
+            self.tactical_ignore_selection_event = False
+            return
+        if self.embedded_tactical is None or self.tactical_syncing_selection:
+            return
+        selected = self.tactical_scene_list.curselection()
+        if not selected:
+            return
+        scene = self.embedded_tactical.scenes[selected[0]]
+        self.embedded_tactical.select_scene(scene["scene_id"])
+        self._sync_review_scene(scene["scene_id"])
+        self.tactical_frame_index = 0
+        self._draw_tactical_scene()
+
+    def _draw_tactical_scene(self) -> None:
+        if self.embedded_tactical is None:
+            return
+        scene = self.embedded_tactical.selected_scene()
+        scenes = self.embedded_tactical.scenes
+        if self.tactical_scene_list.size() != len(scenes):
+            self.tactical_scene_list.delete(0, self.tk.END)
+            for item in scenes:
+                self.tactical_scene_list.insert(
+                    self.tk.END,
+                    f"R{item['round_number']} · Tick {item['requested_tick']}",
+                )
+        selected_index = next(index for index, item in enumerate(scenes) if item["scene_id"] == scene["scene_id"])
+        if self.tactical_scene_list.curselection() != (selected_index,):
+            self.tactical_syncing_selection = True
+            self.tactical_ignore_selection_event = True
+            try:
+                self.tactical_scene_list.selection_clear(0, self.tk.END)
+                self.tactical_scene_list.selection_set(selected_index)
+                self.tactical_scene_list.see(selected_index)
+            finally:
+                self.tactical_syncing_selection = False
+        frames = scene.get("frames", ())
+        self.tactical_frame.configure(to=max(0, len(frames) - 1))
+        self.tactical_frame.set(min(self.tactical_frame_index, max(0, len(frames) - 1)))
+        self.tactical_frame_index = min(self.tactical_frame_index, max(0, len(frames) - 1))
+        review_scene = next(
+            item for item in self.embedded_review.scenes if item.scene_id == scene["scene_id"]
+        ) if self.embedded_review else None
+        if review_scene:
+            self.tactical_scene_title.set(
+                f"Runde {review_scene.round_number} · Tick {review_scene.review_tick} · {review_scene.timecode}"
+            )
+            review = self.embedded_review.review(review_scene.scene_id)
+            selection = self.embedded_tactical.flow.get("selection", {})
+            profile = self.embedded_tactical.flow.get("profile", {})
+            self.tactical_scene_context.set(
+                f"{self.embedded_tactical.flow.get('source', {}).get('map_id', 'Map nicht belegt')} · "
+                f"Szene {review_scene.scene_id} · Spieler {', '.join(review_scene.player_names) or 'nicht belegt'} · "
+                f"Profil {profile.get('profile_id', 'nicht belegt')} · Auswahl {selection.get('mode', 'nicht belegt')} · "
+                f"Review {review['state']}"
+            )
+            self.tactical_scene_note.set(
+                f"Review-Notiz: {review['note']}" if review.get("note") else "Review-Notiz: keine"
+            )
+        self._draw_tactical_canvas()
+
+    def _set_tactical_frame(self, value: str) -> None:
+        self.tactical_frame_index = int(round(float(value)))
+        self._draw_tactical_canvas()
+
+    def _draw_tactical_canvas(self) -> None:
+        canvas = getattr(self, "tactical_canvas", None)
+        if canvas is None:
+            return
+        canvas.delete("all")
+        width, height = max(canvas.winfo_width(), 2), max(canvas.winfo_height(), 2)
+        for x in range(0, width, 80):
+            canvas.create_line(x, 0, x, height, fill="#183149")
+        for y in range(0, height, 80):
+            canvas.create_line(0, y, width, y, fill="#183149")
+        if self.embedded_tactical is None:
+            canvas.create_text(width / 2, height / 2, text="Szene im Analyzer Review auswählen", fill=_THEME["muted"])
+            return
+        scene = self.embedded_tactical.selected_scene()
+        frames = scene.get("frames", ())
+        if not frames:
+            canvas.create_text(width / 2, height / 2, text="Keine belegten Positionsframes für diese Szene", fill=_THEME["muted"])
+            self.tactical_frame_status.set("Keine Positionsframes")
+            return
+        self.tactical_frame_index = max(0, min(self.tactical_frame_index, len(frames) - 1))
+        frame = frames[self.tactical_frame_index]
+        players = frame.get("players", ())
+        self.tactical_frame_status.set(
+            f"Tick {frame['tick']} · Frame {self.tactical_frame_index + 1}/{len(frames)}"
+        )
+        if not players:
+            canvas.create_text(width / 2, height / 2, text="Keine vollständigen Spielerpositionen in diesem Frame", fill=_THEME["muted"])
+            return
+        xs, ys = [float(player["x"]) for player in players], [float(player["y"]) for player in players]
+        min_x, max_x, min_y, max_y = min(xs), max(xs), min(ys), max(ys)
+        span = max(max_x - min_x, max_y - min_y, 1.0)
+        base_scale = min(width, height) * 0.72 / span
+        scale = base_scale * self.tactical_zoom
+        center_x, center_y = (min_x + max_x) / 2, (min_y + max_y) / 2
+        focus = scene.get("focus_player_id")
+        for player in players:
+            x = width / 2 + (float(player["x"]) - center_x) * scale + self.tactical_pan[0]
+            y = height / 2 - (float(player["y"]) - center_y) * scale + self.tactical_pan[1]
+            color = "#55aaff" if str(player.get("side", "")).upper() == "CT" else "#ff9f43"
+            radius = 10 if player.get("player_id") != focus else 14
+            yaw = math.radians(float(player.get("yaw", 0.0)))
+            canvas.create_line(x, y, x + math.cos(yaw) * 34, y - math.sin(yaw) * 34, fill=color, width=3)
+            canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill=color, outline=_THEME["ice"] if radius == 14 else color, width=2)
+            canvas.create_text(x + 14, y - 14, text=str(player.get("name", "")), fill=_THEME["ink"], anchor="sw", font=("Segoe UI", 9))
+
+    def _zoom_tactical(self, factor: float) -> None:
+        self.tactical_zoom = max(0.5, min(4.0, self.tactical_zoom * factor))
+        self._draw_tactical_canvas()
+
+    def _wheel_tactical(self, event) -> None:
+        self._zoom_tactical(1.12 if event.delta > 0 else 0.89)
+
+    def _reset_tactical_view(self) -> None:
+        self.tactical_zoom = 1.0
+        self.tactical_pan = [0.0, 0.0]
+        self._draw_tactical_canvas()
+
+    def _start_tactical_pan(self, event) -> None:
+        self.tactical_drag_origin = (event.x, event.y)
+
+    def _drag_tactical_pan(self, event) -> None:
+        if self.tactical_drag_origin is None:
+            return
+        previous_x, previous_y = self.tactical_drag_origin
+        self.tactical_pan[0] += event.x - previous_x
+        self.tactical_pan[1] += event.y - previous_y
+        self.tactical_drag_origin = (event.x, event.y)
+        self._draw_tactical_canvas()
+
+    def _open_tactical_in_cs2(self) -> None:
+        if self.embedded_tactical is None or self.embedded_review is None:
+            return
+        scene_id = self.embedded_tactical.selected_scene()["scene_id"]
+        self.tactical_action_status.set("Prüfe CS2, aktive Demo und erlaubten Szenen-Tick …")
+
+        def worker() -> None:
+            try:
+                result = self.embedded_review.open_in_cs2(scene_id)
+                message = f"In CS2 geöffnet: {result['demo_name']} · Tick {result['tick']}"
+            except Exception as error:
+                message = f"Nicht in CS2 geöffnet: {error}"
+            self.root.after(0, lambda: self.tactical_action_status.set(message))
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def _open_artifact(self, name: str) -> None:
         try:
