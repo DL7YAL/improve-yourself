@@ -880,7 +880,7 @@ NEXT: Tristan prüft den frischen Portable-Build auf die sichtbare, rein informa
 MODEL_PROFILE: terra
 MODEL_REASON: Mehrteiliger, sicherheitsrelevanter System-Evidence-Slice mit Schema-, UI-, Test- und Packaging-Gate.
 COMPUTER_USE: no
-COMMIT/PR: Wird nach Push ergänzt.
+COMMIT/PR: `3d621a0 feat: add optimizer evidence matrix validation`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
