@@ -95,7 +95,16 @@ $bios = Get-CimInstance Win32_BIOS | Select-Object -First 1
 $computer = Get-CimInstance Win32_ComputerSystem
 $gpus = @(Get-CimInstance Win32_VideoController | ForEach-Object { @{name=$_.Name;vendor=$_.AdapterCompatibility;driver_version=$_.DriverVersion} })
 $displays = @(Get-CimInstance Win32_VideoController | ForEach-Object { @{refresh_hz=$_.CurrentRefreshRate;width=$_.CurrentHorizontalResolution;height=$_.CurrentVerticalResolution} })
-$network = @(Get-CimInstance Win32_NetworkAdapter | Where-Object { $_.PhysicalAdapter -eq $true } | ForEach-Object { @{name=$_.Name;manufacturer=$_.Manufacturer;driver_version=$_.DriverVersion;link_speed_mbps=$(if ($_.Speed) {[math]::Round($_.Speed/1MB,0)} else {$null});mac_address=$_.MACAddress} })
+$network = @(Get-CimInstance Win32_NetworkAdapter | Where-Object { $_.PhysicalAdapter -eq $true } | ForEach-Object {
+  $ip = $null; try { $ip = Get-NetIPInterface -InterfaceIndex $_.InterfaceIndex -AddressFamily IPv4 -ErrorAction Stop | Select-Object -First 1 } catch {}
+  $rss = $null; try { $rss = Get-NetAdapterRss -Name $_.Name -ErrorAction Stop } catch {}
+  @{
+    name=$_.Name;manufacturer=$_.Manufacturer;driver_version=$_.DriverVersion;interface_index=$_.InterfaceIndex;
+    link_speed_mbps=$(if ($_.Speed) {[math]::Round($_.Speed/1MB,0)} else {$null});mac_address=$_.MACAddress;
+    mtu=$(if ($ip) {$ip.NlMtu} else {$null});connection_state=$(if ($ip) {[string]$ip.ConnectionState} else {$null});
+    rss=$(if ($rss) {[bool]$rss.Enabled} else {$null});eee='NOT_RELIABLY_DETECTABLE';interrupt_moderation='NOT_RELIABLY_DETECTABLE';offloads='NOT_RELIABLY_DETECTABLE';power_management='NOT_RELIABLY_DETECTABLE';duplex_link_mode='NOT_RELIABLY_DETECTABLE'
+  }
+})
 $secureBoot = $null; try { $secureBoot = [bool](Confirm-SecureBootUEFI) } catch {}
 $tpm = $null; try {
   $t = Get-Tpm

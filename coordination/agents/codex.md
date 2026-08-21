@@ -901,6 +901,23 @@ MODEL_REASON: Sicherheitsrelevanter Datenmodell-/Collector-Slice mit echter loka
 COMPUTER_USE: no
 COMMIT/PR: `54c1943 feat: add optimizer evidence foundation`, gepusht nach `origin/dev/v1-foundation`.
 
+# Handoff 2026-08-22 — Optimizer Foundation V1 final architecture alignment
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Die verbindliche V1-Architektur ohne Apply-/Write-Pfad abschließen und die Foundation nur dort erweitern, wo Datenmodell, Network-/BIOS-Sonderfälle, Zustandsprovenance oder Tests fehlten.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/optimizer_foundation.py`, `src/improve_yourself/system_check.py`, `tests/test_optimizer_foundation.py`, `docs/OPTIMIZER_EVIDENCE_FOUNDATION_V1.md`, `coordination/agents/codex.md`.
+FINAL ALIGNMENT: Die gemeinsame Engine bleibt die einzige Basis für System/Graphics/Network/BIOS. `RULE_COMPATIBILITY` trägt nun auch Rule-Konflikte; `EVIDENCE_RECORD` kann Evidenzversion und Beobachtungszeit speichern. Die verbindlichen Maturity-Werte heißen `RELEASE_VERIFIED`, `CONDITIONAL_VERIFIED`, `EXPERIMENTAL`, `REJECTED_NO_BENEFIT`. Recommendation-Ergebnisse enthalten zusätzlich den deterministischen ALREADY_RECOMMENDED-Weg. Nicht qualifizierte Regeln werden nicht empfohlen.
+NETWORK: Der read-only Windows-Collector erfasst pro physischem Adapter nun Interface-Index, Link-Speed, IPv4-MTU, Connection-State und RSS, sofern Windows dies zuverlässig zurückgibt. EEE, Interrupt Moderation, Offloads, Energieverwaltung und Duplex/Link Mode bleiben explizit `NOT_RELIABLY_DETECTABLE`; keine Einstellung wird verändert. Der reale lokale Collector zeigte eine erkannte MTU und keine RSS-Behauptung, wenn Windows keine sichere Antwort lieferte.
+PROVENANCE: `SYSTEM_PROFILE` unterscheidet nun per `field_observation` mindestens DETECTED, NOT_AVAILABLE und NOT_RELIABLY_DETECTABLE (INFERRED ist als zulässiger Status reserviert, wird aktuell nicht als Fakt ausgegeben). CS2-Konfiguration, GPU-Treiberoptionen sowie CPU/GPU-Limitierung bleiben korrekt unbekannt.
+VERIFIED: Vollständiger `pytest` **149/149 PASS**; `compileall` PASS; `pip check` PASS; `git diff --check` PASS. Echter lokaler `iy-system-profile`-Collector erneut read-only ausgeführt; 150-System-Fixture-Harness bleibt ausschließlich `SYNTHETIC / DECISION LOGIC ONLY / NOT MEASURED`.
+KNOWN LIMITS: Die Fixture-Regeln bleiben Testdaten und liefern keine reale Performance-Evidenz. Kein Ping/Jitter/Packet-Loss-Reader und kein aktiver-Gamesocket-/Routenbeleg wurde eingeführt; diese Werte würden sonst eine neue Mess- bzw. Netzwerkdiagnoseautorität benötigen.
+NEXT: Genau ein möglicher Folge-Slice nach neuer Freigabe: einen lokalen, read-only Network Quality Collector für klar deklarierte Ping/Jitter/Packet-Loss-Proben mit Datenschutz-/Zielhost-Entscheidung spezifizieren. Kein Apply-/Snapshot-/Restore-Slice ohne getrennte Autorisierung.
+MODEL_PROFILE: terra
+MODEL_REASON: Finaler sicherheitsrelevanter Architektur-/Collector-Abgleich ohne systemverändernde Autorität.
+COMPUTER_USE: no
+COMMIT/PR: Wird nach Commit/Push ergänzt.
+
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
 STATUS: WAITING_FOR_TRISTAN

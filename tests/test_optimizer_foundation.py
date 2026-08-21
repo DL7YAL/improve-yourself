@@ -33,7 +33,8 @@ def test_system_profile_is_versioned_read_only_and_preserves_unknowns() -> None:
     assert profile["display"][0]["width"] == 2560
     assert profile["network"]["adapters"][0]["link_speed_mbps"] == 1000
     assert "cs2.configuration" in profile["unknown_fields"]
-    assert profile["applications"]["cs2"] == {"status": "not_available"}
+    assert profile["applications"]["cs2"] == {"status": "NOT_AVAILABLE"}
+    assert profile["field_observation"]["cs2.configuration"] == "NOT_AVAILABLE"
 
 
 def test_fixture_rules_cover_four_domains_and_are_not_real_rules() -> None:
@@ -68,6 +69,13 @@ def test_view_model_has_explanation_panel_contract_without_apply() -> None:
     assert {"title", "current_state", "improve_recommendation", "status", "what_is_it", "why_for_this_system", "what_can_change", "evidence_validity", "risk_notes", "restore_change_information", "guidance"} <= set(model)
     assert "apply" not in {key.lower() for key in model}
     assert model["guidance"]["manual_action_required"] is True
+
+
+def test_already_recommended_and_conflicting_rules_are_deterministic() -> None:
+    profile = system_profile_from_facts(_facts())
+    profile["current_recommendations"] = {"fixture-system-memory": True}
+    result = {item["rule_id"]: item for item in evaluate_recommendations(profile)["results"]}
+    assert result["fixture-system-memory"]["state"] == RecommendationState.ALREADY_RECOMMENDED
 
 
 def test_150_system_harness_is_deterministic_and_not_a_performance_simulation() -> None:

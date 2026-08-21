@@ -42,14 +42,16 @@ value:
 - mainboard manufacturer, product and version; BIOS version, date and vendor;
 - Windows caption, version and build;
 - display resolution and refresh rate reported by the adapter;
-- physical network adapter name, manufacturer, driver, link speed and MAC
-  address as local inventory evidence.
+- physical network adapter name, manufacturer, driver, link speed, observed
+  IPv4 MTU, connection state and RSS where Windows returns them. EEE, Interrupt
+  Moderation, offloads, energy management and duplex/link mode are explicitly
+  `NOT_RELIABLY_DETECTABLE` until a safe, source-specific reader exists.
 
-CS2 configuration, GPU driver-option state and current CPU/GPU limitation
-remain explicit unknown/not_available values. Network MTU and advanced adapter
-features are not guessed; they remain unavailable until a dedicated safe
-reader is approved. The profile is local, read-only and contains no claim that
-an observed adapter is the active game route.
+The profile distinguishes `DETECTED`, `INFERRED`, `NOT_AVAILABLE` and
+`NOT_RELIABLY_DETECTABLE` through `field_observation`. CS2 configuration, GPU
+driver-option state and current CPU/GPU limitation remain explicit unknown
+values. The profile is local, read-only and contains no claim that an observed
+adapter is the active game route.
 
 ## BIOS special handling
 
