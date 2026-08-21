@@ -716,3 +716,20 @@ MODEL_PROFILE: terra
 MODEL_REASON: Zusammenhängender visueller Desktop-Conformance-Pass mit responsiver Runtime-QA, vollständigem Gate und Packaging.
 COMPUTER_USE: yes
 COMMIT/PR: Dieser Handoff wird mit dem Visual-Conformance-Checkpoint auf `dev/v1-foundation` committed und gepusht; exakter HEAD im Abschlussbericht.
+
+# Handoff 2026-08-21 — Direct Home master implementation
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Page 03 der verbindlichen Concept Preview als direkte Home-/Command-Center-Komposition umsetzen, statt nur deren Designprinzipien zu interpretieren.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/analyzer_shell.py`, `docs/design/UI_SPEC.md`, `docs/design/MOCKUP_INDEX.md`, `docs/AGENT_BASE.md`, `coordination/CURRENT.md`, `coordination/agents/codex.md`. Home enthält nun den Master-Header mit Begrüßung und vier echten Statuskarten, sechs Moduleinstiegskarten, die mittlere Dreiteilung Fortschritt/letzte Analyse/Schnellzugriff sowie die unteren Idee-/Community-Flächen. Bei Standardbreite bleibt die 6x1-Modulzeile; unter 1000 Pixel Inhaltsbreite reflowt sie auf 3x2. Home ist wie Analyzer vertikal scrollbar.
+DATA_TRUTH: Statuskarten, Fortschritts-/Pipelinebereich und letzte Analyse konsumieren ausschließlich den bereits geöffneten realen Workflow (`map_id`, Parserstatus, Runden, Spieler, Szenen, Auswahlmodus, Reviewstatus, Quellname und Hashpräfix). Nicht implementierte Benchmark-/Community-Funktionen zeigen ehrliche inaktive beziehungsweise erklärende Zustände. Keine illustrativen Scores, Streaks, Datumswerte oder Analysehistorie erfunden.
+MASTER_MATCH: Sidebar PASS; Header/Begrüßung PASS; obere Statuskarten PASS; sechs Moduleinstiege PASS; Fortschrittsübersicht PASS mit realem Pipelinezustand statt Fake-Score; letzte Analysen PASS mit genau dem belegten lokalen Workflow statt erfundener Historie; Schnellzugriff PASS; untere Informations-/Community-Struktur PASS. Direkte Desktop-Sichtprüfung bei 1360x860 und maximierter Breite zeigt die 6x1-Masterhierarchie; 1080x720 zeigt vollständigen 3x2-Reflow ohne horizontales Clipping und mit vertikal erreichbaren Folgeflächen.
+SCOPE: Keine neue Funktion, Analyzerregel, Replay-/3D-/POV-, Optimizer-, Benchmark-, Clip- oder Videofunktion. Bestehende Navigation und Zielseiten werden nur als Home-Einstiege wiederverwendet. Logo-Variante 3 und Shell-Branding unverändert.
+VERIFIED: Gezielte Analyzer-Shell-Tests 15/15 PASS. Vollständiger `pytest` 131/131 PASS; derselbe vollständige Lauf im finalen Build erneut 131/131 PASS; `compileall` und `git diff --check` PASS. Frische Portable-EXE mit dem vorhandenen echten Ancient-Workflow gestartet und Home praktisch geöffnet: 18 Runden, 10 Spieler, 54 Szenen, Parser PASS und Review bereit erscheinen aus der realen Workflow-Wahrheit; alle Masterblöcke sichtbar, keine Browseröffnung. EXE SHA-256 `F63E6D83F8618C302C592D4F8B4D224C9DA7F596C37DEF76DE464ACC49ED3E6A`; Portable-ZIP SHA-256 `F84D4D1ED7AFA1211FD0BD317791A2D930806763CA717E65717FB774DCE044CD`.
+OPEN: My-Improvement-Langzeitmetriken, echte Analysehistorie, Benchmarkausführung und Community-Einreichung bleiben mangels aktuellem Produktumfang bewusst ohne erfundene Funktion. Nutzerabnahme bleibt Tristan vorbehalten.
+NEXT: Tristan vergleicht den neuen Portable-Home-Screen direkt mit Seite 03 und meldet Abnahme oder eine konkrete verbleibende Home-Abweichung. Kein neuer Product Slice und kein Merge nach `main`.
+MODEL_PROFILE: terra
+MODEL_REASON: Direkter, responsiver Screen-Master-Abgleich innerhalb der bestehenden Desktop-Shell.
+COMPUTER_USE: yes
+COMMIT/PR: Dieser Handoff wird mit dem direkten Home-Master-Checkpoint auf `dev/v1-foundation` committed und gepusht; exakter HEAD im Abschlussbericht.

@@ -15,12 +15,14 @@ Purpose: product presentation only. Not an application-screen contract.
 Purpose: module identity, compact icon/card language and brand presentation. Module claims and example scope remain subject to current functional truth.
 
 ### 03 — Home / Overview
-Binding visual ideas:
-- persistent dark left sidebar;
-- compact header/brand area;
-- module cards across the main content;
-- progress/recent/quick-access panels below;
-- dark navy surfaces with restrained blue accents.
+Binding direct screen composition:
+- persistent dark left sidebar and compact greeting/header area with real status cards;
+- six module-entry cards across the primary row;
+- progress overview, recent analyses and quick access as the middle three-panel row;
+- product-idea and community/information areas across the bottom;
+- the page-03 relative positions, proportions, panel hierarchy, dark navy surfaces and restrained blue accents.
+
+This page is the direct Home screen master. Do not replace it with a generic dashboard that only borrows colors or card styling. At reduced window widths the same hierarchy may reflow responsively, but every block remains reachable and recognizable.
 
 Illustrative only:
 - exact user profile, counters, scores and module metrics.

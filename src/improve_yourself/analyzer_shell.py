@@ -451,6 +451,12 @@ class AnalyzerShellApp:
         self.filename_status = tk.StringVar(value="○ Dateiname: noch nicht geprüft")
         self.preflight_message = tk.StringVar(value="Vor dem Review CS2 prüfen.")
         self.overview_status = tk.StringVar(value="Noch keine Demo geladen")
+        self.dashboard_rounds = tk.StringVar(value="—\nRunden")
+        self.dashboard_players = tk.StringVar(value="—\nSpieler")
+        self.dashboard_scenes = tk.StringVar(value="—\nSzenen")
+        self.dashboard_readiness = tk.StringVar(value="BEREIT\nLokaler Modus")
+        self.dashboard_pipeline = tk.StringVar(value="Demo nicht geladen\nParser —  ·  Auswahl —  ·  Szenen —  ·  Review —")
+        self.dashboard_recent = tk.StringVar(value="Noch keine lokale Analyse geöffnet.")
         self.report_status = tk.StringVar(value="Nach einer Analyse stehen Report und Timeline lokal bereit.")
         self.system_status = tk.StringVar(value="System Check wurde noch nicht ausgeführt.")
         self.embedded_review: EmbeddedReviewSession | None = None
@@ -504,7 +510,7 @@ class AnalyzerShellApp:
             host = ttk.Frame(content, style="Content.TFrame")
             host.place(relx=0, rely=0, relwidth=1, relheight=1)
             self.page_hosts[name] = host
-            if name == "Analyzer / Review":
+            if name in {"Analyzer / Review", "Dashboard"}:
                 canvas = tk.Canvas(
                     host, background=_THEME["night"], borderwidth=0, highlightthickness=0,
                 )
@@ -530,7 +536,10 @@ class AnalyzerShellApp:
                     "<MouseWheel>",
                     lambda event, target=canvas: target.yview_scroll(int(-event.delta / 120), "units"),
                 )
-                self.analyzer_canvas = canvas
+                if name == "Analyzer / Review":
+                    self.analyzer_canvas = canvas
+                else:
+                    self.dashboard_canvas = canvas
             else:
                 page = ttk.Frame(host, style="Content.TFrame")
                 page.pack(fill="both", expand=True)
@@ -725,58 +734,127 @@ class AnalyzerShellApp:
 
     def _build_dashboard_page(self) -> None:
         page = self.pages["Dashboard"]
-        hero = self.tk.Canvas(
-            page, height=150, background=_THEME["panel"], borderwidth=0,
-            highlightthickness=1, highlightbackground=_THEME["line_soft"],
-        )
-        hero.pack(fill="x", pady=(0, 18))
-        self.dashboard_hero = hero
-        try:
-            dashboard_path = Path(__file__).with_name("assets") / "improve-yourself-wordmark-v3.png"
-            self.dashboard_brand_image = self.tk.PhotoImage(file=str(dashboard_path))
-        except self.tk.TclError:
-            self.dashboard_brand_image = None
-        hero.bind("<Configure>", self._draw_dashboard_hero)
-        self.ttk.Label(page, text="Dashboard", font=("Segoe UI", 24, "bold")).pack(anchor="w")
-        self.ttk.Label(page, text="Lokaler Einstieg und aktueller Arbeitsstand", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
-        grid = self.ttk.Frame(page, style="Content.TFrame")
-        grid.pack(fill="x")
-        for column, (title, detail, target) in enumerate((
-            ("Demo Analyzer", "Echte Demo lesen, Spieler wählen und Szenen erzeugen.", "Analyzer / Review"),
-            ("Tactical Replay", "Erzeugte Situationen aus derselben Replay-Wahrheit prüfen.", "Tactical Replay"),
-            ("System Check", "Lokale Systemfakten read-only erfassen.", "System Check / Optimizer"),
-        )):
-            grid.columnconfigure(column, weight=1, uniform="modules")
-            card = self.ttk.Frame(grid, style="Card.TFrame", padding=20)
-            card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 6, 0 if column == 2 else 6))
-            self.ttk.Label(card, text=title, style="Card.TLabel", font=("Segoe UI Semibold", 14)).pack(anchor="w")
-            self.ttk.Label(card, text=detail, style="Muted.TLabel", wraplength=250, justify="left").pack(anchor="w", pady=(8, 16))
-            self.ttk.Button(card, text="Öffnen", command=lambda value=target: self._show_page(value)).pack(anchor="w")
-        recent = self.ttk.Frame(page, style="Card.TFrame", padding=20)
-        recent.pack(fill="x", pady=(16, 0))
-        self.ttk.Label(recent, text="Aktueller lokaler Stand", style="Card.TLabel", font=("Segoe UI Semibold", 14)).pack(anchor="w")
-        self.ttk.Label(recent, textvariable=self.overview_status, style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(8, 0))
+        header = self.ttk.Frame(page, style="Content.TFrame")
+        header.pack(fill="x", pady=(0, 12))
+        greeting = self.ttk.Frame(header, style="Content.TFrame")
+        greeting.pack(side="left", fill="x", expand=True)
+        self.ttk.Label(greeting, text="Willkommen zurück!", font=("Segoe UI", 23, "bold")).pack(anchor="w")
+        self.ttk.Label(
+            greeting, text="Dein lokales Command Center für Analyse, Review und kontinuierliche Verbesserung.",
+            foreground=_THEME["muted"],
+        ).pack(anchor="w", pady=(2, 0))
+        stats = self.ttk.Frame(header, style="Content.TFrame")
+        stats.pack(side="right")
+        self.dashboard_header = header
+        self.dashboard_greeting = greeting
+        self.dashboard_stats = stats
+        for variable in (self.dashboard_readiness, self.dashboard_rounds, self.dashboard_players, self.dashboard_scenes):
+            card = self.ttk.Frame(stats, style="Card.TFrame", padding=(12, 8))
+            card.pack(side="left", padx=(6, 0))
+            self.ttk.Label(card, textvariable=variable, style="Card.TLabel", justify="center", font=("Segoe UI Semibold", 9)).pack()
 
-    def _draw_dashboard_hero(self, _event=None) -> None:
-        canvas = self.dashboard_hero
-        width, height = max(canvas.winfo_width(), 2), max(canvas.winfo_height(), 2)
-        canvas.delete("all")
-        canvas.create_rectangle(0, 0, width, height, fill=_THEME["panel"], outline="")
-        for offset, color in ((0, "#0b2a43"), (18, "#0d3b5c"), (36, "#0b2a43")):
-            canvas.create_line(width - 340 + offset, height, width - 210 + offset, 0, fill=color, width=2)
-        canvas.create_line(0, height - 2, width, height - 2, fill=_THEME["line"], width=1)
-        canvas.create_rectangle(width - 210, 22, width - 22, 128, fill="#081827", outline=_THEME["line_soft"])
-        canvas.create_text(
-            width - 194, 36, anchor="w", text="CURRENT LOCAL WORKFLOW",
-            fill=_THEME["ice"], font=("Segoe UI Semibold", 9),
+        modules = self.ttk.Frame(page, style="Content.TFrame")
+        modules.pack(fill="x")
+        self.dashboard_module_grid = modules
+        self.dashboard_module_cards = []
+        module_specs = (
+            ("◎", "IMPROVE\nANALYZER", "Szenen und Evidenz aus einer echten Demo prüfen.", "Review öffnen", "Analyzer / Review", True),
+            ("♙", "DEMO\nANALYZER", "Demo laden, Parserstatus und Line-ups kontrollieren.", "Demo laden", "Analyzer / Review", True),
+            ("⚔", "2D\nTACTICAL", "Rundenpositionen aus derselben Replay-Wahrheit ansehen.", "Replay öffnen", "Tactical Replay", True),
+            ("◉", "IMPROVE\nOPTIMIZER", "Systemfakten sicher und read-only erfassen.", "System prüfen", "System Check / Optimizer", True),
+            ("▥", "IMPROVE\nBENCHMARK", "Separater, derzeit geparkter Arbeitsstrang.", "Nicht in diesem Slice", "", False),
+            ("◯", "MY\nIMPROVEMENT", "Lokale Reports und aktuelle Analyseartefakte öffnen.", "Übersicht öffnen", "Reports", True),
         )
-        canvas.create_text(
-            width - 194, 56, anchor="nw", width=160, text=self.overview_status.get(),
-            fill=_THEME["muted"], font=("Segoe UI", 8),
-        )
-        if self.dashboard_brand_image is not None:
-            canvas.create_image(18, 16, image=self.dashboard_brand_image, anchor="nw")
-        canvas.create_text(20, 132, anchor="sw", text="MAKE UP YOUR MIND.", fill=_THEME["ice"], font=("Segoe UI Semibold", 9))
+        for column, (icon, title, detail, action, target, enabled) in enumerate(module_specs):
+            modules.columnconfigure(column, weight=1, uniform="home-modules")
+            card = self.ttk.Frame(modules, style="Card.TFrame", padding=13)
+            card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 3, 0 if column == 5 else 3))
+            self.dashboard_module_cards.append(card)
+            self.ttk.Label(card, text=f"{icon}  {title}", style="Card.TLabel", font=("Segoe UI Semibold", 10), justify="left").pack(anchor="w")
+            self.ttk.Label(card, text=detail, style="Muted.TLabel", wraplength=150, justify="left").pack(anchor="w", pady=(8, 10), fill="x")
+            button = self.ttk.Button(card, text=action, command=(lambda value=target: self._show_page(value)))
+            button.configure(state="normal" if enabled else "disabled")
+            button.pack(fill="x")
+
+        overview = self.ttk.Frame(page, style="Content.TFrame")
+        overview.pack(fill="x", pady=(12, 0))
+        overview.columnconfigure(0, weight=5, uniform="home-overview")
+        overview.columnconfigure(1, weight=5, uniform="home-overview")
+        overview.columnconfigure(2, weight=6, uniform="home-overview")
+
+        progress = self.ttk.Frame(overview, style="Card.TFrame", padding=15)
+        progress.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+        self.ttk.Label(progress, text="DEIN FORTSCHRITT – ÜBERBLICK", style="Card.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w")
+        self.ttk.Label(progress, textvariable=self.dashboard_pipeline, style="Muted.TLabel", wraplength=230, justify="left").pack(anchor="w", pady=(10, 12))
+        self.ttk.Button(progress, text="Zum Analyzer", command=lambda: self._show_page("Analyzer / Review")).pack(fill="x")
+
+        recent = self.ttk.Frame(overview, style="Card.TFrame", padding=15)
+        recent.grid(row=0, column=1, sticky="nsew", padx=5)
+        self.ttk.Label(recent, text="LETZTE ANALYSEN", style="Card.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w")
+        self.ttk.Label(recent, textvariable=self.dashboard_recent, style="Muted.TLabel", wraplength=230, justify="left").pack(anchor="w", pady=(10, 8))
+        self.ttk.Label(recent, textvariable=self.overview_status, style="Card.TLabel", wraplength=230, justify="left").pack(anchor="w")
+
+        quick = self.ttk.Frame(overview, style="Card.TFrame", padding=15)
+        quick.grid(row=0, column=2, sticky="nsew", padx=(5, 0))
+        self.ttk.Label(quick, text="SCHNELLZUGRIFF", style="Card.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w")
+        quick_grid = self.ttk.Frame(quick, style="CardInner.TFrame")
+        quick_grid.pack(fill="x", pady=(8, 0))
+        for index, (label, target) in enumerate((
+            ("Analyse öffnen  ›", "Analyzer / Review"), ("Demo laden  ›", "Analyzer / Review"),
+            ("2D Tactical  ›", "Tactical Replay"), ("System prüfen  ›", "System Check / Optimizer"),
+            ("Reports  ›", "Reports"), ("Einstellungen  ›", "Settings"),
+        )):
+            button = self.ttk.Button(quick_grid, text=label, command=lambda value=target: self._show_page(value))
+            button.grid(row=index // 2, column=index % 2, sticky="ew", padx=(0 if index % 2 == 0 else 4, 4 if index % 2 == 0 else 0), pady=3)
+            quick_grid.columnconfigure(index % 2, weight=1, uniform="quick")
+
+        lower = self.ttk.Frame(page, style="Content.TFrame")
+        lower.pack(fill="x", pady=(12, 16))
+        lower.columnconfigure(0, weight=1, uniform="home-lower")
+        lower.columnconfigure(1, weight=1, uniform="home-lower")
+        idea = self.ttk.Frame(lower, style="Card.TFrame", padding=15)
+        idea.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
+        self.ttk.Label(idea, text="◉  DIE IDEE HINTER IMPROVE YOURSELF", style="Card.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w")
+        self.ttk.Label(
+            idea,
+            text="Datenbasierte Analyse, gemeinsame Replay-Wahrheit und transparente lokale Werkzeuge begleiten dich Schritt für Schritt – ohne erfundene Ergebnisse.",
+            style="Muted.TLabel", wraplength=360, justify="left",
+        ).pack(anchor="w", pady=(8, 0))
+        community = self.ttk.Frame(lower, style="Card.TFrame", padding=15)
+        community.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
+        self.ttk.Label(community, text="◇  COMMUNITY & IDEEN", style="Card.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w")
+        self.ttk.Label(
+            community,
+            text="Der geschützte Kern bleibt lokal, nachvollziehbar und sicher. Community-Funktionen werden erst mit einem belegten Produktumfang ergänzt.",
+            style="Muted.TLabel", wraplength=360, justify="left",
+        ).pack(anchor="w", pady=(8, 0))
+        page.bind("<Configure>", lambda event: self._layout_dashboard(event.width))
+
+    def _layout_dashboard(self, width: int) -> None:
+        compact = width < 1000
+        if getattr(self, "dashboard_compact", None) == compact:
+            return
+        self.dashboard_compact = compact
+        self.dashboard_greeting.pack_forget()
+        self.dashboard_stats.pack_forget()
+        if compact:
+            self.dashboard_greeting.pack(fill="x")
+            self.dashboard_stats.pack(anchor="w", pady=(10, 0))
+        else:
+            self.dashboard_greeting.pack(side="left", fill="x", expand=True)
+            self.dashboard_stats.pack(side="right")
+        columns = 3 if compact else 6
+        for column in range(6):
+            self.dashboard_module_grid.columnconfigure(column, weight=0, uniform="")
+        for column in range(columns):
+            self.dashboard_module_grid.columnconfigure(column, weight=1, uniform="home-modules")
+        for index, card in enumerate(self.dashboard_module_cards):
+            row, column = divmod(index, columns)
+            card.grid_configure(
+                row=row, column=column, sticky="nsew",
+                padx=(0 if column == 0 else 3, 0 if column == columns - 1 else 3),
+                pady=(0 if row == 0 else 6, 0),
+            )
 
     def _build_reports_page(self) -> None:
         page = self.pages["Reports"]
@@ -971,8 +1049,18 @@ class AnalyzerShellApp:
             f"{result.source_demo_name or 'Lokaler Workflow'} · {result.map_id} · {result.round_count} Runden · "
             f"{len(result.players)} Spieler · {phase}"
         )
-        if hasattr(self, "dashboard_hero"):
-            self._draw_dashboard_hero()
+        self.dashboard_rounds.set(f"{result.round_count}\nRunden")
+        self.dashboard_players.set(f"{len(result.players)}\nSpieler")
+        self.dashboard_scenes.set(f"{result.scene_count}\nSzenen")
+        self.dashboard_readiness.set("BEREIT\nReview lokal" if result.status == "READY_FOR_REVIEW" else "BEREIT\nAuswahl lokal")
+        self.dashboard_pipeline.set(
+            f"{result.map_id} · Parser {result.parser_status}\n"
+            f"Auswahl {self.controller.selection_mode}  ·  Szenen {result.scene_count}  ·  {phase}"
+        )
+        self.dashboard_recent.set(
+            f"{result.source_demo_name or result.manifest_path.name}\n"
+            f"SHA-256 {result.source_sha256[:12]}… · lokaler Workflow"
+        )
         ready = result.status == "READY_FOR_REVIEW"
         self.report_status.set(
             f"{result.scene_count} zusammengeführte Szenen · Quelle {result.source_sha256[:12]}…"

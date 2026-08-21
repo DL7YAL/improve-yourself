@@ -63,7 +63,7 @@ Avoid presenting automated cheat/guilt verdicts.
 ### Home / Overview
 Target: central entry point and status overview.
 
-Preserve the concept-preview structure: sidebar + module cards/quick actions + recent/relevant information. Do not force obsolete counters or gamified profile elements into V1 if the backing feature does not exist.
+Page 03 of the concept preview is the direct structural and visual screen master, not only a source of general design principles. Preserve its complete Command-Center composition: shared sidebar; greeting/header with real status cards; six module-entry cards; progress overview, recent analyses and quick access in the next row; and the lower product-idea/community information areas in the same relative hierarchy and proportions. Real current data and honest unavailable states replace illustrative values or obsolete actions. Do not substitute a generic dashboard composition or force unsupported counters and gamified profile elements into V1.
 
 ### Demo Analyzer / Demo Preflight
 Target: demo ingestion before interpretation.
