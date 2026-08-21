@@ -189,6 +189,58 @@ class SidebarStatusPanel:
         canvas.create_text(19, 39, text="READ-ONLY WHERE MARKED", fill="#7395aa", anchor="w", font=(self.ui_font, 7))
 
 
+class RoundedHomeSurface:
+    """Reusable rounded Home card chrome with an unchanged ttk content grid.
+
+    The canvas owns only the visual perimeter; all existing labels, buttons
+    and responsive grid rules live in ``body``.  This keeps Home's approved
+    layout and action alignment intact while giving surfaces real rounded
+    corners instead of relying on a rectangular ttk border.
+    """
+
+    def __init__(self, tk, ttk, parent, *, style: str, fill: str, outline: str, padding, min_height: int, min_width: int = 1, radius: int = 9) -> None:
+        self.tk = tk
+        self.radius = radius
+        self.fill = fill
+        self.outline = outline
+        self.canvas = tk.Canvas(parent, width=min_width, height=min_height, background=_THEME["night"], highlightthickness=0, borderwidth=0, bd=0)
+        self.body = ttk.Frame(self.canvas, style=style, padding=padding)
+        self.window = self.canvas.create_window((radius, 0), window=self.body, anchor="nw")
+        self.canvas.bind("<Configure>", self._sync)
+
+    def pack(self, **kwargs) -> None:
+        self.canvas.pack(**kwargs)
+
+    def grid(self, **kwargs) -> None:
+        self.canvas.grid(**kwargs)
+
+    def grid_configure(self, **kwargs) -> None:
+        self.canvas.grid_configure(**kwargs)
+
+    def columnconfigure(self, index: int, **kwargs) -> None:
+        self.body.columnconfigure(index, **kwargs)
+
+    def rowconfigure(self, index: int, **kwargs) -> None:
+        self.body.rowconfigure(index, **kwargs)
+
+    def _sync(self, _event=None) -> None:
+        width, height = max(self.canvas.winfo_width(), 1), max(self.canvas.winfo_height(), 1)
+        self.canvas.itemconfigure(self.window, width=max(1, width - 2 * self.radius), height=height)
+        self.canvas.delete("surface")
+        x1, y1, x2, y2, radius = 0, 0, width - 1, height - 1, self.radius
+        # Fill the center and sides first, then four arcs.  The canvas itself
+        # stays on the midnight page color, so the uncovered corners are real.
+        self.canvas.create_rectangle(x1 + radius, y1, x2 - radius, y2, fill=self.fill, outline="", tags="surface")
+        self.canvas.create_rectangle(x1, y1 + radius, x2, y2 - radius, fill=self.fill, outline="", tags="surface")
+        for box, start in (((x1, y1, x1 + 2 * radius, y1 + 2 * radius), 90), ((x1, y2 - 2 * radius, x1 + 2 * radius, y2), 180), ((x2 - 2 * radius, y2 - 2 * radius, x2, y2), 270), ((x2 - 2 * radius, y1, x2, y1 + 2 * radius), 0)):
+            self.canvas.create_arc(*box, start=start, extent=90, fill=self.fill, outline=self.outline, tags="surface")
+        self.canvas.create_line(x1 + radius, y1, x2 - radius, y1, fill=self.outline, tags="surface")
+        self.canvas.create_line(x1 + radius, y2, x2 - radius, y2, fill=self.outline, tags="surface")
+        self.canvas.create_line(x1, y1 + radius, x1, y2 - radius, fill=self.outline, tags="surface")
+        self.canvas.create_line(x2, y1 + radius, x2, y2 - radius, fill=self.outline, tags="surface")
+        self.canvas.tag_lower("surface")
+
+
 def dashboard_layout_metrics(content_width: int, viewport_height: int) -> tuple[bool, int, int, int, int]:
     """Return responsive Home metrics without scaling the whole interface."""
     compact = content_width < 1000
@@ -924,11 +976,13 @@ class AnalyzerShellApp:
         self.dashboard_greeting = greeting
         self.dashboard_stats = stats
         stat_accents = ("#23d8bb", "#30aef4", "#a687ff", "#ffcf5a")
-        for variable, accent in zip((self.dashboard_readiness, self.dashboard_rounds, self.dashboard_players, self.dashboard_scenes), stat_accents):
-            card = self.ttk.Frame(stats, style="HomeStat.TFrame", padding=(10, 7))
+        for index, (variable, accent) in enumerate(zip((self.dashboard_readiness, self.dashboard_rounds, self.dashboard_players, self.dashboard_scenes), stat_accents)):
+            card = RoundedHomeSurface(
+                self.tk, self.ttk, stats, style="HomeStat.TFrame", fill="#071624", outline="#123752", padding=(0, 7), min_height=58, min_width=104 if index == 0 else 62,
+            )
             card.pack(side="left", padx=(6, 0))
-            self._home_accent(card, accent)
-            self.ttk.Label(card, textvariable=variable, style="HomeStat.TLabel", justify="center", font=(self.ui_font, 9, "bold")).pack(pady=(4, 0))
+            self._home_accent(card.body, accent)
+            self.ttk.Label(card.body, textvariable=variable, style="HomeStat.TLabel", justify="center", font=(self.ui_font, 9, "bold")).pack(pady=(4, 0))
 
         modules = self.ttk.Frame(page, style="Content.TFrame")
         modules.pack(fill="x")
@@ -944,21 +998,23 @@ class AnalyzerShellApp:
         )
         for column, (icon, title, detail, action, target, enabled, accent, button_style) in enumerate(module_specs):
             modules.columnconfigure(column, weight=1, uniform="home-modules")
-            card = self.ttk.Frame(modules, style="HomeModule.TFrame", padding=13)
+            card = RoundedHomeSurface(
+                self.tk, self.ttk, modules, style="HomeModule.TFrame", fill=_THEME["card"], outline="#123650", padding=7, min_height=196, radius=6,
+            )
             card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 3, 0 if column == 5 else 3))
             card.columnconfigure(0, weight=1)
             # One shared vertical grid keeps every action in the same card row.
             # Description height may vary; only the spacer absorbs that variance.
             card.rowconfigure(3, weight=1)
             self.dashboard_module_cards.append(card)
-            self._home_accent(card, accent, pack=False).grid(row=0, column=0, sticky="ew")
-            icon_row = self.ttk.Frame(card, style="HomeModule.TFrame")
+            self._home_accent(card.body, accent, pack=False).grid(row=0, column=0, sticky="ew")
+            icon_row = self.ttk.Frame(card.body, style="HomeModule.TFrame")
             icon_row.grid(row=1, column=0, sticky="ew", pady=(5, 6))
             self._home_module_icon(icon_row, icon, accent).pack(side="left", padx=(0, 8))
             self.ttk.Label(icon_row, text=title, style="HomeModule.TLabel", font=(self.display_font, 9, "bold"), justify="left").pack(side="left", anchor="w")
-            self.ttk.Label(card, text=detail, style="HomeMuted.TLabel", wraplength=150, justify="left").grid(row=2, column=0, sticky="ew", pady=(2, 10))
-            self.ttk.Frame(card, style="HomeModule.TFrame").grid(row=3, column=0, sticky="nsew")
-            button = self.ttk.Button(card, text=action, style=button_style, command=(lambda value=target: self._show_page(value)))
+            self.ttk.Label(card.body, text=detail, style="HomeMuted.TLabel", wraplength=150, justify="left").grid(row=2, column=0, sticky="ew", pady=(2, 10))
+            self.ttk.Frame(card.body, style="HomeModule.TFrame").grid(row=3, column=0, sticky="nsew")
+            button = self.ttk.Button(card.body, text=action, style=button_style, command=(lambda value=target: self._show_page(value)))
             button.configure(state="normal" if enabled else "disabled")
             button.grid(row=4, column=0, sticky="ew")
 
@@ -968,28 +1024,34 @@ class AnalyzerShellApp:
         overview.columnconfigure(1, weight=5, uniform="home-overview")
         overview.columnconfigure(2, weight=6, uniform="home-overview")
 
-        progress = self.ttk.Frame(overview, style="HomePanel.TFrame", padding=15)
+        progress = RoundedHomeSurface(
+            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#123650", padding=15, min_height=184,
+        )
         progress.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
-        self._home_accent(progress, "#2bdcbb")
-        self.ttk.Label(progress, text="DEIN FORTSCHRITT – ÜBERBLICK", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
-        progress_body = self.ttk.Frame(progress, style="HomeInner.TFrame")
+        self._home_accent(progress.body, "#2bdcbb")
+        self.ttk.Label(progress.body, text="DEIN FORTSCHRITT – ÜBERBLICK", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
+        progress_body = self.ttk.Frame(progress.body, style="HomeInner.TFrame")
         progress_body.pack(fill="x", pady=(8, 9))
         self._home_progress_gauge(progress_body).pack(side="left", padx=(0, 9))
         self.ttk.Label(progress_body, textvariable=self.dashboard_pipeline, style="HomePanelMuted.TLabel", wraplength=180, justify="left").pack(side="left", fill="x", expand=True)
-        self.ttk.Button(progress, text="Zum Analyzer", style="HomeTeal.TButton", command=lambda: self._show_page("Analyzer / Review")).pack(fill="x")
+        self.ttk.Button(progress.body, text="Zum Analyzer", style="HomeTeal.TButton", command=lambda: self._show_page("Analyzer / Review")).pack(fill="x")
 
-        recent = self.ttk.Frame(overview, style="HomePanel.TFrame", padding=15)
+        recent = RoundedHomeSurface(
+            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#123650", padding=15, min_height=184,
+        )
         recent.grid(row=0, column=1, sticky="nsew", padx=5)
-        self._home_accent(recent, "#a687ff")
-        self.ttk.Label(recent, text="LETZTE ANALYSEN", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
-        self.ttk.Label(recent, textvariable=self.dashboard_recent, style="HomePanelMuted.TLabel", wraplength=230, justify="left").pack(anchor="w", pady=(10, 8))
-        self.ttk.Label(recent, textvariable=self.overview_status, style="HomePanel.TLabel", wraplength=230, justify="left").pack(anchor="w")
+        self._home_accent(recent.body, "#a687ff")
+        self.ttk.Label(recent.body, text="LETZTE ANALYSEN", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
+        self.ttk.Label(recent.body, textvariable=self.dashboard_recent, style="HomePanelMuted.TLabel", wraplength=230, justify="left").pack(anchor="w", pady=(10, 8))
+        self.ttk.Label(recent.body, textvariable=self.overview_status, style="HomePanel.TLabel", wraplength=230, justify="left").pack(anchor="w")
 
-        quick = self.ttk.Frame(overview, style="HomePanel.TFrame", padding=15)
+        quick = RoundedHomeSurface(
+            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#123650", padding=15, min_height=184,
+        )
         quick.grid(row=0, column=2, sticky="nsew", padx=(5, 0))
-        self._home_accent(quick, "#238ffc")
-        self.ttk.Label(quick, text="SCHNELLZUGRIFF", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
-        quick_grid = self.ttk.Frame(quick, style="HomeInner.TFrame")
+        self._home_accent(quick.body, "#238ffc")
+        self.ttk.Label(quick.body, text="SCHNELLZUGRIFF", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
+        quick_grid = self.ttk.Frame(quick.body, style="HomeInner.TFrame")
         quick_grid.pack(fill="x", pady=(8, 0))
         for index, (label, target) in enumerate((
             ("Analyse öffnen  ›", "Analyzer / Review"), ("Demo laden  ›", "Analyzer / Review"),
@@ -1004,21 +1066,25 @@ class AnalyzerShellApp:
         lower.pack(fill="x", pady=(12, 16))
         lower.columnconfigure(0, weight=1, uniform="home-lower")
         lower.columnconfigure(1, weight=1, uniform="home-lower")
-        idea = self.ttk.Frame(lower, style="HomePanel.TFrame", padding=15)
+        idea = RoundedHomeSurface(
+            self.tk, self.ttk, lower, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#123650", padding=15, min_height=116,
+        )
         idea.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
-        self._home_accent(idea, "#2bdcbb")
-        self.ttk.Label(idea, text="◉  DIE IDEE HINTER IMPROVE YOURSELF", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
+        self._home_accent(idea.body, "#2bdcbb")
+        self.ttk.Label(idea.body, text="◉  DIE IDEE HINTER IMPROVE YOURSELF", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
         self.ttk.Label(
-            idea,
+            idea.body,
             text="Datenbasierte Analyse, gemeinsame Replay-Wahrheit und transparente lokale Werkzeuge begleiten dich Schritt für Schritt – ohne erfundene Ergebnisse.",
             style="HomePanelMuted.TLabel", wraplength=360, justify="left",
         ).pack(anchor="w", pady=(8, 0))
-        community = self.ttk.Frame(lower, style="HomePanel.TFrame", padding=15)
+        community = RoundedHomeSurface(
+            self.tk, self.ttk, lower, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#123650", padding=15, min_height=116,
+        )
         community.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
-        self._home_accent(community, "#a687ff")
-        self.ttk.Label(community, text="◇  COMMUNITY & IDEEN", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
+        self._home_accent(community.body, "#a687ff")
+        self.ttk.Label(community.body, text="◇  COMMUNITY & IDEEN", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
         self.ttk.Label(
-            community,
+            community.body,
             text="Der geschützte Kern bleibt lokal, nachvollziehbar und sicher. Community-Funktionen werden erst mit einem belegten Produktumfang ergänzt.",
             style="HomePanelMuted.TLabel", wraplength=360, justify="left",
         ).pack(anchor="w", pady=(8, 0))
