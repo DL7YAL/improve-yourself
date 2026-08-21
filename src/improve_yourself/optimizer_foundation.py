@@ -51,6 +51,11 @@ class RiskClass(StrEnum):
     HIGH = "HIGH"
 
 
+class RuleType(StrEnum):
+    STANDARD = "STANDARD"
+    SECURITY_PERFORMANCE_TRADEOFF = "SECURITY_PERFORMANCE_TRADEOFF"
+
+
 @dataclass(frozen=True)
 class RuleCompatibility:
     compatibility_id: str
@@ -94,12 +99,15 @@ class OptimizationRule:
     manual_action_required: bool = False
     guidance_available: bool = False
     screenshot_verification_later: bool = False
+    rule_type: RuleType = RuleType.STANDARD
+    fixture_only: bool = True
 
     def as_dict(self) -> dict[str, object]:
         result = asdict(self)
         result["domain"] = self.domain.value
         result["risk_class"] = self.risk_class.value
         result["maturity"] = self.maturity.value
+        result["rule_type"] = self.rule_type.value
         return result
 
 
@@ -152,12 +160,14 @@ def fixture_rules() -> tuple[OptimizationRule, ...]:
         OptimizationRule("fixture-network-link", OptimizerDomain.NETWORK, "Fixture Network Link", "network.adapters.0.link_speed_mbps", ("KNOWN",), "Unknown handling", True, False, True, False, RiskClass.LOW, RuleMaturity.CONDITIONAL_VERIFIED, RuleCompatibility("compat-fixture-network", (("network.adapters", "present", True),), (), (), "Fixture requires an observed adapter."), (record("fixture-network-link", OptimizerDomain.NETWORK),), "Fixture-only Network rule."),
         OptimizationRule("fixture-bios-guidance", OptimizerDomain.BIOS, "Fixture BIOS Guidance", "bios.version", ("KNOWN",), "Manual guidance metadata", True, False, True, True, RiskClass.HIGH, RuleMaturity.CONDITIONAL_VERIFIED, RuleCompatibility("compat-fixture-bios", (("motherboard.product", "present", True), ("bios.version", "present", True)), (), (), "Fixture requires board and BIOS evidence."), (record("fixture-bios-guidance", OptimizerDomain.BIOS),), "Fixture-only BIOS rule; never automatically changeable.", True, True, True),
         OptimizationRule("fixture-conditional-exclusion", OptimizerDomain.SYSTEM, "Fixture Conditional Exclusion", "windows.build", ("KNOWN",), "Exclusion behavior", True, False, True, False, RiskClass.LOW, RuleMaturity.CONDITIONAL_VERIFIED, RuleCompatibility("compat-fixture-exclusion", (("windows.build", "gte", 22000),), (("ram.capacity_gb", "lt", 16),), (), "Fixture excludes low-memory systems."), (record("fixture-conditional-exclusion", OptimizerDomain.SYSTEM),), "Fixture-only conditional/exclusion rule."),
+        OptimizationRule("fixture-security-performance-tradeoff", OptimizerDomain.SYSTEM, "Fixture Security Trade-off", "security.fixture", ("KNOWN",), "Trade-off handling", True, False, True, True, RiskClass.HIGH, RuleMaturity.RELEASE_VERIFIED, RuleCompatibility("compat-fixture-tradeoff", (), (), (), "Fixture always demonstrates protected trade-off handling."), (record("fixture-security-performance-tradeoff", OptimizerDomain.SYSTEM),), "Fixture-only protected trade-off.", True, False, False, RuleType.SECURITY_PERFORMANCE_TRADEOFF),
     )
 
 
-def evaluate_recommendations(profile: dict[str, object], rules: Iterable[OptimizationRule] | None = None) -> dict[str, object]:
+def evaluate_recommendations(profile: dict[str, object], rules: Iterable[OptimizationRule] | None = None, evidence_records: Iterable[EvidenceRecord] = ()) -> dict[str, object]:
     results: list[dict[str, object]] = []
     accepted: set[str] = set()
+    available_evidence = tuple(evidence_records)
     for rule in rules or fixture_rules():
         missing: set[str] = set()
         unmet: list[str] = []
@@ -170,6 +180,8 @@ def evaluate_recommendations(profile: dict[str, object], rules: Iterable[Optimiz
             matched, absent = _matches(profile, condition)
             if absent: missing.add(absent)
             if matched: excluded = True
+        evidence_for_rule = [record for record in (*rule.evidence, *available_evidence) if record.rule_id in {rule.rule_id, "network-quality-observation"}]
+        trace = {"required": [], "exclusions": [], "conflicts": list(rule.compatibility.conflicts_with)}
         if any(conflict in accepted for conflict in rule.compatibility.conflicts_with):
             state, rationale = RecommendationState.NO_CHANGE, "Conflicts with an already selected compatible rule."
         elif missing:
@@ -184,17 +196,25 @@ def evaluate_recommendations(profile: dict[str, object], rules: Iterable[Optimiz
             state, rationale = RecommendationState.ALREADY_RECOMMENDED, "The read-only profile records the recommended state already present."
         else:
             state, rationale = RecommendationState.RECOMMENDED, "Fixture compatibility conditions are met."
+        for condition in rule.compatibility.required:
+            matched, absent = _matches(profile, condition)
+            trace["required"].append({"condition": condition, "matched": matched, "missing": absent})
+        for condition in rule.compatibility.excluded:
+            matched, absent = _matches(profile, condition)
+            trace["exclusions"].append({"condition": condition, "matched": matched, "missing": absent})
+        if rule.rule_type is RuleType.SECURITY_PERFORMANCE_TRADEOFF:
+            state, rationale = RecommendationState.NO_CHANGE, "Security/performance trade-off fixtures are never automatically recommended or applied."
         if state in {RecommendationState.RECOMMENDED, RecommendationState.ALREADY_RECOMMENDED}:
             accepted.add(rule.rule_id)
-        results.append({"rule_id": rule.rule_id, "domain": rule.domain.value, "state": state.value, "rationale": rationale, "missing_evidence": sorted(missing), "rule": rule.as_dict()})
-    return {"schema": FOUNDATION_SCHEMA, "profile_schema": profile.get("schema", "unknown"), "profile_id": profile.get("profile_id", profile.get("system_id", "unknown")), "read_only": True, "results": results}
+        results.append({"rule_id": rule.rule_id, "domain": rule.domain.value, "state": state.value, "rationale": rationale, "missing_evidence": sorted(missing), "compatibility_trace": trace, "evidence_records": [asdict(record) for record in evidence_for_rule], "fixture_only": rule.fixture_only, "rule": rule.as_dict()})
+    return {"schema": FOUNDATION_SCHEMA, "profile_schema": profile.get("schema", "unknown"), "profile_id": profile.get("profile_id", profile.get("system_id", "unknown")), "read_only": True, "evidence_path": {"configuration_evidence": [asdict(record) for record in available_evidence if record.source_type != "OBSERVED_NETWORK_QUALITY"], "observed_network_quality": [asdict(record) for record in available_evidence if record.source_type == "OBSERVED_NETWORK_QUALITY"]}, "results": results}
 
 
 def recommendation_detail_view_model(result: dict[str, object]) -> dict[str, object]:
     """Stable no-apply panel contract for later desktop UI work."""
     rule = result["rule"]
     assert isinstance(rule, dict)
-    return {"title": rule["title"], "current_state": "unknown/not_available", "improve_recommendation": result["state"], "status": result["state"], "what_is_it": rule["setting"], "why_for_this_system": result["rationale"], "what_can_change": rule["goal"], "evidence_validity": rule["evidence"], "risk_notes": rule["risk_class"], "restore_change_information": {"restore_capable": rule["restore_capable"], "changeable_later": rule["changeable_later"]}, "guidance": {"manual_action_required": rule["manual_action_required"], "guidance_available": rule["guidance_available"], "screenshot_verification_later": rule["screenshot_verification_later"]}}
+    return {"optimizer": "Optimizer", "recommendation_group": "Improve Empfehlungen", "domain": result["domain"], "title": rule["title"], "current_state": "unknown/not_available", "improve_recommendation": "FIXTURE_ONLY — " + str(result["state"]) if result.get("fixture_only") else result["state"], "status": result["state"], "what_is_it": rule["setting"], "why_for_this_system": result["rationale"], "what_can_change": rule["goal"], "evidence_validity": result.get("evidence_records", rule["evidence"]), "risk_notes": rule["risk_class"], "restore_change_information": {"restore_capable": rule["restore_capable"], "changeable_later": rule["changeable_later"]}, "guidance": {"manual_action_required": rule["manual_action_required"], "guidance_available": rule["guidance_available"], "screenshot_verification_later": rule["screenshot_verification_later"]}, "explainability": {"compatibility": result.get("compatibility_trace", {}), "missing_evidence": result.get("missing_evidence", [])}, "apply_available": False}
 
 
 def system_profile_from_facts(facts: dict[str, Any]) -> dict[str, object]:
@@ -218,6 +238,12 @@ def run_fixture_harness() -> dict[str, object]:
         for result in report["results"]:
             states[str(result["state"])] += 1
     return {"schema": FOUNDATION_SCHEMA, "label": "SYNTHETIC / DECISION LOGIC ONLY / NOT MEASURED", "system_count": len(reports), "states": states, "reports": reports}
+
+
+def integration_proof(profile: dict[str, object], evidence_records: Iterable[EvidenceRecord]) -> dict[str, object]:
+    """One transparent COLLECT→PROFILE→COMPATIBILITY→EVIDENCE→RESULT→VIEWMODEL proof."""
+    report = evaluate_recommendations(profile, evidence_records=evidence_records)
+    return {"schema": FOUNDATION_SCHEMA, "pipeline": ("COLLECT", "SYSTEM_PROFILE", "RULE_COMPATIBILITY", "EVIDENCE", "RECOMMENDATION_RESULT", "UI_VIEWMODEL"), "read_only": True, "report": report, "view_models": [recommendation_detail_view_model(item) for item in report["results"]]}
 
 
 def main() -> int:

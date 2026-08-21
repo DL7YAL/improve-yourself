@@ -936,6 +936,25 @@ MODEL_REASON: Netzwerk- und datenschutzsensibler, aber strikt read-only Daten-/T
 COMPUTER_USE: no
 COMMIT/PR: `b5c9754 feat: add network quality collector`, gepusht nach `origin/dev/v1-foundation`.
 
+# Handoff 2026-08-22 — Optimizer Evidence Integration Proof V1
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Den vollständigen gemeinsamen, read-only Optimizer-Evidence-Pfad nachweisen, ohne Target-Pack, neue Engine, Apply-Pfad oder reale Regeln.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/optimizer_foundation.py`, `tests/test_optimizer_integration_proof.py`, `tests/test_optimizer_foundation.py`, `docs/OPTIMIZER_EVIDENCE_INTEGRATION_PROOF_V1.md`, `coordination/agents/codex.md`.
+PIPELINE: `integration_proof()` orchestriert ausschließlich die vorhandene Foundation: **COLLECT → SYSTEM_PROFILE → RULE_COMPATIBILITY → EVIDENCE → RECOMMENDATION_RESULT → UI_VIEWMODEL**. Jedes Result hält Rule-ID, Domain, State, Rationale, Missing Data, vollständige Required-/Exclusion-Trace, Konflikte und berücksichtigte Evidence Records. Das Result ist read-only.
+FOUR DOMAINS / RESULTS: Sechs als FIXTURE/TEST markierte Regeln beweisen System, Graphics, Network, BIOS, Conditional/Exclusion und SECURITY_PERFORMANCE_TRADEOFF. Tests weisen RECOMMENDED, ALREADY_RECOMMENDED, CONDITIONAL, NO_CHANGE, INSUFFICIENT_EVIDENCE sowie eine explizit gematchte Exclusion nach. Fehlende Daten ergeben nie ein positives Result. Der Trade-off-Typ ist zwingend NO_CHANGE und kann nicht automatisch empfohlen oder angewendet werden.
+NETWORK: `OBSERVED_NETWORK_QUALITY` aus Network Quality Collector V1 wird als eigener Evidence-Pfad neben Configuration Evidence übergeben. Die Provenance stellt klar: Korrelation ist keine Konfigurationskausalität. Beobachtetes RTT/Jitter/Packet-Loss kann daher keine Adapterursache oder automatische Empfehlung erzeugen.
+UI CONTRACT: Das gemeinsame Detail-ViewModel liefert Optimizer/Improve-Empfehlungsgruppe, Domain, Titel, Zustand, Status, Erklärung, systemspezifische Begründung, Wirkung, Evidence/Gültigkeit, Risiko, Restore-Information, BIOS Guidance und Explainability. Fixtures werden explizit als `FIXTURE_ONLY — <state>` gekennzeichnet; `apply_available: false` ist fest.
+SYNTHETIC: Der bestehende 150-System-Harness bleibt unverändert die einzige synthetische Decision-Logic-Matrix und enthält keine reale Performance-/Latency-Evidenz oder VALIDATION_RESULT.
+VERIFIED: Vollständiger `pytest` **155/155 PASS**; `compileall` PASS; `pip check` PASS; `git diff --check` PASS.
+KNOWN LIMITS: Es gibt keine reale Release-Regel, keine echte Optimizer-Recommendation, keinen Target-Pack, keine UI-Neugestaltung und keinen Apply-/Write-Pfad. Network Quality bleibt reine Beobachtung.
+NEXT: Genau ein empfohlener Folge-Slice nach neuer Freigabe: privacy-reviewed, versionierte controlled Target Packs für die bereits vorhandene Network-Quality-Messung. Keine weitere Arbeit ohne Auftrag.
+MODEL_PROFILE: terra
+MODEL_REASON: Integrations-/Explainability-Nachweis über sicherheitsrelevante Datenpfade ohne Systemänderung.
+COMPUTER_USE: no
+COMMIT/PR: Wird nach Commit/Push ergänzt.
+
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
 STATUS: WAITING_FOR_TRISTAN
