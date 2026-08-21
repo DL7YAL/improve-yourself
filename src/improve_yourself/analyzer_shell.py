@@ -47,6 +47,44 @@ _THEME = {
     "ink": "#f1f7fc", "muted": "#8ca9bd", "success": "#58d69a",
 }
 
+_UI_FONT = "Inter"
+_DISPLAY_FONT = "Orbitron"
+_PRIVATE_FONT_FLAG = 0x10
+
+
+def _register_private_fonts(root, assets: Path) -> tuple[str, str]:
+    """Register the packaged V1 font files for this process only.
+
+    The portable build must not depend on a machine-wide font installation.
+    Windows keeps FR_PRIVATE registrations local to the running application;
+    other platforms retain their safe system sans fallback.
+    """
+    if os.name != "nt" or not hasattr(ctypes, "windll"):
+        return "Segoe UI", "Segoe UI"
+    add_font = ctypes.windll.gdi32.AddFontResourceExW
+    for filename in ("Inter-Variable.ttf", "Orbitron-Variable.ttf"):
+        font_path = assets / "fonts" / filename
+        if font_path.is_file():
+            add_font(str(font_path), _PRIVATE_FONT_FLAG, None)
+    families = set(root.tk.call("font", "families"))
+    return (
+        _UI_FONT if _UI_FONT in families else "Segoe UI",
+        _DISPLAY_FONT if _DISPLAY_FONT in families else "Segoe UI",
+    )
+
+
+def dashboard_layout_metrics(content_width: int, viewport_height: int) -> tuple[bool, int, int, int, int]:
+    """Return responsive Home metrics without scaling the whole interface."""
+    compact = content_width < 1000
+    extra_height = max(0, min(300, viewport_height - 650))
+    return (
+        compact,
+        196 + extra_height // 12,
+        184 + extra_height // 3,
+        116 + extra_height // 4,
+        12 + extra_height // 20,
+    )
+
 
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
@@ -354,7 +392,10 @@ class AnalyzerShellApp:
         self.root.minsize(1080, 720)
         self.root.configure(background=_THEME["night"])
         _enable_dark_titlebar(self.root)
-        icon_path = Path(__file__).with_name("assets") / "improve-yourself-icon-v3.png"
+        assets_path = Path(__file__).with_name("assets")
+        self.ui_font, self.display_font = _register_private_fonts(self.root, assets_path)
+        self.root.option_add("*Font", f"{self.ui_font} 10")
+        icon_path = assets_path / "improve-yourself-icon-v3.png"
         try:
             self.app_icon = tk.PhotoImage(file=str(icon_path))
             self.root.iconphoto(True, self.app_icon)
@@ -364,7 +405,7 @@ class AnalyzerShellApp:
         style.theme_use("clam")
         style.configure(
             ".", background=_THEME["panel"], foreground=_THEME["ink"],
-            fieldbackground=_THEME["deep"], font=("Segoe UI", 10),
+            fieldbackground=_THEME["deep"], font=(self.ui_font, 10),
             bordercolor=_THEME["line_soft"], lightcolor=_THEME["panel_high"],
             darkcolor=_THEME["deep"], focuscolor=_THEME["accent"],
         )
@@ -384,14 +425,14 @@ class AnalyzerShellApp:
         style.configure("HomePanel.TLabel", background="#091a2b", foreground=_THEME["ink"])
         style.configure("HomeMuted.TLabel", background="#0a1d30", foreground="#93b4c9")
         style.configure("HomePanelMuted.TLabel", background="#091a2b", foreground="#93b4c9")
-        style.configure("HomeKicker.TLabel", background=_THEME["night"], foreground="#3bbaff", font=("Segoe UI Semibold", 9))
-        style.configure("HomePrimary.TButton", background="#075f96", foreground="#f7fbff", padding=(13, 8), borderwidth=1, bordercolor="#27b8ff", relief="flat", font=("Segoe UI Semibold", 9))
+        style.configure("HomeKicker.TLabel", background=_THEME["night"], foreground="#3bbaff", font=(self.display_font, 9))
+        style.configure("HomePrimary.TButton", background="#075f96", foreground="#f7fbff", padding=(13, 8), borderwidth=1, bordercolor="#27b8ff", relief="flat", font=(self.ui_font, 9, "bold"))
         style.map("HomePrimary.TButton", background=[("active", "#078bd1"), ("pressed", "#064d7e"), ("disabled", "#0b2232")], bordercolor=[("active", "#a5e4ff"), ("disabled", "#1a3a50")])
-        style.configure("HomeTeal.TButton", background="#07574f", foreground="#ecfffb", padding=(13, 8), borderwidth=1, bordercolor="#20d0b0", relief="flat", font=("Segoe UI Semibold", 9))
+        style.configure("HomeTeal.TButton", background="#07574f", foreground="#ecfffb", padding=(13, 8), borderwidth=1, bordercolor="#20d0b0", relief="flat", font=(self.ui_font, 9, "bold"))
         style.map("HomeTeal.TButton", background=[("active", "#087b70"), ("pressed", "#06463f"), ("disabled", "#0b2232")], bordercolor=[("active", "#9fffe9"), ("disabled", "#1a3a50")])
-        style.configure("HomeViolet.TButton", background="#38285e", foreground="#f6f0ff", padding=(13, 8), borderwidth=1, bordercolor="#a684ff", relief="flat", font=("Segoe UI Semibold", 9))
+        style.configure("HomeViolet.TButton", background="#38285e", foreground="#f6f0ff", padding=(13, 8), borderwidth=1, bordercolor="#a684ff", relief="flat", font=(self.ui_font, 9, "bold"))
         style.map("HomeViolet.TButton", background=[("active", "#564090"), ("pressed", "#2c2049"), ("disabled", "#171d2b")], bordercolor=[("active", "#dfd1ff"), ("disabled", "#30384b")])
-        style.configure("HomeGold.TButton", background="#6b5014", foreground="#fff8e5", padding=(13, 8), borderwidth=1, bordercolor="#e3b940", relief="flat", font=("Segoe UI Semibold", 9))
+        style.configure("HomeGold.TButton", background="#6b5014", foreground="#fff8e5", padding=(13, 8), borderwidth=1, bordercolor="#e3b940", relief="flat", font=(self.ui_font, 9, "bold"))
         style.map("HomeGold.TButton", background=[("active", "#927123"), ("pressed", "#513d10"), ("disabled", "#272417")], bordercolor=[("active", "#ffdc77"), ("disabled", "#3b3520")])
         style.configure("Sidebar.TFrame", background="#050f1c", borderwidth=0)
         style.configure("TLabel", background=_THEME["night"], foreground=_THEME["ink"])
@@ -401,7 +442,7 @@ class AnalyzerShellApp:
         style.configure("TLabelframe.Label", background=_THEME["panel"], foreground=_THEME["ice"], font=("Segoe UI Semibold", 9))
         style.configure(
             "TButton", background="#102b43", foreground="#dcefff", padding=(14, 9),
-            borderwidth=1, bordercolor="#245b82", relief="flat", font=("Segoe UI Semibold", 9),
+            borderwidth=1, bordercolor="#245b82", relief="flat", font=(self.ui_font, 9, "bold"),
             focusthickness=0,
         )
         style.map(
@@ -412,7 +453,7 @@ class AnalyzerShellApp:
         )
         style.configure(
             "Primary.TButton", background="#087dcc", foreground="#ffffff",
-            bordercolor="#35b8ff", font=("Segoe UI Semibold", 9), padding=(16, 9),
+            bordercolor="#35b8ff", font=(self.ui_font, 9, "bold"), padding=(16, 9),
         )
         style.map("Primary.TButton", background=[("active", "#0ba3f2"), ("pressed", "#0568ae"), ("disabled", "#0b2437")])
         style.configure(
@@ -440,7 +481,7 @@ class AnalyzerShellApp:
         style.configure(
             "Rule.TCheckbutton", indicatoron=False, anchor="w", background="#0a1a2a",
             foreground=_THEME["muted"], padding=(12, 10), borderwidth=1,
-            bordercolor=_THEME["line_soft"], font=("Segoe UI Semibold", 9),
+            bordercolor=_THEME["line_soft"], font=(self.ui_font, 9, "bold"),
         )
         style.map(
             "Rule.TCheckbutton",
@@ -450,12 +491,12 @@ class AnalyzerShellApp:
         )
         style.configure(
             "Nav.TButton", anchor="w", background="#050f1c", foreground=_THEME["muted"],
-            padding=(18, 13), borderwidth=1, bordercolor="#050f1c", font=("Segoe UI Semibold", 9),
+            padding=(18, 13), borderwidth=1, bordercolor="#050f1c", font=(self.ui_font, 9),
         )
         style.map("Nav.TButton", background=[("active", "#0a2033")], foreground=[("active", _THEME["ink"])], bordercolor=[("active", _THEME["line_soft"])])
         style.configure(
             "NavActive.TButton", anchor="w", background="#0b3150", foreground="#ffffff",
-            padding=(18, 13), borderwidth=1, bordercolor="#168ddd", font=("Segoe UI Semibold", 9),
+            padding=(18, 13), borderwidth=1, bordercolor="#168ddd", font=(self.ui_font, 9, "bold"),
         )
         style.configure(
             "Horizontal.TScale", background=_THEME["panel"], troughcolor="#06111d",
@@ -537,17 +578,13 @@ class AnalyzerShellApp:
                 )
                 scrollbar = ttk.Scrollbar(host, orient="vertical", command=canvas.yview)
                 canvas.configure(yscrollcommand=scrollbar.set)
-                scrollbar.pack(side="right", fill="y")
                 canvas.pack(side="left", fill="both", expand=True)
                 page = ttk.Frame(canvas, style="Content.TFrame")
                 page_window = canvas.create_window((0, 0), window=page, anchor="nw")
-                page.bind(
-                    "<Configure>",
-                    lambda _event, target=canvas: target.configure(scrollregion=target.bbox("all")),
-                )
+                page.bind("<Configure>", lambda _event, target=canvas, body=page, bar=scrollbar: self._sync_scrollable_page(target, body, bar))
                 canvas.bind(
                     "<Configure>",
-                    lambda event, target=canvas, item=page_window: target.itemconfigure(item, width=event.width),
+                    lambda event, target=canvas, item=page_window, body=page, bar=scrollbar: self._resize_scrollable_page(target, item, body, bar, event.width),
                 )
                 canvas.bind(
                     "<MouseWheel>",
@@ -561,6 +598,7 @@ class AnalyzerShellApp:
                     self.analyzer_canvas = canvas
                 else:
                     self.dashboard_canvas = canvas
+                    self.dashboard_scrollbar = scrollbar
             else:
                 page = ttk.Frame(host, style="Content.TFrame")
                 page.pack(fill="both", expand=True)
@@ -750,6 +788,8 @@ class AnalyzerShellApp:
 
     def _show_page(self, name: str) -> None:
         self.page_hosts[name].tkraise()
+        if name == "Dashboard":
+            self.root.after_idle(lambda: self.dashboard_canvas.yview_moveto(0.0))
         for page_name, button in self.nav_buttons.items():
             button.configure(style="NavActive.TButton" if page_name == name else "Nav.TButton")
 
@@ -763,7 +803,7 @@ class AnalyzerShellApp:
         greeting = self.ttk.Frame(header, style="Content.TFrame")
         greeting.pack(side="left", fill="x", expand=True)
         self.ttk.Label(greeting, text="LOCAL PERFORMANCE LAB  /  COMMAND CENTER", style="HomeKicker.TLabel").pack(anchor="w", pady=(0, 3))
-        self.ttk.Label(greeting, text="Willkommen zurück!", font=("Segoe UI", 23, "bold")).pack(anchor="w")
+        self.ttk.Label(greeting, text="Willkommen zurück!", font=(self.display_font, 22, "bold")).pack(anchor="w")
         self.ttk.Label(
             greeting, text="Dein lokales Command Center für Analyse, Review und kontinuierliche Verbesserung.",
             foreground=_THEME["muted"],
@@ -778,7 +818,7 @@ class AnalyzerShellApp:
             card = self.ttk.Frame(stats, style="HomeStat.TFrame", padding=(10, 7))
             card.pack(side="left", padx=(6, 0))
             self._home_accent(card, accent)
-            self.ttk.Label(card, textvariable=variable, style="HomeStat.TLabel", justify="center", font=("Segoe UI Semibold", 9)).pack(pady=(4, 0))
+            self.ttk.Label(card, textvariable=variable, style="HomeStat.TLabel", justify="center", font=(self.ui_font, 9, "bold")).pack(pady=(4, 0))
 
         modules = self.ttk.Frame(page, style="Content.TFrame")
         modules.pack(fill="x")
@@ -801,7 +841,7 @@ class AnalyzerShellApp:
             icon_row = self.ttk.Frame(card, style="HomeModule.TFrame")
             icon_row.pack(fill="x", pady=(5, 6))
             self._home_module_icon(icon_row, icon, accent).pack(side="left", padx=(0, 8))
-            self.ttk.Label(icon_row, text=title, style="HomeModule.TLabel", font=("Segoe UI Semibold", 10), justify="left").pack(side="left", anchor="w")
+            self.ttk.Label(icon_row, text=title, style="HomeModule.TLabel", font=(self.display_font, 9, "bold"), justify="left").pack(side="left", anchor="w")
             self.ttk.Label(card, text=detail, style="HomeMuted.TLabel", wraplength=150, justify="left").pack(anchor="w", pady=(2, 10), fill="x")
             button = self.ttk.Button(card, text=action, style=button_style, command=(lambda value=target: self._show_page(value)))
             button.configure(state="normal" if enabled else "disabled")
@@ -816,7 +856,7 @@ class AnalyzerShellApp:
         progress = self.ttk.Frame(overview, style="HomePanel.TFrame", padding=15)
         progress.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
         self._home_accent(progress, "#2bdcbb")
-        self.ttk.Label(progress, text="DEIN FORTSCHRITT – ÜBERBLICK", style="HomePanel.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w", pady=(5, 0))
+        self.ttk.Label(progress, text="DEIN FORTSCHRITT – ÜBERBLICK", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
         progress_body = self.ttk.Frame(progress, style="HomeInner.TFrame")
         progress_body.pack(fill="x", pady=(8, 9))
         self._home_progress_gauge(progress_body).pack(side="left", padx=(0, 9))
@@ -826,14 +866,14 @@ class AnalyzerShellApp:
         recent = self.ttk.Frame(overview, style="HomePanel.TFrame", padding=15)
         recent.grid(row=0, column=1, sticky="nsew", padx=5)
         self._home_accent(recent, "#a687ff")
-        self.ttk.Label(recent, text="LETZTE ANALYSEN", style="HomePanel.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w", pady=(5, 0))
+        self.ttk.Label(recent, text="LETZTE ANALYSEN", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
         self.ttk.Label(recent, textvariable=self.dashboard_recent, style="HomePanelMuted.TLabel", wraplength=230, justify="left").pack(anchor="w", pady=(10, 8))
         self.ttk.Label(recent, textvariable=self.overview_status, style="HomePanel.TLabel", wraplength=230, justify="left").pack(anchor="w")
 
         quick = self.ttk.Frame(overview, style="HomePanel.TFrame", padding=15)
         quick.grid(row=0, column=2, sticky="nsew", padx=(5, 0))
         self._home_accent(quick, "#238ffc")
-        self.ttk.Label(quick, text="SCHNELLZUGRIFF", style="HomePanel.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w", pady=(5, 0))
+        self.ttk.Label(quick, text="SCHNELLZUGRIFF", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
         quick_grid = self.ttk.Frame(quick, style="HomeInner.TFrame")
         quick_grid.pack(fill="x", pady=(8, 0))
         for index, (label, target) in enumerate((
@@ -852,7 +892,7 @@ class AnalyzerShellApp:
         idea = self.ttk.Frame(lower, style="HomePanel.TFrame", padding=15)
         idea.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
         self._home_accent(idea, "#2bdcbb")
-        self.ttk.Label(idea, text="◉  DIE IDEE HINTER IMPROVE YOURSELF", style="HomePanel.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w", pady=(5, 0))
+        self.ttk.Label(idea, text="◉  DIE IDEE HINTER IMPROVE YOURSELF", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
         self.ttk.Label(
             idea,
             text="Datenbasierte Analyse, gemeinsame Replay-Wahrheit und transparente lokale Werkzeuge begleiten dich Schritt für Schritt – ohne erfundene Ergebnisse.",
@@ -861,12 +901,15 @@ class AnalyzerShellApp:
         community = self.ttk.Frame(lower, style="HomePanel.TFrame", padding=15)
         community.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
         self._home_accent(community, "#a687ff")
-        self.ttk.Label(community, text="◇  COMMUNITY & IDEEN", style="HomePanel.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w", pady=(5, 0))
+        self.ttk.Label(community, text="◇  COMMUNITY & IDEEN", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
         self.ttk.Label(
             community,
             text="Der geschützte Kern bleibt lokal, nachvollziehbar und sicher. Community-Funktionen werden erst mit einem belegten Produktumfang ergänzt.",
             style="HomePanelMuted.TLabel", wraplength=360, justify="left",
         ).pack(anchor="w", pady=(8, 0))
+        self.dashboard_modules = modules
+        self.dashboard_overview = overview
+        self.dashboard_lower = lower
         page.bind("<Configure>", lambda event: self._layout_dashboard(event.width))
 
     def _home_accent(self, parent: object, color: str) -> None:
@@ -888,8 +931,8 @@ class AnalyzerShellApp:
         canvas.create_oval(4, 4, 52, 52, outline="#12364f", width=4)
         canvas.create_arc(4, 4, 52, 52, start=88, extent=214, style="arc", outline="#2bdcbb", width=3)
         canvas.create_arc(10, 10, 46, 46, start=305, extent=82, style="arc", outline="#2d9fe8", width=2)
-        canvas.create_text(28, 25, text="LOCAL", fill="#dff8ff", font=("Segoe UI Semibold", 7))
-        canvas.create_text(28, 35, text="FLOW", fill="#75b8d7", font=("Segoe UI Semibold", 7))
+        canvas.create_text(28, 25, text="LOCAL", fill="#dff8ff", font=(self.display_font, 7))
+        canvas.create_text(28, 35, text="FLOW", fill="#75b8d7", font=(self.display_font, 7))
         return canvas
 
     def _draw_home_tech_line(self, canvas: object, width: int, height: int) -> None:
@@ -902,10 +945,27 @@ class AnalyzerShellApp:
         for x in range(12, width, 96):
             canvas.create_oval(x, baseline - 2, x + 4, baseline + 2, fill="#2daff2", outline="")
 
-    def _layout_dashboard(self, width: int) -> None:
-        compact = width < 1000
-        if getattr(self, "dashboard_compact", None) == compact:
+    def _resize_scrollable_page(self, canvas: object, item: int, page: object, scrollbar: object, width: int) -> None:
+        canvas.itemconfigure(item, width=width)
+        self.root.after_idle(lambda: self._sync_scrollable_page(canvas, page, scrollbar))
+
+    def _sync_scrollable_page(self, canvas: object, page: object, scrollbar: object) -> None:
+        bounds = canvas.bbox("all")
+        if bounds is None:
             return
+        canvas.configure(scrollregion=bounds)
+        needs_scroll = (bounds[3] - bounds[1]) > canvas.winfo_height() + 1
+        shown = bool(scrollbar.winfo_manager())
+        if needs_scroll and not shown:
+            scrollbar.pack(side="right", fill="y")
+        elif shown and not needs_scroll:
+            scrollbar.pack_forget()
+            canvas.yview_moveto(0.0)
+
+    def _layout_dashboard(self, width: int) -> None:
+        compact, module_height, overview_height, lower_height, gap = dashboard_layout_metrics(
+            width, self.dashboard_canvas.winfo_height()
+        )
         self.dashboard_compact = compact
         self.dashboard_greeting.pack_forget()
         self.dashboard_stats.pack_forget()
@@ -927,6 +987,13 @@ class AnalyzerShellApp:
                 padx=(0 if column == 0 else 3, 0 if column == columns - 1 else 3),
                 pady=(0 if row == 0 else 6, 0),
             )
+        self.dashboard_modules.rowconfigure(0, minsize=module_height)
+        self.dashboard_modules.rowconfigure(1, minsize=module_height if compact else 0)
+        self.dashboard_overview.rowconfigure(0, minsize=overview_height)
+        self.dashboard_lower.rowconfigure(0, minsize=lower_height)
+        self.dashboard_header.pack_configure(pady=(0, gap))
+        self.dashboard_overview.pack_configure(pady=(gap, 0))
+        self.dashboard_lower.pack_configure(pady=(gap, gap + 4))
 
     def _build_reports_page(self) -> None:
         page = self.pages["Reports"]

@@ -7,7 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from improve_yourself.analyzer_shell import AnalyzerShellController, UI_REFERENCE_STATUS, default_output_root
+from improve_yourself.analyzer_shell import (
+    AnalyzerShellController,
+    UI_REFERENCE_STATUS,
+    dashboard_layout_metrics,
+    default_output_root,
+)
 
 
 def test_packaged_windows_default_output_is_stable_and_user_writable(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -29,6 +34,19 @@ def test_experimental_shell_exposes_binding_product_sections_from_canonical_desi
     assert UI_REFERENCE_STATUS["Tactical Replay"] == "IMPLEMENTED"
     assert "NEEDS_UI_REFERENCE" not in UI_REFERENCE_STATUS.values()
     assert UI_REFERENCE_STATUS["System Check / Optimizer"] == "PARTIAL_REFERENCE"
+
+
+def test_dashboard_layout_keeps_cards_readable_without_global_scaling() -> None:
+    wide = dashboard_layout_metrics(1400, 860)
+    compact = dashboard_layout_metrics(900, 720)
+    tall = dashboard_layout_metrics(1400, 1080)
+    assert wide[0] is False
+    assert compact[0] is True
+    assert wide[1:] == (213, 254, 168, 22)
+    assert tall[1] > wide[1]
+    assert tall[2] > wide[2]
+    assert tall[3] > wide[3]
+    assert tall[4] > wide[4]
 
 
 def _write_result(root: Path, selected: tuple[str, ...] = (), source_hash: str = "a" * 64) -> Path:

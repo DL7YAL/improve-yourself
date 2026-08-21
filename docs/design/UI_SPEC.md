@@ -24,12 +24,11 @@ A light alternative is allowed later/where already supported: light surfaces wit
 
 ## 3. Typography
 
-- Clean, straight technical sans-serif character.
-- Page/module titles: strong weight.
-- Section headings: medium/semibold.
-- Tables, rules, explanations and dense information: regular/medium.
-- Do not make all information bold.
-- Maintain readable hierarchy through weight, size and spacing rather than excessive color.
+- `Orbitron` is the display/technical family: page titles, module names and deliberately sparse technical labels only. It must not be used for explanatory copy, tables or dense small UI text.
+- `Inter` is the primary UI and reading family: navigation, buttons, controls, status, values, descriptions, tables and all normal labels use Inter Regular/Medium by default.
+- The Portable build carries both font files under their SIL Open Font License and registers them privately for the application process. It must not rely on an installed machine-wide font or install a font globally.
+- Page/module titles use a strong display weight; section headings use medium/semibold; tables, rules, explanations and dense information remain regular/medium.
+- Do not make all information bold. Maintain readable hierarchy through weight, size and spacing rather than excessive color.
 
 ## 4. Color and state language
 

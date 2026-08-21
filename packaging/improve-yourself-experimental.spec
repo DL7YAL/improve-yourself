@@ -14,6 +14,7 @@ a = Analysis(
     datas=[
         (str(assets / "improve-yourself-wordmark-v3.png"), "improve_yourself/assets"),
         (str(assets / "improve-yourself-icon-v3.png"), "improve_yourself/assets"),
+        (str(assets / "fonts"), "improve_yourself/assets/fonts"),
     ],
     hiddenimports=hiddenimports,
     hookspath=[],
