@@ -953,7 +953,7 @@ NEXT: Genau ein empfohlener Folge-Slice nach neuer Freigabe: privacy-reviewed, v
 MODEL_PROFILE: terra
 MODEL_REASON: Integrations-/Explainability-Nachweis über sicherheitsrelevante Datenpfade ohne Systemänderung.
 COMPUTER_USE: no
-COMMIT/PR: Wird nach Commit/Push ergänzt.
+COMMIT/PR: `6186a5c feat: prove optimizer evidence integration`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
