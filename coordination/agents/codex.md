@@ -733,3 +733,20 @@ MODEL_PROFILE: terra
 MODEL_REASON: Direkter, responsiver Screen-Master-Abgleich innerhalb der bestehenden Desktop-Shell.
 COMPUTER_USE: yes
 COMMIT/PR: Dieser Handoff wird mit dem direkten Home-Master-Checkpoint auf `dev/v1-foundation` committed und gepusht; exakter HEAD im Abschlussbericht.
+
+# Handoff 2026-08-21 — Home visual master correction pass
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Ausschließlich die noch nicht angenommene grafische Umsetzung des direkt strukturell akzeptierten Page-03-Home-Masters korrigieren; keinen neuen Product Slice starten und keine Home-Struktur neu entwerfen.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/analyzer_shell.py`, `docs/AGENT_BASE.md`, `coordination/CURRENT.md`, `coordination/agents/codex.md`. Home behält Header, vier reale Statuskarten, sechs Moduleinstiege, Fortschritt, letzte Analyse, Schnellzugriff und die unteren Informationsflächen in identischer Reihenfolge und Datenbindung. Es nutzt jetzt eine eigene Home-Komponentenfamilie: abgestufte Midnight-/Metallic-Panels, akzentcodierte feine Oberkanten, instrumentierte Modulicons, eine zurückhaltende technische Headerlinie, Flow-Anzeige sowie eigene moderne Button-Zustände. Die generischen flachen Tk-Karten bleiben auf Home nicht mehr sichtbar.
+DATA_TRUTH: Keine Master-Beispielwerte übernommen. Status-, Pipeline-, letzte-Analyse- und Reviewwerte konsumieren weiterhin ausschließlich den aktuell geladenen lokalen Workflow; bei fehlender Demo bleiben die expliziten Nicht-verfügbar-Zustände sichtbar. Analyzer-, Replay-, NetCon-, System-Check- und Optimizer-Autorität sind unverändert.
+MASTER_MATCH: Struktur Page 03 weiterhin PASS (bereits akzeptiert). Grafische Anpassung: Midnight-/Metallic-Gesamteindruck PASS; Panel-/Card-Hierarchie PASS; feine blaue bzw. modulbezogene Akzentlinien PASS; moderne Aktions- und Statusflächen PASS; technisches Linien-/Instrumentdetail PASS; Variant-3-Sidebar-Branding unverändert PASS. Der native dunkle Fensterrand bleibt bewusst die einzige Host-Konvention.
+VERIFIED: `compileall` PASS; `git diff --check` PASS. Gezielte Analyzer-Shell-Tests 15/15 PASS. Vollständiger `pytest` 131/131 PASS, im frischen Build erneut 131/131 PASS; Abhängigkeitstest `pip check` PASS. Direkte Quell-Sichtprüfung und anschließende Sichtprüfung der frischen Portable-EXE bei 1360x860: Home zeigt die vollständige sechsmodulige Command-Center-Hierarchie, keine weißen/fremden Flächen und die neuen akzentuierten Panels/Controls. Die bestehende responsive 3x2-Reflow-Logik unter 1000 Pixeln wurde nicht verändert; sie bleibt über die vorhandenen Shell-Tests abgesichert. EXE SHA-256 `1D7A9921B9EC121ED6B25F08B2205414E2057E31C28A72706441DE8C5E32A17A`; Portable-ZIP SHA-256 `0D98DB956C1EF94630D54106E6268690459D3C08E685F5A0299736A038C2E5A7`.
+BUILD: `dist/experimental/Improve Yourself Experimental/Improve Yourself Experimental.exe`, `dist/experimental/Improve-Yourself-Experimental-Portable.zip` und `dist/experimental/experimental-build.json` sind frisch erzeugt. Kein Setup/Installer und kein Signing, da hierfür weiterhin kein akzeptierter Vertrag vorliegt.
+OPEN: Menschliche Page-03-Home-Abnahme durch Tristan. Nicht Teil dieses Passes: neue Funktionsflächen, neue Analyzer-/Rules-/Replay-/3D-/POV-/Optimizer-/Benchmark-/Clip-Funktionen, alternative Branding-Varianten oder ein Merge nach `main`.
+NEXT: Tristan öffnet ausschließlich den frischen Portable-Build, vergleicht Home direkt mit Page 03 und meldet Abnahme oder eine konkrete verbleibende grafische Abweichung. Bis dahin keine weitere Produktarbeit.
+MODEL_PROFILE: terra
+MODEL_REASON: Eng begrenzter visueller Korrekturpass innerhalb der vorhandenen nativen Shell mit Paket-Runtime-QA.
+COMPUTER_USE: yes
+COMMIT/PR: Diesen Handoff mit dem Home-Visual-Checkpoint auf `dev/v1-foundation` committen und pushen; exakten HEAD anschließend berichten.

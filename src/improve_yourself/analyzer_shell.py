@@ -372,6 +372,27 @@ class AnalyzerShellApp:
         style.configure("Content.TFrame", background=_THEME["night"])
         style.configure("Card.TFrame", background=_THEME["panel"], relief="flat", borderwidth=1, bordercolor=_THEME["line_soft"])
         style.configure("CardInner.TFrame", background=_THEME["panel"], relief="flat", borderwidth=0)
+        # Home deliberately has its own component family.  The command-centre
+        # layout is shared with the rest of the shell, while these styles keep
+        # its cards from falling back to the generic/native looking controls.
+        style.configure("HomeStat.TFrame", background="#091a2b", relief="flat", borderwidth=1, bordercolor="#1d5d87")
+        style.configure("HomeModule.TFrame", background="#0a1d30", relief="flat", borderwidth=1, bordercolor="#1b537b")
+        style.configure("HomePanel.TFrame", background="#091a2b", relief="flat", borderwidth=1, bordercolor="#1b5279")
+        style.configure("HomeInner.TFrame", background="#091a2b", relief="flat", borderwidth=0)
+        style.configure("HomeStat.TLabel", background="#091a2b", foreground=_THEME["ice"])
+        style.configure("HomeModule.TLabel", background="#0a1d30", foreground=_THEME["ink"])
+        style.configure("HomePanel.TLabel", background="#091a2b", foreground=_THEME["ink"])
+        style.configure("HomeMuted.TLabel", background="#0a1d30", foreground="#93b4c9")
+        style.configure("HomePanelMuted.TLabel", background="#091a2b", foreground="#93b4c9")
+        style.configure("HomeKicker.TLabel", background=_THEME["night"], foreground="#3bbaff", font=("Segoe UI Semibold", 9))
+        style.configure("HomePrimary.TButton", background="#075f96", foreground="#f7fbff", padding=(13, 8), borderwidth=1, bordercolor="#27b8ff", relief="flat", font=("Segoe UI Semibold", 9))
+        style.map("HomePrimary.TButton", background=[("active", "#078bd1"), ("pressed", "#064d7e"), ("disabled", "#0b2232")], bordercolor=[("active", "#a5e4ff"), ("disabled", "#1a3a50")])
+        style.configure("HomeTeal.TButton", background="#07574f", foreground="#ecfffb", padding=(13, 8), borderwidth=1, bordercolor="#20d0b0", relief="flat", font=("Segoe UI Semibold", 9))
+        style.map("HomeTeal.TButton", background=[("active", "#087b70"), ("pressed", "#06463f"), ("disabled", "#0b2232")], bordercolor=[("active", "#9fffe9"), ("disabled", "#1a3a50")])
+        style.configure("HomeViolet.TButton", background="#38285e", foreground="#f6f0ff", padding=(13, 8), borderwidth=1, bordercolor="#a684ff", relief="flat", font=("Segoe UI Semibold", 9))
+        style.map("HomeViolet.TButton", background=[("active", "#564090"), ("pressed", "#2c2049"), ("disabled", "#171d2b")], bordercolor=[("active", "#dfd1ff"), ("disabled", "#30384b")])
+        style.configure("HomeGold.TButton", background="#6b5014", foreground="#fff8e5", padding=(13, 8), borderwidth=1, bordercolor="#e3b940", relief="flat", font=("Segoe UI Semibold", 9))
+        style.map("HomeGold.TButton", background=[("active", "#927123"), ("pressed", "#513d10"), ("disabled", "#272417")], bordercolor=[("active", "#ffdc77"), ("disabled", "#3b3520")])
         style.configure("Sidebar.TFrame", background="#050f1c", borderwidth=0)
         style.configure("TLabel", background=_THEME["night"], foreground=_THEME["ink"])
         style.configure("Card.TLabel", background=_THEME["panel"], foreground=_THEME["ink"])
@@ -734,10 +755,14 @@ class AnalyzerShellApp:
 
     def _build_dashboard_page(self) -> None:
         page = self.pages["Dashboard"]
+        home_line = self.tk.Canvas(page, height=10, background=_THEME["night"], highlightthickness=0, bd=0)
+        home_line.pack(fill="x", pady=(0, 10))
+        home_line.bind("<Configure>", lambda event: self._draw_home_tech_line(home_line, event.width, event.height))
         header = self.ttk.Frame(page, style="Content.TFrame")
         header.pack(fill="x", pady=(0, 12))
         greeting = self.ttk.Frame(header, style="Content.TFrame")
         greeting.pack(side="left", fill="x", expand=True)
+        self.ttk.Label(greeting, text="LOCAL PERFORMANCE LAB  /  COMMAND CENTER", style="HomeKicker.TLabel").pack(anchor="w", pady=(0, 3))
         self.ttk.Label(greeting, text="Willkommen zurück!", font=("Segoe UI", 23, "bold")).pack(anchor="w")
         self.ttk.Label(
             greeting, text="Dein lokales Command Center für Analyse, Review und kontinuierliche Verbesserung.",
@@ -748,31 +773,37 @@ class AnalyzerShellApp:
         self.dashboard_header = header
         self.dashboard_greeting = greeting
         self.dashboard_stats = stats
-        for variable in (self.dashboard_readiness, self.dashboard_rounds, self.dashboard_players, self.dashboard_scenes):
-            card = self.ttk.Frame(stats, style="Card.TFrame", padding=(12, 8))
+        stat_accents = ("#23d8bb", "#30aef4", "#a687ff", "#ffcf5a")
+        for variable, accent in zip((self.dashboard_readiness, self.dashboard_rounds, self.dashboard_players, self.dashboard_scenes), stat_accents):
+            card = self.ttk.Frame(stats, style="HomeStat.TFrame", padding=(10, 7))
             card.pack(side="left", padx=(6, 0))
-            self.ttk.Label(card, textvariable=variable, style="Card.TLabel", justify="center", font=("Segoe UI Semibold", 9)).pack()
+            self._home_accent(card, accent)
+            self.ttk.Label(card, textvariable=variable, style="HomeStat.TLabel", justify="center", font=("Segoe UI Semibold", 9)).pack(pady=(4, 0))
 
         modules = self.ttk.Frame(page, style="Content.TFrame")
         modules.pack(fill="x")
         self.dashboard_module_grid = modules
         self.dashboard_module_cards = []
         module_specs = (
-            ("◎", "IMPROVE\nANALYZER", "Szenen und Evidenz aus einer echten Demo prüfen.", "Review öffnen", "Analyzer / Review", True),
-            ("♙", "DEMO\nANALYZER", "Demo laden, Parserstatus und Line-ups kontrollieren.", "Demo laden", "Analyzer / Review", True),
-            ("⚔", "2D\nTACTICAL", "Rundenpositionen aus derselben Replay-Wahrheit ansehen.", "Replay öffnen", "Tactical Replay", True),
-            ("◉", "IMPROVE\nOPTIMIZER", "Systemfakten sicher und read-only erfassen.", "System prüfen", "System Check / Optimizer", True),
-            ("▥", "IMPROVE\nBENCHMARK", "Separater, derzeit geparkter Arbeitsstrang.", "Nicht in diesem Slice", "", False),
-            ("◯", "MY\nIMPROVEMENT", "Lokale Reports und aktuelle Analyseartefakte öffnen.", "Übersicht öffnen", "Reports", True),
+            ("◎", "IMPROVE\nANALYZER", "Szenen und Evidenz aus einer echten Demo prüfen.", "Review öffnen", "Analyzer / Review", True, "#2bdcbb", "HomeTeal.TButton"),
+            ("♙", "DEMO\nANALYZER", "Demo laden, Parserstatus und Line-ups kontrollieren.", "Demo laden", "Analyzer / Review", True, "#a687ff", "HomeViolet.TButton"),
+            ("⚔", "2D\nTACTICAL", "Rundenpositionen aus derselben Replay-Wahrheit ansehen.", "Replay öffnen", "Tactical Replay", True, "#2db8ff", "HomePrimary.TButton"),
+            ("◉", "IMPROVE\nOPTIMIZER", "Systemfakten sicher und read-only erfassen.", "System prüfen", "System Check / Optimizer", True, "#ffcc54", "HomeGold.TButton"),
+            ("▥", "IMPROVE\nBENCHMARK", "Separater, derzeit geparkter Arbeitsstrang.", "Nicht in diesem Slice", "", False, "#6587a0", "HomePrimary.TButton"),
+            ("◯", "MY\nIMPROVEMENT", "Lokale Reports und aktuelle Analyseartefakte öffnen.", "Übersicht öffnen", "Reports", True, "#238ffc", "HomePrimary.TButton"),
         )
-        for column, (icon, title, detail, action, target, enabled) in enumerate(module_specs):
+        for column, (icon, title, detail, action, target, enabled, accent, button_style) in enumerate(module_specs):
             modules.columnconfigure(column, weight=1, uniform="home-modules")
-            card = self.ttk.Frame(modules, style="Card.TFrame", padding=13)
+            card = self.ttk.Frame(modules, style="HomeModule.TFrame", padding=13)
             card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 3, 0 if column == 5 else 3))
             self.dashboard_module_cards.append(card)
-            self.ttk.Label(card, text=f"{icon}  {title}", style="Card.TLabel", font=("Segoe UI Semibold", 10), justify="left").pack(anchor="w")
-            self.ttk.Label(card, text=detail, style="Muted.TLabel", wraplength=150, justify="left").pack(anchor="w", pady=(8, 10), fill="x")
-            button = self.ttk.Button(card, text=action, command=(lambda value=target: self._show_page(value)))
+            self._home_accent(card, accent)
+            icon_row = self.ttk.Frame(card, style="HomeModule.TFrame")
+            icon_row.pack(fill="x", pady=(5, 6))
+            self._home_module_icon(icon_row, icon, accent).pack(side="left", padx=(0, 8))
+            self.ttk.Label(icon_row, text=title, style="HomeModule.TLabel", font=("Segoe UI Semibold", 10), justify="left").pack(side="left", anchor="w")
+            self.ttk.Label(card, text=detail, style="HomeMuted.TLabel", wraplength=150, justify="left").pack(anchor="w", pady=(2, 10), fill="x")
+            button = self.ttk.Button(card, text=action, style=button_style, command=(lambda value=target: self._show_page(value)))
             button.configure(state="normal" if enabled else "disabled")
             button.pack(fill="x")
 
@@ -782,29 +813,35 @@ class AnalyzerShellApp:
         overview.columnconfigure(1, weight=5, uniform="home-overview")
         overview.columnconfigure(2, weight=6, uniform="home-overview")
 
-        progress = self.ttk.Frame(overview, style="Card.TFrame", padding=15)
+        progress = self.ttk.Frame(overview, style="HomePanel.TFrame", padding=15)
         progress.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
-        self.ttk.Label(progress, text="DEIN FORTSCHRITT – ÜBERBLICK", style="Card.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w")
-        self.ttk.Label(progress, textvariable=self.dashboard_pipeline, style="Muted.TLabel", wraplength=230, justify="left").pack(anchor="w", pady=(10, 12))
-        self.ttk.Button(progress, text="Zum Analyzer", command=lambda: self._show_page("Analyzer / Review")).pack(fill="x")
+        self._home_accent(progress, "#2bdcbb")
+        self.ttk.Label(progress, text="DEIN FORTSCHRITT – ÜBERBLICK", style="HomePanel.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w", pady=(5, 0))
+        progress_body = self.ttk.Frame(progress, style="HomeInner.TFrame")
+        progress_body.pack(fill="x", pady=(8, 9))
+        self._home_progress_gauge(progress_body).pack(side="left", padx=(0, 9))
+        self.ttk.Label(progress_body, textvariable=self.dashboard_pipeline, style="HomePanelMuted.TLabel", wraplength=180, justify="left").pack(side="left", fill="x", expand=True)
+        self.ttk.Button(progress, text="Zum Analyzer", style="HomeTeal.TButton", command=lambda: self._show_page("Analyzer / Review")).pack(fill="x")
 
-        recent = self.ttk.Frame(overview, style="Card.TFrame", padding=15)
+        recent = self.ttk.Frame(overview, style="HomePanel.TFrame", padding=15)
         recent.grid(row=0, column=1, sticky="nsew", padx=5)
-        self.ttk.Label(recent, text="LETZTE ANALYSEN", style="Card.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w")
-        self.ttk.Label(recent, textvariable=self.dashboard_recent, style="Muted.TLabel", wraplength=230, justify="left").pack(anchor="w", pady=(10, 8))
-        self.ttk.Label(recent, textvariable=self.overview_status, style="Card.TLabel", wraplength=230, justify="left").pack(anchor="w")
+        self._home_accent(recent, "#a687ff")
+        self.ttk.Label(recent, text="LETZTE ANALYSEN", style="HomePanel.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w", pady=(5, 0))
+        self.ttk.Label(recent, textvariable=self.dashboard_recent, style="HomePanelMuted.TLabel", wraplength=230, justify="left").pack(anchor="w", pady=(10, 8))
+        self.ttk.Label(recent, textvariable=self.overview_status, style="HomePanel.TLabel", wraplength=230, justify="left").pack(anchor="w")
 
-        quick = self.ttk.Frame(overview, style="Card.TFrame", padding=15)
+        quick = self.ttk.Frame(overview, style="HomePanel.TFrame", padding=15)
         quick.grid(row=0, column=2, sticky="nsew", padx=(5, 0))
-        self.ttk.Label(quick, text="SCHNELLZUGRIFF", style="Card.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w")
-        quick_grid = self.ttk.Frame(quick, style="CardInner.TFrame")
+        self._home_accent(quick, "#238ffc")
+        self.ttk.Label(quick, text="SCHNELLZUGRIFF", style="HomePanel.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w", pady=(5, 0))
+        quick_grid = self.ttk.Frame(quick, style="HomeInner.TFrame")
         quick_grid.pack(fill="x", pady=(8, 0))
         for index, (label, target) in enumerate((
             ("Analyse öffnen  ›", "Analyzer / Review"), ("Demo laden  ›", "Analyzer / Review"),
             ("2D Tactical  ›", "Tactical Replay"), ("System prüfen  ›", "System Check / Optimizer"),
             ("Reports  ›", "Reports"), ("Einstellungen  ›", "Settings"),
         )):
-            button = self.ttk.Button(quick_grid, text=label, command=lambda value=target: self._show_page(value))
+            button = self.ttk.Button(quick_grid, text=label, style="HomePrimary.TButton", command=lambda value=target: self._show_page(value))
             button.grid(row=index // 2, column=index % 2, sticky="ew", padx=(0 if index % 2 == 0 else 4, 4 if index % 2 == 0 else 0), pady=3)
             quick_grid.columnconfigure(index % 2, weight=1, uniform="quick")
 
@@ -812,23 +849,58 @@ class AnalyzerShellApp:
         lower.pack(fill="x", pady=(12, 16))
         lower.columnconfigure(0, weight=1, uniform="home-lower")
         lower.columnconfigure(1, weight=1, uniform="home-lower")
-        idea = self.ttk.Frame(lower, style="Card.TFrame", padding=15)
+        idea = self.ttk.Frame(lower, style="HomePanel.TFrame", padding=15)
         idea.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
-        self.ttk.Label(idea, text="◉  DIE IDEE HINTER IMPROVE YOURSELF", style="Card.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w")
+        self._home_accent(idea, "#2bdcbb")
+        self.ttk.Label(idea, text="◉  DIE IDEE HINTER IMPROVE YOURSELF", style="HomePanel.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w", pady=(5, 0))
         self.ttk.Label(
             idea,
             text="Datenbasierte Analyse, gemeinsame Replay-Wahrheit und transparente lokale Werkzeuge begleiten dich Schritt für Schritt – ohne erfundene Ergebnisse.",
-            style="Muted.TLabel", wraplength=360, justify="left",
+            style="HomePanelMuted.TLabel", wraplength=360, justify="left",
         ).pack(anchor="w", pady=(8, 0))
-        community = self.ttk.Frame(lower, style="Card.TFrame", padding=15)
+        community = self.ttk.Frame(lower, style="HomePanel.TFrame", padding=15)
         community.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
-        self.ttk.Label(community, text="◇  COMMUNITY & IDEEN", style="Card.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w")
+        self._home_accent(community, "#a687ff")
+        self.ttk.Label(community, text="◇  COMMUNITY & IDEEN", style="HomePanel.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w", pady=(5, 0))
         self.ttk.Label(
             community,
             text="Der geschützte Kern bleibt lokal, nachvollziehbar und sicher. Community-Funktionen werden erst mit einem belegten Produktumfang ergänzt.",
-            style="Muted.TLabel", wraplength=360, justify="left",
+            style="HomePanelMuted.TLabel", wraplength=360, justify="left",
         ).pack(anchor="w", pady=(8, 0))
         page.bind("<Configure>", lambda event: self._layout_dashboard(event.width))
+
+    def _home_accent(self, parent: object, color: str) -> None:
+        """Add the thin illuminated edge used throughout the Home master."""
+        accent = self.tk.Frame(parent, height=3, background=color, borderwidth=0, highlightthickness=0)
+        accent.pack(fill="x", anchor="n")
+
+    def _home_module_icon(self, parent: object, glyph: str, color: str) -> object:
+        canvas = self.tk.Canvas(parent, width=31, height=31, background="#0a1d30", highlightthickness=0, bd=0)
+        canvas.create_oval(3, 3, 28, 28, outline="#183a54", width=2)
+        canvas.create_oval(7, 7, 24, 24, outline=color, width=1)
+        canvas.create_line(15, 1, 15, 6, fill=color, width=1)
+        canvas.create_line(15, 25, 15, 30, fill=color, width=1)
+        canvas.create_text(15, 15, text=glyph, fill="#edf9ff", font=("Segoe UI Symbol", 11, "bold"))
+        return canvas
+
+    def _home_progress_gauge(self, parent: object) -> object:
+        canvas = self.tk.Canvas(parent, width=56, height=56, background="#091a2b", highlightthickness=0, bd=0)
+        canvas.create_oval(4, 4, 52, 52, outline="#12364f", width=4)
+        canvas.create_arc(4, 4, 52, 52, start=88, extent=214, style="arc", outline="#2bdcbb", width=3)
+        canvas.create_arc(10, 10, 46, 46, start=305, extent=82, style="arc", outline="#2d9fe8", width=2)
+        canvas.create_text(28, 25, text="LOCAL", fill="#dff8ff", font=("Segoe UI Semibold", 7))
+        canvas.create_text(28, 35, text="FLOW", fill="#75b8d7", font=("Segoe UI Semibold", 7))
+        return canvas
+
+    def _draw_home_tech_line(self, canvas: object, width: int, height: int) -> None:
+        canvas.delete("all")
+        baseline = max(1, height // 2)
+        canvas.create_line(0, baseline, width, baseline, fill="#103d5c", width=1)
+        for offset in range(-20, width + 40, 42):
+            canvas.create_line(offset, height, offset + 18, 0, fill="#0c2c43", width=1)
+            canvas.create_line(offset + 20, height, offset + 38, 0, fill="#0a2135", width=1)
+        for x in range(12, width, 96):
+            canvas.create_oval(x, baseline - 2, x + 4, baseline + 2, fill="#2daff2", outline="")
 
     def _layout_dashboard(self, width: int) -> None:
         compact = width < 1000
