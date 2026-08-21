@@ -93,8 +93,9 @@ $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
 $board = Get-CimInstance Win32_BaseBoard | Select-Object -First 1
 $bios = Get-CimInstance Win32_BIOS | Select-Object -First 1
 $computer = Get-CimInstance Win32_ComputerSystem
-$gpus = @(Get-CimInstance Win32_VideoController | ForEach-Object { @{name=$_.Name;driver_version=$_.DriverVersion} })
-$displays = @(Get-CimInstance Win32_VideoController | ForEach-Object { @{refresh_hz=$_.CurrentRefreshRate} })
+$gpus = @(Get-CimInstance Win32_VideoController | ForEach-Object { @{name=$_.Name;vendor=$_.AdapterCompatibility;driver_version=$_.DriverVersion} })
+$displays = @(Get-CimInstance Win32_VideoController | ForEach-Object { @{refresh_hz=$_.CurrentRefreshRate;width=$_.CurrentHorizontalResolution;height=$_.CurrentVerticalResolution} })
+$network = @(Get-CimInstance Win32_NetworkAdapter | Where-Object { $_.PhysicalAdapter -eq $true } | ForEach-Object { @{name=$_.Name;manufacturer=$_.Manufacturer;driver_version=$_.DriverVersion;link_speed_mbps=$(if ($_.Speed) {[math]::Round($_.Speed/1MB,0)} else {$null});mac_address=$_.MACAddress} })
 $secureBoot = $null; try { $secureBoot = [bool](Confirm-SecureBootUEFI) } catch {}
 $tpm = $null; try {
   $t = Get-Tpm
@@ -104,10 +105,11 @@ $tpm = $null; try {
 } catch {}
 @{
  windows=@{caption=$os.Caption;version=$os.Version;build=$os.BuildNumber}
- cpu=@{name=$cpu.Name;logical_processors=$computer.NumberOfLogicalProcessors}
- memory=@{total_gb=[math]::Round($computer.TotalPhysicalMemory/1GB,1)}
- motherboard=@{manufacturer=$board.Manufacturer;product=$board.Product;bios_version=$bios.SMBIOSBIOSVersion;bios_date=[string]$bios.ReleaseDate}
- gpus=$gpus;displays=$displays;secure_boot=$secureBoot;tpm=$tpm
+ cpu=@{name=$cpu.Name;manufacturer=$cpu.Manufacturer;architecture=$cpu.Architecture;family=$cpu.Family;logical_processors=$computer.NumberOfLogicalProcessors}
+ memory=@{total_gb=[math]::Round($computer.TotalPhysicalMemory/1GB,1);speed_mt_s=$null}
+ motherboard=@{manufacturer=$board.Manufacturer;product=$board.Product;version=$board.Version;bios_version=$bios.SMBIOSBIOSVersion;bios_date=[string]$bios.ReleaseDate}
+ bios=@{version=$bios.SMBIOSBIOSVersion;date=[string]$bios.ReleaseDate;manufacturer=$bios.Manufacturer}
+ gpus=$gpus;displays=$displays;network_adapters=$network;secure_boot=$secureBoot;tpm=$tpm
 } | ConvertTo-Json -Depth 6 -Compress
 '''
 

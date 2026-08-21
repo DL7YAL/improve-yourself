@@ -882,6 +882,25 @@ MODEL_REASON: Mehrteiliger, sicherheitsrelevanter System-Evidence-Slice mit Sche
 COMPUTER_USE: no
 COMMIT/PR: `3d621a0 feat: add optimizer evidence matrix validation`, gepusht nach `origin/dev/v1-foundation`.
 
+# Handoff 2026-08-22 — Optimizer Evidence Foundation V1
+
+STATUS: REVIEW
+TASK: Die bestehende Optimizer-Evidence-Matrix zur kanonischen, weiterhin strikt read-only Domain-/Recommendation-Grundlage erweitern. Kein Apply-Pfad, keine riskante Systemänderung und keine Performance-Simulation.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/optimizer_foundation.py`, `src/improve_yourself/system_check.py`, `pyproject.toml`, `tests/test_optimizer_foundation.py`, `docs/OPTIMIZER_EVIDENCE_FOUNDATION_V1.md`, `coordination/CURRENT.md`, `coordination/agents/codex.md`.
+REUSED: Der neue Collector nutzt den vorhandenen Windows-System-Check-Collector (`collect_windows_facts`) und normalisiert dessen read-only Fakten zu `iy.system_profile/v1`. Die bestehende 150-System-Matrix (`synthetic_system_matrix`) bleibt die einzige synthetische Profilbasis; der neue Harness legt keine zweite Performance-/Benchmark-Simulation an.
+IMPLEMENTATION: `optimizer_foundation.py` ist die gemeinsame Infrastructure für **System Optimizer**, **Graphics Optimizer**, **Network Optimizer** und **BIOS Optimizer**. Das versionierte Datenmodell enthält `SYSTEM_PROFILE`, `OPTIMIZATION_RULE`, `RULE_COMPATIBILITY`, `EVIDENCE_RECORD`, `RECOMMENDATION_RESULT` und die später reservierte `VALIDATION_RESULT`-Struktur. Recommendation-Zustände: RECOMMENDED, ALREADY_RECOMMENDED, CONDITIONAL, NO_CHANGE, INSUFFICIENT_EVIDENCE. Interne Reifegrade: VERIFIED, CONDITIONAL_VERIFIED, EXPERIMENTAL, REJECTED, NO_BENEFIT; nicht-reife Regeln werden nicht empfohlen. `recommendation_detail_view_model()` liefert den gemeinsamen Informationspanel-Vertrag, ausdrücklich ohne Apply-Aktion.
+COLLECTOR: Der reale lokale `iy-system-profile`-Lauf war read-only (`changes_applied: false`). Sicher erfasst werden CPU-Name/Hersteller/Architektur/Familie, GPU-Name/Vendor/Treiber, RAM-Kapazität, Mainboard-Hersteller/Produkt/Version, BIOS-Version/Datum/Hersteller, Windows-Edition/Version/Build, Adapter-Displayauflösung/Refresh sowie physische Netzwerkadapter (Name/Hersteller/Treiber/Link-Speed/MAC als lokale Inventarevidenz). RAM-Speed, MTU, erweiterte Adapterfeatures, aktive Spiele-Route, CS2-Konfiguration, GPU-Driver-Optionen und CPU/GPU-Limitierung bleiben korrekt unknown/not_available.
+FIXTURES / BIOS: Fünf ausdrücklich fixture-only, SYNTHETIC/TEST_ONLY-Regeln decken System, Graphics, Network, BIOS und Conditional/Exclusion ab. BIOS bleibt in derselben Engine, aber die Fixture ist nicht changeable, HIGH risk, manual-action-required und trägt Guidance-/spätere Screenshot-Verifikationsmetadaten. Es wurde kein BIOS-Workflow dupliziert.
+HARNESS: 150 vorhandene synthetische Profile wurden durch dieselbe Recommendation-Engine geführt. Ergebnis ausschließlich für Entscheidungslogik: **314 RECOMMENDED, 98 CONDITIONAL, 38 NO_CHANGE, 300 INSUFFICIENT_EVIDENCE, 0 Performancewerte**. Label: `SYNTHETIC / DECISION LOGIC ONLY / NOT MEASURED`.
+VERIFIED: Foundation-Tests plus bestehende Optimizer-/System-Check-Tests **15/15 PASS**; vollständiger `pytest` **148/148 PASS**; `compileall` PASS; `pip check` PASS; `git diff --check` PASS. CLI-Smokes erzeugten lokal `results/system-profile.json` und `results/optimizer-foundation-fixtures.json`; beide sind ignorierte lokale Evidenz, nicht eingecheckt.
+OPEN: Die fünf Regeln sind absichtlich nur technische Fixtures und keine kuratierten echten Optimizer-Regeln. Es existiert keine automatisierte Aktion. Keine echte A/B-/Performance-Evidenz wurde erzeugt.
+NEXT: Tristan entscheidet über den nächsten separaten, weiterhin read-only Schritt: entweder kuratierte reale Evidence Records für wenige freigegebene Regeln oder ein eng begrenzter Collector für noch sicher erfassbare MTU/Adapterfeatures/CS2-Lesedaten. Erst deutlich später: Snapshot/Restore/Verify und ein explizit freigegebener Apply-Slice.
+MODEL_PROFILE: terra
+MODEL_REASON: Sicherheitsrelevanter Datenmodell-/Collector-Slice mit echter lokaler Read-only-Prüfung und deterministischem Harness.
+COMPUTER_USE: no
+COMMIT/PR: Wird nach Commit/Push ergänzt.
+
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
 STATUS: WAITING_FOR_TRISTAN
