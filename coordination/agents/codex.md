@@ -1,5 +1,20 @@
 # Codex
 
+## 2026-08-21 — Shared Base full-status synchronization
+
+STATUS: done
+TASK: Consolidate the complete current Beast/project status into the shared Agent Base and push it without implicitly merging to `main`.
+BRANCH: `dev/v1-foundation`
+CHANGED: Expanded `docs/AGENT_BASE.md` with the synchronized branch/gate, real Ancient E2E evidence, shared replay truth, Analyzer-shell restore/relink/action-bound security, CS2 coordinator boundary, 2D and 3D/POV state, read-only System Check, local workflow, benchmark blocker, strict scope exclusions and the exact next engineering step. Updated the stale 33-test/five-CLI summary in `coordination/CURRENT.md` to the current 113-test/eight-CLI evidence. No product code, generated results, runtime files, benchmark assets or `main` change.
+VERIFIED: Documentation cross-checked against current handoff, CURRENT cockpit, clean `dev/v1-foundation` at `4d4c161cf3dc10a6202253a7ee3ebf49fe31ecf3`, and the immediately preceding full 113/113 + dependency + eight-CLI + compile + diff PASS. This documentation-only synchronization receives an additional diff check before push.
+DECISIONS: `docs/AGENT_BASE.md` is now the complete shared entry snapshot, while `coordination/CURRENT.md` remains the operative detail authority and this handoff retains chronological engineering evidence. `main` is not changed without explicit review/merge authorization.
+OPEN: Merge/release acceptance remains Tristan's decision. Hammer multi-map compile remains parked on the documented Valve/SDK script-asset blocker.
+NEXT: Continue only with the Base-listed Analyzer-shell usability slice: disable workflow-dependent controls until load and display manifest/source/hash identity; do not change validation/parser/review behavior.
+MODEL_PROFILE: luna
+MODEL_REASON: Repository-status reconciliation and documentation-only synchronization with no architecture or product-code change.
+COMPUTER_USE: no; repository evidence was sufficient.
+COMMIT/PR: this synchronization commit on `dev/v1-foundation`.
+
 ## 2026-08-21 — Action-bound workflow revalidation
 
 STATUS: done
