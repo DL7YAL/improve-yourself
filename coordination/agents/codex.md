@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-21 — Real-demo Analyzer desktop shell slice
+
+STATUS: done
+TASK: Integrate the proven `iy-demo-workflow` as the Analyzer's first local desktop import/selection/review slice without creating a second parser, roster, rule or scene authority.
+BRANCH: `dev/v1-foundation`
+CHANGED: Added `analyzer_shell.py` with a testable controller and thin Tk desktop adapter: `.dem`/`.dem.zst` selection, background import, named CT/T line-ups, distinct Full Demo and Player Select modes, deduplicated dropdown + Add Player, CT/T/Reset, analysis rerender and existing review launch. Refactored `demo_workflow.py` only to expose selection rerendering from its existing replay-v2 artifact; no reparse and no rule changes. Added `iy-analyzer-shell`, tests and its eighth setup smoke. Fixed the pre-existing PowerShell/Python quoting bug in Setup-V1's Python-version probe.
+VERIFIED: 100/100 tests, dependency check, eight CLI smokes, compile and diff check PASS. Visible Windows smoke showed the local shell and all required controls; it closed cleanly. Real ignored Ancient ReplayStore selection reused the existing parse for player `steam:76561198063336407`, produced 22 real scenes in `player_select`, then successfully restored Full Demo. No fake result or second interpretation path was used.
+DECISIONS: Shell is an adapter over `run_demo_workflow`/`rerender_demo_workflow`; canonical replay-v2 remains the single replay truth. Reset means empty Player Select and cannot silently analyze as Full Demo. An explicit Full Demo action is required to return to all-player analysis. Parsing/rerender work runs off the GUI thread.
+OPEN: The shell is a functional engineering UI, not final branded product styling. It opens the existing self-contained review in the default browser; direct CS2 process/netcon lifecycle ownership is deliberately not added. Packaging/installer integration is still open.
+NEXT: Bind a selected scene in the existing review output to a narrow local “Open in CS2” coordinator that validates demo readiness and sends only the scene's generated `demo_gototick`, with explicit status/error reporting. Do not add OBS/video, ML verdicts, a second timeline or broader CS2 process management.
+MODEL_PROFILE: terra
+MODEL_REASON: Standard multi-file controller/UI integration with real-data reuse and test coverage.
+COMPUTER_USE: yes; startup layout/control presence and clean close were visually checked for the local desktop shell only.
+
 ## 2026-08-21 — Runtime-compatible Ancient end-to-end proof
 
 STATUS: done

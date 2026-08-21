@@ -15,6 +15,27 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _write_flow_artifacts(root: Path, replay_path: Path, selection: PlayerSelection) -> tuple[dict, dict]:
+    flow = build_from_store(ReplayStore(replay_path), selection)
+    flow_path = root / "analysis-flow.json"
+    flow_path.write_text(json.dumps(flow, ensure_ascii=False, indent=2), encoding="utf-8")
+    timeline_path = root / "timeline.json"
+    timeline_path.write_text(
+        json.dumps({"source": flow["source"], "timeline": flow["timeline"]}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    review_path = render_analysis_review(flow, root / "review.html")
+    commands_path = root / "cs2-review-commands.txt"
+    commands_path.write_text("\n".join(scene["review"]["command"] for scene in flow["scenes"]) + "\n", encoding="utf-8")
+    artifacts = {
+        "analysis_flow": flow_path.name,
+        "timeline": timeline_path.name,
+        "review": review_path.name,
+        "cs2_review_commands": commands_path.name,
+    }
+    return flow, artifacts
+
+
 def run_demo_workflow(demo: Path, output_root: Path, *, player_ids: tuple[str, ...] = (), max_bytes: int = 2_000_000_000) -> Path:
     demo = demo.resolve()
     if not demo.is_file():
@@ -25,18 +46,10 @@ def run_demo_workflow(demo: Path, output_root: Path, *, player_ids: tuple[str, .
     analysis_path = analyze(demo, root / "analysis", max_bytes=max_bytes)
     replay_path = export_replay_v2(demo, analysis_path, root / "replay-v2")
     selection = PlayerSelection("player_select", tuple(dict.fromkeys(player_ids))) if player_ids else PlayerSelection()
-    flow = build_from_store(ReplayStore(replay_path), selection)
-    flow_path = root / "analysis-flow.json"
-    flow_path.write_text(json.dumps(flow, ensure_ascii=False, indent=2), encoding="utf-8")
-    timeline_path = root / "timeline.json"
-    timeline_path.write_text(json.dumps({"source": flow["source"], "timeline": flow["timeline"]}, ensure_ascii=False, indent=2), encoding="utf-8")
-    review_path = render_analysis_review(flow, root / "review.html")
-    commands_path = root / "cs2-review-commands.txt"
-    commands_path.write_text("\n".join(scene["review"]["command"] for scene in flow["scenes"]) + "\n", encoding="utf-8")
+    flow, flow_artifacts = _write_flow_artifacts(root, replay_path, selection)
     artifacts = {
         "analysis": analysis_path.relative_to(root).as_posix(), "replay_v2": replay_path.relative_to(root).as_posix(),
-        "analysis_flow": flow_path.name, "timeline": timeline_path.name, "review": review_path.name,
-        "cs2_review_commands": commands_path.name,
+        **flow_artifacts,
     }
     manifest = {
         "schema": "iy.demo_workflow/v1", "status": "READY_FOR_REVIEW", "source_sha256": source_hash,
@@ -48,6 +61,27 @@ def run_demo_workflow(demo: Path, output_root: Path, *, player_ids: tuple[str, .
     path = root / "demo-workflow.json"
     path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     return path
+
+
+def rerender_demo_workflow(manifest_path: Path, *, player_ids: tuple[str, ...] = ()) -> Path:
+    manifest_path = manifest_path.resolve()
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("schema") != "iy.demo_workflow/v1":
+        raise ValueError("expected iy.demo_workflow/v1 manifest")
+    root = manifest_path.parent
+    replay_path = root / manifest["artifacts"]["replay_v2"]
+    selection = PlayerSelection("player_select", tuple(dict.fromkeys(player_ids))) if player_ids else PlayerSelection()
+    flow, flow_artifacts = _write_flow_artifacts(root, replay_path, selection)
+    manifest["selection"] = flow["selection"]
+    manifest["counts"] = {
+        "players": len(flow["roster"]),
+        "indicators": len(flow["indicators"]),
+        "rule_matches": len(flow["rule_matches"]),
+        "scenes": len(flow["scenes"]),
+    }
+    manifest["artifacts"].update(flow_artifacts)
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    return manifest_path
 
 
 def main() -> int:
