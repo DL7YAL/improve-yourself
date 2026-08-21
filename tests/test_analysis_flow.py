@@ -48,6 +48,6 @@ def test_roster_preserves_names_lineups_and_review_controls(tmp_path):
     flow = build_analysis_flow(*_fixture())
     assert flow["roster"][0] == {"player_id": "p1", "display_name": "Alpha", "steam_id": "1", "teams": ["CT"], "initial_team": "CT"}
     review = render_analysis_review(flow, tmp_path / "review.html").read_text(encoding="utf-8")
-    for token in ("Full Demo", "+ Add Player", "id=\"ctAll\"", "id=\"tAll\"", "Reset", "demo_gototick"):
+    for token in ("Full Demo", "+ Add Player", "id=\"ctAll\"", "id=\"tAll\"", "Reset", "demo_gototick", "In CS2 öffnen", "/api/cs2/tick"):
         assert token in review
     assert flow["rounds"] == [{"round_number": 1, "first_tick": 100, "last_tick": 900, "frame_count": 3}]

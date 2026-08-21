@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+from .cs2_review_coordinator import Cs2ReviewCoordinator, ReviewCoordinatorServer
 from .demo_workflow import rerender_demo_workflow, run_demo_workflow
 
 
@@ -27,6 +28,7 @@ class ShellResult:
     selection_mode: str
     scene_count: int
     map_id: str
+    source_demo_name: str
 
 
 class AnalyzerShellController:
@@ -120,6 +122,7 @@ class AnalyzerShellController:
             selection_mode=flow["selection"]["mode"],
             scene_count=len(flow["scenes"]),
             map_id=str(flow["source"].get("map_id") or "unknown"),
+            source_demo_name=str(manifest.get("source_demo_name") or ""),
         )
 
 
@@ -136,6 +139,7 @@ class AnalyzerShellApp:
         self.root.geometry("860x620")
         self.status = tk.StringVar(value="Echte CS2-Demo auswählen")
         self.player_by_label: dict[str, str] = {}
+        self.review_server: ReviewCoordinatorServer | None = None
 
         frame = ttk.Frame(self.root, padding=18)
         frame.pack(fill="both", expand=True)
@@ -166,6 +170,7 @@ class AnalyzerShellApp:
         actions.pack(fill="x", pady=8)
         ttk.Button(actions, text="Analyse starten", command=self._analyze).pack(side="left")
         ttk.Button(actions, text="Review öffnen", command=self._open_review).pack(side="left", padx=8)
+        self.root.protocol("WM_DELETE_WINDOW", self._close)
 
     def run(self) -> None:
         self.root.mainloop()
@@ -232,7 +237,19 @@ class AnalyzerShellApp:
 
     def _open_review(self) -> None:
         result = self.controller._require_result()
-        webbrowser.open(result.review_path.as_uri())
+        if self.review_server:
+            self.review_server.close()
+        manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+        flow_path = result.manifest_path.parent / manifest["artifacts"]["analysis_flow"]
+        coordinator = Cs2ReviewCoordinator(flow_path, result.source_demo_name)
+        self.review_server = ReviewCoordinatorServer(result.review_path, coordinator)
+        self.review_server.start()
+        webbrowser.open(self.review_server.url)
+
+    def _close(self) -> None:
+        if self.review_server:
+            self.review_server.close()
+        self.root.destroy()
 
 
 def main() -> int:

@@ -53,6 +53,7 @@ def run_demo_workflow(demo: Path, output_root: Path, *, player_ids: tuple[str, .
     }
     manifest = {
         "schema": "iy.demo_workflow/v1", "status": "READY_FOR_REVIEW", "source_sha256": source_hash,
+        "source_demo_name": demo.name,
         "parser": flow["source"]["parser"], "selection": flow["selection"], "profile": flow["profile"],
         "counts": {"players": len(flow["roster"]), "indicators": len(flow["indicators"]), "rule_matches": len(flow["rule_matches"]), "scenes": len(flow["scenes"])},
         "artifacts": artifacts,

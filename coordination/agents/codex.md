@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-21 — Fail-closed scene-to-CS2 review coordinator
+
+STATUS: done
+TASK: Bind an existing generated review scene to a narrow local CS2 tick coordinator with demo-readiness, exact-demo and exact-scene validation; no broader CS2 process ownership.
+BRANCH: `dev/v1-foundation`
+CHANGED: Added `cs2_review_coordinator.py`: fixed-loopback netcon client, evidence-led `status` + `demo_info` readiness probe, exact expected demo filename check, immutable scene-ID/tick allowlist from `analysis-flow.json`, and origin-/size-limited loopback HTTP endpoint. Review scenes now expose “In CS2 öffnen” with visible sent/error status. Analyzer shell serves the existing review through the coordinator and closes the service with the window. Workflow manifests disclose only the source demo basename needed for identity comparison. No parser/rule/timeline/process-launch change.
+VERIFIED: 103/103 tests, dependency check, eight CLI smokes, compile and diff check PASS. Tests reject altered tick, unknown scene, wrong demo, foreign Origin and oversized/invalid requests without sending a tick. Live installed-CS2 probe returned `Client: Connected [DEMO]`, `Demo contents for iy_ancient.dem`, and the real coordinator accepted only `r1-t3654-0`/`3654`, sent it, and visibly returned Ancient to about 0:57 in the first-round context.
+DECISIONS: Fail closed unless CS2 is reachable on `127.0.0.1`, reports active `[DEMO]` playback, and `demo_info` matches the workflow's expected basename. Readiness commands are read-only; the sole state-changing command is the generated `demo_gototick`. The server binds only loopback, accepts same-origin POST only, and validates against canonical flow data rather than browser input.
+OPEN: The coordinator does not launch/restart CS2, add `-netconport`, copy/rename demos or infer equivalent filenames. If the CS2 runtime copy was renamed, identity validation correctly rejects it until the expected workflow/demo filename and active filename match. Final product UX for preparing CS2/netcon remains separate.
+NEXT: Add a narrow preflight panel to the desktop shell that explains and verifies the three prerequisites before opening review: local netcon reachable, active demo playback, exact filename match. It may display corrective instructions but must not launch/restart CS2, edit Steam options or copy demos automatically.
+MODEL_PROFILE: terra
+MODEL_REASON: Security-bounded local coordination and UI integration with real runtime evidence.
+COMPUTER_USE: yes; read-only screenshot confirmed the real coordinator's generated tick landing in installed CS2; no CS2 UI input was issued in this slice.
+
 ## 2026-08-21 — Real-demo Analyzer desktop shell slice
 
 STATUS: done
