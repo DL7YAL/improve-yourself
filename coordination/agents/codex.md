@@ -785,3 +785,21 @@ MODEL_PROFILE: terra
 MODEL_REASON: Eng begrenzter, bereits spezifizierter Desktop-Layout-Korrekturpass mit Runtime- und Paketprüfung.
 COMPUTER_USE: yes
 COMMIT/PR: Dieser Handoff ist Teil des gepushten `dev/v1-foundation`-Checkpoints; exakter HEAD steht im Abschlussbericht.
+
+# Handoff 2026-08-21 — Home final sidebar and surface master-conformance pass
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Ausschließlich die letzten visuellen Abweichungen zur verbindlichen Page-03-Home-Referenz korrigieren: Sidebar/Navigation/Statusfläche sowie die gemeinsame Card-/Panel-Tonalität. Bereits angenommene Struktur, Typografie, Action-Ausrichtung und Responsive-/Viewport-Verhalten bleiben unverändert.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/analyzer_shell.py`, `docs/AGENT_BASE.md`, `coordination/CURRENT.md`, `coordination/agents/codex.md`.
+IMPLEMENTATION: Zentralisierte Midnight-Surface-Tokens (`night`, `deep`, `panel`, `card`, `sidebar`, Linien-/Metallwerte) senken die Helligkeit der gemeinsamen Card-/Panel-Familie und halten Konturen subtil. Die Sidebar verwendet nicht länger native `ttk`-Auswahlbuttons: `SidebarNavItem` zeichnet für jede bestehende Route denselben großzügigen, gerundeten Icon-/Text-Eintrag mit ruhigem Hover sowie einer integrierten blauen Aktivfläche und leichtem Außen-Glow. `SidebarStatusPanel` nutzt die gleiche gerundete, lokale Statussprache. Es gibt keine page-spezifischen Pixelkorrekturen.
+SCOPE: Keine Änderung an Seitenreihenfolge, Navigation-Zielen, Datenbindung, Analyzer-/Review-/Tactical-/NetCon-Autorität, Card-Action-Grid, Fonts, Buttonlogik, Scroll-/Viewport-Verhalten oder Produktumfang. Keine neue Funktion, kein neuer Slice und kein Merge nach `main`.
+VISUAL_CHECK: Direkte Quell-Sichtprüfung auf der realen Home-Seite: Sidebar ist dunkler integriert; aktive Route zeigt keine klassische rechteckige Windows-Selection mehr, sondern eine abgerundete blaue Flächenhierarchie mit funktionalem Icon-/Text-Abstand. Der lokale/private Statusblock nutzt dieselbe Tonalität. Die sechs Modul-Cards und die mittleren/unteren Panels bleiben vollständig sichtbar, gleich ausgerichtet und gegenüber dem Hintergrund tiefer/dunkler bei erhaltenen Akzentlinien.
+VERIFIED: `compileall` PASS; gezielte Analyzer-Shell-Tests 16/16 PASS; vollständiger `pytest` 132/132 PASS; `git diff --check` PASS. Der Build führte die vollständigen 132 Tests erneut mit PASS aus; Abhängigkeitsprüfung (`pip check`) PASS. Frische Portable-EXE praktisch geöffnet: Analyzer-Route, aktive gerundete Sidebar-Navigation und Home-Dashboard mit sechs ausgerichteten Modulactions, mittleren und unteren Panels sichtbar; keine weiße/klassische Auswahlfläche.
+BUILD: Frisch erzeugt: `dist/experimental/Improve Yourself Experimental/Improve Yourself Experimental.exe`, `dist/experimental/Improve-Yourself-Experimental-Portable.zip`, `dist/experimental/experimental-build.json`. EXE SHA-256 `54901ACF83D2964B5FCABCB178C87076504B53C17CE7FB30F24ADEB66350DA66`; Portable-ZIP SHA-256 `32B6DB03BA4C39C31F29416B68DDD75E832C11CD5F4AF996EB30098BE09B6592`. Kein Installer/Signing, weil kein freigegebener Vertrag vorliegt.
+OPEN: Ausschließlich menschlicher finaler Page-03-Sichtcheck durch Tristan.
+NEXT: Tristan prüft den frischen Portable-Build gegen den Home-Master auf Sidebar/Status-Komponente und ruhige Midnight-Surfaces; danach `Home: ACCEPTED` oder eine konkrete, begrenzte Restabweichung. Bis dahin keine weitere Produktarbeit.
+MODEL_PROFILE: terra
+MODEL_REASON: Eng begrenzter visueller Desktop-Conformance-Pass mit gemeinsamer Komponentenbasis und Runtime-/Paket-QA.
+COMPUTER_USE: yes
+COMMIT/PR: Dieser Handoff ist Teil des gepushten `dev/v1-foundation`-Checkpoints; exakter HEAD steht im Abschlussbericht.

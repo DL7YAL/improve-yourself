@@ -41,9 +41,13 @@ UI_REFERENCE_STATUS = {
 }
 
 _THEME = {
-    "night": "#030914", "deep": "#071321", "panel": "#0b1b2c",
-    "panel_high": "#10263b", "metal": "#173c5d", "line": "#1f5f8e",
-    "line_soft": "#143550", "accent": "#058cff", "ice": "#8edbff",
+    # Shared Midnight surfaces.  Each layer is intentionally close in value:
+    # cards stay distinct from the background without turning into bright blue
+    # tiles, while contours remain a quiet depth cue rather than a frame.
+    "night": "#020711", "deep": "#06111e", "panel": "#081827",
+    "panel_high": "#0b2031", "card": "#071624", "sidebar": "#040d18",
+    "metal": "#123956", "line": "#195379", "line_soft": "#102d47",
+    "accent": "#058cff", "ice": "#8edbff",
     "ink": "#f1f7fc", "muted": "#8ca9bd", "success": "#58d69a",
 }
 
@@ -71,6 +75,118 @@ def _register_private_fonts(root, assets: Path) -> tuple[str, str]:
         _UI_FONT if _UI_FONT in families else "Segoe UI",
         _DISPLAY_FONT if _DISPLAY_FONT in families else "Segoe UI",
     )
+
+
+class SidebarNavItem:
+    """One reusable, rounded navigation surface for the Midnight shell.
+
+    ttk's native button element remains visibly rectangular even with the
+    custom theme.  A small canvas component gives the sidebar a single,
+    controlled active/hover treatment without changing any page routing.
+    """
+
+    def __init__(self, tk, parent, *, text: str, ui_font: str, command: Callable[[], None]) -> None:
+        self.tk = tk
+        self.text = text
+        self.ui_font = ui_font
+        self.command = command
+        self.active = False
+        self.hovered = False
+        self.canvas = tk.Canvas(
+            parent, height=50, background=_THEME["sidebar"], highlightthickness=0,
+            borderwidth=0, bd=0, takefocus=True,
+        )
+        self.canvas.bind("<Configure>", self._draw)
+        for target in (self.canvas,):
+            target.bind("<Enter>", self._enter)
+            target.bind("<Leave>", self._leave)
+            target.bind("<Button-1>", self._activate)
+            target.bind("<Return>", self._activate)
+            target.bind("<space>", self._activate)
+
+    def pack(self, **kwargs) -> None:
+        self.canvas.pack(**kwargs)
+
+    def set_active(self, active: bool) -> None:
+        self.active = active
+        self._draw()
+
+    def _enter(self, _event=None) -> None:
+        self.hovered = True
+        self._draw()
+
+    def _leave(self, _event=None) -> None:
+        self.hovered = False
+        self._draw()
+
+    def _activate(self, _event=None) -> None:
+        self.command()
+
+    def _rounded_rect(self, x1: int, y1: int, x2: int, y2: int, radius: int, *, fill: str, outline: str = "") -> None:
+        canvas = self.canvas
+        canvas.create_rectangle(x1 + radius, y1, x2 - radius, y2, fill=fill, outline="")
+        canvas.create_rectangle(x1, y1 + radius, x2, y2 - radius, fill=fill, outline="")
+        for start in (90, 180, 270, 0):
+            if start == 90:
+                box = (x1, y1, x1 + 2 * radius, y1 + 2 * radius)
+            elif start == 180:
+                box = (x1, y2 - 2 * radius, x1 + 2 * radius, y2)
+            elif start == 270:
+                box = (x2 - 2 * radius, y2 - 2 * radius, x2, y2)
+            else:
+                box = (x2 - 2 * radius, y1, x2, y1 + 2 * radius)
+            canvas.create_arc(*box, start=start, extent=90, fill=fill, outline=outline or fill)
+        if outline:
+            canvas.create_line(x1 + radius, y1, x2 - radius, y1, fill=outline)
+            canvas.create_line(x1 + radius, y2, x2 - radius, y2, fill=outline)
+            canvas.create_line(x1, y1 + radius, x1, y2 - radius, fill=outline)
+            canvas.create_line(x2, y1 + radius, x2, y2 - radius, fill=outline)
+
+    def _draw(self, _event=None) -> None:
+        canvas = self.canvas
+        width = max(canvas.winfo_width(), 1)
+        height = max(canvas.winfo_height(), 1)
+        canvas.delete("all")
+        if self.active:
+            # The outer layer is a restrained simulated glow, not a hard focus box.
+            self._rounded_rect(2, 3, width - 2, height - 3, 11, fill="#071d31")
+            self._rounded_rect(4, 5, width - 4, height - 5, 9, fill="#0a3150", outline="#1a79ad")
+            icon_color, label_color = "#9fe5ff", "#f4fbff"
+        elif self.hovered:
+            self._rounded_rect(4, 5, width - 4, height - 5, 9, fill="#071b2c", outline="#123650")
+            icon_color, label_color = "#76cfff", "#d7eaf7"
+        else:
+            icon_color, label_color = "#5f8eaa", _THEME["muted"]
+        icon, label = self.text[:1], self.text[1:].strip()
+        canvas.create_text(23, height // 2, text=icon, fill=icon_color, anchor="center", font=(self.ui_font, 13, "bold"))
+        canvas.create_text(43, height // 2, text=label, fill=label_color, anchor="w", font=(self.ui_font, 10, "bold" if self.active else "normal"))
+
+
+class SidebarStatusPanel:
+    """Quiet, rounded local-status surface that matches the navigation."""
+
+    def __init__(self, tk, parent, *, ui_font: str) -> None:
+        self.tk = tk
+        self.ui_font = ui_font
+        self.canvas = tk.Canvas(parent, height=63, background=_THEME["sidebar"], highlightthickness=0, borderwidth=0, bd=0)
+        self.canvas.bind("<Configure>", self._draw)
+
+    def pack(self, **kwargs) -> None:
+        self.canvas.pack(**kwargs)
+
+    def _draw(self, _event=None) -> None:
+        canvas = self.canvas
+        width, height = max(canvas.winfo_width(), 1), max(canvas.winfo_height(), 1)
+        canvas.delete("all")
+        radius = 9
+        canvas.create_rectangle(8 + radius, 4, width - 8 - radius, height - 4, fill="#061522", outline="")
+        canvas.create_rectangle(8, 4 + radius, width - 8, height - 4 - radius, fill="#061522", outline="")
+        for box, start in (((8, 4, 8 + 2 * radius, 4 + 2 * radius), 90), ((8, height - 4 - 2 * radius, 8 + 2 * radius, height - 4), 180), ((width - 8 - 2 * radius, height - 4 - 2 * radius, width - 8, height - 4), 270), ((width - 8 - 2 * radius, 4, width - 8, 4 + 2 * radius), 0)):
+            canvas.create_arc(*box, start=start, extent=90, fill="#061522", outline="#102d47")
+        canvas.create_line(8 + radius, 4, width - 8 - radius, 4, fill="#102d47")
+        canvas.create_text(19, 20, text="●", fill="#2bdcbb", anchor="center", font=(self.ui_font, 9, "bold"))
+        canvas.create_text(31, 18, text="LOCAL / PRIVATE", fill="#b8d8e8", anchor="w", font=(self.ui_font, 8, "bold"))
+        canvas.create_text(19, 39, text="READ-ONLY WHERE MARKED", fill="#7395aa", anchor="w", font=(self.ui_font, 7))
 
 
 def dashboard_layout_metrics(content_width: int, viewport_height: int) -> tuple[bool, int, int, int, int]:
@@ -411,20 +527,20 @@ class AnalyzerShellApp:
         )
         style.configure("TFrame", background=_THEME["night"])
         style.configure("Content.TFrame", background=_THEME["night"])
-        style.configure("Card.TFrame", background=_THEME["panel"], relief="flat", borderwidth=1, bordercolor=_THEME["line_soft"])
-        style.configure("CardInner.TFrame", background=_THEME["panel"], relief="flat", borderwidth=0)
+        style.configure("Card.TFrame", background=_THEME["card"], relief="flat", borderwidth=1, bordercolor=_THEME["line_soft"])
+        style.configure("CardInner.TFrame", background=_THEME["card"], relief="flat", borderwidth=0)
         # Home deliberately has its own component family.  The command-centre
         # layout is shared with the rest of the shell, while these styles keep
         # its cards from falling back to the generic/native looking controls.
-        style.configure("HomeStat.TFrame", background="#091a2b", relief="flat", borderwidth=1, bordercolor="#1d5d87")
-        style.configure("HomeModule.TFrame", background="#0a1d30", relief="flat", borderwidth=1, bordercolor="#1b537b")
-        style.configure("HomePanel.TFrame", background="#091a2b", relief="flat", borderwidth=1, bordercolor="#1b5279")
-        style.configure("HomeInner.TFrame", background="#091a2b", relief="flat", borderwidth=0)
-        style.configure("HomeStat.TLabel", background="#091a2b", foreground=_THEME["ice"])
-        style.configure("HomeModule.TLabel", background="#0a1d30", foreground=_THEME["ink"])
-        style.configure("HomePanel.TLabel", background="#091a2b", foreground=_THEME["ink"])
-        style.configure("HomeMuted.TLabel", background="#0a1d30", foreground="#93b4c9")
-        style.configure("HomePanelMuted.TLabel", background="#091a2b", foreground="#93b4c9")
+        style.configure("HomeStat.TFrame", background="#071624", relief="flat", borderwidth=1, bordercolor="#123752")
+        style.configure("HomeModule.TFrame", background=_THEME["card"], relief="flat", borderwidth=1, bordercolor="#123650")
+        style.configure("HomePanel.TFrame", background=_THEME["panel"], relief="flat", borderwidth=1, bordercolor="#123650")
+        style.configure("HomeInner.TFrame", background=_THEME["panel"], relief="flat", borderwidth=0)
+        style.configure("HomeStat.TLabel", background="#071624", foreground=_THEME["ice"])
+        style.configure("HomeModule.TLabel", background=_THEME["card"], foreground=_THEME["ink"])
+        style.configure("HomePanel.TLabel", background=_THEME["panel"], foreground=_THEME["ink"])
+        style.configure("HomeMuted.TLabel", background=_THEME["card"], foreground="#8eafc2")
+        style.configure("HomePanelMuted.TLabel", background=_THEME["panel"], foreground="#8eafc2")
         style.configure("HomeKicker.TLabel", background=_THEME["night"], foreground="#3bbaff", font=(self.display_font, 9))
         style.configure("HomePrimary.TButton", background="#075f96", foreground="#f7fbff", padding=(13, 8), borderwidth=1, bordercolor="#27b8ff", relief="flat", font=(self.ui_font, 9, "bold"))
         style.map("HomePrimary.TButton", background=[("active", "#078bd1"), ("pressed", "#064d7e"), ("disabled", "#0b2232")], bordercolor=[("active", "#a5e4ff"), ("disabled", "#1a3a50")])
@@ -434,12 +550,12 @@ class AnalyzerShellApp:
         style.map("HomeViolet.TButton", background=[("active", "#564090"), ("pressed", "#2c2049"), ("disabled", "#171d2b")], bordercolor=[("active", "#dfd1ff"), ("disabled", "#30384b")])
         style.configure("HomeGold.TButton", background="#6b5014", foreground="#fff8e5", padding=(13, 8), borderwidth=1, bordercolor="#e3b940", relief="flat", font=(self.ui_font, 9, "bold"))
         style.map("HomeGold.TButton", background=[("active", "#927123"), ("pressed", "#513d10"), ("disabled", "#272417")], bordercolor=[("active", "#ffdc77"), ("disabled", "#3b3520")])
-        style.configure("Sidebar.TFrame", background="#050f1c", borderwidth=0)
+        style.configure("Sidebar.TFrame", background=_THEME["sidebar"], borderwidth=0)
         style.configure("TLabel", background=_THEME["night"], foreground=_THEME["ink"])
-        style.configure("Card.TLabel", background=_THEME["panel"], foreground=_THEME["ink"])
-        style.configure("Muted.TLabel", background=_THEME["panel"], foreground=_THEME["muted"])
-        style.configure("TLabelframe", background=_THEME["panel"], foreground=_THEME["ink"], relief="flat", borderwidth=1, bordercolor=_THEME["line_soft"])
-        style.configure("TLabelframe.Label", background=_THEME["panel"], foreground=_THEME["ice"], font=("Segoe UI Semibold", 9))
+        style.configure("Card.TLabel", background=_THEME["card"], foreground=_THEME["ink"])
+        style.configure("Muted.TLabel", background=_THEME["card"], foreground=_THEME["muted"])
+        style.configure("TLabelframe", background=_THEME["card"], foreground=_THEME["ink"], relief="flat", borderwidth=1, bordercolor=_THEME["line_soft"])
+        style.configure("TLabelframe.Label", background=_THEME["card"], foreground=_THEME["ice"], font=("Segoe UI Semibold", 9))
         style.configure(
             "TButton", background="#102b43", foreground="#dcefff", padding=(14, 9),
             borderwidth=1, bordercolor="#245b82", relief="flat", font=(self.ui_font, 9, "bold"),
@@ -490,15 +606,6 @@ class AnalyzerShellApp:
             bordercolor=[("selected", _THEME["accent"]), ("active", _THEME["line"]), ("disabled", _THEME["line_soft"])],
         )
         style.configure(
-            "Nav.TButton", anchor="w", background="#050f1c", foreground=_THEME["muted"],
-            padding=(18, 13), borderwidth=1, bordercolor="#050f1c", font=(self.ui_font, 9),
-        )
-        style.map("Nav.TButton", background=[("active", "#0a2033")], foreground=[("active", _THEME["ink"])], bordercolor=[("active", _THEME["line_soft"])])
-        style.configure(
-            "NavActive.TButton", anchor="w", background="#0b3150", foreground="#ffffff",
-            padding=(18, 13), borderwidth=1, bordercolor="#168ddd", font=(self.ui_font, 9, "bold"),
-        )
-        style.configure(
             "Horizontal.TScale", background=_THEME["panel"], troughcolor="#06111d",
             bordercolor=_THEME["line_soft"], lightcolor="#20a9ff", darkcolor="#0876be",
             slidercolor="#20a9ff", gripcount=0, borderwidth=0,
@@ -543,22 +650,22 @@ class AnalyzerShellApp:
 
         shell = ttk.Frame(self.root, style="Content.TFrame")
         shell.pack(fill="both", expand=True)
-        sidebar = ttk.Frame(shell, style="Sidebar.TFrame", width=245)
+        sidebar = ttk.Frame(shell, style="Sidebar.TFrame", width=258)
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
         tk.Frame(sidebar, width=1, background=_THEME["line_soft"]).pack(side="right", fill="y")
         brand_path = Path(__file__).with_name("assets") / "improve-yourself-wordmark-v3.png"
         try:
             self.brand_image = tk.PhotoImage(file=str(brand_path)).subsample(3, 3)
-            tk.Label(sidebar, image=self.brand_image, background=_THEME["deep"]).pack(anchor="w", padx=18, pady=(22, 6))
+            tk.Label(sidebar, image=self.brand_image, background=_THEME["sidebar"]).pack(anchor="w", padx=20, pady=(24, 7))
         except tk.TclError:
-            ttk.Label(sidebar, text="IMPROVE YOURSELF", style="Card.TLabel", font=("Segoe UI", 17, "bold")).pack(anchor="w", padx=18, pady=(24, 6))
-        tk.Label(sidebar, text="EXPERIMENTAL BUILD", background=_THEME["deep"], foreground=_THEME["ice"], font=("Segoe UI Semibold", 9)).pack(anchor="w", padx=19, pady=(0, 20))
+            ttk.Label(sidebar, text="IMPROVE YOURSELF", style="Card.TLabel", font=("Segoe UI", 17, "bold")).pack(anchor="w", padx=20, pady=(26, 7))
+        tk.Label(sidebar, text="EXPERIMENTAL BUILD", background=_THEME["sidebar"], foreground="#73bddf", font=(self.ui_font, 8, "bold")).pack(anchor="w", padx=21, pady=(0, 22))
         content = ttk.Frame(shell, style="Content.TFrame", padding=(24, 18, 24, 24))
         content.pack(side="left", fill="both", expand=True)
         self.pages: dict[str, ttk.Frame] = {}
         self.page_hosts: dict[str, ttk.Frame] = {}
-        self.nav_buttons: dict[str, ttk.Button] = {}
+        self.nav_buttons: dict[str, SidebarNavItem] = {}
         nav_labels = {
             "Dashboard": "⌂   Dashboard",
             "Analyzer / Review": "◎   Analyzer / Review",
@@ -603,10 +710,13 @@ class AnalyzerShellApp:
                 page = ttk.Frame(host, style="Content.TFrame")
                 page.pack(fill="both", expand=True)
             self.pages[name] = page
-            button = ttk.Button(sidebar, text=nav_labels[name], style="Nav.TButton", command=lambda value=name: self._show_page(value))
-            button.pack(fill="x", padx=8, pady=1)
+            button = SidebarNavItem(
+                tk, sidebar, text=nav_labels[name], ui_font=self.ui_font,
+                command=lambda value=name: self._show_page(value),
+            )
+            button.pack(fill="x", padx=11, pady=2)
             self.nav_buttons[name] = button
-        tk.Label(sidebar, text="LOCAL · PRIVATE · READ-ONLY WHERE MARKED", background=_THEME["deep"], foreground=_THEME["muted"], wraplength=205, justify="left", font=("Segoe UI", 8)).pack(side="bottom", anchor="w", padx=18, pady=18)
+        SidebarStatusPanel(tk, sidebar, ui_font=self.ui_font).pack(side="bottom", fill="x", padx=12, pady=16)
 
         frame = self.pages["Analyzer / Review"]
         analyzer_header = ttk.Frame(frame, style="Content.TFrame")
@@ -791,7 +901,7 @@ class AnalyzerShellApp:
         if name == "Dashboard":
             self.root.after_idle(lambda: self.dashboard_canvas.yview_moveto(0.0))
         for page_name, button in self.nav_buttons.items():
-            button.configure(style="NavActive.TButton" if page_name == name else "Nav.TButton")
+            button.set_active(page_name == name)
 
     def _build_dashboard_page(self) -> None:
         page = self.pages["Dashboard"]
