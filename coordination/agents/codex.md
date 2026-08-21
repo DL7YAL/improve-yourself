@@ -934,7 +934,7 @@ NEXT: Tristan entscheidet über genau einen Folge-Slice: einen expliziten, priva
 MODEL_PROFILE: terra
 MODEL_REASON: Netzwerk- und datenschutzsensibler, aber strikt read-only Daten-/Test-Slice.
 COMPUTER_USE: no
-COMMIT/PR: Wird nach Abschlussgate ergänzt.
+COMMIT/PR: `b5c9754 feat: add network quality collector`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
