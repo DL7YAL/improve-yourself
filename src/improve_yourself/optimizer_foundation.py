@@ -240,6 +240,27 @@ def run_fixture_harness() -> dict[str, object]:
     return {"schema": FOUNDATION_SCHEMA, "label": "SYNTHETIC / DECISION LOGIC ONLY / NOT MEASURED", "system_count": len(reports), "states": states, "reports": reports}
 
 
+def validate_synthetic_rule_pack(rule_pack: Iterable[OptimizationRule], matrix: dict[str, object] | None = None) -> dict[str, object]:
+    """Run any later curated pack through the canonical 150-profile decision matrix.
+
+    Synthetic profiles are explicitly prohibited from becoming real validation
+    evidence; this function only returns deterministic compatibility results.
+    """
+    source = matrix or synthetic_system_matrix()
+    systems = source.get("systems") if isinstance(source, dict) else None
+    if source.get("schema") != "iy.optimizer_synthetic_matrix/v1" or not isinstance(systems, list):
+        raise ValueError("expected iy.optimizer_synthetic_matrix/v1")
+    rules = tuple(rule_pack)
+    reports = [evaluate_recommendations(profile, rules=rules) for profile in systems if isinstance(profile, dict)]
+    state_counts = {state.value: 0 for state in RecommendationState}
+    domains = {domain.value: 0 for domain in OptimizerDomain}
+    for report in reports:
+        for result in report["results"]:
+            state_counts[str(result["state"])] += 1
+            domains[str(result["domain"])] += 1
+    return {"schema": FOUNDATION_SCHEMA, "validation_kind": "SYNTHETIC_RULE_PACK_VALIDATION", "label": "SYNTHETIC / DECISION LOGIC ONLY / NOT REAL EVIDENCE", "system_count": len(reports), "rule_ids": [rule.rule_id for rule in rules], "state_counts": state_counts, "domain_result_counts": domains, "reports": reports, "real_validation_result_created": False, "confidence_changed": False}
+
+
 def integration_proof(profile: dict[str, object], evidence_records: Iterable[EvidenceRecord]) -> dict[str, object]:
     """One transparent COLLECT→PROFILE→COMPATIBILITY→EVIDENCE→RESULT→VIEWMODEL proof."""
     report = evaluate_recommendations(profile, evidence_records=evidence_records)

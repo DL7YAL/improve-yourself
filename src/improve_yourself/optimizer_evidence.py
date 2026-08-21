@@ -283,16 +283,22 @@ def synthetic_system_matrix() -> dict[str, object]:
         goal = GoalProfile.PERFORMANCE.value if index % 2 == 0 else GoalProfile.QUALITY.value
         limitation = "CPU" if index % 3 == 0 else "GPU"
         systems.append({
-            "system_id": f"synthetic-{index + 1:03d}", "profile_source": "SYNTHETIC", "performance_evidence": "NOT_MEASURED",
+            "schema": "iy.system_profile/v1", "system_id": f"synthetic-{index + 1:03d}", "profile_id": f"synthetic-{index + 1:03d}", "profile_source": "SYNTHETIC_VALIDATION", "performance_evidence": "NOT_MEASURED",
             "synthetic_label": "SYNTHETIC / EXPECTED / NOT MEASURED", "goal": goal, "limitation": limitation,
             "cpu": {"vendor": cpu_vendor, "name": cpu_name, "family": "X3D" if x3d else "NON_X3D", "generation": 3 + (index % 12)},
-            "gpu": {"vendor": gpu_vendor, "name": gpu_name, "tier": ("HIGH" if index % 5 == 0 else "MID" if index % 5 < 3 else "LOW"), "driver_version": f"{24 + index % 3}.{10 + index % 12}.1"},
+            "gpu": {"vendor": gpu_vendor, "name": gpu_name, "tier": ("HIGH" if index % 5 == 0 else "MID" if index % 5 < 3 else "LOW"), "driver_version": None if index % 31 == 0 else f"{24 + index % 3}.{10 + index % 12}.1"},
             "ram": {"capacity_gb": (8, 16, 32, 64)[index % 4], "speed_mt_s": (2666, 3200, 5600, 6000)[index % 4]},
             "windows": {"build": (19045, 22631, 26100, 26200)[index % 4]},
             "monitor": {"refresh_hz": refresh},
             "windows_gaming": {"game_mode": bool(index % 2), "hags": bool((index // 2) % 2)},
             "gpu_options": {"latency_mode": "KNOWN" if index % 4 else "UNKNOWN"},
             "cs2": {"refresh_hz": refresh if index % 4 else max(60, refresh // 2), "reflex": "ON" if gpu_vendor == "NVIDIA" else None, "frame_pacing": "DEFAULT"},
+            "motherboard": {} if index % 23 == 0 else {"manufacturer": ("AMD Board Vendor" if cpu_vendor == "AMD" else "Intel Board Vendor"), "product": f"Board-{index % 9}", "version": f"R{1 + index % 3}"},
+            "bios": {} if index % 23 == 0 else {"version": f"B{100 + index % 17}", "date": f"202{index % 5}-0{1 + index % 9}-01"},
+            "network": {"adapters": [] if index % 29 == 0 else [{"name": ("Realtek 2.5GbE" if index % 2 else "Intel Ethernet"), "driver_version": f"{1 + index % 4}.0", "link_speed_mbps": (100 if index % 7 == 0 else 1000 if index % 3 else 2500), "mtu": 1500 if index % 5 else None, "rss": bool(index % 2), "eee": "UNKNOWN" if index % 4 else "NOT_RELIABLY_DETECTABLE"}]},
+            "field_observation": {"ram_speed": "DETECTED" if index % 4 else "NOT_RELIABLY_DETECTABLE", "network_mtu": "DETECTED" if index % 5 else "NOT_AVAILABLE", "gpu.driver_options": "NOT_RELIABLY_DETECTABLE" if index % 4 == 0 else "DETECTED"},
+            "current_recommendations": {"fixture-system-memory": True} if index % 19 == 0 else {},
+            "synthetic_case": {"case_id": f"matrix-{index + 1:03d}", "expected_validation": "DETERMINISTIC_DECISION_ONLY", "real_evidence_allowed": False},
         })
     return {"schema": SYNTHETIC_MATRIX_SCHEMA, "performance_evidence": "SYNTHETIC / EXPECTED / NOT MEASURED", "systems": systems}
 

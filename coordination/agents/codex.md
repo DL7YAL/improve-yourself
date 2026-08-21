@@ -973,6 +973,24 @@ MODEL_REASON: Datenschutz- und Netzwerkkontakt-Governance mit versionierter hist
 COMPUTER_USE: no
 COMMIT/PR: `75d9350 feat: add controlled network target pack`, gepusht nach `origin/dev/v1-foundation`.
 
+# Handoff 2026-08-22 — Synthetic Matrix Validation V1
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Die vorhandene 150-System-Synthetic-Matrix als finale, kanonische und wiederverwendbare Validierungsstrecke für kommende kuratierte Rule Packs absichern — ohne Performance-Simulation oder neue Infrastruktur.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/optimizer_evidence.py`, `src/improve_yourself/optimizer_foundation.py`, `tests/test_synthetic_matrix_validation.py`, `docs/SYNTHETIC_MATRIX_VALIDATION_V1.md`, `coordination/agents/codex.md`.
+PROFILES: Exakt 150 Profile, jetzt jeweils `iy.system_profile/v1`, `SYNTHETIC_VALIDATION`, `SYNTHETIC / EXPECTED / NOT MEASURED` und `real_evidence_allowed: false`. Abdeckung: AMD/Intel CPUs, AMD/NVIDIA GPUs und Treiberzustände, 8/16/32/64 GB, Windows-Builds, 60/120/144/165/240/360 Hz, Mainboard/BIOS-Varianten, NICs mit 100/1000/2500 Mbps, MTU/RSS/Unknown-Feature-Zuständen, bereits empfohlenem Zustand, fehlender Treiberversion, fehlendem Mainboard/BIOS und fehlendem Adapter.
+HARNESS: `validate_synthetic_rule_pack(rule_pack)` verwendet dieselbe gemeinsame Foundation und nimmt später kuratierte `OptimizationRule`-Packs ohne Umbau der Profile oder des Tests entgegen. Es erzeugt deterministische Profile→Compatibility→Evidence Sufficiency→Recommendation Result-Traces inklusive State- und Domain-Zählern. Kennzeichnung: `SYNTHETIC / DECISION LOGIC ONLY / NOT REAL EVIDENCE`; `real_validation_result_created: false`, `confidence_changed: false`.
+ABDECKUNG: Tests zeigen alle vier Domains sowie RECOMMENDED, ALREADY_RECOMMENDED, CONDITIONAL, NO_CHANGE, INSUFFICIENT_EVIDENCE, gematchte Exclusion und SECURITY_PERFORMANCE_TRADEOFF. Missing/Unknown bleibt Missing/Unknown; keine positive Empfehlung durch Annahme. Keine FPS-/Frametime-/Ping-/Jitter-Verbesserung und keine reale Evidence/Validation Result wird erzeugt.
+REAL TESTER PREP: Synthetische und spätere echte Profile folgen demselben `iy.system_profile/v1`-Schema. Ein späterer read-only Shadow-Recommendation-Tester kann daher lokal erfassen, auswerten und protokollieren, ohne Systemdaten automatisch zu übertragen. Dieser Slice implementiert keine Übertragung.
+VERIFIED: Neue Matrix-Tests **3/3 PASS**; vollständiger `pytest` **163/163 PASS**; `compileall` PASS; `pip check` PASS; `git diff --check` PASS.
+COVERAGE LIMITS: Keine Hardwarekatalog-Vollständigkeit, kein echter A/B-Nachweis und keine reale Confidence-Erhöhung. Die erwarteten Resultate sind deterministische Rule-Pack-Entscheidungen, keine Performanceprognosen.
+NEXT: Genau ein empfohlener Folge-Slice nach neuer Freigabe: den separat gelieferten kuratierten realen V1-Matrix-/Rule-Pack mit stabilen Rule-IDs einspielen und gegen diese Matrix prüfen. Keine weitere Optimizer-Infrastruktur eigenständig vertiefen.
+MODEL_PROFILE: terra
+MODEL_REASON: Finaler deterministischer Validierungs-/Safety-Pass vor dem realen kuratierten Regelkatalog.
+COMPUTER_USE: no
+COMMIT/PR: Wird nach Commit/Push ergänzt.
+
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
 STATUS: WAITING_FOR_TRISTAN
