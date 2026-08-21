@@ -1,6 +1,6 @@
 # 3D/POV V1 — Slice D renderer/embed spike
 
-Date: 2026-08-21  
+Date: 2026-08-21
 Branch: `dev/v1-foundation`
 
 ## Result
