@@ -916,7 +916,7 @@ NEXT: Genau ein möglicher Folge-Slice nach neuer Freigabe: einen lokalen, read-
 MODEL_PROFILE: terra
 MODEL_REASON: Finaler sicherheitsrelevanter Architektur-/Collector-Abgleich ohne systemverändernde Autorität.
 COMPUTER_USE: no
-COMMIT/PR: Wird nach Commit/Push ergänzt.
+COMMIT/PR: `18244ae feat: finalize optimizer foundation architecture`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
