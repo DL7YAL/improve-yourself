@@ -535,7 +535,7 @@ NEXT: Experimental-Build gegen die versionierte Master-PDF vollständig abnehmen
 MODEL_PROFILE: terra
 MODEL_REASON: Verbindlicher Designabgleich und Repository-Konsolidierung ohne Architektur- oder Funktionsänderung.
 COMPUTER_USE: no
-COMMIT/PR: pending final gate and push on `dev/v1-foundation`.
+COMMIT/PR: Master-Integration `7519690` plus nachfolgender `.pdf binary`-Schutzcommit auf `dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Experimental UI consolidation
 
