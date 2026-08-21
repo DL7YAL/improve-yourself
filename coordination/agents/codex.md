@@ -1,5 +1,20 @@
 # Codex
 
+## 2026-08-21 — Final Portable real-workflow acceptance
+
+STATUS: review
+TASK: Den gepushten finalen Portable-Build über den normalen Produktdialog mit dem frisch erzeugten echten Ancient-Workflow laden und die real freigeschalteten Zustände prüfen.
+BRANCH: `dev/v1-foundation`
+CHANGED: Nur dieser Handoff. Keine Produkt-, Workflow-, Ergebnis-, Packaging- oder Systemdatei geändert. Der ignorierte reale Workflow wurde ausschließlich gelesen.
+VERIFIED: `Improve Yourself Experimental.exe` aus dem finalen Portable-Artefakt gestartet; `Vorhandene Analyse öffnen` und der native Dateidialog verwendet; `results/experimental-build-e2e/c183dd61fc6a/demo-workflow.json` nach vollständiger fail-closed Hashprüfung erfolgreich geladen. Sichtbar bestätigt: `de_ancient`, 54 Szenen, Review bereit, Quelle `fut-vs-mouz-m2-ancient.dem`, Hashpräfix `c183dd61fc6a`, Parser PASS, 18 Runden, 10 Spieler, 3.179 Grundevents sowie korrekte CT-/T-Line-ups. Reports zeigt 54 Szenen und aktivierte Report-/Timeline-Aktionen; Tactical Replay ist aktiv. Keine UI-Ausnahme oder helle Produktfremdfläche; Build anschließend sauber geschlossen.
+DECISIONS: Keine. Der normale Restore-Pfad ist nun zusätzlich im tatsächlich verteilten EXE mit realen Daten belegt; dies ersetzt keine menschliche Inhaltsbewertung der Szenen und keine CS2-Live-Readiness-Prüfung.
+OPEN: Tristan prüft weiterhin Szeneninhalte, Notizen/Review und CS2-Tick im eigenen Lauf. Setup bleibt `NEEDS_INSTALLER_SPEC`.
+NEXT: Tristan verwendet denselben Portable-ZIP für den praktischen Review; Engineering ändert danach nur konkret gemeldete Laufzeit-/UI-Befunde.
+MODEL_PROFILE: terra
+MODEL_REASON: Reale Windows-Runtime-Abnahme an der verteilten EXE-/Workflow-Grenze.
+COMPUTER_USE: yes
+COMMIT/PR: pending documentation-only checkpoint on `dev/v1-foundation`.
+
 ## 2026-08-21 — Branded Portable Experimental integration
 
 STATUS: review
