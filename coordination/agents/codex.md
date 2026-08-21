@@ -899,7 +899,7 @@ NEXT: Tristan entscheidet über den nächsten separaten, weiterhin read-only Sch
 MODEL_PROFILE: terra
 MODEL_REASON: Sicherheitsrelevanter Datenmodell-/Collector-Slice mit echter lokaler Read-only-Prüfung und deterministischem Harness.
 COMPUTER_USE: no
-COMMIT/PR: Wird nach Commit/Push ergänzt.
+COMMIT/PR: `54c1943 feat: add optimizer evidence foundation`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
