@@ -971,7 +971,7 @@ NEXT: Genau ein empfohlener Folge-Slice nach neuer Freigabe: Integration eines k
 MODEL_PROFILE: terra
 MODEL_REASON: Datenschutz- und Netzwerkkontakt-Governance mit versionierter historischer Nachvollziehbarkeit.
 COMPUTER_USE: no
-COMMIT/PR: Wird nach Commit/Push ergänzt.
+COMMIT/PR: `75d9350 feat: add controlled network target pack`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
