@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-21 — Embedded Analyzer Review product slice
+
+STATUS: review
+TASK: Den real abgenommenen Analyzer-/NetCon-Pfad als eingebetteten Review in die bestehende Midnight-/Metallic-Shell integrieren, ohne zweite Review-Engine oder neue Produktfunktion.
+BRANCH: `dev/v1-foundation`
+CHANGED: Neuer dünner `EmbeddedReviewSession` liest ausschließlich das fail-closed validierte `iy.analysis_flow/v1`, stellt Runde, exakten Tick, belegten Timecode, Kontext, Marker, Spielernamen, objektive Anker und Rule-IDs bereit und delegiert jeden CS2-Sprung unverändert an `Cs2ReviewCoordinator.open_scene(scene_id, tick)`. Der bestehende `iy.review_state/v1`-Vertrag akzeptiert nun kanonische explizite Scene-IDs; Status und Notiz bleiben source-/scene-bound, längenbegrenzt und atomar lokal gespeichert. `AnalyzerShellApp` zeigt Szenenliste und Detail innerhalb desselben Analyzer-/Review-Reiters; `Review anzeigen` öffnet keinen Browser. Der HTML-/Review-Server bleibt nur als ausdrücklich beschrifteter `HTML-Export im Browser (Fallback)`. Spezifikation: `docs/EMBEDDED_ANALYZER_REVIEW_V1.md`. Tests: `tests/test_embedded_review.py`. Keine Parser-, Indikator-, Rule-, Szenen-, Tick-, Benchmark-, Optimizer-, System-, Clip-, OBS- oder Videoänderung.
+VERIFIED: Vor Änderung 125/125 Tests PASS. Danach gezieltes Embedded-/State-/Coordinator-/Shell-Gate 27/27 und vollständige Suite 129/129 PASS; `compileall`, Abhängigkeitsprüfung und `git diff --check` PASS. Reale UI mit bestehendem Ancient-Workflow: 54 Szenen innerhalb des Improve-Yourself-Fensters, keine neue Firefox-/Review-Ausgabe, Dark-/Variant-3-Oberfläche, Runde/Tick/Spieler/Regeln/Notiz/Status sichtbar. Drei verschiedene Szenen wurden aus dem Embedded Review über den unveränderten Coordinator erfolgreich an Tick 3654, 4362 und 12577 in `fut-vs-mouz-m2-ancient.dem` geöffnet. Bestehende automatisierte Fehlerabdeckung belegt CS2 offline, laufendes CS2 ohne NetCon/ungeeigneten Startmodus, NetCon ohne aktive Demo, falsche Demo und fremdes Scene-/Tick-Paar fail-closed. Frischer Portable-Build inklusive Tests PASS; EXE SHA-256 `9F8D10B9388690E4BFAD2B06DBB9BE29FDE7CB8DA930D0F4D6703C22CF19C15C`, ZIP SHA-256 `C811534090577B47600705CEC30535CF8A38AB7F8CBDCC602832EF16D2E64ECD`; gepackte EXE startet mit Branding/dunkler Shell.
+DECISIONS: Native Präsentationsschicht statt neuer WebView-Abhängigkeit für diesen begrenzten Slice. Bestehender lokaler Review-Server und HTML bleiben kompatibler Export/Fallback, sind aber nicht mehr Hauptworkflow. Eine fehlende Tickrate bleibt `Zeit nicht belegt`; der exakte Tick wird angezeigt und kein 64-Hz-Timecode erfunden.
+OPEN: Die reale Ancient-Quelle liefert keine belegte Tickrate, daher ist dort nur Tick, kein abgeleiteter Timecode verfügbar. Setup/Signing bleibt außerhalb dieses Slices unverändert offen. Der finale Portable-Embedded-Workflow benötigt noch Tristans eigener Produkt-Sichtcheck; Quellruntime und gebauter Start sind bereits geprüft.
+NEXT: Tristan lädt denselben Ancient-Workflow im neuen Portable-Build, prüft Szenenliste/Notiz/Status und wiederholt einen Tick-Sprung; danach als nächsten getrennten Product Slice die gemeinsame 2D-Tactical-/Embedded-Review-Navigation spezifizieren, ohne neue Analyseautorität.
+MODEL_PROFILE: terra
+MODEL_REASON: Zusammenhängende native UI-, State-, Sicherheits- und Runtime-Integration auf bestehendem realem Analyzer-Pfad.
+COMPUTER_USE: yes
+
 ## 2026-08-21 — Real NetCon multi-scene acceptance and connection guidance
 
 STATUS: review

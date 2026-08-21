@@ -16,6 +16,7 @@ from typing import Callable
 from .analysis_flow import AnalysisProfile
 from .cs2_review_coordinator import Cs2ReviewCoordinator, ReviewCoordinatorServer, ReviewPreflight
 from .demo_workflow import preflight_demo_workflow, rerender_demo_workflow
+from .embedded_review import EmbeddedReviewSession
 from .local_profiles import OBJECTIVE_RULES, LocalProfileStore
 from .replay_store import ReplayStore
 from .system_check import run_system_check
@@ -407,6 +408,13 @@ class AnalyzerShellApp:
         self.overview_status = tk.StringVar(value="Noch keine Demo geladen")
         self.report_status = tk.StringVar(value="Nach einer Analyse stehen Report und Timeline lokal bereit.")
         self.system_status = tk.StringVar(value="System Check wurde noch nicht ausgeführt.")
+        self.embedded_review: EmbeddedReviewSession | None = None
+        self.embedded_scene_id: str | None = None
+        self.embedded_cs2_status = tk.StringVar(value="CS2-Bereitschaft noch nicht geprüft.")
+        self.embedded_scene_title = tk.StringVar(value="Keine Szene ausgewählt")
+        self.embedded_scene_context = tk.StringVar(value="")
+        self.embedded_scene_players = tk.StringVar(value="")
+        self.embedded_scene_rules = tk.StringVar(value="")
 
         shell = ttk.Frame(self.root, style="Content.TFrame")
         shell.pack(fill="both", expand=True)
@@ -506,12 +514,13 @@ class AnalyzerShellApp:
         self.cs2_button = ttk.Button(actions, text="CS2 prüfen", command=self._preflight, state="disabled")
         self.cs2_button.pack(side="left", padx=8)
         self.workflow_widgets.extend((self.analyze_button, self.cs2_button))
-        self.review_button = ttk.Button(actions, text="Review öffnen", command=self._open_review, state="disabled")
+        self.review_button = ttk.Button(actions, text="Review anzeigen", command=self._open_review, state="disabled")
         self.review_button.pack(side="left")
         preflight = ttk.LabelFrame(frame, text="CS2-Readiness", padding=10)
         preflight.pack(fill="x", pady=10)
         for variable in (self.netcon_status, self.demo_status, self.filename_status, self.preflight_message):
             ttk.Label(preflight, textvariable=variable).pack(anchor="w")
+        self._build_embedded_review(frame)
         self._build_dashboard_page()
         self._build_reports_page()
         self._build_settings_page()
@@ -519,6 +528,72 @@ class AnalyzerShellApp:
         self._build_tactical_page()
         self._show_page("Analyzer / Review")
         self.root.protocol("WM_DELETE_WINDOW", self._close)
+
+    def _build_embedded_review(self, parent) -> None:
+        review = self.ttk.Frame(parent, style="Content.TFrame", padding=(0, 0, 0, 0))
+        self.embedded_review_frame = review
+        header = self.ttk.Frame(review, style="Content.TFrame")
+        header.pack(fill="x")
+        self.ttk.Button(header, text="← Analyse", command=self._close_embedded_review).pack(side="left")
+        self.ttk.Label(header, text="Analyzer Review", font=("Segoe UI", 24, "bold")).pack(side="left", padx=16)
+        self.ttk.Label(
+            header, text="LOCAL · EINGEBETTET", foreground=_THEME["ice"], font=("Segoe UI Semibold", 9)
+        ).pack(side="right")
+        self.ttk.Label(
+            review,
+            text="Szenen, Evidenz und Notizen aus derselben Analyse · Tick-Sprung über den geprüften lokalen Coordinator",
+            foreground=_THEME["muted"],
+        ).pack(anchor="w", pady=(4, 14))
+
+        body = self.ttk.Frame(review, style="Content.TFrame")
+        body.pack(fill="both", expand=True)
+        left = self.ttk.Frame(body, style="Card.TFrame", padding=14)
+        left.pack(side="left", fill="y", padx=(0, 10))
+        self.ttk.Label(left, text="Szenen", style="Card.TLabel", font=("Segoe UI Semibold", 14)).pack(anchor="w")
+        self.embedded_scene_list = self.tk.Listbox(
+            left, width=36, height=25, background=_THEME["deep"], foreground=_THEME["ink"],
+            selectbackground=_THEME["metal"], selectforeground=_THEME["ink"],
+            borderwidth=1, highlightthickness=1, highlightbackground=_THEME["line"],
+            highlightcolor=_THEME["ice"], activestyle="none", font=("Segoe UI", 10),
+        )
+        self.embedded_scene_list.pack(fill="y", expand=True, pady=(10, 0))
+        self.embedded_scene_list.bind("<<ListboxSelect>>", self._select_embedded_scene)
+
+        detail = self.ttk.Frame(body, style="Card.TFrame", padding=20)
+        detail.pack(side="left", fill="both", expand=True)
+        self.ttk.Label(detail, textvariable=self.embedded_scene_title, style="Card.TLabel", font=("Segoe UI Semibold", 17)).pack(anchor="w")
+        self.ttk.Label(detail, textvariable=self.embedded_scene_context, style="Muted.TLabel", wraplength=720, justify="left").pack(anchor="w", pady=(8, 0))
+        self.ttk.Label(detail, textvariable=self.embedded_scene_players, style="Card.TLabel", wraplength=720, justify="left").pack(anchor="w", pady=(14, 0))
+        self.ttk.Label(detail, textvariable=self.embedded_scene_rules, style="Muted.TLabel", wraplength=720, justify="left").pack(anchor="w", pady=(6, 16))
+
+        state_row = self.ttk.Frame(detail, style="CardInner.TFrame")
+        state_row.pack(fill="x")
+        self.ttk.Label(state_row, text="Review-Status", style="Card.TLabel").pack(side="left")
+        self.embedded_state = self.ttk.Combobox(
+            state_row, state="readonly", width=18,
+            values=("unreviewed", "reviewed", "follow-up", "discarded", "clip-worthy"),
+        )
+        self.embedded_state.pack(side="left", padx=10)
+        self.ttk.Label(detail, text="Notiz", style="Card.TLabel").pack(anchor="w", pady=(16, 6))
+        self.embedded_note = self.tk.Text(
+            detail, height=7, wrap="word", background=_THEME["deep"], foreground=_THEME["ink"],
+            insertbackground=_THEME["ice"], selectbackground=_THEME["metal"],
+            borderwidth=1, relief="solid", highlightthickness=1, highlightbackground=_THEME["line"],
+            font=("Segoe UI", 10),
+        )
+        self.embedded_note.pack(fill="x")
+        buttons = self.ttk.Frame(detail, style="CardInner.TFrame")
+        buttons.pack(fill="x", pady=(14, 0))
+        self.ttk.Button(buttons, text="Status & Notiz speichern", command=self._save_embedded_review).pack(side="left")
+        self.ttk.Button(buttons, text="In CS2 ansehen", style="Primary.TButton", command=self._open_embedded_in_cs2).pack(side="left", padx=8)
+        self.ttk.Button(buttons, text="Vorherige", command=lambda: self._step_embedded_scene(-1)).pack(side="left", padx=(16, 4))
+        self.ttk.Button(buttons, text="Nächste", command=lambda: self._step_embedded_scene(1)).pack(side="left")
+        self.ttk.Label(
+            detail, textvariable=self.embedded_cs2_status, style="Muted.TLabel", wraplength=720, justify="left"
+        ).pack(anchor="w", pady=(18, 0))
+        self.ttk.Button(
+            detail, text="HTML-Export im Browser (Fallback)", command=self._open_review_fallback
+        ).pack(anchor="w", pady=(12, 0))
 
     def _show_page(self, name: str) -> None:
         self.pages[name].tkraise()
@@ -693,6 +768,10 @@ class AnalyzerShellApp:
         for button in (self.report_button, self.timeline_button, self.tactical_button):
             button.configure(state="normal" if ready else "disabled")
         self.cs2_button.configure(state="normal" if result.status == "READY_FOR_REVIEW" else "disabled")
+        self.review_button.configure(state="normal" if ready else "disabled")
+        self._close_embedded_review()
+        self.embedded_review = None
+        self.embedded_scene_id = None
         self._select_profile()
         self._reset_preflight()
 
@@ -761,7 +840,111 @@ class AnalyzerShellApp:
         self._background("Auswahl wird aus demselben Replay neu berechnet …", self.controller.analyze_selection)
 
     def _open_review(self) -> None:
-        self._preflight(open_after=True)
+        try:
+            manifest_path = self.controller.validate_current_workflow()
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            coordinator = self._coordinator()
+            self.embedded_review = EmbeddedReviewSession(
+                manifest_path.parent / manifest["artifacts"]["analysis_flow"],
+                manifest_path.parent / "review-state.json",
+                str(manifest["source_sha256"]),
+                coordinator,
+            )
+            self.embedded_scene_list.delete(0, self.tk.END)
+            for scene in self.embedded_review.scenes:
+                anchors = ", ".join(scene.anchor_types) or "Kontext"
+                self.embedded_scene_list.insert(
+                    self.tk.END, f"Runde {scene.round_number:02d} · {scene.timecode} · {anchors}"
+                )
+            self.embedded_review_frame.place(relx=0, rely=0, relwidth=1, relheight=1)
+            self.embedded_review_frame.tkraise()
+            if self.embedded_review.scenes:
+                self.embedded_scene_list.selection_set(0)
+                self.embedded_scene_list.activate(0)
+                self._draw_embedded_scene(0)
+            else:
+                self.embedded_scene_title.set("Keine Szenen für diese Auswahl")
+                self.embedded_scene_context.set("Analyse und Review bleiben gültig; die gewählten Kriterien erzeugten keine Szene.")
+            self.embedded_cs2_status.set("Review lokal geladen. CS2-Bereitschaft wird beim Tick-Sprung erneut geprüft.")
+        except Exception as error:
+            self.status.set(f"Fehler: {error}")
+
+    def _close_embedded_review(self) -> None:
+        self.embedded_review_frame.place_forget()
+
+    def _select_embedded_scene(self, _event=None) -> None:
+        selection = self.embedded_scene_list.curselection()
+        if selection:
+            self._draw_embedded_scene(int(selection[0]))
+
+    def _draw_embedded_scene(self, index: int) -> None:
+        if self.embedded_review is None or not 0 <= index < len(self.embedded_review.scenes):
+            return
+        scene = self.embedded_review.scenes[index]
+        self.embedded_scene_id = scene.scene_id
+        anchors = ", ".join(scene.anchor_types) or "keine Anker"
+        self.embedded_scene_title.set(
+            f"Runde {scene.round_number} · Tick {scene.review_tick} · {scene.timecode}"
+        )
+        self.embedded_scene_context.set(
+            f"Kontext {scene.start_tick}–{scene.end_tick} · Marker {', '.join(map(str, scene.marker_ticks))} · {anchors}"
+        )
+        self.embedded_scene_players.set("Spieler: " + (", ".join(scene.player_names) or "nicht belegt"))
+        self.embedded_scene_rules.set("Regeln: " + (", ".join(scene.rule_ids) or "nicht belegt"))
+        review = self.embedded_review.review(scene.scene_id)
+        self.embedded_state.set(review["state"])
+        self.embedded_note.delete("1.0", self.tk.END)
+        self.embedded_note.insert("1.0", review["note"])
+
+    def _step_embedded_scene(self, delta: int) -> None:
+        if self.embedded_review is None or not self.embedded_review.scenes:
+            return
+        current = self.embedded_scene_list.curselection()
+        index = int(current[0]) if current else 0
+        index = max(0, min(len(self.embedded_review.scenes) - 1, index + delta))
+        self.embedded_scene_list.selection_clear(0, self.tk.END)
+        self.embedded_scene_list.selection_set(index)
+        self.embedded_scene_list.activate(index)
+        self.embedded_scene_list.see(index)
+        self._draw_embedded_scene(index)
+
+    def _save_embedded_review(self) -> None:
+        if self.embedded_review is None or self.embedded_scene_id is None:
+            return
+        try:
+            self.embedded_review.save_review(
+                self.embedded_scene_id,
+                self.embedded_state.get(),
+                self.embedded_note.get("1.0", "end-1c"),
+            )
+            self.embedded_cs2_status.set("Review-Status und Notiz lokal gespeichert.")
+        except Exception as error:
+            self.embedded_cs2_status.set(f"Nicht gespeichert: {error}")
+
+    def _open_embedded_in_cs2(self) -> None:
+        if self.embedded_review is None or self.embedded_scene_id is None:
+            return
+        self._save_embedded_review()
+        scene_id = self.embedded_scene_id
+        self.embedded_cs2_status.set("Prüfe CS2, aktive Demo und erlaubten Szenen-Tick …")
+
+        def worker() -> None:
+            try:
+                result = self.embedded_review.open_in_cs2(scene_id) if self.embedded_review else None
+                if result is None:
+                    raise RuntimeError("Embedded Review ist nicht geladen")
+                message = f"In CS2 geöffnet: {result['demo_name']} · Tick {result['tick']}"
+            except Exception as error:
+                message = f"Nicht in CS2 geöffnet: {error}"
+            self.root.after(0, lambda: self.embedded_cs2_status.set(message))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _open_review_fallback(self) -> None:
+        try:
+            self._start_review(self._coordinator())
+        except Exception as error:
+            self.embedded_cs2_status.set(f"Browser-Fallback nicht geöffnet: {error}")
 
     def _open_artifact(self, name: str) -> None:
         try:
@@ -840,7 +1023,7 @@ class AnalyzerShellApp:
             + f" Dateiname: erwartet {preflight.expected_demo_name} · aktiv {active}"
         )
         self.preflight_message.set(preflight.message)
-        self.review_button.configure(state="normal" if preflight.ready else "disabled")
+        self.embedded_cs2_status.set(preflight.message)
         if preflight.ready and open_after:
             self._start_review(coordinator)
 
@@ -857,7 +1040,6 @@ class AnalyzerShellApp:
         self.demo_status.set("○ Demo-Modus: noch nicht geprüft")
         self.filename_status.set("○ Dateiname: noch nicht geprüft")
         self.preflight_message.set("Vor dem Review CS2 prüfen.")
-        self.review_button.configure(state="disabled")
 
     def _close(self) -> None:
         if self.review_server:

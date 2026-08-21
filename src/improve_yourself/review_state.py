@@ -12,6 +12,9 @@ MAX_NOTE_LENGTH = 2_000
 
 
 def scene_id(scene: dict[str, Any]) -> str:
+    explicit = scene.get("scene_id")
+    if isinstance(explicit, str) and explicit:
+        return explicit
     return f"r{int(scene['round_number'])}-t{int(scene['start_tick'])}-{int(scene['end_tick'])}-{scene['marker_player']}"
 
 
