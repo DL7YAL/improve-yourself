@@ -20,6 +20,7 @@ from .demo_workflow import preflight_demo_workflow, rerender_demo_workflow
 from .embedded_review import EmbeddedReviewSession
 from .embedded_tactical import EmbeddedTacticalSession
 from .local_profiles import OBJECTIVE_RULES, LocalProfileStore
+from .optimizer_evidence import evaluate_profile, profile_from_system_check
 from .replay_store import ReplayStore
 from .system_check import run_system_check
 
@@ -172,6 +173,38 @@ def system_check_result_view(payload: dict[str, object]) -> dict[str, object] | 
             else "Ausführungsrichtlinie konnte nicht vollständig bestätigt werden"
         ),
         "rows": rows,
+    }
+
+
+def optimizer_evidence_view(payload: dict[str, object]) -> dict[str, object] | None:
+    """Present read-only selection evidence; it deliberately exposes no apply action."""
+    profile = profile_from_system_check(payload)
+    if profile is None:
+        return None
+    report = evaluate_profile(profile)
+    groups = (
+        ("VERIFIED / STABLE", report["stable_recommendations"]),
+        ("CONDITIONAL", report["conditional_recommendations"]),
+        ("EXPERIMENTAL", report["experimental_candidates"]),
+    )
+    rows: list[dict[str, str]] = []
+    for evidence_class, rules in groups:
+        for rule in rules:
+            if not isinstance(rule, dict):
+                continue
+            rows.append({
+                "evidence_class": evidence_class,
+                "name": str(rule.get("name") or "Unbenannter Kandidat"),
+                "effect": str(rule.get("expected_effect") or "Keine Wirkung behauptet."),
+                "risk": _system_evidence_text(rule.get("possible_side_effects")),
+                "restore": str(rule.get("backup_restore_requirement") or "Snapshot und Restore erforderlich."),
+            })
+    return {
+        "profile_source": str(report["profile_source"]),
+        "performance_evidence": str(report["performance_evidence"]),
+        "rows": rows,
+        "missing_input_data": [str(item) for item in report["missing_input_data"]],
+        "excluded_rules": [item for item in report["excluded_rules"] if isinstance(item, dict)],
     }
 
 
@@ -1436,7 +1469,7 @@ class AnalyzerShellApp:
         card.pack(fill="x")
         self.ttk.Label(card, text="SYSTEM CHECK", style="Card.TLabel", font=(self.display_font, 11, "bold")).pack(anchor="w")
         self.ttk.Label(card, text="Erkannte Systemwerte, Bewertung und Hinweise bleiben getrennt. Nicht sicher belegbare Werte werden als zu prüfen angezeigt.", style="Muted.TLabel", wraplength=780, justify="left").pack(anchor="w", pady=(8, 0))
-        self.ttk.Label(card, text="Optimizer-Empfehlungen erscheinen erst, wenn eine reale, sichere Funktion dahintersteht.", style="Muted.TLabel").pack(anchor="w", pady=(8, 12))
+        self.ttk.Label(card, text="Evidenzbasierte Kandidaten bleiben read-only: keine Änderung ohne späteren Snapshot-, Verify- und Restore-Ablauf.", style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(8, 12))
         self.ttk.Button(card, text="System Check ausführen", style="Primary.TButton", command=self._run_system_check).pack(anchor="w")
         self.ttk.Label(card, textvariable=self.system_status, style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(10, 0))
 
@@ -1448,6 +1481,13 @@ class AnalyzerShellApp:
         self.system_result_grid.pack(fill="x")
         for column in range(4):
             self.system_result_grid.columnconfigure(column, weight=1, uniform="system-results")
+
+        self.optimizer_evidence_card = self.ttk.Frame(page, style="Card.TFrame", padding=18)
+        self.ttk.Label(self.optimizer_evidence_card, text="OPTIMIZER EVIDENCE MATRIX", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
+        self.optimizer_evidence_meta = self.ttk.Label(self.optimizer_evidence_card, text="", style="Muted.TLabel", wraplength=940, justify="left")
+        self.optimizer_evidence_meta.pack(anchor="w", pady=(6, 10))
+        self.optimizer_evidence_rows = self.ttk.Frame(self.optimizer_evidence_card, style="CardInner.TFrame")
+        self.optimizer_evidence_rows.pack(fill="x")
 
     def _build_tactical_page(self) -> None:
         page = self.pages["Tactical Replay"]
@@ -2066,6 +2106,7 @@ class AnalyzerShellApp:
         self.dashboard_system_scan_attention.set(view["attention"])
         self.dashboard_system_scan_attention_label.pack(before=self.dashboard_system_scan_details_button, anchor="w", pady=(1, 4))
         self._render_system_check_results(payload)
+        self._render_optimizer_evidence(payload)
         self.system_status.set(status_message)
 
     def _render_system_check_results(self, payload: dict[str, object]) -> None:
@@ -2099,6 +2140,31 @@ class AnalyzerShellApp:
             self.ttk.Label(item, text=row["summary"], style="Muted.TLabel", wraplength=225, justify="left").pack(anchor="w", pady=(7, 3))
             self.ttk.Label(item, text=f"Evidenz: {row['evidence']}", style="Card.TLabel", wraplength=225, justify="left", font=(self.ui_font, 8)).pack(anchor="w")
         self.system_result_card.pack(fill="x", pady=(14, 0))
+
+    def _render_optimizer_evidence(self, payload: dict[str, object]) -> None:
+        view = optimizer_evidence_view(payload)
+        if view is None:
+            return
+        for child in self.optimizer_evidence_rows.winfo_children():
+            child.destroy()
+        missing = ", ".join(view["missing_input_data"]) or "keine"
+        self.optimizer_evidence_meta.configure(
+            text=(
+                f"Systembasis: {view['profile_source']} · Leistungsevidenz: {view['performance_evidence']} · "
+                "keine Änderung angewendet.\n"
+                f"Noch fehlende sichere Eingaben: {missing}"
+            )
+        )
+        if not view["rows"]:
+            self.ttk.Label(self.optimizer_evidence_rows, text="Keine Kandidaten: Die vorhandene Evidenz reicht nicht für eine sichere Zuordnung.", style="Muted.TLabel", wraplength=900, justify="left").pack(anchor="w")
+        else:
+            for row in view["rows"]:
+                item = self.ttk.Frame(self.optimizer_evidence_rows, style="Card.TFrame", padding=(12, 9))
+                item.pack(fill="x", pady=(0, 6))
+                self.ttk.Label(item, text=f"[{row['evidence_class']}]  {row['name']}", style="Card.TLabel", font=(self.ui_font, 9, "bold")).pack(anchor="w")
+                self.ttk.Label(item, text=f"Erwartete Wirkung: {row['effect']}", style="Muted.TLabel", wraplength=880, justify="left").pack(anchor="w", pady=(4, 0))
+                self.ttk.Label(item, text=f"Risiko: {row['risk']}\nRücknahme: {row['restore']}", style="Muted.TLabel", wraplength=880, justify="left").pack(anchor="w", pady=(3, 0))
+        self.optimizer_evidence_card.pack(fill="x", pady=(14, 0))
 
     def _coordinator(self) -> Cs2ReviewCoordinator:
         manifest_path = self.controller.validate_current_workflow()

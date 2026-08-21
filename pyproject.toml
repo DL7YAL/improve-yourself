@@ -20,6 +20,7 @@ renderer-spike = ["panda3d==1.10.16", "panda3d-gltf==1.3.0"]
 iy-analyze = "improve_yourself.cli:main"
 iy-replay-viewer = "improve_yourself.viewer:main"
 iy-system-check = "improve_yourself.system_check:main"
+iy-optimizer-matrix = "improve_yourself.optimizer_evidence:main"
 iy-workflow = "improve_yourself.workflow:main"
 iy-review-server = "improve_yourself.review_server:main"
 iy-analysis-flow = "improve_yourself.analysis_flow:main"

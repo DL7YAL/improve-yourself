@@ -12,9 +12,27 @@ from improve_yourself.analyzer_shell import (
     UI_REFERENCE_STATUS,
     dashboard_layout_metrics,
     default_output_root,
+    optimizer_evidence_view,
     system_check_result_view,
     system_scan_home_view,
 )
+
+
+def test_optimizer_evidence_view_keeps_missing_cs2_state_explicit() -> None:
+    payload = {
+        "schema": "iy.system_check/v1",
+        "checks": [
+            {"id": "gpu", "evidence": {"adapters": [{"name": "AMD Radeon RX 7900 XTX", "driver_version": "24.10.1"}]}},
+            {"id": "display", "evidence": {"refresh_rates_hz": [240]}},
+            {"id": "memory", "evidence": {"total_gb": 32}},
+        ],
+    }
+    view = optimizer_evidence_view(payload)
+    assert view is not None
+    assert view["profile_source"] == "READ_ONLY_SYSTEM_CHECK"
+    assert view["performance_evidence"] == "NOT_MEASURED"
+    assert "cs2.refresh_hz" in view["missing_input_data"]
+    assert any(row["evidence_class"] == "CONDITIONAL" for row in view["rows"])
 
 
 def test_packaged_windows_default_output_is_stable_and_user_writable(monkeypatch: pytest.MonkeyPatch) -> None:
