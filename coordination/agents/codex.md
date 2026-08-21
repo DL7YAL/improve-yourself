@@ -1,5 +1,17 @@
 # Codex
 
+## 2026-08-21 — Canonical SightlineResult evaluator
+
+STATUS: done
+TASK: Implement only canonical sightline evaluation from one ReplayFrame and the verified VisibilityGeometry, with exact tick/player identity and visible/occluded/unknown evidence; do not draw an overlay or infer smoke.
+BRANCH: `dev/v1-foundation`
+CHANGED: Added `sightlines.py` with immutable `SightlineResult`, explicit decision table, separate smoke-evidence boundary and unknown-by-default implementation. Added the canonical `replay_frame_from_dict` restore path and removed the renderer spike's duplicate frame mapping. Added evaluator/round-trip tests and evidence documentation; updated CURRENT/handoff. No renderer drawing, asset, benchmark, smoke approximation, utility/event overlay, model, ReplayController semantics, Optimizer/System Check or packaging change.
+VERIFIED: 17/17 focused sightline/visibility/renderer tests and 81/81 complete tests pass; full Setup-V1 and five CLI smokes pass. On real Anubis round 1/tick 6401, observer `steam:76561198009555616` to nearby `steam:76561198263389260` returns geometry clear + smoke unknown = final unknown, never visible. The same observer to `steam:76561198066871323` returns verified geometry blocked + smoke unknown = occluded. Exact tick and both identities remain in each immutable result/evidence.
+DECISIONS: Geometry blocked is sufficient for occluded; geometry unknown remains unknown. Geometry clear becomes visible only with separately evidenced smoke clear. Default smoke coverage is unknown because this slice has no accepted V1 smoke-volume approximation. Evaluation stays outside the renderer and consumes shared replay truth.
+OPEN: No overlay exists yet, and no real result can be called visible without complete relevant smoke evidence. Smoke approximation remains a later explicit Slice-F boundary rather than a shortcut here.
+NEXT: Implement only a renderer presentation boundary for already evaluated SightlineResult values: fixed visible/occluded/unknown colors and eye-to-eye segments from the same canonical frame, without recomputing geometry or smoke. Prove FP/fixed-TP switching preserves tick/player/result. Do not add smoke approximation or other utility/event overlays.
+COMPUTER_USE: no UI action in this slice.
+
 ## 2026-08-21 — Verified TP camera obstruction adjustment
 
 STATUS: done

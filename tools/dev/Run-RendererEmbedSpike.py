@@ -10,23 +10,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from improve_yourself.panda_renderer import PandaReplayRenderer
-from improve_yourself.replay_contract import PlayerState, ReplayFrame, Vec3
+from improve_yourself.replay_contract import replay_frame_from_dict
 from improve_yourself.replay_store import ReplayStore
-
-
-def _vec(value):
-    return None if value is None else Vec3(float(value["x"]), float(value["y"]), float(value["z"]))
-
-
-def _frame(value):
-    players = tuple(
-        PlayerState(
-            item["player_id"], item["active"], item.get("alive"), item["team"], _vec(item.get("position")),
-            item.get("view_yaw_deg"), item.get("view_pitch_deg"), _vec(item.get("velocity")), item.get("health"),
-            item.get("armor"), item.get("weapon"), tuple(item.get("availability", ())),
-        ) for item in value["players"]
-    )
-    return ReplayFrame(value["tick"], value["round_number"], value.get("time_in_round_seconds"), players, (), ())
 
 
 def main() -> int:
@@ -40,7 +25,7 @@ def main() -> int:
     chosen = None
     for round_number in store.round_numbers:
         for raw in store.load_round(round_number)["frames"]:
-            candidate = _frame(raw)
+            candidate = replay_frame_from_dict(raw)
             if any(p.active and p.alive is not False and p.position and p.view_yaw_deg is not None and p.view_pitch_deg is not None for p in candidate.players):
                 chosen = candidate
                 break
