@@ -57,8 +57,18 @@ def test_builds_complete_tick_state_and_exact_event_tick() -> None:
     assert [frame["tick"] for frame in chunk["frames"]] == [100, 101, 102]
     assert chunk["frames"][1]["players"] == []
     assert chunk["frames"][1]["events"][0]["type"] == "kill"
+    assert chunk["frames"][1]["events"][0]["details"]["headshot"] is True
     assert chunk["frames"][0]["players"][0]["player_id"] == "steam:7"
     assert chunk["frames"][0]["players"][0]["velocity"] == {"x": 6.0, "y": 7.0, "z": 8.0}
+
+
+def test_kill_event_retains_objective_awpy_qualifiers() -> None:
+    registry = IdentityRegistry("a" * 64)
+    events = normalize_events("kills", [{
+        "tick": 5, "attacker_steamid": 7, "attacker_name": "A", "victim_steamid": 8,
+        "victim_name": "B", "penetrated": 2, "through_smoke": True, "attacker_blind": True,
+    }], registry)
+    assert events[5][0].details == {"penetrated": 2, "attacker_blind": True, "thrusmoke": True}
 
 
 def test_duplicate_display_names_keep_distinct_steam_identity() -> None:

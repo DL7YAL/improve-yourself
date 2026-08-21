@@ -22,6 +22,8 @@ iy-replay-viewer = "improve_yourself.viewer:main"
 iy-system-check = "improve_yourself.system_check:main"
 iy-workflow = "improve_yourself.workflow:main"
 iy-review-server = "improve_yourself.review_server:main"
+iy-analysis-flow = "improve_yourself.analysis_flow:main"
+iy-demo-workflow = "improve_yourself.demo_workflow:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

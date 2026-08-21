@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-21 — Real neutral demo-to-review workflow
+
+STATUS: partial
+TASK: Consolidate the existing Awpy/canonical replay pipeline into a real neutral Demo→Selection→Profile→Rules→Merged Scenes→Review workflow and prove it on a real CS2 demo, including a CS2 tick jump.
+BRANCH: `dev/v1-foundation`
+CHANGED: Added `analysis_flow.py` (roster/starting line-ups, Full Demo/player selection, neutral profile, objective indicators/rules, context merge, timeline/JSON and required selection UI), `demo_workflow.py` (hash-bound real `.dem` orchestration and local review artifacts), two public CLIs and tests. Replay-v2 kill normalization now preserves evidenced headshot/penetration/through-smoke/attacker-blind qualifiers. Setup smokes seven CLIs. Added locked product decision, evidence doc and updated CURRENT/handoff. No fake results, suspect verdict, OBS/video/ML, Optimizer, benchmark, asset or 3D change.
+VERIFIED: 97/97 tests, dependency check, seven CLI smokes and diff check pass. Real 477-MB source hash `2d70058ba006…` completed through Awpy 2.0.2: Mirage, 30 rounds, 10 named players, observed 5 CT/5 T starting line-ups, 201 kills, 98 headshots, 30 entries, 21 smoke kills, 6 wallbangs, 19 bounded multi-kill combinations. 375 objective markers/rule matches merged into 97 scenes; explicit one-player selection produced 35 and deduplicated IDs. Timeline/JSON/HTML plus commands file generated; first scene is round 1/tick 6352 with `demo_gototick 6352`. Trade/info rules correctly remain disabled where timing/sound/context evidence is insufficient.
+DECISIONS: Standard engine is neutral and objective-anchor-only; weak single information indicators cannot emit scenes. CT/T are starting-line-up quick selectors within Player Select, not a third mode. Context is 128 ticks before/256 after, merge gap 96; two same-attacker kills within 320 ticks form the V1 multi-kill combination. Missing tick rate prevents trade inference. Generated match data stays ignored/local.
+OPEN: DONE is not yet claimed. CS2 launched to main menu, but Computer Use detected active user input when settings were opened and stopped before loading the demo/tick. Exact prerequisite: Tristan leaves CS2 idle and authorizes/resumes the local check; then load the same demo and visibly confirm generated tick 6352. No code blocker is known.
+NEXT: With CS2 idle, perform only the same-demo runtime jump to generated tick `6352`, capture the observed landing, then update this handoff to done if it succeeds; if the command is rejected, correct only the review-launch command and rerun its focused/full gates.
+MODEL_PROFILE: terra
+MODEL_REASON: Multi-component parser/rule/scene/workflow integration with real-data validation; no Sol escalation needed.
+COMPUTER_USE: yes; CS2 main menu reached, then stopped safely on detected user input before any demo/tick action.
+
 ## 2026-08-21 — ReplayController-to-renderer session adapter
 
 STATUS: done

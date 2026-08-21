@@ -206,9 +206,11 @@ def normalize_events(
         position_prefix = "attacker_" if channel in {"kills", "damages"} else "player_" if channel == "shots" else ""
         position = _vec3(row, position_prefix)
         details = {}
-        for key in ("weapon", "headshot", "dmg_health", "dmg_armor", "bombsite"):
+        for key in ("weapon", "headshot", "penetrated", "thrusmoke", "attacker_blind", "dmg_health", "dmg_armor", "bombsite"):
             if row.get(key) is not None:
                 details[key] = row[key]
+        if "thrusmoke" not in details and row.get("through_smoke") is not None:
+            details["thrusmoke"] = row["through_smoke"]
         by_tick[tick].append(
             ReplayEvent(
                 event_id=f"{channel}:{tick}:{index}",
