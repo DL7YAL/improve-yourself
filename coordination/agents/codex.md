@@ -1,5 +1,17 @@
 # Codex
 
+## 2026-08-21 — Slice D renderer protocol and native embed proof
+
+STATUS: done
+TASK: Continue only the documented Slice D: implement the minimal renderer boundary and prove local Anubis load, canonical camera updates, native embedding, resize and dispose without packaging assets or adding replay interpretation.
+BRANCH: `dev/v1-foundation`
+CHANGED: Added backend-neutral `renderer.py` with `ReplayRenderer`, deterministic FP/fixed-TP camera functions, explicit unavailable-state behavior and `NullRenderer`; added disposable `panda_renderer.py`, the local `Run-RendererEmbedSpike.py`, focused tests, exact optional spike dependencies and the Slice-D evidence note. Updated this handoff and `coordination/CURRENT.md`. No benchmark, smoke, geometry, Optimizer/System Check, replay schema/controller, tracked result or local-only asset changed.
+VERIFIED: 8/8 focused renderer tests and 71/71 complete tests pass; Python compilation passes. With optional Panda3D 1.10.16 + panda3d-gltf 1.3.0, the verified ignored Anubis GLB loaded in a Panda viewport parented to a native Tk child window. Canonical tick 4659/player `steam:76561198009555616` drove the fixed TP camera; observed sizes were startup `1x1`, then `1100x700` and `900x560`; automatic dispose/close returned structured PASS. The ignored screenshot was visually inspected and contains local map geometry in the camera frustum. Materialless-physics warnings are expected and non-blocking for this wireframe proof.
+DECISIONS: The renderer protocol and V1 camera semantics are stable; Panda3D remains only the first candidate behind the boundary. The optional dependency does not enter the default V1 install. Valve-derived geometry/replay/screenshot remain ignored and local-only. No freecam, overlays, events, player models, smoke interpretation, packaging or independent demo parsing was introduced.
+OPEN: Production renderer/UI choice and distributable art remain undecided by design. Visibility-mesh obstruction correction is the next bounded implementation gap; the current TP spike does not yet adjust an obstructed camera.
+NEXT: Implement only the verified visibility-mesh query boundary and the fixed Third-Person camera-to-anchor obstruction adjustment, including `camera_adjusted=true` plus clear/blocked/unknown tests. Do not add overlays, smoke interpretation, models, free camera, packaging or another replay truth.
+COMPUTER_USE: Local native window was launched for a timed visual proof; no authentication, external transmission or persistent app/system setting change.
+
 ## 2026-08-17 — Final `dev/v1-foundation` review toward `main`
 
 STATUS: ready_for_review
