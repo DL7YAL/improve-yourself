@@ -8,7 +8,7 @@ import pytest
 from improve_yourself.analyzer_shell import AnalyzerShellController, UI_REFERENCE_STATUS
 
 
-def test_experimental_shell_exposes_binding_product_sections_without_inventing_missing_references() -> None:
+def test_experimental_shell_exposes_binding_product_sections_from_canonical_design_spec() -> None:
     assert tuple(UI_REFERENCE_STATUS) == (
         "Dashboard", "Analyzer / Review", "Rules", "Reports",
         "System Check / Optimizer", "Settings", "Tactical Replay",
@@ -16,9 +16,8 @@ def test_experimental_shell_exposes_binding_product_sections_without_inventing_m
     assert UI_REFERENCE_STATUS["Analyzer / Review"] == "IMPLEMENTED"
     assert UI_REFERENCE_STATUS["Rules"] == "IMPLEMENTED"
     assert UI_REFERENCE_STATUS["Tactical Replay"] == "IMPLEMENTED"
-    assert {name for name, status in UI_REFERENCE_STATUS.items() if status == "NEEDS_UI_REFERENCE"} == {
-        "Dashboard", "Reports", "Settings",
-    }
+    assert "NEEDS_UI_REFERENCE" not in UI_REFERENCE_STATUS.values()
+    assert UI_REFERENCE_STATUS["System Check / Optimizer"] == "PARTIAL_REFERENCE"
 
 
 def _write_result(root: Path, selected: tuple[str, ...] = (), source_hash: str = "a" * 64) -> Path:

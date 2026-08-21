@@ -16,6 +16,7 @@ from .cs2_review_coordinator import Cs2ReviewCoordinator, ReviewCoordinatorServe
 from .demo_workflow import preflight_demo_workflow, rerender_demo_workflow
 from .local_profiles import OBJECTIVE_RULES, LocalProfileStore
 from .replay_store import ReplayStore
+from .system_check import run_system_check
 
 
 _SOURCE_HASH = re.compile(r"[0-9a-f]{64}")
@@ -25,12 +26,12 @@ _REVIEW_ARTIFACTS = (
 )
 
 UI_REFERENCE_STATUS = {
-    "Dashboard": "NEEDS_UI_REFERENCE",
+    "Dashboard": "IMPLEMENTED",
     "Analyzer / Review": "IMPLEMENTED",
     "Rules": "IMPLEMENTED",
-    "Reports": "NEEDS_UI_REFERENCE",
+    "Reports": "IMPLEMENTED",
     "System Check / Optimizer": "PARTIAL_REFERENCE",
-    "Settings": "NEEDS_UI_REFERENCE",
+    "Settings": "IMPLEMENTED",
     "Tactical Replay": "IMPLEMENTED",
 }
 
@@ -344,6 +345,7 @@ class AnalyzerShellApp:
         style.configure("TFrame", background=_THEME["night"])
         style.configure("Content.TFrame", background=_THEME["night"])
         style.configure("Card.TFrame", background=_THEME["panel"], relief="solid", borderwidth=1)
+        style.configure("CardInner.TFrame", background=_THEME["panel"], relief="flat", borderwidth=0)
         style.configure("Sidebar.TFrame", background=_THEME["deep"])
         style.configure("TLabel", background=_THEME["night"], foreground=_THEME["ink"])
         style.configure("Card.TLabel", background=_THEME["panel"], foreground=_THEME["ink"])
@@ -364,6 +366,9 @@ class AnalyzerShellApp:
         self.demo_status = tk.StringVar(value="○ Demo-Modus: noch nicht geprüft")
         self.filename_status = tk.StringVar(value="○ Dateiname: noch nicht geprüft")
         self.preflight_message = tk.StringVar(value="Vor dem Review CS2 prüfen.")
+        self.overview_status = tk.StringVar(value="Noch keine Demo geladen")
+        self.report_status = tk.StringVar(value="Nach einer Analyse stehen Report und Timeline lokal bereit.")
+        self.system_status = tk.StringVar(value="System Check wurde noch nicht ausgeführt.")
 
         shell = ttk.Frame(self.root, style="Content.TFrame")
         shell.pack(fill="both", expand=True)
@@ -469,9 +474,9 @@ class AnalyzerShellApp:
         preflight.pack(fill="x", pady=10)
         for variable in (self.netcon_status, self.demo_status, self.filename_status, self.preflight_message):
             ttk.Label(preflight, textvariable=variable).pack(anchor="w")
-        self._build_reference_page("Dashboard", "Dashboard", "Die verbindliche Detailreferenz für Kacheln, Kennzahlen und Leerzustand fehlt im Repository.")
-        self._build_reference_page("Reports", "Reports", "Der Bericht wird real erzeugt; für Listen-, Filter- und Detailansicht fehlt die verbindliche visuelle Referenz.")
-        self._build_reference_page("Settings", "Settings", "Midnight / Metallic Blue ist verbindlich aktiv. Das konkrete Settings-Layout benötigt die beschlossene Referenz.")
+        self._build_dashboard_page()
+        self._build_reports_page()
+        self._build_settings_page()
         self._build_system_page()
         self._build_tactical_page()
         self._show_page("Analyzer / Review")
@@ -482,14 +487,51 @@ class AnalyzerShellApp:
         for page_name, button in self.nav_buttons.items():
             button.configure(style="NavActive.TButton" if page_name == name else "Nav.TButton")
 
-    def _build_reference_page(self, key: str, title: str, detail: str) -> None:
-        page = self.pages[key]
-        self.ttk.Label(page, text=title, font=("Segoe UI", 24, "bold")).pack(anchor="w")
-        card = self.ttk.Frame(page, style="Card.TFrame", padding=24)
+    def _build_dashboard_page(self) -> None:
+        page = self.pages["Dashboard"]
+        self.ttk.Label(page, text="Dashboard", font=("Segoe UI", 24, "bold")).pack(anchor="w")
+        self.ttk.Label(page, text="Lokaler Einstieg und aktueller Arbeitsstand", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
+        grid = self.ttk.Frame(page, style="Content.TFrame")
+        grid.pack(fill="x")
+        for column, (title, detail, target) in enumerate((
+            ("Demo Analyzer", "Echte Demo lesen, Spieler wählen und Szenen erzeugen.", "Analyzer / Review"),
+            ("Tactical Replay", "Erzeugte Situationen aus derselben Replay-Wahrheit prüfen.", "Tactical Replay"),
+            ("System Check", "Lokale Systemfakten read-only erfassen.", "System Check / Optimizer"),
+        )):
+            grid.columnconfigure(column, weight=1, uniform="modules")
+            card = self.ttk.Frame(grid, style="Card.TFrame", padding=20)
+            card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 6, 0 if column == 2 else 6))
+            self.ttk.Label(card, text=title, style="Card.TLabel", font=("Segoe UI Semibold", 14)).pack(anchor="w")
+            self.ttk.Label(card, text=detail, style="Muted.TLabel", wraplength=250, justify="left").pack(anchor="w", pady=(8, 16))
+            self.ttk.Button(card, text="Öffnen", command=lambda value=target: self._show_page(value)).pack(anchor="w")
+        recent = self.ttk.Frame(page, style="Card.TFrame", padding=20)
+        recent.pack(fill="x", pady=(16, 0))
+        self.ttk.Label(recent, text="Aktueller lokaler Stand", style="Card.TLabel", font=("Segoe UI Semibold", 14)).pack(anchor="w")
+        self.ttk.Label(recent, textvariable=self.overview_status, style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(8, 0))
+
+    def _build_reports_page(self) -> None:
+        page = self.pages["Reports"]
+        self.ttk.Label(page, text="Reports", font=("Segoe UI", 24, "bold")).pack(anchor="w")
+        self.ttk.Label(page, text="Nachvollziehbare Ergebnisse aus der aktuellen lokalen Analyse", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
+        card = self.ttk.Frame(page, style="Card.TFrame", padding=20)
+        card.pack(fill="x")
+        self.ttk.Label(card, text="Analysebericht", style="Card.TLabel", font=("Segoe UI Semibold", 14)).pack(anchor="w")
+        self.ttk.Label(card, textvariable=self.report_status, style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(8, 14))
+        actions = self.ttk.Frame(card, style="CardInner.TFrame")
+        actions.pack(fill="x")
+        self.report_button = self.ttk.Button(actions, text="Report JSON öffnen", command=lambda: self._open_artifact("report"), state="disabled")
+        self.report_button.pack(side="left")
+        self.timeline_button = self.ttk.Button(actions, text="Timeline JSON öffnen", command=lambda: self._open_artifact("timeline"), state="disabled")
+        self.timeline_button.pack(side="left", padx=8)
+
+    def _build_settings_page(self) -> None:
+        page = self.pages["Settings"]
+        self.ttk.Label(page, text="Settings", font=("Segoe UI", 24, "bold")).pack(anchor="w")
+        card = self.ttk.Frame(page, style="Card.TFrame", padding=20)
         card.pack(fill="x", pady=(18, 0))
-        self.ttk.Label(card, text="NEEDS_UI_REFERENCE", style="Card.TLabel", foreground=_THEME["ice"], font=("Segoe UI Semibold", 10)).pack(anchor="w")
-        self.ttk.Label(card, text=detail, style="Muted.TLabel", wraplength=760, justify="left").pack(anchor="w", pady=(10, 0))
-        self.ttk.Label(card, text="Keine Ersatzmaske und keine erfundenen Produktdaten.", style="Muted.TLabel").pack(anchor="w", pady=(5, 0))
+        self.ttk.Label(card, text="Darstellung", style="Card.TLabel", font=("Segoe UI Semibold", 14)).pack(anchor="w")
+        self.ttk.Label(card, text="Midnight / Metallic Blue · verbindliches Standarddesign", style="Muted.TLabel").pack(anchor="w", pady=(8, 0))
+        self.ttk.Label(card, text="Keine weiteren Einstellungen werden angeboten, solange keine reale konfigurierbare Funktion dahintersteht.", style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(6, 0))
 
     def _build_system_page(self) -> None:
         page = self.pages["System Check / Optimizer"]
@@ -499,7 +541,9 @@ class AnalyzerShellApp:
         card.pack(fill="x")
         self.ttk.Label(card, text="System Check", style="Card.TLabel", font=("Segoe UI Semibold", 15)).pack(anchor="w")
         self.ttk.Label(card, text="Die technische Baseline ist vorhanden. Die vollständige Reiterdarstellung ist PARTIAL_REFERENCE und wird nicht durch erfundene Werte ersetzt.", style="Muted.TLabel", wraplength=780, justify="left").pack(anchor="w", pady=(8, 0))
-        self.ttk.Label(card, text="Optimizer bleibt außerhalb dieses Replay-Konsolidierungsschritts.", style="Muted.TLabel").pack(anchor="w", pady=(8, 0))
+        self.ttk.Label(card, text="Optimizer bleibt außerhalb dieses Replay-Konsolidierungsschritts.", style="Muted.TLabel").pack(anchor="w", pady=(8, 12))
+        self.ttk.Button(card, text="System Check ausführen", style="Primary.TButton", command=self._run_system_check).pack(anchor="w")
+        self.ttk.Label(card, textvariable=self.system_status, style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(10, 0))
 
     def _build_tactical_page(self) -> None:
         page = self.pages["Tactical Replay"]
@@ -508,6 +552,8 @@ class AnalyzerShellApp:
         card.pack(fill="x", pady=(18, 0))
         self.ttk.Label(card, text="Eine gemeinsame Replay-Wahrheit", style="Card.TLabel", font=("Segoe UI Semibold", 15)).pack(anchor="w")
         self.ttk.Label(card, text="Nach der Analyse wird der echte Tactical-Replay-HTML-Export zusammen mit Timeline, Report und CS2-Ticks erzeugt. Der Review-Einstieg bleibt im Analyzer freigegeben, sobald die lokale CS2-Prüfung bestanden ist.", style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(8, 0))
+        self.tactical_button = self.ttk.Button(card, text="Tactical Replay öffnen", command=lambda: self._open_artifact("tactical_replay"), state="disabled")
+        self.tactical_button.pack(anchor="w", pady=(14, 0))
 
     def run(self) -> None:
         self.root.mainloop()
@@ -597,6 +643,17 @@ class AnalyzerShellApp:
         )
         phase = "Auswahl bereit" if result.status == "READY_FOR_SELECTION" else f"{result.scene_count} Szenen · Review bereit"
         self.status.set(f"{result.map_id} · {phase}")
+        self.overview_status.set(
+            f"{result.source_demo_name or 'Lokaler Workflow'} · {result.map_id} · {result.round_count} Runden · "
+            f"{len(result.players)} Spieler · {phase}"
+        )
+        ready = result.status == "READY_FOR_REVIEW"
+        self.report_status.set(
+            f"{result.scene_count} zusammengeführte Szenen · Quelle {result.source_sha256[:12]}…"
+            if ready else "Demo ist gelesen. Report und Timeline entstehen erst nach der expliziten Analyse."
+        )
+        for button in (self.report_button, self.timeline_button, self.tactical_button):
+            button.configure(state="normal" if ready else "disabled")
         self.cs2_button.configure(state="normal" if result.status == "READY_FOR_REVIEW" else "disabled")
         self._select_profile()
         self._reset_preflight()
@@ -651,6 +708,40 @@ class AnalyzerShellApp:
 
     def _open_review(self) -> None:
         self._preflight(open_after=True)
+
+    def _open_artifact(self, name: str) -> None:
+        try:
+            manifest_path = self.controller.validate_current_workflow()
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            relative = manifest.get("artifacts", {}).get(name)
+            if not isinstance(relative, str):
+                raise ValueError(f"Artefakt ist nicht verfügbar: {name}")
+            artifact = (manifest_path.parent / relative).resolve()
+            if manifest_path.parent != artifact and manifest_path.parent not in artifact.parents:
+                raise ValueError("Artefakt liegt außerhalb des lokalen Workflows")
+            if not artifact.is_file():
+                raise ValueError(f"Artefaktdatei fehlt: {name}")
+            webbrowser.open(artifact.as_uri())
+        except Exception as error:
+            self.status.set(f"Fehler: {error}")
+
+    def _run_system_check(self) -> None:
+        self.system_status.set("Lokale Systemfakten werden read-only erfasst …")
+
+        def worker() -> None:
+            try:
+                output = run_system_check(self.controller.output_root / "system-check.json")
+                payload = json.loads(output.read_text(encoding="utf-8"))
+                summary = payload["summary"]
+                message = (
+                    f"Abgeschlossen: {summary['OK']} OK · {summary['REVIEW']} REVIEW · "
+                    f"{summary['ACTION_REQUIRED']} ACTION REQUIRED · keine Änderungen angewendet."
+                )
+            except Exception as error:
+                message = f"System Check fehlgeschlagen: {error}"
+            self.root.after(0, lambda: self.system_status.set(message))
+
+        threading.Thread(target=worker, daemon=True).start()
 
     def _coordinator(self) -> Cs2ReviewCoordinator:
         manifest_path = self.controller.validate_current_workflow()

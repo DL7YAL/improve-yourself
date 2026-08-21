@@ -535,4 +535,19 @@ NEXT: Tristan ordnet die drei eindeutigen Detailreferenzen zu oder nimmt den kon
 MODEL_PROFILE: terra
 MODEL_REASON: Zusammenhängende UI-/Funktionskonsolidierung mit Tests und visueller Runtime-Abnahme.
 COMPUTER_USE: yes
-COMMIT/PR: wird mit diesem Handoff committed und auf `origin/dev/v1-foundation` gepusht.
+COMMIT/PR: Implementierungsstand `4971b96` auf `origin/dev/v1-foundation`; dieser Handoff-Nachtrag dokumentiert die veröffentlichte Referenz.
+
+## Handoff 2026-08-21 — Canonical design reference integration
+
+STATUS: review
+TASK: Die nachgereichten kanonischen Dateien unter `docs/design/` in den laufenden Experimental-UI-Auftrag integrieren.
+BRANCH: `dev/v1-foundation`
+CHANGED: Vier reine Designreferenz-Commits aus `origin/beast/analyzer-default-criteria-v1` nachvollziehbar übernommen; Dashboard mit realen Modul-Quick-Actions und lokalem Workflowstatus umgesetzt; Reports mit hash-/workflowgebundenem Zugriff auf echte Report-/Timeline-Artefakte; Settings auf das reale aktive Theme begrenzt; Tactical Replay öffnet nur das validierte lokale Artefakt; System Check ist direkt read-only ausführbar. Referenzmatrix, Tests, Experimental-Spezifikation, Shared Base und CURRENT entsprechend aktualisiert.
+VERIFIED: 120/120 pytest PASS; compileall PASS; `git diff --check` PASS. Windows-Sichtprüfung bei 1360x860: gemeinsame dunkle Shell, vollständige Variant-3-Wortmarke, Analyzer, Dashboard-Modulkarten und Reports-Leerzustand PASS; eine unnötige Innenrahmenlinie im Reports-Aktionsbereich wurde dabei gefunden und entfernt.
+DECISIONS: `docs/design/README.md`, `UI_SPEC.md`, `BRANDING.md` und `MOCKUP_INDEX.md` sind verbindlich. Fehlende Standalone-Rasterbilder blockieren Dashboard/Reports/Settings nicht mehr, weil `MOCKUP_INDEX.md` ausdrücklich die Ableitung aus globaler Shell und nächstem freigegebenem Modul vorgibt. Keine Fake-Werte, Fülloptionen oder Optimizer-Funktion ergänzt.
+OPEN: System Check / Optimizer bleibt `PARTIAL_REFERENCE`, da Optimizer-Funktion weiterhin außerhalb dieses Replay-Strangs liegt. Produktabnahme und Merge bleiben Tristan vorbehalten.
+NEXT: Vollständigen UI-/Produktfluss anhand des gepushten Experimental-Builds prüfen; nur konkrete Abweichungen gegen `docs/design/` korrigieren.
+MODEL_PROFILE: terra
+MODEL_REASON: Verbindliche Design-/Funktionsintegration mit lokalem Artefaktzugriff, Tests und GUI-Abnahme.
+COMPUTER_USE: yes
+COMMIT/PR: wird als abschließender kanonischer UI-Abgleich auf `dev/v1-foundation` committed und gepusht.

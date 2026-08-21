@@ -49,22 +49,22 @@ No OBS, clip creation, video editor, automated rendering, forced window mode/res
 
 ## Acceptance status
 
-The engineering gate is complete. Status is `REVIEW`: the functional flow and every available binding UI reference are consolidated. Dashboard, Reports and Settings remain explicitly `NEEDS_UI_REFERENCE`; they are not authorized for free redesign.
+The engineering gate is complete. Status is `REVIEW`: the functional flow and the canonical references under `docs/design/` are consolidated. No unsupported product metric or setting is fabricated.
 
 # Verbindliche UI-Konsolidierung
 
 Der Experimental-Build verwendet die bereits freigegebene Variant-3-Markenquelle und die belegten Theme-Tokens: Midnight `#07111e`, Panel `#102033`, Metallic `#264766`, Ice `#8edbff` und Ink `#edf7ff`. Die Desktop-Typografie bleibt Segoe UI; Fenster, Sidebar, Navigation und Inhaltsflächen bilden eine durchgehend dunkle Anwendung ohne weiße Fremdfläche im Titel- oder Kopfbereich.
 
-Die gemeinsame Shell führt folgende Produktbereiche zusammen. `NEEDS_UI_REFERENCE` ist dabei ein bewusst sichtbarer, fail-closed Zustand und kein fertiges Reiterdesign:
+Die gemeinsame Shell führt folgende Produktbereiche zusammen. Für Bereiche ohne eigenes Rastermockup gilt gemäß `docs/design/MOCKUP_INDEX.md` die globale Shell plus die nächstliegende belegte Modulstruktur:
 
 | Bereich | UI-Status | Verbindlicher Inhalt |
 | --- | --- | --- |
-| Dashboard | `NEEDS_UI_REFERENCE` | Keine erfundenen Kacheln, Kennzahlen oder Leerzustände. |
+| Dashboard | `IMPLEMENTED` | Modul-Karten, Quick Actions und ausschließlich echter lokaler Workflowstatus. |
 | Analyzer / Review | `IMPLEMENTED` | Demoimport, Parser-Preflight, benannte Teams, Auswahl, Profil, Analyse und CS2-Readiness. |
 | Rules | `IMPLEMENTED` | Objektive V1-Anker und profilgebundene Regelwahl; Custom bleibt lokal. |
-| Reports | `NEEDS_UI_REFERENCE` | Reales Report-Artefakt vorhanden; Listen-/Filter-/Detailansicht nicht frei gestaltet. |
+| Reports | `IMPLEMENTED` | Reale Report-/Timeline-Artefakte, Quellenhash und Szenenzahl; keine Fake-Kennzahlen. |
 | System Check / Optimizer | `PARTIAL_REFERENCE` | Read-only Grenze sichtbar; kein Apply und keine Replay-fremde Optimizer-Erweiterung. |
-| Settings | `NEEDS_UI_REFERENCE` | Verbindliches dunkles Standardtheme sichtbar, konkretes Einstellungs-Layout offen. |
+| Settings | `IMPLEMENTED` | Nur das reale verbindliche Theme; keine Fülloptionen ohne Funktion. |
 | Tactical Replay | `IMPLEMENTED` | Gemeinsame Replay-Wahrheit und vorhandener echter HTML-Export klar zugeordnet. |
 
-Die Referenzmatrix ist zusätzlich als `UI_REFERENCE_STATUS` in der Shell festgeschrieben und getestet. Für einen späteren Ausbau der drei offenen Reiter sind die ursprünglichen, eindeutig zuordenbaren Mockups oder eine neue ausdrückliche Freigabe erforderlich.
+Die Referenzmatrix ist zusätzlich als `UI_REFERENCE_STATUS` in der Shell festgeschrieben und getestet. System Check / Optimizer bleibt `PARTIAL_REFERENCE`, weil nur die read-only System-Check-Funktion in diesem Strang real freigegeben ist; das ist eine Funktionsgrenze, keine Einladung zu erfundener UI.
