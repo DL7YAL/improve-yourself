@@ -12,7 +12,7 @@ import threading
 import webbrowser
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 from .analysis_flow import AnalysisProfile
 from .cs2_review_coordinator import Cs2ReviewCoordinator, ReviewCoordinatorServer, ReviewPreflight
@@ -35,7 +35,7 @@ UI_REFERENCE_STATUS = {
     "Analyzer / Review": "IMPLEMENTED",
     "Rules": "IMPLEMENTED",
     "Reports": "IMPLEMENTED",
-    "System Check / Optimizer": "PARTIAL_REFERENCE",
+    "System Check / Optimizer": "IMPLEMENTED",
     "Settings": "IMPLEMENTED",
     "Tactical Replay": "IMPLEMENTED",
 }
@@ -103,6 +103,75 @@ def system_scan_home_view(payload: dict[str, object]) -> dict[str, object] | Non
         "overall": f"{counts.get('OK', 0)} OK · {counts.get('REVIEW', 0)} zu prüfen · {counts.get('ACTION_REQUIRED', 0)} Handlungsbedarf",
         "attention": "Hinweise: " + ", ".join(attention) if attention else "Keine offenen Hinweise aus dem letzten Scan.",
         "entries": entries,
+    }
+
+
+def _system_evidence_text(value: object) -> str:
+    """Format persisted read-only evidence without inferring missing facts."""
+    if value is None:
+        return "nicht sicher ermittelt"
+    if isinstance(value, bool):
+        return "ja" if value else "nein"
+    if isinstance(value, (str, int, float)):
+        return str(value).strip() or "nicht verfügbar"
+    if isinstance(value, list):
+        rendered = [_system_evidence_text(item) for item in value]
+        return " · ".join(item for item in rendered if item) or "nicht verfügbar"
+    if isinstance(value, dict):
+        rendered = [
+            f"{key}: {_system_evidence_text(item)}"
+            for key, item in value.items()
+            if _system_evidence_text(item) != "nicht verfügbar"
+        ]
+        return " · ".join(rendered) or "nicht verfügbar"
+    return "nicht verfügbar"
+
+
+def system_check_result_view(payload: dict[str, object]) -> dict[str, object] | None:
+    """Turn an existing `iy.system_check/v1` document into display-only rows.
+
+    It intentionally presents the persisted summary, status and evidence as
+    separate fields. The view neither reevaluates the device nor turns an
+    unknown check into an actionable recommendation.
+    """
+    if payload.get("schema") != "iy.system_check/v1":
+        return None
+    summary = payload.get("summary")
+    checks = payload.get("checks")
+    policy = payload.get("policy")
+    if not isinstance(summary, dict) or not isinstance(checks, list) or not isinstance(policy, dict):
+        return None
+    rows: list[dict[str, str]] = []
+    for check in checks:
+        if not isinstance(check, dict):
+            continue
+        label = check.get("label")
+        status = check.get("status")
+        description = check.get("summary")
+        evidence = check.get("evidence")
+        if not all(isinstance(value, str) and value for value in (label, status, description)):
+            continue
+        rows.append({
+            "label": label,
+            "status": status if status in {"OK", "REVIEW", "ACTION_REQUIRED"} else "UNKNOWN",
+            "summary": description,
+            "evidence": _system_evidence_text(evidence if isinstance(evidence, dict) else None),
+        })
+    if not rows:
+        return None
+    return {
+        "generated_at_utc": str(payload.get("generated_at_utc") or "Zeitpunkt nicht verfügbar"),
+        "summary": {
+            "OK": str(summary.get("OK", 0)),
+            "REVIEW": str(summary.get("REVIEW", 0)),
+            "ACTION_REQUIRED": str(summary.get("ACTION_REQUIRED", 0)),
+        },
+        "policy": (
+            "Read-only · keine Änderungen angewendet"
+            if policy.get("read_only") is True and policy.get("changes_applied") is False
+            else "Ausführungsrichtlinie konnte nicht vollständig bestätigt werden"
+        ),
+        "rows": rows,
     }
 
 
@@ -1371,6 +1440,15 @@ class AnalyzerShellApp:
         self.ttk.Button(card, text="System Check ausführen", style="Primary.TButton", command=self._run_system_check).pack(anchor="w")
         self.ttk.Label(card, textvariable=self.system_status, style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(10, 0))
 
+        self.system_result_card = self.ttk.Frame(page, style="Card.TFrame", padding=18)
+        self.ttk.Label(self.system_result_card, text="ERFASSTE ERGEBNISSE", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
+        self.system_result_meta = self.ttk.Label(self.system_result_card, text="", style="Muted.TLabel", wraplength=940, justify="left")
+        self.system_result_meta.pack(anchor="w", pady=(6, 12))
+        self.system_result_grid = self.ttk.Frame(self.system_result_card, style="CardInner.TFrame")
+        self.system_result_grid.pack(fill="x")
+        for column in range(4):
+            self.system_result_grid.columnconfigure(column, weight=1, uniform="system-results")
+
     def _build_tactical_page(self) -> None:
         page = self.pages["Tactical Replay"]
         header = self.ttk.Frame(page, style="Content.TFrame")
@@ -1987,7 +2065,40 @@ class AnalyzerShellApp:
         self.dashboard_system_scan_overall.set(view["overall"])
         self.dashboard_system_scan_attention.set(view["attention"])
         self.dashboard_system_scan_attention_label.pack(before=self.dashboard_system_scan_details_button, anchor="w", pady=(1, 4))
+        self._render_system_check_results(payload)
         self.system_status.set(status_message)
+
+    def _render_system_check_results(self, payload: dict[str, object]) -> None:
+        view = system_check_result_view(payload)
+        if view is None:
+            return
+        summary = view["summary"]
+        self.system_result_meta.configure(
+            text=(
+                f"{view['generated_at_utc']} · {summary['OK']} OK · "
+                f"{summary['REVIEW']} zu prüfen · {summary['ACTION_REQUIRED']} Handlungsbedarf\n"
+                f"{view['policy']}"
+            )
+        )
+        for child in self.system_result_grid.winfo_children():
+            child.destroy()
+        status_colors = {
+            "OK": _THEME["success"],
+            "REVIEW": _THEME["cyan"],
+            "ACTION_REQUIRED": "#ffcc54",
+            "UNKNOWN": _THEME["muted"],
+        }
+        for index, row in enumerate(view["rows"]):
+            item = self.ttk.Frame(self.system_result_grid, style="Card.TFrame", padding=(12, 10))
+            column = index % 4
+            item.grid(row=index // 4, column=column, sticky="nsew", padx=(0 if column == 0 else 4, 0 if column == 3 else 4), pady=(0, 10))
+            header = self.ttk.Frame(item, style="CardInner.TFrame")
+            header.pack(fill="x")
+            self.ttk.Label(header, text=row["label"], style="Card.TLabel", font=(self.ui_font, 9, "bold")).pack(side="left")
+            self.ttk.Label(header, text=row["status"], style="Card.TLabel", foreground=status_colors[row["status"]], font=(self.ui_font, 8, "bold")).pack(side="right")
+            self.ttk.Label(item, text=row["summary"], style="Muted.TLabel", wraplength=225, justify="left").pack(anchor="w", pady=(7, 3))
+            self.ttk.Label(item, text=f"Evidenz: {row['evidence']}", style="Card.TLabel", wraplength=225, justify="left", font=(self.ui_font, 8)).pack(anchor="w")
+        self.system_result_card.pack(fill="x", pady=(14, 0))
 
     def _coordinator(self) -> Cs2ReviewCoordinator:
         manifest_path = self.controller.validate_current_workflow()

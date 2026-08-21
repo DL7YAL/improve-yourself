@@ -12,6 +12,7 @@ from improve_yourself.analyzer_shell import (
     UI_REFERENCE_STATUS,
     dashboard_layout_metrics,
     default_output_root,
+    system_check_result_view,
     system_scan_home_view,
 )
 
@@ -34,7 +35,7 @@ def test_experimental_shell_exposes_binding_product_sections_from_canonical_desi
     assert UI_REFERENCE_STATUS["Rules"] == "IMPLEMENTED"
     assert UI_REFERENCE_STATUS["Tactical Replay"] == "IMPLEMENTED"
     assert "NEEDS_UI_REFERENCE" not in UI_REFERENCE_STATUS.values()
-    assert UI_REFERENCE_STATUS["System Check / Optimizer"] == "PARTIAL_REFERENCE"
+    assert UI_REFERENCE_STATUS["System Check / Optimizer"] == "IMPLEMENTED"
 
 
 def test_dashboard_layout_keeps_cards_readable_without_global_scaling() -> None:
@@ -75,6 +76,25 @@ def test_system_scan_home_view_projects_existing_read_only_evidence_without_fake
 def test_system_scan_home_view_rejects_untrusted_or_missing_payloads() -> None:
     assert system_scan_home_view({}) is None
     assert system_scan_home_view({"schema": "iy.system_check/v1", "checks": "not-a-list"}) is None
+
+
+def test_system_check_result_view_keeps_evidence_and_unknowns_separate() -> None:
+    payload = {
+        "schema": "iy.system_check/v1", "generated_at_utc": "2026-08-21T12:00:00+00:00",
+        "summary": {"OK": 1, "REVIEW": 1, "ACTION_REQUIRED": 0},
+        "policy": {"read_only": True, "changes_applied": False, "elevation_requested": False},
+        "checks": [
+            {"label": "CPU", "status": "OK", "summary": "CPU erkannt.", "evidence": {"name": "Real CPU", "logical_processors": 16}},
+            {"label": "Secure Boot", "status": "REVIEW", "summary": "Status nicht sicher.", "evidence": {"enabled": None}},
+        ],
+    }
+    view = system_check_result_view(payload)
+    assert view is not None
+    assert view["summary"] == {"OK": "1", "REVIEW": "1", "ACTION_REQUIRED": "0"}
+    assert view["policy"] == "Read-only · keine Änderungen angewendet"
+    assert view["rows"][0]["evidence"] == "name: Real CPU · logical_processors: 16"
+    assert view["rows"][1]["evidence"] == "enabled: nicht sicher ermittelt"
+    assert system_check_result_view({"schema": "iy.system_check/v1", "summary": {}, "checks": [], "policy": {}}) is None
 
 
 def _write_result(root: Path, selected: tuple[str, ...] = (), source_hash: str = "a" * 64) -> Path:

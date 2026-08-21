@@ -832,6 +832,38 @@ MODEL_REASON: Letzter eng begrenzter Home-Surface-/Action-Chrome-Pass ohne Produ
 COMPUTER_USE: yes
 COMMIT/PR: Wird nach dem finalen Commit-/Push-Checkpoint ergänzt.
 
+# Handoff 2026-08-21 — Product decision: Home accepted / System Check next
+
+STATUS: IN_PROGRESS
+TASK: Die Produktentscheidung dokumentieren und den autorisierten nächsten Funktionsstrang System Check / Optimizer zunächst gegen den vorhandenen realen read-only Ergebnisfluss abgleichen.
+DECISION: **HOME STATUS: FUNCTIONALLY ACCEPTED / VISUAL FINALIZATION DEFERRED.** Home wird nicht als visuell final abgenommen. Navigation, Modulaufteilung, Systemscan-Projektion, Fortschritt, letzte Analysen und Informationsbereiche bleiben die akzeptierte funktionale Basis. Keine weitere isolierte Home-Korrektur und keine ungeprüfte globale Vererbung des aktuellen Stils. Ein späterer bewusst freigegebener Final-Polish entscheidet erst über globale Surface-, Card-, Button-, Border-, Radius- und Akzent-Tokens.
+NEXT SCOPE: System Check / Optimizer, ausschließlich read-only: vorhandenes `iy.system_check/v1` mit echten lokalen Ergebnissen erfassen, bestehende Ergebnisdarstellung auf Fakten/Bewertung/Hinweise/Unbekannt prüfen und nur nach diesem Abgleich eine eng begrenzte Ergebnisdarstellung ergänzen. Keine Firmware-, Treiber-, Registry-, Windows- oder sonstige Systemänderung; kein neuer Analyzer-/Replay-/Benchmark-/UI-Polish-Slice.
+INITIAL INVENTORY: `system_check.py` erfasst bereits Windows, CPU, RAM, Mainboard/BIOS, GPU/Treiber, Anzeige, Secure Boot und TPM read-only; die aktuelle Desktop-Route zeigt bislang primär Ausführen-Action plus kompakten Status, während Home sechs Datenpunkte projiziert. Reale Erfassung und Sichtprüfung stehen als nächster Schritt an.
+BRANCH: `dev/v1-foundation`
+CHANGED: `docs/AGENT_BASE.md`, `coordination/CURRENT.md`, `coordination/agents/codex.md`.
+VERIFIED: Dokumentationsabgleich erfolgt; Quellinventar ohne Funktionsänderung gelesen. Reale System-Check-Ausführung folgt.
+OPEN: Ergebnisdarstellung der bestehenden System-Check-Route ist noch nicht anhand eines frisch erfassten lokalen `iy.system_check/v1`-Datensatzes verifiziert.
+NEXT: Read-only System Check real ausführen, Schema und sichtbare Route gegen dieselben Ergebnisse prüfen; erst dann über die kleinste notwendige Ergebnisdarstellung entscheiden.
+
+# Handoff 2026-08-21 — System Check real result presentation
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Den bestehenden System Check / Optimizer anhand echter lokaler read-only Evidenz fertig prüfen und die minimal notwendige Ergebnisdarstellung innerhalb der vorhandenen Route ergänzen.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/analyzer_shell.py`, `tests/test_analyzer_shell.py`, `docs/AGENT_BASE.md`, `coordination/CURRENT.md`, `coordination/agents/codex.md`.
+IMPLEMENTATION: `system_check_result_view()` konsumiert ausschließlich ein vorhandenes `iy.system_check/v1`-Payload und trennt Datum, gespeicherte Zählung, Ausführungsrichtlinie, Check-Status, Zusammenfassung und Evidenz. Es bewertet nicht neu und leitet aus unbekannten Werten keine Maßnahmen ab. Die bestehende System-Check-Route zeigt nach Laden oder Run acht echte Checks in einem responsiven 4×2-Raster; jedes Element enthält Label, Status, Aussage und `Evidenz:`. Die View erscheint nur für ein bestätigtes Schema. `UI_REFERENCE_STATUS` für System Check / Optimizer ist deshalb `IMPLEMENTED`; das bedeutet Ergebnisdarstellung, nicht eine Optimizer-Autorität.
+REAL RESULT: Read-only-Probe und anschließender UI-Run auf diesem Rechner: **6 OK · 2 REVIEW · 0 ACTION_REQUIRED**. Windows, CPU, RAM, Mainboard/BIOS, GPU/Treiber und Anzeige wurden als Evidenz angezeigt. Secure Boot und TPM blieben `REVIEW` mit `enabled: nicht sicher ermittelt`; keine Behauptung „aus“, keine Empfehlung und keine Änderung. Das Payload bestätigt `read_only: true`, `changes_applied: false`, `elevation_requested: false`.
+VISUAL / RUNTIME CHECK: Quelle auf 1362×892 mit gespeichertem echten Datensatz und nach anschließendem echten Button-Run geöffnet. Ursprünglich war das 2×4-Resultatraster in dieser Höhe zu lang; das ausschließlich darstellungsseitig verdichtete 4×2-Raster zeigt alle acht Checks gleichzeitig. Der echte Lauf aktualisierte Zeitstempel und Zusammenfassung. Home wurde nicht verändert.
+VERIFIED: Gezielte System-Check-/Shell-Tests **22/22 PASS**; vollständiger `pytest` **135/135 PASS**; `compileall` PASS; `git diff --check` PASS. Build-Gate: `pytest` **135/135 PASS**, `pip check` PASS. Neue Testdeckung sichert Schema-Validierung, Read-only-Richtlinie, Evidenzformatierung und die Darstellung eines unbekannten Sicherheitswertes.
+BUILD: Frisch bereit: `dist/experimental/Improve Yourself Experimental/Improve Yourself Experimental.exe`, `dist/experimental/Improve-Yourself-Experimental-Portable.zip`, `dist/experimental/experimental-build.json`. EXE SHA-256 `17D060548F8E38AC1AF14866383E0E8BB0F1EFAB9C638B1D6A486147F0A649B1` (19,793,433 Bytes); Portable-ZIP SHA-256 `01B7A573DFAF9D3E8F0661B2CFB3BDC9448411AA218EFCE9121CA673785A1D8E` (172,982,237 Bytes). Der Build-Gate erzeugte die EXE; in dieser Desktop-Umgebung wurde der unveränderte Archiv-/Manifest-Schritt danach mit der frischen EXE abgeschlossen, nachdem die offene Portable geschlossen war.
+HOME DECISION: **FUNCTIONALLY ACCEPTED / VISUAL FINALIZATION DEFERRED.** Keine weitere isolierte Home-Korrektur und keine ungeprüfte Übertragung des aktuellen Stils.
+OPEN: Der Name Optimizer bleibt als bestehender Navigationstext; es gibt bewusst keine Optimizer-Empfehlung oder Ausführungsfunktion, weil keine reale sichere Aktion autorisiert ist. Eine spätere Erweiterung braucht einen getrennten Produktauftrag samt Safety-/Evidenz-Kriterien.
+NEXT: Tristan legt den nächsten begrenzten Produktbereich fest. Bis dahin kein neuer UI-Polish, keine Optimizer-Automatik, keine Systemänderung und kein Merge nach `main`.
+MODEL_PROFILE: terra
+MODEL_REASON: Read-only System-Evidence-Slice mit realem Desktop- und Paketnachweis.
+COMPUTER_USE: yes
+COMMIT/PR: Wird nach dem Abschlusscommit/-push ergänzt.
+
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
 STATUS: WAITING_FOR_TRISTAN
