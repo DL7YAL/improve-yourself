@@ -629,8 +629,14 @@ class AnalyzerShellApp:
         )
         style.configure("TFrame", background=_THEME["night"])
         style.configure("Content.TFrame", background=_THEME["night"])
-        style.configure("Card.TFrame", background=_THEME["card"], relief="flat", borderwidth=1, bordercolor=_THEME["line_soft"])
+        # Dark V1 is shared by Home and every existing product route.  The
+        # card family intentionally stays close to the app background; a
+        # border is a depth cue, not a permanently lit frame.
+        style.configure("Card.TFrame", background=_THEME["card"], relief="flat", borderwidth=1, bordercolor=_THEME["border_soft"])
         style.configure("CardInner.TFrame", background=_THEME["card"], relief="flat", borderwidth=0)
+        style.configure("PageTitle.TLabel", background=_THEME["night"], foreground=_THEME["ink"], font=(self.display_font, 22, "bold"))
+        style.configure("PageKicker.TLabel", background=_THEME["night"], foreground=_THEME["cyan"], font=(self.display_font, 8))
+        style.configure("StatusBadge.TLabel", background=_THEME["panel_high"], foreground=_THEME["secondary"], padding=(9, 5), font=(self.ui_font, 8, "bold"))
         # Home deliberately has its own component family.  The command-centre
         # layout is shared with the rest of the shell, while these styles keep
         # its cards from falling back to the generic/native looking controls.
@@ -659,27 +665,27 @@ class AnalyzerShellApp:
         style.configure("TLabel", background=_THEME["night"], foreground=_THEME["ink"])
         style.configure("Card.TLabel", background=_THEME["card"], foreground=_THEME["ink"])
         style.configure("Muted.TLabel", background=_THEME["card"], foreground=_THEME["muted"])
-        style.configure("TLabelframe", background=_THEME["card"], foreground=_THEME["ink"], relief="flat", borderwidth=1, bordercolor=_THEME["line_soft"])
-        style.configure("TLabelframe.Label", background=_THEME["card"], foreground=_THEME["ice"], font=("Segoe UI Semibold", 9))
+        style.configure("TLabelframe", background=_THEME["card"], foreground=_THEME["ink"], relief="flat", borderwidth=1, bordercolor=_THEME["border_soft"])
+        style.configure("TLabelframe.Label", background=_THEME["card"], foreground=_THEME["ice"], font=(self.ui_font, 9, "bold"))
         style.configure(
-            "TButton", background="#102b43", foreground="#dcefff", padding=(14, 9),
-            borderwidth=1, bordercolor="#245b82", relief="flat", font=(self.ui_font, 9, "bold"),
+            "TButton", background=_THEME["panel_hover"], foreground=_THEME["ice"], padding=(14, 9),
+            borderwidth=1, bordercolor=_THEME["border"], relief="flat", font=(self.ui_font, 9, "bold"),
             focusthickness=0,
         )
         style.map(
             "TButton",
-            background=[("active", "#174b70"), ("pressed", "#0d78c7"), ("disabled", "#091725")],
-            bordercolor=[("active", _THEME["ice"]), ("pressed", _THEME["accent"]), ("disabled", _THEME["line_soft"])],
-            foreground=[("disabled", "#587184")],
+            background=[("active", "#122D43"), ("pressed", "#085A95"), ("disabled", _THEME["panel"])],
+            bordercolor=[("active", _THEME["border_active"]), ("pressed", _THEME["accent"]), ("disabled", _THEME["border_soft"])],
+            foreground=[("disabled", _THEME["muted"])],
         )
         style.configure(
-            "Primary.TButton", background="#087dcc", foreground="#ffffff",
-            bordercolor="#35b8ff", font=(self.ui_font, 9, "bold"), padding=(16, 9),
+            "Primary.TButton", background=_THEME["accent"], foreground="#ffffff",
+            bordercolor=_THEME["cyan"], font=(self.ui_font, 9, "bold"), padding=(16, 9),
         )
-        style.map("Primary.TButton", background=[("active", "#0ba3f2"), ("pressed", "#0568ae"), ("disabled", "#0b2437")])
+        style.map("Primary.TButton", background=[("active", _THEME["cyan"]), ("pressed", "#085A95"), ("disabled", _THEME["panel"])])
         style.configure(
             "TCombobox", background=_THEME["deep"], fieldbackground=_THEME["deep"],
-            foreground=_THEME["ink"], arrowcolor=_THEME["ice"], bordercolor="#245b82",
+            foreground=_THEME["ink"], arrowcolor=_THEME["ice"], bordercolor=_THEME["border"],
             lightcolor=_THEME["deep"], darkcolor=_THEME["deep"], padding=(8, 6),
         )
         style.map(
@@ -700,20 +706,20 @@ class AnalyzerShellApp:
             indicatorcolor=[("selected", _THEME["ice"]), ("disabled", _THEME["metal"])],
         )
         style.configure(
-            "Rule.TCheckbutton", indicatoron=False, anchor="w", background="#0a1a2a",
+            "Rule.TCheckbutton", indicatoron=False, anchor="w", background=_THEME["panel"],
             foreground=_THEME["muted"], padding=(12, 10), borderwidth=1,
             bordercolor=_THEME["line_soft"], font=(self.ui_font, 9, "bold"),
         )
         style.map(
             "Rule.TCheckbutton",
-            background=[("selected", "#0d3d60"), ("active", "#102d46"), ("disabled", "#091725")],
+            background=[("selected", _THEME["panel_hover"]), ("active", "#122D43"), ("disabled", _THEME["panel"])],
             foreground=[("selected", "#ffffff"), ("active", "#ffffff"), ("disabled", "#587184")],
             bordercolor=[("selected", _THEME["accent"]), ("active", _THEME["line"]), ("disabled", _THEME["line_soft"])],
         )
         style.configure(
-            "Horizontal.TScale", background=_THEME["panel"], troughcolor="#06111d",
-            bordercolor=_THEME["line_soft"], lightcolor="#20a9ff", darkcolor="#0876be",
-            slidercolor="#20a9ff", gripcount=0, borderwidth=0,
+            "Horizontal.TScale", background=_THEME["panel"], troughcolor="#04131F",
+            bordercolor=_THEME["border_soft"], lightcolor=_THEME["cyan"], darkcolor=_THEME["accent"],
+            slidercolor=_THEME["cyan"], gripcount=0, borderwidth=0,
         )
         self.status = tk.StringVar(value="Echte CS2-Demo auswählen")
         self.identity = tk.StringVar(value="Keine lokale Analyse geladen")
@@ -837,8 +843,8 @@ class AnalyzerShellApp:
         frame = self.pages["Analyzer / Review"]
         analyzer_header = ttk.Frame(frame, style="Content.TFrame")
         analyzer_header.pack(fill="x", pady=(0, 12))
-        ttk.Label(analyzer_header, text="Analyzer / Review", font=("Segoe UI", 24, "bold")).pack(side="left")
-        ttk.Label(analyzer_header, textvariable=self.status, foreground=_THEME["ice"]).pack(side="right")
+        ttk.Label(analyzer_header, text="Analyzer / Review", style="PageTitle.TLabel").pack(side="left")
+        ttk.Label(analyzer_header, textvariable=self.status, style="StatusBadge.TLabel").pack(side="right")
         ttk.Label(frame, text="Demo → Parser → Auswahl → Profil → Regeln → Szenen → Review", foreground=_THEME["muted"]).pack(anchor="w", pady=(0, 12))
 
         analyzer_top = ttk.Frame(frame, style="Content.TFrame")
@@ -892,7 +898,7 @@ class AnalyzerShellApp:
         self.rules = ttk.Label(profile_row, text="Objektive V1-Regeln · Details per Profil")
         self.rules.pack(side="left", padx=8)
         rules_frame = ttk.LabelFrame(self.pages["Rules"], text="Objektive Szenenanker V1", padding=18)
-        ttk.Label(self.pages["Rules"], text="Rules", font=("Segoe UI", 24, "bold")).pack(anchor="w")
+        ttk.Label(self.pages["Rules"], text="Rules", style="PageTitle.TLabel").pack(anchor="w")
         ttk.Label(self.pages["Rules"], text="Profile kombinieren belegte Marker; einzelne schwache Hinweise erzeugen keine Standard-Szene.", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
         rules_frame.pack(fill="x", pady=5)
         rules_frame.columnconfigure(0, weight=1, uniform="rules")
@@ -952,10 +958,8 @@ class AnalyzerShellApp:
         header = self.ttk.Frame(review, style="Content.TFrame")
         header.pack(fill="x")
         self.ttk.Button(header, text="← Analyse", command=self._close_embedded_review).pack(side="left")
-        self.ttk.Label(header, text="Analyzer Review", font=("Segoe UI", 24, "bold")).pack(side="left", padx=16)
-        self.ttk.Label(
-            header, text="LOCAL · EINGEBETTET", foreground=_THEME["ice"], font=("Segoe UI Semibold", 9)
-        ).pack(side="right")
+        self.ttk.Label(header, text="Analyzer Review", style="PageTitle.TLabel").pack(side="left", padx=16)
+        self.ttk.Label(header, text="LOCAL · EINGEBETTET", style="StatusBadge.TLabel").pack(side="right")
         self.ttk.Label(
             review,
             text="Szenen, Evidenz und Notizen aus derselben Analyse · Tick-Sprung über den geprüften lokalen Coordinator",
@@ -966,7 +970,7 @@ class AnalyzerShellApp:
         body.pack(fill="both", expand=True)
         left = self.ttk.Frame(body, style="Card.TFrame", padding=14)
         left.pack(side="left", fill="y", padx=(0, 10))
-        self.ttk.Label(left, text="Szenen", style="Card.TLabel", font=("Segoe UI Semibold", 14)).pack(anchor="w")
+        self.ttk.Label(left, text="SZENEN", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
         self.embedded_scene_list = self.tk.Listbox(
             left, width=36, height=25, background=_THEME["deep"], foreground=_THEME["ink"],
             selectbackground=_THEME["metal"], selectforeground=_THEME["ink"],
@@ -978,7 +982,7 @@ class AnalyzerShellApp:
 
         detail = self.ttk.Frame(body, style="Card.TFrame", padding=20)
         detail.pack(side="left", fill="both", expand=True)
-        self.ttk.Label(detail, textvariable=self.embedded_scene_title, style="Card.TLabel", font=("Segoe UI Semibold", 17)).pack(anchor="w")
+        self.ttk.Label(detail, textvariable=self.embedded_scene_title, style="Card.TLabel", font=(self.display_font, 14, "bold")).pack(anchor="w")
         self.ttk.Label(detail, textvariable=self.embedded_scene_context, style="Muted.TLabel", wraplength=720, justify="left").pack(anchor="w", pady=(8, 0))
         self.ttk.Label(detail, textvariable=self.embedded_scene_players, style="Card.TLabel", wraplength=720, justify="left").pack(anchor="w", pady=(14, 0))
         self.ttk.Label(detail, textvariable=self.embedded_scene_rules, style="Muted.TLabel", wraplength=720, justify="left").pack(anchor="w", pady=(6, 16))
@@ -1259,11 +1263,11 @@ class AnalyzerShellApp:
 
     def _build_reports_page(self) -> None:
         page = self.pages["Reports"]
-        self.ttk.Label(page, text="Reports", font=("Segoe UI", 24, "bold")).pack(anchor="w")
+        self.ttk.Label(page, text="Reports", style="PageTitle.TLabel").pack(anchor="w")
         self.ttk.Label(page, text="Nachvollziehbare Ergebnisse aus der aktuellen lokalen Analyse", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
         card = self.ttk.Frame(page, style="Card.TFrame", padding=20)
         card.pack(fill="x")
-        self.ttk.Label(card, text="Analysebericht", style="Card.TLabel", font=("Segoe UI Semibold", 14)).pack(anchor="w")
+        self.ttk.Label(card, text="ANALYSEBERICHT", style="Card.TLabel", font=(self.display_font, 11, "bold")).pack(anchor="w")
         self.ttk.Label(card, textvariable=self.report_status, style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(8, 14))
         actions = self.ttk.Frame(card, style="CardInner.TFrame")
         actions.pack(fill="x")
@@ -1274,20 +1278,20 @@ class AnalyzerShellApp:
 
     def _build_settings_page(self) -> None:
         page = self.pages["Settings"]
-        self.ttk.Label(page, text="Settings", font=("Segoe UI", 24, "bold")).pack(anchor="w")
+        self.ttk.Label(page, text="Settings", style="PageTitle.TLabel").pack(anchor="w")
         card = self.ttk.Frame(page, style="Card.TFrame", padding=20)
         card.pack(fill="x", pady=(18, 0))
-        self.ttk.Label(card, text="Darstellung", style="Card.TLabel", font=("Segoe UI Semibold", 14)).pack(anchor="w")
+        self.ttk.Label(card, text="DARSTELLUNG", style="Card.TLabel", font=(self.display_font, 11, "bold")).pack(anchor="w")
         self.ttk.Label(card, text="Midnight / Metallic Blue · verbindliches Standarddesign", style="Muted.TLabel").pack(anchor="w", pady=(8, 0))
         self.ttk.Label(card, text="Keine weiteren Einstellungen werden angeboten, solange keine reale konfigurierbare Funktion dahintersteht.", style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(6, 0))
 
     def _build_system_page(self) -> None:
         page = self.pages["System Check / Optimizer"]
-        self.ttk.Label(page, text="System Check / Optimizer", font=("Segoe UI", 24, "bold")).pack(anchor="w")
+        self.ttk.Label(page, text="System Check / Optimizer", style="PageTitle.TLabel").pack(anchor="w")
         self.ttk.Label(page, text="Read-only Evidenz · keine automatische Firmware-, Treiber-, Registry- oder Windows-Änderung", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
         card = self.ttk.Frame(page, style="Card.TFrame", padding=24)
         card.pack(fill="x")
-        self.ttk.Label(card, text="System Check", style="Card.TLabel", font=("Segoe UI Semibold", 15)).pack(anchor="w")
+        self.ttk.Label(card, text="SYSTEM CHECK", style="Card.TLabel", font=(self.display_font, 11, "bold")).pack(anchor="w")
         self.ttk.Label(card, text="Erkannte Systemwerte, Bewertung und Hinweise bleiben getrennt. Nicht sicher belegbare Werte werden als zu prüfen angezeigt.", style="Muted.TLabel", wraplength=780, justify="left").pack(anchor="w", pady=(8, 0))
         self.ttk.Label(card, text="Optimizer-Empfehlungen erscheinen erst, wenn eine reale, sichere Funktion dahintersteht.", style="Muted.TLabel").pack(anchor="w", pady=(8, 12))
         self.ttk.Button(card, text="System Check ausführen", style="Primary.TButton", command=self._run_system_check).pack(anchor="w")
@@ -1299,11 +1303,11 @@ class AnalyzerShellApp:
         header.pack(fill="x")
         self.tactical_back_button = self.ttk.Button(header, text="← Zurück zum Review", command=self._return_to_embedded_review, state="disabled")
         self.tactical_back_button.pack(side="left")
-        self.ttk.Label(header, text="Tactical Replay", font=("Segoe UI", 24, "bold")).pack(side="left", padx=16)
-        self.ttk.Label(header, text="GEMEINSAME REPLAY-WAHRHEIT", foreground=_THEME["ice"], font=("Segoe UI Semibold", 9)).pack(side="right")
+        self.ttk.Label(header, text="Tactical Replay", style="PageTitle.TLabel").pack(side="left", padx=16)
+        self.ttk.Label(header, text="GEMEINSAME REPLAY-WAHRHEIT", style="StatusBadge.TLabel").pack(side="right")
         context_bar = self.ttk.Frame(page, style="Card.TFrame", padding=(14, 10))
         context_bar.pack(fill="x", pady=(10, 10))
-        self.ttk.Label(context_bar, textvariable=self.tactical_scene_title, style="Card.TLabel", font=("Segoe UI Semibold", 12)).pack(side="left")
+        self.ttk.Label(context_bar, textvariable=self.tactical_scene_title, style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(side="left")
         self.ttk.Label(context_bar, textvariable=self.tactical_scene_context, style="Muted.TLabel").pack(side="right")
         self.ttk.Label(page, textvariable=self.tactical_scene_note, foreground=_THEME["muted"]).pack(anchor="w", pady=(0, 8))
 
@@ -1311,7 +1315,7 @@ class AnalyzerShellApp:
         body.pack(fill="both", expand=True)
         scene_panel = self.ttk.Frame(body, style="Card.TFrame", padding=12)
         scene_panel.pack(side="left", fill="y", padx=(0, 8))
-        self.ttk.Label(scene_panel, text="SZENEN", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w")
+        self.ttk.Label(scene_panel, text="SZENEN", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
         self.tactical_scene_list = self.tk.Listbox(
             scene_panel, width=25, background=_THEME["deep"], foreground=_THEME["ink"],
             selectbackground=_THEME["metal"], selectforeground=_THEME["ink"],

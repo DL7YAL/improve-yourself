@@ -786,6 +786,33 @@ MODEL_REASON: Eng begrenzter, bereits spezifizierter Desktop-Layout-Korrekturpas
 COMPUTER_USE: yes
 COMMIT/PR: Dieser Handoff ist Teil des gepushten `dev/v1-foundation`-Checkpoints; exakter HEAD steht im Abschlussbericht.
 
+# Handoff 2026-08-21 — Improve Yourself UI completion pass
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Den akzeptierten Home-Dark-V1-Kandidaten unverändert lassen und ausschließlich die bestehende native Shell über die gemeinsamen Dark-V1-Controls auf die vorhandenen Kernrouten übertragen. Kein neuer Product Slice, keine neue Engine und keine Produktlogik.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/analyzer_shell.py`, `docs/AGENT_BASE.md`, `coordination/CURRENT.md`, `coordination/agents/codex.md`.
+UI WORK: Der gemeinsame Card-, Formular-, Button-, Check-, Slider-, Status-Badge- und Seitenüberschrifts-Layer verwendet Dark V1: App `#020A12`, Sidebar `#03101C`, Panel `#071725`, raised/Card `#0A1C2D`, Hover `#0D2236`, dezente Borders (`#0A2132`/`#071A27`), Akzente `#0B79C9`/`#13A7E8` und Text `#E4E8ED`/`#A0ABB8`/`#687789`. Display-Überschriften und Abschnittskicker nutzen die bereits paketierte Display-Schrift; Lesetext bleibt Inter. Dadurch wirken vorhandene Routen wie eine Anwendung, ohne ihren Ablauf oder ihre Datenautorität zu verändern.
+HOME STATUS: `HOME DARK V1 – READY FOR FINAL VISUAL ACCEPTANCE`. Home wurde nicht strukturell geändert: sechs Modul-Cards, die Action-Grundlinie, responsive Geometrie, Sidebar, untere Bereiche sowie die feste Reihenfolge **Letzter Systemscan → Dein Fortschritt – Überblick → Letzte Analysen** bleiben erhalten. Dieser Status bedeutet nicht `ACCEPTED`; nur Tristan kann die finale visuelle Home-Abnahme erteilen.
+CORE SCREEN COVERAGE:
+| Bestehender Screen | Dark-V1-Abgleich | Praktische Prüfung | Restabweichung |
+| --- | --- | --- | --- |
+| Home / Dashboard | vollständige bestehende Master-Implementierung bleibt aktiv | Quelle auf 1362×892 geöffnet | finale menschliche Abnahme gegen Page 03 offen |
+| Analyzer / Review | PageTitle, Status-Badge sowie gemeinsame Cards/Buttons/Formulare | zuvor auf Quelle geöffnet; aktuelle Demo- und Analysefunktionen unverändert | Embedded-Detailansicht braucht für einen visuellen Datentest eine reale geladene Analyse; kein zweiter Review-Pfad angelegt |
+| Tactical Replay | PageTitle, gemeinsame Karten, Status-Badge, Timeline-/Control-Flächen | Quelle auf 1362×892 geöffnet | ohne aktive Review-Szene korrekt neutraler Zustand; Datenszene nicht künstlich erzeugt |
+| System Check / Optimizer | PageTitle, dunkle Card-/Button-/Lesetext-Hierarchie | Quelle auf 1362×892 geöffnet | nur bestehender read-only System Check; keine Optimizer-Autorität ergänzt |
+| Rules / Reports / Settings | PageTitle, Display-Abschnittskicker und gemeinsame Controls | über gemeinsame Shell-Styles abgedeckt | keine separaten Masterbilder vorhanden; daher Dark-V1-Konsistenz statt freier Neugestaltung |
+SCOPE: Parser, Demoimport, Rule Engine, Szenen, eingebetteter Review, Tactical-Replay-Truth, CS2/NetCon, System Check, Optimizer, Datenbindung, Routenfolge und Branding Variant 3 wurden nicht verändert. Es gibt keine neue Remote-Schnittstelle, keine erfundenen Analyse-/Fortschrittswerte und keinen neuen Screen.
+VERIFIED: Gezielte Analyzer-Shell-Tests **18/18 PASS**; vollständiger `pytest` **134/134 PASS**; `compileall` PASS; `git diff --check` PASS. Der kontrollierte Build-Gate wiederholte `pytest` **134/134 PASS** und `pip check` PASS. Quellen-Sichtprüfung bestätigte Home, Tactical Replay und System Check jeweils auf 1362×892 mit gemeinsamer Midnight-/Metallic-Oberfläche. Die frische Portable wurde praktisch auf Analyzer und anschließend Home geöffnet; Navigation, aktive Route, Variant-3-Wortmarke sowie die neutralen leeren Datenzustände arbeiten ohne Regression. Eine aktive Embedded-Review-Szene wurde nicht künstlich erzeugt.
+BUILD: Frisch bereit unter `dist/experimental/Improve Yourself Experimental/Improve Yourself Experimental.exe`, `dist/experimental/Improve-Yourself-Experimental-Portable.zip` und `dist/experimental/experimental-build.json`. EXE SHA-256 `6A23599B16949CC332A66BD1EBCFC78168375E9E95B8FC51EC2E6F3F4230F4CC` (19,788,451 Bytes); Portable-ZIP SHA-256 `A82D305B8E874BBCBBC71C9BEDACEC096026FB5E348FEAC59708032EA099B6C7` (168,771,697 Bytes). Der offizielle Build-Gate erzeugte die EXE und schloss seinen eigenen Archive-/Manifest-Schritt anschließend regulär ab. Paketprüfung bestätigt Inter, Orbitron und die Variant-3-Wortmarke in den erwarteten mitgelieferten Asset-Pfaden.
+WORKTREE: Vor dem Abschluss nur die vier oben genannten versionierten Dateien; Test- und Paketartefakte bleiben ignoriert.
+OPEN: 1. Tristans finaler visueller Home-Vergleich gegen Page 03. 2. Optionaler Echt-Daten-Sichttest des eingebetteten Review, sobald Tristan eine vorhandene Demo/Analyse im frischen Build öffnet; keinerlei Fake-Szene zur Demonstration verwenden.
+NEXT: Tristan prüft die neue Portable auf Home und die Dark-V1-Konsistenz der vorhandenen Kernrouten. Bis zu dessen Entscheidung keine weitere Produktarbeit, kein neuer Slice und kein Merge nach `main`.
+MODEL_PROFILE: terra
+MODEL_REASON: Begrenzter bestehender Desktop-UI-Completion-Pass mit gemeinsamer Komponentenbasis und Runtime-/Paket-QA.
+COMPUTER_USE: yes
+COMMIT/PR: Dieser versionierte Handoff gehört zum Checkpoint `ui: extend dark v1 styling across core screens`; der exakte finale HEAD wird nach dem Push im Abschlussbericht ausgewiesen.
+
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
 STATUS: WAITING_FOR_TRISTAN
