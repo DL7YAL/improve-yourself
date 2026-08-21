@@ -1009,6 +1009,24 @@ MODEL_REASON: Produktintegration einer bestehenden sicherheitskritischen Read-on
 COMPUTER_USE: no
 COMMIT/PR: `e19ddff feat: integrate optimizer foundation into UI`, gepusht nach `origin/dev/v1-foundation`.
 
+# Handoff 2026-08-22 — Optimizer Real Rule Pack Readiness V1
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Den datengetriebenen, fail-closed Rule-Pack-Import samt Synthetic-Regression und bestehender UI-Anbindung für den separat gelieferten kuratierten Matrix Pack 01 vorbereiten, ohne eigene reale Regeln oder weitere Infrastruktur.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/rule_pack.py`, `src/improve_yourself/optimizer_foundation.py`, `src/improve_yourself/analyzer_shell.py`, `tests/test_rule_pack.py`, `docs/OPTIMIZER_REAL_RULE_PACK_READINESS_V1.md`, `coordination/agents/codex.md`.
+SCHEMA: `iy.improve_rule_pack/v1` finalisiert stabile Rule-ID, Domain, Setting, Beschreibung, Current-State-Pfad, Candidate-State, Compatibility/Exclusions, Dependencies/Conflicts, Evidence, Klassen-/Maturity-Metadaten, Risk, Restart, Read/Apply/Restore-Capabilities, Erklärung, Version und Provenance. Unterstützte Pack-Klassen: RELEASE_CANDIDATE, CONDITIONAL, EXPERIMENTAL, NO_CHANGE, SECURITY_PERFORMANCE_TRADEOFF, REJECTED. Apply ist nur Metadatum, nicht implementiert.
+VALIDATION GATE: `import_rule_pack()` ist fail-closed für Schema, doppelte IDs, ungültige Domain/Risk/Class, fehlende State-/Explanation-/Provenance-Metadaten, fehlende/ungültige Evidence, invalide Compatibility und widersprüchliche Required/Exclusion-Conditions. Ungültige Regeln werden nicht still aktiviert. `validate_rule_pack()` importiert nur nach bestandenem Gate und startet danach die bestehende 150-System-Synthetic-Regression.
+SYNTHETIC / REAL: Der Regression-Report liefert deterministisch pro Rule/Systemklasse matched/excluded/recommended/already/conditional/no-change/insufficient/conflict über den bestehenden Harness. Er kann kein reales VALIDATION_RESULT erzeugen, Confidence nicht erhöhen und keine Performancebehauptung ableiten.
+UI: Importierte `OptimizationRule`-Objekte fließen direkt in `optimizer_product_view(..., rules=rules)` → Improve Empfehlungen → richtige Domain → gemeinsame Setting Cards → gemeinsames Detailpanel. Test beweist diesen Weg für den Fixture-Pack ohne Rule-spezifischen UI-Code; alle Fixtures bleiben sichtbar `FIXTURE_ONLY`, Apply bleibt false.
+SCHEMA LIMITS: Kein echter Matrix Pack 01 wurde erfunden oder recherchiert. Das Fixture-Pack ist nur ein syntaktisches/semantisches Formatbeispiel. Eine spätere reale Pack-Signatur, Content-Pack-Lieferkette oder Release-Freigabe ist nicht Gegenstand dieses Slices.
+VERIFIED: Rule-Pack-Import-/Gate-/Regression-/UI-Tests **12/12 PASS**; vollständiger `pytest` **171/171 PASS**; `compileall` PASS; `pip check` PASS; `git diff --check` PASS.
+NEXT: Erwarteter nächster Input ist ausschließlich der separat kuratierte Improve Matrix Pack 01. Nach dessen Lieferung: Pack importieren, fail-closed validieren, über 150 Profile regressieren und in UI prüfen. Keine weitere Infrastruktur oder eigenen realen Optimizer-Regeln beginnen.
+MODEL_PROFILE: terra
+MODEL_REASON: Finaler Import-/Safety-Gate vor kuratiertem Inhalt, mit deterministischer Regression und UI-Durchstich.
+COMPUTER_USE: no
+COMMIT/PR: Wird nach Commit/Push ergänzt.
+
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
 STATUS: WAITING_FOR_TRISTAN

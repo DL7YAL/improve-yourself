@@ -21,7 +21,7 @@ from .embedded_review import EmbeddedReviewSession
 from .embedded_tactical import EmbeddedTacticalSession
 from .local_profiles import OBJECTIVE_RULES, LocalProfileStore
 from .optimizer_evidence import evaluate_profile, profile_from_system_check
-from .optimizer_foundation import integration_proof
+from .optimizer_foundation import OptimizationRule, integration_proof
 from .replay_store import ReplayStore
 from .system_check import run_system_check
 
@@ -209,9 +209,9 @@ def optimizer_evidence_view(payload: dict[str, object]) -> dict[str, object] | N
     }
 
 
-def optimizer_product_view(profile: dict[str, object], *, internal_test: bool = False) -> dict[str, object]:
+def optimizer_product_view(profile: dict[str, object], *, internal_test: bool = False, rules: tuple[OptimizationRule, ...] | None = None) -> dict[str, object]:
     """Common read-only Optimizer product/UI contract for real or synthetic profiles."""
-    proof = integration_proof(profile, ())
+    proof = integration_proof(profile, (), rules=rules)
     models = proof["view_models"]
     domains: dict[str, list[dict[str, object]]] = {}
     counts = {"checked": len(models), "recommended": 0, "already": 0, "conditional": 0, "manual_bios": 0, "insufficient": 0, "tradeoffs": 0}

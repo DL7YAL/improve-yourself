@@ -261,9 +261,9 @@ def validate_synthetic_rule_pack(rule_pack: Iterable[OptimizationRule], matrix: 
     return {"schema": FOUNDATION_SCHEMA, "validation_kind": "SYNTHETIC_RULE_PACK_VALIDATION", "label": "SYNTHETIC / DECISION LOGIC ONLY / NOT REAL EVIDENCE", "system_count": len(reports), "rule_ids": [rule.rule_id for rule in rules], "state_counts": state_counts, "domain_result_counts": domains, "reports": reports, "real_validation_result_created": False, "confidence_changed": False}
 
 
-def integration_proof(profile: dict[str, object], evidence_records: Iterable[EvidenceRecord]) -> dict[str, object]:
+def integration_proof(profile: dict[str, object], evidence_records: Iterable[EvidenceRecord], rules: Iterable[OptimizationRule] | None = None) -> dict[str, object]:
     """One transparent COLLECT→PROFILE→COMPATIBILITY→EVIDENCE→RESULT→VIEWMODEL proof."""
-    report = evaluate_recommendations(profile, evidence_records=evidence_records)
+    report = evaluate_recommendations(profile, rules=rules, evidence_records=evidence_records)
     return {"schema": FOUNDATION_SCHEMA, "pipeline": ("COLLECT", "SYSTEM_PROFILE", "RULE_COMPATIBILITY", "EVIDENCE", "RECOMMENDATION_RESULT", "UI_VIEWMODEL"), "read_only": True, "report": report, "view_models": [recommendation_detail_view_model(item) for item in report["results"]]}
 
 
