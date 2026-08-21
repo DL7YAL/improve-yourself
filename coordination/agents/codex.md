@@ -813,6 +813,25 @@ MODEL_REASON: Begrenzter bestehender Desktop-UI-Completion-Pass mit gemeinsamer 
 COMPUTER_USE: yes
 COMMIT/PR: Dieser versionierte Handoff gehört zum Checkpoint `ui: extend dark v1 styling across core screens`; der exakte finale HEAD wird nach dem Push im Abschlussbericht ausgewiesen.
 
+# Handoff 2026-08-21 — Home final visual pass / last run
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Ausschließlich die bereits angenommene Home-Oberfläche ein letztes Mal an das kanonische Home-Master-Farbgewicht und die Modulbutton-Formsprache angleichen. Keine Informationsarchitektur, Reihenfolge, Funktionen, Datenanbindung, Typografie, responsive Geometrie oder Sidebar-Grundstruktur ändern.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/analyzer_shell.py`, `docs/AGENT_BASE.md`, `coordination/CURRENT.md`, `coordination/agents/codex.md`.
+IMPLEMENTATION: Große Home-Status- und Modulkarten verwenden die bereits verbindliche dunkle Panelstufe `#071725` statt der helleren raised-Stufe. Für ausschließlich die sechs oberen Module ersetzt `RoundedHomeAction` die kantigen, vollfarbigen nativen Buttons: eine gemeinsame 37px-Action mit 7px-Radius, dunkler Innenfläche `#0A1C2D`, feiner jeweiliger Modul-Kontur, zurückhaltendem Hover, gleicher Grid-Zeile, gleicher Breite und unverändertem Command-/Disabled-/Tastaturverhalten. Modulfarben bleiben nur Akzent, nicht Button- oder Card-Grundfläche. Keine andere Home-Action und keine andere Produktseite wurde im Rahmen dieses Auftrags neu gestaltet.
+HOME STATUS: `HOME VISUAL TEMPLATE LOCKED – READY FOR FINAL VISUAL ACCEPTANCE`. Der Lock bedeutet: Die aktuelle Home-Implementierung ist der kanonische Template-Stand für diesen freigegebenen Master, bis Tristan eine konkrete neue Abweichung oder einen neuen UI-Auftrag gibt. Er bedeutet weder einen Merge nach `main` noch eine implizite flächige Übertragung der Home-Komponenten auf weitere Seiten.
+VISUAL CHECK: Quell-Shell auf 1362×892 geöffnet. App-Hintergrund bleibt nahezu schwarz; große Module und mittlere/untere Panels heben sich nur über dunkle Navy-Stufen ab. Alle sechs oberen Actions stehen auf einer Linie und sind erkennbar abgerundet, dunkel und fein nach ihrer Modulfarbe konturiert. Direkter Klick auf `Übersicht öffnen` navigierte unverändert nach Reports; keine Daten oder Analyse wurde erzeugt. Der kompakte Responsive-Grid-/Action-Mechanismus blieb unverändert, weil nur die Action-Chrome innerhalb derselben Grid-Zeile ersetzt wurde.
+VERIFIED: Gezielte Analyzer-Shell-Tests **18/18 PASS**; `compileall` PASS; vollständiger `pytest` **134/134 PASS** im Wiederholungslauf; `git diff --check` PASS. Der erste vollständige Lauf brach einmalig im bestehenden Loopback-Origin-Test mit Windows `WinError 10053` ab, bevor eine erwartete HTTP-Antwort gelesen wurde; derselbe unveränderte Lauf war unmittelbar danach vollständig grün, daher kein reproduzierbarer UI-/Produktfehler. Der offizielle Build-Gate wiederholte `pytest` **134/134 PASS** und `pip check` PASS. Frische Portable auf Analyzer und Home geöffnet; Home zeigt die dunklen Card-Flächen und sechs abgerundete Modulactions wie geprüft.
+BUILD: Frisch bereit: `dist/experimental/Improve Yourself Experimental/Improve Yourself Experimental.exe`, `dist/experimental/Improve-Yourself-Experimental-Portable.zip`, `dist/experimental/experimental-build.json`. EXE SHA-256 `43CC5CDF15FAF2C5A6862E451D3BD525CB98D5EAE4E18DB1DEF21F876DFCBCB7` (19,790,195 Bytes); Portable-ZIP SHA-256 `F60E32E02BE961360A9BC1F5313EDE2DC82EB2B3410CFD2DAB7A62C75BBB8A8D` (172,978,916 Bytes). Der PyInstaller-Lauf erzeugte die EXE korrekt; weil der lokale Wrapper in dieser Umgebung seinen letzten Archivschritt nicht abwartbar zurückgab, wurde der unveränderte vorhandene Kopier-/ZIP-/Manifest-Schritt danach mit der frischen EXE ausgeführt, nachdem die offene Portable geschlossen war.
+WORKTREE: Vor Abschluss die vier genannten versionierten Dateien; Test-/Build-Ergebnisse bleiben ignoriert.
+OPEN: Ausschließlich Tristans finaler visueller Vergleich von Home mit dem kanonischen Master. Keine weitere UI-Arbeit ohne neuen Auftrag.
+NEXT: Tristan prüft den frischen Portable-Build direkt auf Gesamtdunkelheit der Card-Flächen und die sechs subtilen abgerundeten Modulbuttons. Bei Zustimmung Home-Abnahme dokumentieren; andernfalls nur eine konkrete, begrenzte visuelle Abweichung benennen.
+MODEL_PROFILE: terra
+MODEL_REASON: Letzter eng begrenzter Home-Surface-/Action-Chrome-Pass ohne Produktfunktionsausweitung.
+COMPUTER_USE: yes
+COMMIT/PR: Wird nach dem finalen Commit-/Push-Checkpoint ergänzt.
+
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
 STATUS: WAITING_FOR_TRISTAN

@@ -291,6 +291,76 @@ class RoundedHomeSurface:
         self.canvas.tag_lower("surface")
 
 
+class RoundedHomeAction:
+    """A shared, restrained module action for the six approved Home cards.
+
+    Native ttk buttons cannot render the rounded, low-fill Master treatment
+    consistently on Windows.  This component changes only the Home action
+    chrome; it forwards the existing command and keeps normal keyboard
+    activation and disabled-state behaviour intact.
+    """
+
+    def __init__(self, tk, parent, *, text: str, accent: str, command: Callable[[], None], enabled: bool, font) -> None:
+        self.tk = tk
+        self.text = text
+        self.accent = accent
+        self.command = command
+        self.enabled = enabled
+        self.font = font
+        self.hovered = False
+        self.radius = 7
+        self.canvas = tk.Canvas(
+            parent, height=37, background=_THEME["panel"], highlightthickness=0,
+            borderwidth=0, bd=0, takefocus=1 if enabled else 0,
+        )
+        self.canvas.bind("<Configure>", self._draw)
+        self.canvas.bind("<Enter>", self._enter)
+        self.canvas.bind("<Leave>", self._leave)
+        self.canvas.bind("<ButtonRelease-1>", self._activate)
+        self.canvas.bind("<Return>", self._activate)
+        self.canvas.bind("<space>", self._activate)
+
+    def grid(self, **kwargs) -> None:
+        self.canvas.grid(**kwargs)
+
+    def _enter(self, _event=None) -> None:
+        if self.enabled:
+            self.hovered = True
+            self._draw()
+
+    def _leave(self, _event=None) -> None:
+        self.hovered = False
+        self._draw()
+
+    def _activate(self, _event=None) -> str | None:
+        if not self.enabled:
+            return "break"
+        self.command()
+        return "break"
+
+    def _draw(self, _event=None) -> None:
+        width, height = max(self.canvas.winfo_width(), 1), max(self.canvas.winfo_height(), 1)
+        radius = min(self.radius, max(1, height // 2 - 1), max(1, width // 2 - 1))
+        fill = _THEME["panel_hover"] if self.hovered and self.enabled else _THEME["panel_high"]
+        outline = self.accent if self.enabled else _THEME["border_soft"]
+        foreground = _THEME["ice"] if self.enabled else _THEME["muted"]
+        self.canvas.delete("action")
+        self.canvas.create_rectangle(radius, 1, width - radius - 1, height - 2, fill=fill, outline="", tags="action")
+        self.canvas.create_rectangle(1, radius, width - 2, height - radius - 1, fill=fill, outline="", tags="action")
+        for box, start in (
+            ((1, 1, 1 + 2 * radius, 1 + 2 * radius), 90),
+            ((1, height - 2 - 2 * radius, 1 + 2 * radius, height - 2), 180),
+            ((width - 2 - 2 * radius, height - 2 - 2 * radius, width - 2, height - 2), 270),
+            ((width - 2 - 2 * radius, 1, width - 2, 1 + 2 * radius), 0),
+        ):
+            self.canvas.create_arc(*box, start=start, extent=90, fill=fill, outline=outline, tags="action")
+        self.canvas.create_line(1 + radius, 1, width - 2 - radius, 1, fill=outline, tags="action")
+        self.canvas.create_line(1 + radius, height - 2, width - 2 - radius, height - 2, fill=outline, tags="action")
+        self.canvas.create_line(1, 1 + radius, 1, height - 2 - radius, fill=outline, tags="action")
+        self.canvas.create_line(width - 2, 1 + radius, width - 2, height - 2 - radius, fill=outline, tags="action")
+        self.canvas.create_text(width // 2, height // 2, text=self.text, fill=foreground, font=self.font, tags="action")
+
+
 def dashboard_layout_metrics(content_width: int, viewport_height: int) -> tuple[bool, int, int, int, int]:
     """Return responsive Home metrics without scaling the whole interface."""
     compact = content_width < 1000
@@ -640,17 +710,19 @@ class AnalyzerShellApp:
         # Home deliberately has its own component family.  The command-centre
         # layout is shared with the rest of the shell, while these styles keep
         # its cards from falling back to the generic/native looking controls.
-        style.configure("HomeStat.TFrame", background=_THEME["card"], relief="flat", borderwidth=1, bordercolor=_THEME["border"])
-        style.configure("HomeModule.TFrame", background=_THEME["card"], relief="flat", borderwidth=1, bordercolor=_THEME["border"])
+        # Home uses the darkest approved panel level.  Raised blue remains a
+        # small interaction state, never the ground of a large card.
+        style.configure("HomeStat.TFrame", background=_THEME["panel"], relief="flat", borderwidth=1, bordercolor=_THEME["border"])
+        style.configure("HomeModule.TFrame", background=_THEME["panel"], relief="flat", borderwidth=1, bordercolor=_THEME["border"])
         style.configure("HomePanel.TFrame", background=_THEME["panel"], relief="flat", borderwidth=1, bordercolor=_THEME["border"])
         style.configure("HomeInner.TFrame", background=_THEME["panel"], relief="flat", borderwidth=0)
         style.configure("HomeMetric.TFrame", background=_THEME["panel_high"], relief="flat", borderwidth=1, bordercolor=_THEME["border_soft"])
-        style.configure("HomeStat.TLabel", background=_THEME["card"], foreground=_THEME["ice"])
-        style.configure("HomeModule.TLabel", background=_THEME["card"], foreground=_THEME["ink"])
+        style.configure("HomeStat.TLabel", background=_THEME["panel"], foreground=_THEME["ice"])
+        style.configure("HomeModule.TLabel", background=_THEME["panel"], foreground=_THEME["ink"])
         style.configure("HomePanel.TLabel", background=_THEME["panel"], foreground=_THEME["ink"])
         style.configure("HomeMetricLabel.TLabel", background=_THEME["panel_high"], foreground=_THEME["secondary"])
         style.configure("HomeMetricValue.TLabel", background=_THEME["panel_high"], foreground=_THEME["ink"])
-        style.configure("HomeMuted.TLabel", background=_THEME["card"], foreground=_THEME["secondary"])
+        style.configure("HomeMuted.TLabel", background=_THEME["panel"], foreground=_THEME["secondary"])
         style.configure("HomePanelMuted.TLabel", background=_THEME["panel"], foreground=_THEME["secondary"])
         style.configure("HomeKicker.TLabel", background=_THEME["night"], foreground=_THEME["cyan"], font=(self.display_font, 9))
         style.configure("HomePrimary.TButton", background=_THEME["accent"], foreground="#f7fbff", padding=(13, 8), borderwidth=1, bordercolor=_THEME["accent_bright"], relief="flat", font=(self.ui_font, 9, "bold"))
@@ -1047,7 +1119,7 @@ class AnalyzerShellApp:
         stat_accents = ("#23d8bb", "#30aef4", "#a687ff", "#ffcf5a")
         for index, (variable, accent) in enumerate(zip((self.dashboard_readiness, self.dashboard_rounds, self.dashboard_players, self.dashboard_scenes), stat_accents)):
             card = RoundedHomeSurface(
-                self.tk, self.ttk, stats, style="HomeStat.TFrame", fill=_THEME["card"], outline=_THEME["border"], padding=(0, 7), min_height=58, min_width=104 if index == 0 else 62,
+                self.tk, self.ttk, stats, style="HomeStat.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=(0, 7), min_height=58, min_width=104 if index == 0 else 62,
             )
             card.pack(side="left", padx=(6, 0))
             self._home_accent(card.body, accent)
@@ -1068,7 +1140,7 @@ class AnalyzerShellApp:
         for column, (icon, title, detail, action, target, enabled, accent, button_style) in enumerate(module_specs):
             modules.columnconfigure(column, weight=1, uniform="home-modules")
             card = RoundedHomeSurface(
-                self.tk, self.ttk, modules, style="HomeModule.TFrame", fill=_THEME["card"], outline=_THEME["border"], padding=7, min_height=196, radius=8,
+                self.tk, self.ttk, modules, style="HomeModule.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=7, min_height=196, radius=8,
             )
             card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 3, 0 if column == 5 else 3))
             card.columnconfigure(0, weight=1)
@@ -1083,9 +1155,11 @@ class AnalyzerShellApp:
             self.ttk.Label(icon_row, text=title, style="HomeModule.TLabel", font=(self.display_font, 9, "bold"), justify="left").pack(side="left", anchor="w")
             self.ttk.Label(card.body, text=detail, style="HomeMuted.TLabel", wraplength=150, justify="left").grid(row=2, column=0, sticky="ew", pady=(2, 10))
             self.ttk.Frame(card.body, style="HomeModule.TFrame").grid(row=3, column=0, sticky="nsew")
-            button = self.ttk.Button(card.body, text=action, style=button_style, command=(lambda value=target: self._show_page(value)))
-            button.configure(state="normal" if enabled else "disabled")
-            button.grid(row=4, column=0, sticky="ew")
+            RoundedHomeAction(
+                self.tk, card.body, text=action, accent=accent,
+                command=(lambda value=target: self._show_page(value)), enabled=enabled,
+                font=(self.ui_font, 9, "bold"),
+            ).grid(row=4, column=0, sticky="ew")
 
         overview = self.ttk.Frame(page, style="Content.TFrame")
         overview.pack(fill="x", pady=(12, 0))
