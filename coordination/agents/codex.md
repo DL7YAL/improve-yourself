@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-21 — Action-bound workflow revalidation
+
+STATUS: done
+TASK: Revalidate the open workflow immediately before selection rerender and CS2 coordinator creation, failing closed without watchers, scans or a cached trust model.
+BRANCH: `dev/v1-foundation`
+CHANGED: `AnalyzerShellController.validate_current_workflow()` is now the single action-bound gate. Selection rerender invokes it before calling the injected rerenderer. CS2 coordinator creation invokes it before reading the flow/name and performs the potentially multi-second artifact/chunk validation on the existing worker thread. Preflight clears all prior connection/demo/filename indicators before starting and again on any integrity/runtime exception. No parser, rule, scene, timeline, CS2 command, file watcher, background scan, Optimizer/System Check or benchmark change.
+VERIFIED: 113/113 tests, dependency check, eight CLI smokes, compile and diff check PASS. New tests mutate a previously accepted review/flow artifact and prove that rerender is never invoked and the review boundary rejects the changed source metadata. Existing 12/12 focused analyzer-shell tests pass.
+DECISIONS: Trust is recomputed at each consequential action from the manifest and local artifacts; the shell does not retain a second trust cache. Full replay-chunk validation remains intentional evidence even though a real 18-round workflow takes several seconds, so it stays off the GUI thread.
+OPEN: Workflow-dependent controls remain clickable before any workflow is loaded and communicate the missing prerequisite only after the action. Final styling/packaging remains deferred.
+NEXT: Disable `Quelldemo zuordnen`, selection controls, `Analyse starten` and `CS2 prüfen` until a workflow result is loaded, then show the loaded manifest basename/source basename and abbreviated source hash as explicit local identity. Keep `Demo auswählen` and `Vorhandene Analyse öffnen` always available; do not alter validation, parsing or review behavior.
+MODEL_PROFILE: terra
+MODEL_REASON: Narrow trust-boundary closure and asynchronous UI failure semantics with deterministic regression coverage.
+COMPUTER_USE: no; integrity behavior is controller/thread state and required no external application interaction.
+
 ## 2026-08-21 — Hash-bound source-demo relink
 
 STATUS: done

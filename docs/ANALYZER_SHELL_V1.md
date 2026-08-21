@@ -33,11 +33,13 @@ The shell never scans result folders, chooses a recent run, infers a missing sou
 
 For such a legacy workflow, `Quelldemo zuordnen` accepts one explicitly selected `.dem` or `.dem.zst`. It streams the file through SHA-256 and requires an exact match before atomically adding only the basename as `source_demo_name`. A mismatch leaves the manifest byte-for-byte unchanged. A successful link clears stale readiness and immediately repeats the local CS2 preflight; it never reparses, copies, renames or stores the private source path.
 
+Trust is action-bound, not carried forward from the open dialog. Immediately before a selection rerender and before creating the CS2 coordinator, the controller repeats the complete workflow/artifact/chunk validation. A changed artifact prevents the downstream operation from being called. CS2 validation runs off the UI thread, clears every prior readiness indicator before it starts and remains disabled on any integrity error. There is no watcher, directory poller or separate cached trust state.
+
 Reset clears Player Select. It does not silently turn an empty selection into Full Demo; the user must choose Full Demo explicitly. Already selected players are removed from the dropdown and cannot be added twice.
 
 ## Evidence
 
-- 111/111 complete tests pass.
+- 113/113 complete tests pass.
 - Locked dependency check and eight public CLI help smokes pass.
 - The visible Windows shell showed the required controls and closed cleanly.
 - The existing real Ancient replay-v2 store was reused for player `steam:76561198063336407`; no Awpy reparse occurred and 22 real selected scenes were generated. Full Demo was then restored from the same store.
@@ -45,4 +47,4 @@ Reset clears Player Select. It does not silently turn an empty selection into Fu
 
 ## Deferred
 
-Final branding and installer packaging remain separate product work. Manifest integrity should next be revalidated at every later state-changing rerender/review action so a file altered after opening cannot cross the established trust boundary.
+Final branding and installer packaging remain separate product work. The next small shell usability slice may explicitly disable workflow-dependent controls until a workflow is loaded and display the currently trusted workflow/source identity; it must not change parsing, review or trust semantics.

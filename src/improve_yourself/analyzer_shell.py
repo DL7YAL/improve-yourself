@@ -198,9 +198,13 @@ class AnalyzerShellController:
         result = self._require_result()
         if self.selection_mode == "player_select" and not self.selected_ids:
             raise ValueError("Player Select requires at least one player")
-        manifest = self._rerenderer(result.manifest_path, player_ids=tuple(self.selected_ids))
+        manifest_path = self.validate_current_workflow()
+        manifest = self._rerenderer(manifest_path, player_ids=tuple(self.selected_ids))
         self.result = self._load(manifest)
         return self.result
+
+    def validate_current_workflow(self) -> Path:
+        return validate_existing_workflow(self._require_result().manifest_path)
 
     def _require_result(self) -> ShellResult:
         if self.result is None:
@@ -396,25 +400,30 @@ class AnalyzerShellApp:
         self._preflight(open_after=True)
 
     def _coordinator(self) -> Cs2ReviewCoordinator:
-        result = self.controller._require_result()
-        manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
-        flow_path = result.manifest_path.parent / manifest["artifacts"]["analysis_flow"]
-        return Cs2ReviewCoordinator(flow_path, result.source_demo_name)
+        manifest_path = self.controller.validate_current_workflow()
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        flow_path = manifest_path.parent / manifest["artifacts"]["analysis_flow"]
+        return Cs2ReviewCoordinator(flow_path, str(manifest.get("source_demo_name") or ""))
 
     def _preflight(self, open_after: bool = False) -> None:
-        self.review_button.configure(state="disabled")
+        self._reset_preflight()
         self.preflight_message.set("Prüfe lokale CS2-Bereitschaft …")
-        try:
-            coordinator = self._coordinator()
-        except Exception as error:
-            self.preflight_message.set(f"Nicht bereit: {error}")
-            return
 
         def worker() -> None:
-            result = coordinator.preflight()
-            self.root.after(0, lambda: self._finish_preflight(result, coordinator, open_after))
+            try:
+                coordinator = self._coordinator()
+                result = coordinator.preflight()
+            except Exception as error:
+                message = str(error)
+                self.root.after(0, lambda: self._fail_preflight(message))
+            else:
+                self.root.after(0, lambda: self._finish_preflight(result, coordinator, open_after))
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def _fail_preflight(self, message: str) -> None:
+        self._reset_preflight()
+        self.preflight_message.set(f"Nicht bereit: {message}")
 
     def _finish_preflight(
         self, preflight: ReviewPreflight, coordinator: Cs2ReviewCoordinator, open_after: bool

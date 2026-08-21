@@ -172,3 +172,30 @@ def test_shell_rejects_source_hash_mismatch_without_modifying_manifest(tmp_path:
         controller.link_source_demo(demo)
     assert manifest_path.read_bytes() == before
     assert not manifest_path.with_name("demo-workflow.json.tmp").exists()
+
+
+def test_shell_revalidates_before_rerender_and_does_not_call_renderer_on_change(tmp_path: Path) -> None:
+    manifest_path = _write_result(tmp_path / "run")
+    called = False
+
+    def rerenderer(_manifest: Path, *, player_ids: tuple[str, ...]) -> Path:
+        nonlocal called
+        called = True
+        return manifest_path
+
+    controller = AnalyzerShellController(tmp_path, rerenderer=rerenderer)
+    controller.open_existing_workflow(manifest_path)
+    (manifest_path.parent / "review.html").write_text("", encoding="utf-8")
+    with pytest.raises(ValueError, match="review artifact is empty"):
+        controller.analyze_selection()
+    assert called is False
+
+
+def test_shell_revalidates_before_review_boundary(tmp_path: Path) -> None:
+    manifest_path = _write_result(tmp_path / "run")
+    controller = AnalyzerShellController(tmp_path)
+    controller.open_existing_workflow(manifest_path)
+    flow_path = manifest_path.parent / "analysis-flow.json"
+    flow_path.write_text("{}", encoding="utf-8")
+    with pytest.raises(ValueError, match="analysis flow source metadata differs"):
+        controller.validate_current_workflow()
