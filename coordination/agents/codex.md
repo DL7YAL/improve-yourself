@@ -566,3 +566,18 @@ MODEL_PROFILE: terra
 MODEL_REASON: Realer produktweiter UI-Zustandscheck mit kleiner sicherheitsrelevanter CLI-Erweiterung und Runtime-QA.
 COMPUTER_USE: yes
 COMMIT/PR: pending final gate and push on `dev/v1-foundation`.
+
+## Handoff 2026-08-21 — Remaining-tab real-state review
+
+STATUS: review
+TASK: Rules, Tactical Replay, Settings und System Check/Optimizer im real geladenen Ancient-Zustand gegen die kanonische Designsprache prüfen.
+BRANCH: `dev/v1-foundation`
+CHANGED: TCheckbutton-Zustände vollständig an Midnight/Metallic angepasst; helle native Disabled-Flächen entfernt. Interne System-Check-Projektcopy (`PARTIAL_REFERENCE`, Replay-Konsolidierung) durch transparente Nutzertexte ersetzt. Ergebniszusammenfassung deutsch und verständlich formuliert; System-Check-Schema und Bewertung unverändert.
+VERIFIED: Rules mit sieben real aktiven objektiven V1-Ankern, Tactical-Replay-Einstieg, restriktive Settings und System Check visuell geprüft. Read-only System Check real ausgeführt: 6 OK, 2 REVIEW/zu prüfen, 0 Handlungsbedarf, Policy weiterhin keine Änderungen angewendet. Checkbox-Fremdflächen reproduziert, korrigiert und im selben Workflow erneut visuell geprüft. Finale Nutzercopy ohne interne Projektbegriffe erneut visuell PASS. 120/120 pytest, compileall und `git diff --check` PASS.
+DECISIONS: Interne Referenz-/Arbeitsstrangbegriffe gehören nicht in Nutzerflächen. Unknown/REVIEW bleibt unknown/zu prüfen und wird nicht zum negativen Befund. Keine Optimizer-, System- oder Replay-Funktion erweitert.
+OPEN: Vollständiger Endnutzer-Abnahmelauf und Merge bleiben Tristan vorbehalten; CS2-Live-Readiness wurde nicht erneut ausgelöst.
+NEXT: Gepushten Experimental-Build als zusammenhängenden Nutzerfluss abnehmen; danach nur konkrete Abweichungen korrigieren.
+MODEL_PROFILE: terra
+MODEL_REASON: Reale tabübergreifende Runtime-QA mit UI-Zustands- und Sicherheitscopy-Korrektur.
+COMPUTER_USE: yes
+COMMIT/PR: wird als verbleibender Tab-/System-Check-Review auf `dev/v1-foundation` committed und gepusht.

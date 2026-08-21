@@ -366,6 +366,16 @@ class AnalyzerShellApp:
             selectbackground=[("readonly", _THEME["deep"])],
             selectforeground=[("readonly", _THEME["ink"])],
         )
+        style.configure(
+            "TCheckbutton", background=_THEME["panel"], foreground=_THEME["ink"],
+            indicatorcolor=_THEME["deep"], indicatormargin=4,
+        )
+        style.map(
+            "TCheckbutton",
+            background=[("active", _THEME["panel"]), ("disabled", _THEME["panel"])],
+            foreground=[("disabled", _THEME["muted"])],
+            indicatorcolor=[("selected", _THEME["ice"]), ("disabled", _THEME["metal"])],
+        )
         style.configure("Nav.TButton", anchor="w", background=_THEME["deep"], foreground=_THEME["muted"], padding=(18, 12), borderwidth=0)
         style.configure("NavActive.TButton", anchor="w", background=_THEME["metal"], foreground=_THEME["ink"], padding=(18, 12), borderwidth=0)
         self.status = tk.StringVar(value="Echte CS2-Demo auswählen")
@@ -551,8 +561,8 @@ class AnalyzerShellApp:
         card = self.ttk.Frame(page, style="Card.TFrame", padding=24)
         card.pack(fill="x")
         self.ttk.Label(card, text="System Check", style="Card.TLabel", font=("Segoe UI Semibold", 15)).pack(anchor="w")
-        self.ttk.Label(card, text="Die technische Baseline ist vorhanden. Die vollständige Reiterdarstellung ist PARTIAL_REFERENCE und wird nicht durch erfundene Werte ersetzt.", style="Muted.TLabel", wraplength=780, justify="left").pack(anchor="w", pady=(8, 0))
-        self.ttk.Label(card, text="Optimizer bleibt außerhalb dieses Replay-Konsolidierungsschritts.", style="Muted.TLabel").pack(anchor="w", pady=(8, 12))
+        self.ttk.Label(card, text="Erkannte Systemwerte, Bewertung und Hinweise bleiben getrennt. Nicht sicher belegbare Werte werden als zu prüfen angezeigt.", style="Muted.TLabel", wraplength=780, justify="left").pack(anchor="w", pady=(8, 0))
+        self.ttk.Label(card, text="Optimizer-Empfehlungen erscheinen erst, wenn eine reale, sichere Funktion dahintersteht.", style="Muted.TLabel").pack(anchor="w", pady=(8, 12))
         self.ttk.Button(card, text="System Check ausführen", style="Primary.TButton", command=self._run_system_check).pack(anchor="w")
         self.ttk.Label(card, textvariable=self.system_status, style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(10, 0))
 
@@ -745,8 +755,8 @@ class AnalyzerShellApp:
                 payload = json.loads(output.read_text(encoding="utf-8"))
                 summary = payload["summary"]
                 message = (
-                    f"Abgeschlossen: {summary['OK']} OK · {summary['REVIEW']} REVIEW · "
-                    f"{summary['ACTION_REQUIRED']} ACTION REQUIRED · keine Änderungen angewendet."
+                    f"Abgeschlossen: {summary['OK']} OK · {summary['REVIEW']} zu prüfen · "
+                    f"{summary['ACTION_REQUIRED']} Handlungsbedarf · keine Änderungen angewendet."
                 )
             except Exception as error:
                 message = f"System Check fehlgeschlagen: {error}"
