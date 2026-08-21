@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-21 — Existing-analysis restore path
+
+STATUS: done
+TASK: Add only the explicit existing-workflow restore path documented by the prior handoff, without folder scanning, recent-result selection or Awpy reparse.
+BRANCH: `dev/v1-foundation`
+CHANGED: Analyzer shell now offers `Vorhandene Analyse öffnen` for an explicitly selected `demo-workflow.json`. The controller fail-closes on schema/status/policy/source-hash errors, missing/absolute/escaping required artifact paths, inconsistent analysis/replay/flow/timeline hashes, altered replay chunks, selection/count mismatches and empty review output. On PASS it restores the persisted roster, Full Demo/Player Select state, scenes and review directly. No parser, rule, scene, timeline, CS2 command, Optimizer/System Check or benchmark change.
+VERIFIED: 109/109 tests, dependency check, eight CLI smokes, compile and diff check PASS. Focused tests prove valid no-runner restore and reject malformed hash, traversal, missing artifact and replay-source mismatch. The ignored real Ancient workflow reopened without Awpy in 6.3 s and restored `de_ancient`, 10 named players, Full Demo and 54 real scenes; its older manifest truthfully exposes no source filename, so CS2 exact-filename readiness remains unavailable rather than inferred.
+DECISIONS: Explicit manifest selection is the only discovery mechanism. Every required artifact must remain under the selected workflow root. Reopening validates stored source metadata against every canonical replay chunk but does not claim the original `.dem` still exists because its private absolute path is not persisted. Legacy missing `source_demo_name` is not guessed from directories or unrelated files.
+OPEN: Older valid workflows can reopen but cannot pass exact-filename CS2 readiness until a source identity is explicitly and hash-safely supplied. Final styling/packaging remains deferred.
+NEXT: Add an explicit `Quelldemo zuordnen` action for an already open workflow: user selects one `.dem`/`.dem.zst`, the shell computes and requires exact SHA-256 equality before persisting only its basename as `source_demo_name`, then resets/rechecks readiness. Do not scan, infer, rename, copy or reparse the demo.
+MODEL_PROFILE: terra
+MODEL_REASON: Narrow security-bounded restore and desktop-state integration with real artifact validation.
+COMPUTER_USE: no; controller/real-artifact behavior was validated directly, and no new runtime visual semantics were introduced beyond one labeled button.
+
 ## 2026-08-21 — Analyzer-shell CS2 readiness preflight
 
 STATUS: done

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import threading
 import webbrowser
 from dataclasses import dataclass
@@ -10,6 +11,74 @@ from typing import Callable
 
 from .cs2_review_coordinator import Cs2ReviewCoordinator, ReviewCoordinatorServer, ReviewPreflight
 from .demo_workflow import rerender_demo_workflow, run_demo_workflow
+from .replay_store import ReplayStore
+
+
+_SOURCE_HASH = re.compile(r"[0-9a-f]{64}")
+_REQUIRED_ARTIFACTS = (
+    "analysis", "replay_v2", "analysis_flow", "timeline", "review", "cs2_review_commands"
+)
+
+
+def validate_existing_workflow(manifest_path: Path) -> Path:
+    """Fail-closed validation for an explicitly selected local workflow."""
+    manifest_path = manifest_path.resolve()
+    if manifest_path.name != "demo-workflow.json" or not manifest_path.is_file():
+        raise ValueError("select an existing demo-workflow.json file")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict) or manifest.get("schema") != "iy.demo_workflow/v1":
+        raise ValueError("expected iy.demo_workflow/v1 manifest")
+    if manifest.get("status") != "READY_FOR_REVIEW":
+        raise ValueError("workflow is not READY_FOR_REVIEW")
+    source_hash = manifest.get("source_sha256")
+    if not isinstance(source_hash, str) or _SOURCE_HASH.fullmatch(source_hash) is None:
+        raise ValueError("source_sha256 must be 64 lowercase hexadecimal characters")
+    policy = manifest.get("policy")
+    if not isinstance(policy, dict) or policy.get("real_demo_required") is not True or policy.get("fake_results") is not False or policy.get("local_only") is not True:
+        raise ValueError("workflow policy does not prove a local real-demo result")
+
+    root = manifest_path.parent
+    artifacts = manifest.get("artifacts")
+    if not isinstance(artifacts, dict):
+        raise ValueError("workflow artifacts must be an object")
+    resolved: dict[str, Path] = {}
+    for name in _REQUIRED_ARTIFACTS:
+        relative = artifacts.get(name)
+        if not isinstance(relative, str) or not relative:
+            raise ValueError(f"required artifact is missing: {name}")
+        candidate = Path(relative)
+        if candidate.is_absolute():
+            raise ValueError(f"artifact must use a relative local path: {name}")
+        path = (root / candidate).resolve()
+        if root != path and root not in path.parents:
+            raise ValueError(f"artifact escapes workflow root: {name}")
+        if not path.is_file():
+            raise ValueError(f"required artifact file is missing: {name}")
+        resolved[name] = path
+
+    analysis = json.loads(resolved["analysis"].read_text(encoding="utf-8"))
+    if analysis.get("schema") != "iy.analysis/v1" or analysis.get("source_sha256") != source_hash:
+        raise ValueError("analysis source metadata differs from workflow")
+    store = ReplayStore(resolved["replay_v2"])
+    if store.manifest["source"]["sha256"] != source_hash:
+        raise ValueError("replay source metadata differs from workflow")
+    for round_number in store.round_numbers:
+        store.load_round(round_number)
+
+    flow = json.loads(resolved["analysis_flow"].read_text(encoding="utf-8"))
+    if flow.get("schema") != "iy.analysis_flow/v1" or flow.get("source", {}).get("sha256") != source_hash:
+        raise ValueError("analysis flow source metadata differs from workflow")
+    timeline = json.loads(resolved["timeline"].read_text(encoding="utf-8"))
+    if timeline.get("source", {}).get("sha256") != source_hash or not isinstance(timeline.get("timeline"), list):
+        raise ValueError("timeline source metadata differs from workflow")
+    if manifest.get("selection") != flow.get("selection"):
+        raise ValueError("workflow selection differs from analysis flow")
+    counts = manifest.get("counts", {})
+    if counts.get("players") != len(flow.get("roster", [])) or counts.get("scenes") != len(flow.get("scenes", [])):
+        raise ValueError("workflow counts differ from analysis flow")
+    if not resolved["review"].read_text(encoding="utf-8").strip():
+        raise ValueError("review artifact is empty")
+    return manifest_path
 
 
 @dataclass(frozen=True)
@@ -54,6 +123,13 @@ class AnalyzerShellController:
         self.selected_ids.clear()
         self.selection_mode = "full_demo"
         self.result = self._load(manifest)
+        return self.result
+
+    def open_existing_workflow(self, manifest_path: Path) -> ShellResult:
+        manifest = validate_existing_workflow(manifest_path)
+        self.result = self._load(manifest)
+        self.selected_ids = list(self.result.selected_ids)
+        self.selection_mode = self.result.selection_mode
         return self.result
 
     def set_full_demo(self) -> None:
@@ -149,7 +225,10 @@ class AnalyzerShellApp:
         frame.pack(fill="both", expand=True)
         ttk.Label(frame, text="Demo Analyzer", font=("Segoe UI", 20, "bold")).pack(anchor="w")
         ttk.Label(frame, textvariable=self.status).pack(anchor="w", pady=(4, 14))
-        ttk.Button(frame, text="Demo auswählen", command=self._choose_demo).pack(anchor="w")
+        source_actions = ttk.Frame(frame)
+        source_actions.pack(fill="x")
+        ttk.Button(source_actions, text="Demo auswählen", command=self._choose_demo).pack(side="left")
+        ttk.Button(source_actions, text="Vorhandene Analyse öffnen", command=self._open_existing).pack(side="left", padx=8)
 
         teams = ttk.Frame(frame)
         teams.pack(fill="x", pady=14)
@@ -191,6 +270,19 @@ class AnalyzerShellApp:
         path = filedialog.askopenfilename(filetypes=[("CS2 Demo", "*.dem *.dem.zst"), ("Alle Dateien", "*.*")])
         if path:
             self._background("Demo wird lokal geparst …", lambda: self.controller.import_demo(Path(path)))
+
+    def _open_existing(self) -> None:
+        from tkinter import filedialog
+
+        path = filedialog.askopenfilename(
+            title="demo-workflow.json öffnen",
+            filetypes=[("Improve Yourself Analyse", "demo-workflow.json"), ("JSON", "*.json")],
+        )
+        if path:
+            self._background(
+                "Vorhandene Analyse wird lokal geprüft …",
+                lambda: self.controller.open_existing_workflow(Path(path)),
+            )
 
     def _background(self, message: str, operation: Callable[[], ShellResult]) -> None:
         self.status.set(message)
