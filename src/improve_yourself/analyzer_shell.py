@@ -4,12 +4,12 @@ import argparse
 import ctypes
 import hashlib
 import json
+import math
 import os
 import re
 import sys
 import threading
 import webbrowser
-import math
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Callable
@@ -41,9 +41,10 @@ UI_REFERENCE_STATUS = {
 }
 
 _THEME = {
-    "night": "#07111e", "deep": "#0b1727", "panel": "#102033",
-    "metal": "#264766", "line": "#386384", "ice": "#8edbff",
-    "ink": "#edf7ff", "muted": "#a9c7dc", "success": "#76ddb0",
+    "night": "#030914", "deep": "#071321", "panel": "#0b1b2c",
+    "panel_high": "#10263b", "metal": "#173c5d", "line": "#1f5f8e",
+    "line_soft": "#143550", "accent": "#058cff", "ice": "#8edbff",
+    "ink": "#f1f7fc", "muted": "#8ca9bd", "success": "#58d69a",
 }
 
 
@@ -361,23 +362,42 @@ class AnalyzerShellApp:
             self.app_icon = None
         style = ttk.Style(self.root)
         style.theme_use("clam")
-        style.configure(".", background=_THEME["panel"], foreground=_THEME["ink"], fieldbackground=_THEME["deep"], font=("Segoe UI", 10))
+        style.configure(
+            ".", background=_THEME["panel"], foreground=_THEME["ink"],
+            fieldbackground=_THEME["deep"], font=("Segoe UI", 10),
+            bordercolor=_THEME["line_soft"], lightcolor=_THEME["panel_high"],
+            darkcolor=_THEME["deep"], focuscolor=_THEME["accent"],
+        )
         style.configure("TFrame", background=_THEME["night"])
         style.configure("Content.TFrame", background=_THEME["night"])
-        style.configure("Card.TFrame", background=_THEME["panel"], relief="solid", borderwidth=1, bordercolor=_THEME["line"])
+        style.configure("Card.TFrame", background=_THEME["panel"], relief="flat", borderwidth=1, bordercolor=_THEME["line_soft"])
         style.configure("CardInner.TFrame", background=_THEME["panel"], relief="flat", borderwidth=0)
-        style.configure("Sidebar.TFrame", background=_THEME["deep"])
+        style.configure("Sidebar.TFrame", background="#050f1c", borderwidth=0)
         style.configure("TLabel", background=_THEME["night"], foreground=_THEME["ink"])
         style.configure("Card.TLabel", background=_THEME["panel"], foreground=_THEME["ink"])
         style.configure("Muted.TLabel", background=_THEME["panel"], foreground=_THEME["muted"])
-        style.configure("TLabelframe", background=_THEME["panel"], foreground=_THEME["ink"], relief="solid", borderwidth=1)
-        style.configure("TLabelframe.Label", background=_THEME["panel"], foreground=_THEME["ice"], font=("Segoe UI Semibold", 10))
-        style.configure("TButton", background="#19334d", foreground="#dcefff", padding=(12, 8), borderwidth=1, bordercolor=_THEME["line"])
-        style.map("TButton", background=[("active", _THEME["metal"]), ("pressed", _THEME["line"]), ("disabled", _THEME["deep"])], foreground=[("disabled", _THEME["muted"])])
-        style.configure("Primary.TButton", background=_THEME["ice"], foreground="#06101a", font=("Segoe UI Semibold", 10))
+        style.configure("TLabelframe", background=_THEME["panel"], foreground=_THEME["ink"], relief="flat", borderwidth=1, bordercolor=_THEME["line_soft"])
+        style.configure("TLabelframe.Label", background=_THEME["panel"], foreground=_THEME["ice"], font=("Segoe UI Semibold", 9))
+        style.configure(
+            "TButton", background="#102b43", foreground="#dcefff", padding=(14, 9),
+            borderwidth=1, bordercolor="#245b82", relief="flat", font=("Segoe UI Semibold", 9),
+            focusthickness=0,
+        )
+        style.map(
+            "TButton",
+            background=[("active", "#174b70"), ("pressed", "#0d78c7"), ("disabled", "#091725")],
+            bordercolor=[("active", _THEME["ice"]), ("pressed", _THEME["accent"]), ("disabled", _THEME["line_soft"])],
+            foreground=[("disabled", "#587184")],
+        )
+        style.configure(
+            "Primary.TButton", background="#087dcc", foreground="#ffffff",
+            bordercolor="#35b8ff", font=("Segoe UI Semibold", 9), padding=(16, 9),
+        )
+        style.map("Primary.TButton", background=[("active", "#0ba3f2"), ("pressed", "#0568ae"), ("disabled", "#0b2437")])
         style.configure(
             "TCombobox", background=_THEME["deep"], fieldbackground=_THEME["deep"],
-            foreground=_THEME["ink"], arrowcolor=_THEME["ice"], bordercolor=_THEME["line"],
+            foreground=_THEME["ink"], arrowcolor=_THEME["ice"], bordercolor="#245b82",
+            lightcolor=_THEME["deep"], darkcolor=_THEME["deep"], padding=(8, 6),
         )
         style.map(
             "TCombobox",
@@ -388,7 +408,7 @@ class AnalyzerShellApp:
         )
         style.configure(
             "TCheckbutton", background=_THEME["panel"], foreground=_THEME["ink"],
-            indicatorcolor=_THEME["deep"], indicatormargin=4,
+            indicatorcolor=_THEME["deep"], indicatormargin=6, padding=(4, 4),
         )
         style.map(
             "TCheckbutton",
@@ -396,8 +416,31 @@ class AnalyzerShellApp:
             foreground=[("disabled", _THEME["muted"])],
             indicatorcolor=[("selected", _THEME["ice"]), ("disabled", _THEME["metal"])],
         )
-        style.configure("Nav.TButton", anchor="w", background=_THEME["deep"], foreground=_THEME["muted"], padding=(18, 12), borderwidth=0)
-        style.configure("NavActive.TButton", anchor="w", background=_THEME["metal"], foreground=_THEME["ink"], padding=(18, 12), borderwidth=0)
+        style.configure(
+            "Rule.TCheckbutton", indicatoron=False, anchor="w", background="#0a1a2a",
+            foreground=_THEME["muted"], padding=(12, 10), borderwidth=1,
+            bordercolor=_THEME["line_soft"], font=("Segoe UI Semibold", 9),
+        )
+        style.map(
+            "Rule.TCheckbutton",
+            background=[("selected", "#0d3d60"), ("active", "#102d46"), ("disabled", "#091725")],
+            foreground=[("selected", "#ffffff"), ("active", "#ffffff"), ("disabled", "#587184")],
+            bordercolor=[("selected", _THEME["accent"]), ("active", _THEME["line"]), ("disabled", _THEME["line_soft"])],
+        )
+        style.configure(
+            "Nav.TButton", anchor="w", background="#050f1c", foreground=_THEME["muted"],
+            padding=(18, 13), borderwidth=1, bordercolor="#050f1c", font=("Segoe UI Semibold", 9),
+        )
+        style.map("Nav.TButton", background=[("active", "#0a2033")], foreground=[("active", _THEME["ink"])], bordercolor=[("active", _THEME["line_soft"])])
+        style.configure(
+            "NavActive.TButton", anchor="w", background="#0b3150", foreground="#ffffff",
+            padding=(18, 13), borderwidth=1, bordercolor="#168ddd", font=("Segoe UI Semibold", 9),
+        )
+        style.configure(
+            "Horizontal.TScale", background=_THEME["panel"], troughcolor="#06111d",
+            bordercolor=_THEME["line_soft"], lightcolor="#20a9ff", darkcolor="#0876be",
+            slidercolor="#20a9ff", gripcount=0, borderwidth=0,
+        )
         self.status = tk.StringVar(value="Echte CS2-Demo auswählen")
         self.identity = tk.StringVar(value="Keine lokale Analyse geladen")
         self.demo_preflight = tk.StringVar(value="Demo-Preflight ausstehend")
@@ -435,6 +478,7 @@ class AnalyzerShellApp:
         sidebar = ttk.Frame(shell, style="Sidebar.TFrame", width=245)
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
+        tk.Frame(sidebar, width=1, background=_THEME["line_soft"]).pack(side="right", fill="y")
         brand_path = Path(__file__).with_name("assets") / "improve-yourself-wordmark-v3.png"
         try:
             self.brand_image = tk.PhotoImage(file=str(brand_path)).subsample(3, 3)
@@ -445,12 +489,53 @@ class AnalyzerShellApp:
         content = ttk.Frame(shell, style="Content.TFrame", padding=(24, 18, 24, 24))
         content.pack(side="left", fill="both", expand=True)
         self.pages: dict[str, ttk.Frame] = {}
+        self.page_hosts: dict[str, ttk.Frame] = {}
         self.nav_buttons: dict[str, ttk.Button] = {}
+        nav_labels = {
+            "Dashboard": "⌂   Dashboard",
+            "Analyzer / Review": "◎   Analyzer / Review",
+            "Rules": "◇   Rules",
+            "Reports": "▤   Reports",
+            "System Check / Optimizer": "◈   System Check / Optimizer",
+            "Settings": "⚙   Settings",
+            "Tactical Replay": "⌖   Tactical Replay",
+        }
         for name in UI_REFERENCE_STATUS:
-            page = ttk.Frame(content, style="Content.TFrame")
-            page.place(relx=0, rely=0, relwidth=1, relheight=1)
+            host = ttk.Frame(content, style="Content.TFrame")
+            host.place(relx=0, rely=0, relwidth=1, relheight=1)
+            self.page_hosts[name] = host
+            if name == "Analyzer / Review":
+                canvas = tk.Canvas(
+                    host, background=_THEME["night"], borderwidth=0, highlightthickness=0,
+                )
+                scrollbar = ttk.Scrollbar(host, orient="vertical", command=canvas.yview)
+                canvas.configure(yscrollcommand=scrollbar.set)
+                scrollbar.pack(side="right", fill="y")
+                canvas.pack(side="left", fill="both", expand=True)
+                page = ttk.Frame(canvas, style="Content.TFrame")
+                page_window = canvas.create_window((0, 0), window=page, anchor="nw")
+                page.bind(
+                    "<Configure>",
+                    lambda _event, target=canvas: target.configure(scrollregion=target.bbox("all")),
+                )
+                canvas.bind(
+                    "<Configure>",
+                    lambda event, target=canvas, item=page_window: target.itemconfigure(item, width=event.width),
+                )
+                canvas.bind(
+                    "<MouseWheel>",
+                    lambda event, target=canvas: target.yview_scroll(int(-event.delta / 120), "units"),
+                )
+                page.bind(
+                    "<MouseWheel>",
+                    lambda event, target=canvas: target.yview_scroll(int(-event.delta / 120), "units"),
+                )
+                self.analyzer_canvas = canvas
+            else:
+                page = ttk.Frame(host, style="Content.TFrame")
+                page.pack(fill="both", expand=True)
             self.pages[name] = page
-            button = ttk.Button(sidebar, text=name, style="Nav.TButton", command=lambda value=name: self._show_page(value))
+            button = ttk.Button(sidebar, text=nav_labels[name], style="Nav.TButton", command=lambda value=name: self._show_page(value))
             button.pack(fill="x", padx=8, pady=1)
             self.nav_buttons[name] = button
         tk.Label(sidebar, text="LOCAL · PRIVATE · READ-ONLY WHERE MARKED", background=_THEME["deep"], foreground=_THEME["muted"], wraplength=205, justify="left", font=("Segoe UI", 8)).pack(side="bottom", anchor="w", padx=18, pady=18)
@@ -468,11 +553,11 @@ class AnalyzerShellApp:
         source_card.pack(side="left", fill="both", expand=True, padx=(0, 6))
         ttk.Label(source_card, text="DEMO & DATENQUELLE", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w")
         source_actions = ttk.Frame(source_card, style="CardInner.TFrame")
-        source_actions.pack(fill="x")
-        ttk.Button(source_actions, text="Demo auswählen", style="Primary.TButton", command=self._choose_demo).pack(side="left")
-        ttk.Button(source_actions, text="Vorhandene Analyse öffnen", command=self._open_existing).pack(side="left", padx=8)
+        source_actions.pack(fill="x", pady=(8, 0))
+        ttk.Button(source_actions, text="Demo auswählen", style="Primary.TButton", command=self._choose_demo).pack(fill="x")
+        ttk.Button(source_actions, text="Vorhandene Analyse öffnen", command=self._open_existing).pack(fill="x", pady=5)
         self.link_button = ttk.Button(source_actions, text="Quelldemo zuordnen", command=self._link_source, state="disabled")
-        self.link_button.pack(side="left")
+        self.link_button.pack(fill="x")
         ttk.Label(source_card, textvariable=self.identity, style="Muted.TLabel", wraplength=470, justify="left").pack(anchor="w", pady=(10, 0))
         ttk.Label(source_card, textvariable=self.demo_preflight, style="Card.TLabel", wraplength=470, justify="left").pack(anchor="w", pady=(4, 0))
 
@@ -493,9 +578,12 @@ class AnalyzerShellApp:
             button = ttk.Button(controls, text=text, command=command, state="disabled")
             button.pack(side="left", padx=4 if text != "Full Demo" else 0)
             self.workflow_widgets.append(button)
-        self.player = ttk.Combobox(controls, state="disabled", width=32)
-        self.player.pack(side="left", padx=(18, 4))
-        self.add_button = ttk.Button(controls, text="+ Add Player", command=self._add, state="disabled")
+        player_controls = ttk.Frame(selection_card, style="CardInner.TFrame")
+        player_controls.pack(fill="x", pady=(2, 4))
+        ttk.Label(player_controls, text="Spieler", style="Muted.TLabel").pack(side="left")
+        self.player = ttk.Combobox(player_controls, state="disabled", width=32)
+        self.player.pack(side="left", padx=(10, 4))
+        self.add_button = ttk.Button(player_controls, text="+ Add Player", command=self._add, state="disabled")
         self.add_button.pack(side="left")
         self.workflow_widgets.extend((self.player, self.add_button))
 
@@ -513,6 +601,8 @@ class AnalyzerShellApp:
         ttk.Label(self.pages["Rules"], text="Rules", font=("Segoe UI", 24, "bold")).pack(anchor="w")
         ttk.Label(self.pages["Rules"], text="Profile kombinieren belegte Marker; einzelne schwache Hinweise erzeugen keine Standard-Szene.", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
         rules_frame.pack(fill="x", pady=5)
+        rules_frame.columnconfigure(0, weight=1, uniform="rules")
+        rules_frame.columnconfigure(1, weight=1, uniform="rules")
         self.rule_vars: dict[str, tk.BooleanVar] = {}
         self.rule_checks = []
         labels = {
@@ -520,14 +610,18 @@ class AnalyzerShellApp:
             "objective_wallbang": "Wallbang", "objective_smoke_kill": "Smoke-Kill",
             "objective_blind_kill": "Blind-Kill", "objective_entry": "Entry",
         }
-        for rule_id in OBJECTIVE_RULES:
+        for index, rule_id in enumerate(OBJECTIVE_RULES):
             variable = tk.BooleanVar(value=True)
-            check = ttk.Checkbutton(rules_frame, text=labels[rule_id], variable=variable, command=self._save_custom_rules)
-            check.pack(anchor="w", pady=4)
+            check = ttk.Checkbutton(rules_frame, text=labels[rule_id], variable=variable, command=self._save_custom_rules, style="Rule.TCheckbutton")
+            check.grid(row=index // 2, column=index % 2, sticky="ew", padx=(0, 12), pady=5)
             check.bind("<Double-Button-1>", lambda _event, value=rule_id: self._show_rule_details(value))
             self.rule_vars[rule_id] = variable
             self.rule_checks.append(check)
         self.workflow_widgets.extend(self.rule_checks)
+        architecture = ttk.Frame(self.pages["Rules"], style="Card.TFrame", padding=16)
+        architecture.pack(fill="x", pady=(12, 0))
+        ttk.Label(architecture, text="INDIKATOREN  →  REGELKOMBINATIONEN  →  ANALYSEPROFIL  →  SZENEN", style="Card.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w")
+        ttk.Label(architecture, text="Standardprofile erzeugen Szenen nur aus vollständig definierten objektiven Kombinationen.", style="Muted.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(self.pages["Rules"], text=f"Lokale Profile: {controller.profile_store.root}", foreground=_THEME["muted"]).pack(anchor="w", pady=(10, 5))
 
         self.chosen = ttk.Label(selection_card, text="Full Demo", style="Muted.TLabel")
@@ -581,7 +675,7 @@ class AnalyzerShellApp:
         self.embedded_scene_list = self.tk.Listbox(
             left, width=36, height=25, background=_THEME["deep"], foreground=_THEME["ink"],
             selectbackground=_THEME["metal"], selectforeground=_THEME["ink"],
-            borderwidth=1, highlightthickness=1, highlightbackground=_THEME["line"],
+            borderwidth=0, highlightthickness=1, highlightbackground=_THEME["line_soft"],
             highlightcolor=_THEME["ice"], activestyle="none", font=("Segoe UI", 10),
         )
         self.embedded_scene_list.pack(fill="y", expand=True, pady=(10, 0))
@@ -606,7 +700,7 @@ class AnalyzerShellApp:
         self.embedded_note = self.tk.Text(
             detail, height=7, wrap="word", background=_THEME["deep"], foreground=_THEME["ink"],
             insertbackground=_THEME["ice"], selectbackground=_THEME["metal"],
-            borderwidth=1, relief="solid", highlightthickness=1, highlightbackground=_THEME["line"],
+            borderwidth=0, relief="flat", highlightthickness=1, highlightbackground=_THEME["line_soft"],
             font=("Segoe UI", 10),
         )
         self.embedded_note.pack(fill="x")
@@ -625,19 +719,24 @@ class AnalyzerShellApp:
         ).pack(anchor="w", pady=(12, 0))
 
     def _show_page(self, name: str) -> None:
-        self.pages[name].tkraise()
+        self.page_hosts[name].tkraise()
         for page_name, button in self.nav_buttons.items():
             button.configure(style="NavActive.TButton" if page_name == name else "Nav.TButton")
 
     def _build_dashboard_page(self) -> None:
         page = self.pages["Dashboard"]
+        hero = self.tk.Canvas(
+            page, height=150, background=_THEME["panel"], borderwidth=0,
+            highlightthickness=1, highlightbackground=_THEME["line_soft"],
+        )
+        hero.pack(fill="x", pady=(0, 18))
+        self.dashboard_hero = hero
         try:
             dashboard_path = Path(__file__).with_name("assets") / "improve-yourself-wordmark-v3.png"
             self.dashboard_brand_image = self.tk.PhotoImage(file=str(dashboard_path))
-            self.tk.Label(page, image=self.dashboard_brand_image, background=_THEME["night"]).pack(anchor="w")
-            self.ttk.Label(page, text="MAKE UP YOUR MIND.", foreground=_THEME["ice"], font=("Segoe UI Semibold", 9)).pack(anchor="w", pady=(0, 14))
         except self.tk.TclError:
             self.dashboard_brand_image = None
+        hero.bind("<Configure>", self._draw_dashboard_hero)
         self.ttk.Label(page, text="Dashboard", font=("Segoe UI", 24, "bold")).pack(anchor="w")
         self.ttk.Label(page, text="Lokaler Einstieg und aktueller Arbeitsstand", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
         grid = self.ttk.Frame(page, style="Content.TFrame")
@@ -657,6 +756,27 @@ class AnalyzerShellApp:
         recent.pack(fill="x", pady=(16, 0))
         self.ttk.Label(recent, text="Aktueller lokaler Stand", style="Card.TLabel", font=("Segoe UI Semibold", 14)).pack(anchor="w")
         self.ttk.Label(recent, textvariable=self.overview_status, style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(8, 0))
+
+    def _draw_dashboard_hero(self, _event=None) -> None:
+        canvas = self.dashboard_hero
+        width, height = max(canvas.winfo_width(), 2), max(canvas.winfo_height(), 2)
+        canvas.delete("all")
+        canvas.create_rectangle(0, 0, width, height, fill=_THEME["panel"], outline="")
+        for offset, color in ((0, "#0b2a43"), (18, "#0d3b5c"), (36, "#0b2a43")):
+            canvas.create_line(width - 340 + offset, height, width - 210 + offset, 0, fill=color, width=2)
+        canvas.create_line(0, height - 2, width, height - 2, fill=_THEME["line"], width=1)
+        canvas.create_rectangle(width - 210, 22, width - 22, 128, fill="#081827", outline=_THEME["line_soft"])
+        canvas.create_text(
+            width - 194, 36, anchor="w", text="CURRENT LOCAL WORKFLOW",
+            fill=_THEME["ice"], font=("Segoe UI Semibold", 9),
+        )
+        canvas.create_text(
+            width - 194, 56, anchor="nw", width=160, text=self.overview_status.get(),
+            fill=_THEME["muted"], font=("Segoe UI", 8),
+        )
+        if self.dashboard_brand_image is not None:
+            canvas.create_image(18, 16, image=self.dashboard_brand_image, anchor="nw")
+        canvas.create_text(20, 132, anchor="sw", text="MAKE UP YOUR MIND.", fill=_THEME["ice"], font=("Segoe UI Semibold", 9))
 
     def _build_reports_page(self) -> None:
         page = self.pages["Reports"]
@@ -716,7 +836,7 @@ class AnalyzerShellApp:
         self.tactical_scene_list = self.tk.Listbox(
             scene_panel, width=25, background=_THEME["deep"], foreground=_THEME["ink"],
             selectbackground=_THEME["metal"], selectforeground=_THEME["ink"],
-            borderwidth=0, highlightthickness=1, highlightbackground=_THEME["line"],
+            borderwidth=0, highlightthickness=1, highlightbackground=_THEME["line_soft"],
             activestyle="none", font=("Segoe UI", 9),
         )
         self.tactical_scene_list.pack(fill="both", expand=True, pady=(8, 0))
@@ -732,8 +852,8 @@ class AnalyzerShellApp:
         self.ttk.Label(frame_row, textvariable=self.tactical_frame_status, style="Muted.TLabel").pack(side="right")
 
         self.tactical_canvas = self.tk.Canvas(
-            map_panel, background=_THEME["deep"], borderwidth=1, relief="solid",
-            highlightthickness=1, highlightbackground=_THEME["line"], cursor="fleur",
+            map_panel, background=_THEME["deep"], borderwidth=0, relief="flat",
+            highlightthickness=1, highlightbackground=_THEME["line_soft"], cursor="fleur",
         )
         self.tactical_canvas.pack(fill="both", expand=True)
         self.tactical_canvas.bind("<Configure>", lambda _event: self._draw_tactical_canvas())
@@ -751,11 +871,13 @@ class AnalyzerShellApp:
         self.ttk.Button(controls, text="−", command=lambda: self._zoom_tactical(0.85)).pack(side="left", padx=(18, 4))
         self.ttk.Button(controls, text="+", command=lambda: self._zoom_tactical(1.18)).pack(side="left")
         self.ttk.Button(controls, text="Ansicht zurücksetzen", command=self._reset_tactical_view).pack(side="left", padx=6)
+        secondary = self.ttk.Frame(page, style="Content.TFrame")
+        secondary.pack(fill="x", pady=(5, 0))
         self.tactical_button = self.ttk.Button(
-            controls, text="HTML-Export im Browser (Fallback)", command=lambda: self._open_artifact("tactical_replay"), state="disabled"
+            secondary, text="HTML-Export im Browser (Fallback)", command=lambda: self._open_artifact("tactical_replay"), state="disabled"
         )
         self.tactical_button.pack(side="right")
-        self.ttk.Label(page, textvariable=self.tactical_action_status, foreground=_THEME["muted"]).pack(anchor="w", pady=(5, 0))
+        self.ttk.Label(secondary, textvariable=self.tactical_action_status, foreground=_THEME["muted"]).pack(side="left")
 
     def run(self) -> None:
         self.root.mainloop()
@@ -849,6 +971,8 @@ class AnalyzerShellApp:
             f"{result.source_demo_name or 'Lokaler Workflow'} · {result.map_id} · {result.round_count} Runden · "
             f"{len(result.players)} Spieler · {phase}"
         )
+        if hasattr(self, "dashboard_hero"):
+            self._draw_dashboard_hero()
         ready = result.status == "READY_FOR_REVIEW"
         self.report_status.set(
             f"{result.scene_count} zusammengeführte Szenen · Quelle {result.source_sha256[:12]}…"

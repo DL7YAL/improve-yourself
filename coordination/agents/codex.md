@@ -688,3 +688,31 @@ MODEL_PROFILE: terra
 MODEL_REASON: Cross-cutting desktop layout, shared-state integration, packaging and real CS2 runtime validation.
 COMPUTER_USE: yes
 COMMIT/PR: This handoff is part of the final pushed `dev/v1-foundation` checkpoint; exact HEAD is recorded in the final task report.
+
+# Handoff 2026-08-21 — Visual Master Conformance correction pass
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Den bestehenden Experimental-Slice grafisch an die verbindliche neunseitige Master-PDF angleichen, ohne Architektur, Funktionen oder Replay-Wahrheit zu erweitern.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/analyzer_shell.py`, `docs/AGENT_BASE.md`, `coordination/CURRENT.md`, `coordination/agents/codex.md`. Die bestehende Tk-/Desktop-Shell erhielt ein tieferes Midnight-/Metallic-Farbsystem, moderne flache Button-/Dropdown-/Scale-/Rule-Zustände, klarere Panel- und Border-Hierarchie, kompakte Sidebar-Symbole und einen Variant-3-Dashboard-Hero. Analyzer-Aktionen und Auswahlzeilen wurden für kleinere Breiten neu angeordnet; der Analyzer-Inhalt ist bei 1080x720 scrollbar. Der Tactical-HTML-Fallback liegt in einer eigenen responsiven Sekundärzeile.
+
+| Screen | Structural Master Match | Visual Master Match | Remaining Deviation |
+| --- | --- | --- | --- |
+| Application Shell / Hauptfenster | PASS | PASS | Native Windows-Titelleiste bleibt als erlaubter Desktop-Host sichtbar, ist aber dunkel und erzeugt keine weiße Fremdfläche. |
+| Home / Dashboard | PASS | PASS | Bewusst geringere Informationsdichte; keine illustrativen Master-Kennzahlen ohne reale Daten. |
+| Analyzer | PASS | PASS | Bei 1080x720 vertikal scrollbar; keine Demo-Bibliothek erfunden. |
+| Embedded Analyzer Review | PASS | PASS | Keine Szenen-Thumbnails oder Radarbilder, weil dafür keine freigegebenen Assets/Daten vorliegen. |
+| Tactical Replay | PASS | PASS | Positionsgrid statt Master-Radar; Utility-/Score-/Economy-Leisten bleiben mangels belegter Replay-Daten aus. |
+| Rules / Profile | PASS | PASS | V1 zeigt die vorhandenen neutralen Anker/Profile, keine neue Regelbearbeitung. |
+| Optimizer / System Check | PASS für aktuellen read-only Umfang | PASS | Bewusst sparsamer als das illustrative Masterbild; keine Optimizer-Funktion in diesem Slice. |
+| Settings / Reports | PASS für vorhandenen Realumfang | PASS | Restriktive echte Aktionen statt illustrativer Optionen oder Fake-Werte. |
+
+BRANDING: Kanonische Logo-Variante 3 unverändert. Vollmarke auf dem Dashboard, freigegebener Wordmark-Crop in der Sidebar und bestehende Compact-Mark für EXE/Fenster/Taskleiste. Kein `NEEDS_BRAND_ASSET`.
+DECISIONS: Die bestehende Desktop-/Tk-Architektur bleibt. Der Pass verändert ausschließlich Darstellung und responsive Anordnung. Keine Analyzer-Kriterien, Rules, Replay-/3D-/POV-, Optimizer-, Benchmark-, Clip- oder Video-Funktion begonnen. HTML bleibt expliziter Export/Fallback, nicht normaler Review-Hauptweg.
+VERIFIED: Gezielte GUI-Prüfung mit real vorhandenem Ancient-Workflow bei 1080x720: Dashboard-Hero ohne Überlagerung; Analyzer horizontal vollständig und vertikal scrollbar; Rules als einheitliche Metallic-Zeilen; Tactical-Szenenrail, Grid und Primäraktionen vollständig sichtbar, Browser-Fallback separat erreichbar. Frischer Portable-Build bei 1360x860 praktisch geöffnet: Analyzer -> Embedded Review (54 reale Szenen, Tick 3654) -> Tactical; Szenen 3654, 4362 und 5860 sichtbar gewechselt; Rückkehr zum synchronisierten Review-Pfad ohne Browseröffnung. Vollständiger `pytest`: 131/131 PASS; Build führte dieselben 131 Tests erneut mit PASS aus; `compileall` PASS; `git diff --check` PASS. EXE SHA-256 `63FB16E72B355B2694A218F24E7229CB98D833480AB43B78818B65E9749E0E1B`; Portable-ZIP SHA-256 `364AF963EF5AE9FA9BB4DA7BB5F409B9F766E28D49593CF9CE06351C3EF5B906`. Setup/Signing weiterhin nicht erzeugt, da kein unterstützter Installer-/Signing-Vertrag definiert ist.
+OPEN: Master-Radarbild, echte Utility-/Eventtimeline, Score/Economy und Szenen-Thumbnails benötigen separat belegte Daten/Assets und wurden nicht simuliert. Die äußere native dunkle Windows-Titelleiste bleibt die einzige sichtbare Host-Konvention. Menschliche visuelle Produktabnahme und Mergeentscheidung bleiben Tristan vorbehalten.
+NEXT: Tristan prüft ausschließlich den neu gepushten Portable-Build gegen die Masterbilder und meldet Abnahme oder konkrete screenbezogene Restabweichung. Bis dahin kein weiterer Product Slice und kein Merge nach `main`.
+MODEL_PROFILE: terra
+MODEL_REASON: Zusammenhängender visueller Desktop-Conformance-Pass mit responsiver Runtime-QA, vollständigem Gate und Packaging.
+COMPUTER_USE: yes
+COMMIT/PR: Dieser Handoff wird mit dem Visual-Conformance-Checkpoint auf `dev/v1-foundation` committed und gepusht; exakter HEAD im Abschlussbericht.

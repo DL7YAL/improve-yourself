@@ -141,3 +141,7 @@ Bestehende Regeln in `docs/BRANCHING.md` haben Vorrang, falls sie enger gefasst 
 ## Konfliktregel
 
 Bei widersprüchlichen Änderungen wird nichts still überschrieben. Der Konflikt wird in `coordination/CURRENT.md` sichtbar gemacht und Tristan entscheidet bei Produkt-/Rollenfragen final. Technische Konflikte sollen mit reproduzierbaren Belegen, Tests oder Messdaten geklärt werden.
+
+## Aktueller Experimental-Abnahmestand (2026-08-21)
+
+Der Analyzer-/Review-/Tactical-Slice bleibt bis zur visuellen Nutzerabnahme auf `WAITING_FOR_TRISTAN`. Der aktuelle Branch `dev/v1-foundation` enthält den gezielten Visual-Master-Conformance-Pass innerhalb der bestehenden nativen Desktop-Shell: Midnight-/Metallic-Flächen, Panelhierarchie, Controls, Navigation und Variant-3-Branding wurden grafisch angeglichen; Analyzer-Inhalt bleibt bei der Mindestgröße 1080x720 per Scroll erreichbar. Parser-, Szenen-, Replay-, NetCon-, System-Check- und Optimizer-Autoritäten wurden nicht erweitert. Kein neuer Product Slice und kein Merge nach `main` vor Tristans Abnahme; genaue Screen-Matrix, Tests, Build und Restabweichungen stehen im neuesten `coordination/agents/codex.md`-Handoff.
