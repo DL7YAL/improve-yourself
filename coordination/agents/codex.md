@@ -918,6 +918,24 @@ MODEL_REASON: Finaler sicherheitsrelevanter Architektur-/Collector-Abgleich ohne
 COMPUTER_USE: no
 COMMIT/PR: `18244ae feat: finalize optimizer foundation architecture`, gepusht nach `origin/dev/v1-foundation`.
 
+# Handoff 2026-08-22 — Network Quality Collector V1
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Einen lokalen, deklarierte-Ziele-only Network Quality Collector als Observed-Network-Quality-Evidenz in die gemeinsame Optimizer Foundation einfügen, ohne Recommendation- oder Apply-Pfad.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/network_quality.py`, `tests/test_network_quality.py`, `pyproject.toml`, `docs/NETWORK_QUALITY_COLLECTOR_V1.md`, `coordination/CURRENT.md`, `coordination/agents/codex.md`.
+METHOD: `iy.network_quality_measurement/v1` misst ICMP Echo einzeln pro Probe. Ergebnis enthält versioniertes/deklariertes Ziel samt Zweck und TargetClass, Methode, Anzahl, Intervall, Timeout, Messzeitpunkt, Measurement-Session-ID, alle Proben, erfolgreiche/fehlgeschlagene Proben, RTT Min/Max/Mean/Verteilung, klar definierte Jitter-Metrik (Mittel der absoluten Differenzen aufeinanderfolgender erfolgreicher RTTs) und Packet-Loss-Formel (fehlende angeforderte Proben / angeforderte Proben). Eine einzelne Probe ist `TOO_FEW_SAMPLES`.
+TARGETS / PRIVACY: Klassen sind LOCAL_GATEWAY, CONTROLLED_PUBLIC_TARGET und GAME_RELEVANT_TARGET. Es gibt keinen Default- oder versteckten externen Host; Ziel-ID, Host und Zweck sind Pflichtparameter. Lokale Speicherung nur in der vom Aufrufer gewählten Datei; `external_transfer: false`, `public_ip_persisted: false`. MAC-Adressen werden aus dem Adapterkontext entfernt.
+FAILURE STATES: Bei Null-Erfolg wird TARGET_UNREACHABLE, TIMEOUT oder BLOCKED_OR_FILTERED statt Packet Loss des Nutzeranschlusses ausgegeben. Teilverlust mit mindestens einer Antwort ist eine gültige Beobachtung; unter drei Erfolgen bleibt der Zustand TOO_FEW_SAMPLES. Adapter ohne Kontext ist ADAPTER_UNAVAILABLE. Allgemeine Probe-Fehler bleiben als Probe-Fehler sichtbar.
+FOUNDATION INTEGRATION: `network_quality_evidence()` erzeugt einen vorhandenen `EVIDENCE_RECORD` mit SourceType OBSERVED_NETWORK_QUALITY, klarer TargetClass und Provenance „Korrelation ist keine Konfigurationskausalität“. Der Collector erzeugt selbst keine Recommendation. `measurement_session_id` bereitet spätere BEFORE/AFTER-Vergleiche vor, ohne Änderungspfad.
+VERIFIED: Netzwerktests **4/4 PASS** (RTT/Jitter, Teilverlust, Timeout/unreachable, Zielklassen, lokale Speicherung/Adapter-Privacy, Evidence ohne Recommendation); zusammen mit Foundation-Tests **10/10 PASS**. Vollständige Suite und Diff-/Compile-Gate folgen vor Commit.
+KNOWN LIMITS: Kein Ping/Jitter/Packet-Loss-Live-Run gegen einen externen Host wurde ohne explizit vom Nutzer gewähltes Ziel ausgeführt. ICMP kann vom Ziel gefiltert werden und repräsentiert keine CS2-/FACEIT-Qualität. Kein TCP/UDP-Spieltraffic, kein Routing-, Firewall- oder Adapterwrite.
+NEXT: Tristan entscheidet über genau einen Folge-Slice: einen expliziten, privacy-reviewed Katalog von kontrollierten Testzielen/Target-Packs oder kuratierte reale Network-Evidence-Records. Keine Apply-Arbeit ohne neue Freigabe.
+MODEL_PROFILE: terra
+MODEL_REASON: Netzwerk- und datenschutzsensibler, aber strikt read-only Daten-/Test-Slice.
+COMPUTER_USE: no
+COMMIT/PR: Wird nach Abschlussgate ergänzt.
+
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
 STATUS: WAITING_FOR_TRISTAN
