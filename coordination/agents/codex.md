@@ -786,6 +786,26 @@ MODEL_REASON: Eng begrenzter, bereits spezifizierter Desktop-Layout-Korrekturpas
 COMPUTER_USE: yes
 COMMIT/PR: Dieser Handoff ist Teil des gepushten `dev/v1-foundation`-Checkpoints; exakter HEAD steht im Abschlussbericht.
 
+# Handoff 2026-08-21 — Final Home master pass
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Den bestehenden Home-Slice vollständig gegen die verbindliche Page-03-Masterreferenz abschließen, ohne einen neuen Product Slice oder strukturellen Neubau zu beginnen.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/analyzer_shell.py`, `tests/test_analyzer_shell.py`, `docs/AGENT_BASE.md`, `coordination/CURRENT.md`, `coordination/agents/codex.md`.
+IMPLEMENTATION: Die feste mittlere Reihe lautet links nach rechts **LETZTER SYSTEMSCAN → DEIN FORTSCHRITT – ÜBERBLICK → LETZTE ANALYSEN**. `SCHNELLZUGRIFF` ist vollständig entfernt. Der Systemscan besitzt das geforderte 2×3-Raster für CPU, GPU, RAM, Windows, Treiber und Monitor, Zeitpunkt, Gesamtstatus, echte Hinweise sowie genau die Aktion `Systemdetails anzeigen` auf die bestehende System-Check-/Optimizer-Route. `system_scan_home_view()` akzeptiert nur das vorhandene lokale Schema `iy.system_check/v1`, projektiert daraus nachweisbare Evidenz und lässt nicht vorhandene Daten neutral. Ein gespeicherter lokaler Scan wird beim Home-Start gelesen, ein neu gestarteter vorhandener read-only Systemscan aktualisiert dieselbe Anzeige. Fortschritt hat Gesamtstatus sowie AIM, DUELS, UTILITY, GAME SENSE / POSITIONING und PERFORMANCE vorbereitet; ohne echte Datengrundlage bleiben alle Werte sauber als nicht verfügbar sichtbar.
+THEME: Verbindlich konsolidiert: App `#010D19`, Panel `#182D4F`, Panel-soft `#30485A`, Accent `#075C94`, Accent-bright `#0A9AE7`, Accent-strong `#0065DA`, Text `#D0D1D3`, Secondary `#8F97A4`, Muted `#627188`. Gemeinsame Modul- und Unterflächen verwenden nun dieselben dunklen Konturen und 8px-Rundungen; Sidebar-Active/Hover bleibt eine ruhige integrierte blaue Fläche. Akzentfarben bleiben Kennzeichnung, keine dominierende Grundfläche. Variant-3-Branding, Orbitron für markante Displaytexte, Inter für reguläre UI und die gemeinsame Action-Grundlinie sind unverändert.
+DATA_TRUTH: Ein lokaler read-only `iy.system_check/v1`-Lauf wurde erzeugt und die Projektion erfolgreich mit dem tatsächlich gespeicherten Schema geprüft. Keine Hardwarewerte, Scores, Analysehistorie oder Hinweise aus Mockups übernommen. Die Laufzeitdaten verbleiben in ignoriertem lokalem `results/`.
+VERIFIED: `compileall` PASS; gezielte Shell-Tests **18/18 PASS**; vollständiger `pytest` **134/134 PASS**; `git diff --check` PASS. Quell-Shell wurde im kleinen 1080×720-Viewport gestartet: responsiver 3×2-Modulreflow und vertikales Scrolling nur für echten Overflow bleiben verfügbar. Die große Home-Ansicht bleibt ohne unnötigen Scrollbar. Vor dem Packaging läuft zusätzlich der vollständige Build-Gate.
+SCREEN | STRUCTURAL MASTER MATCH | VISUAL MASTER MATCH | REMAINING DEVIATION: Home / Dashboard | PASS – Header, vier Statuskarten, sechs Module, feste Mittelreihe, untere Idee-/Community-Flächen | PASS – dunkle ruhige Midnight-Surfaces, subtile Konturen, gerundete Sidebar-Active-Fläche, Orbitron/Inter | ausschließlich menschliche Endabnahme gegen das Masterbild. Analyzer / Embedded Review / Tactical Replay / Rules / Optimizer / Settings / Reports | bestehender Stand, nicht verändert | nicht Gegenstand dieses Home-Passes | getrennte spätere Screen-Abnahme.
+BUILD: Frisch erzeugt und praktisch geöffnet: `dist/experimental/Improve Yourself Experimental/Improve Yourself Experimental.exe`, `dist/experimental/Improve-Yourself-Experimental-Portable.zip`, `dist/experimental/experimental-build.json`. Das Build-Gate führte die vollständigen **134/134** Tests aus; `pip check` PASS. EXE SHA-256 `4A153BAF6F614EA8A3FF297F3B12FF8632C96AF19684C2529F42352420F8E235`; Portable-ZIP SHA-256 `D289C3C06192BFB2ECE7F3C4AA79AA7E11054D13327F15C88504F9FCF897BFB8`.
+WORKTREE: Vor Commit nur die oben genannten Quell-, Test- und Koordinationsdateien geändert; lokale Scan-/Testartefakte sind ignoriert.
+OPEN: Ausschließlich Tristans visueller Endvergleich des neuen Portable-Builds mit Page 03. Erst danach darf `HOME: ACCEPTED / UI MASTER LOCKED` festgehalten werden. Keine Produktarbeit, kein Merge nach `main` vorher.
+NEXT: Tristan öffnet den frischen Portable-Build, prüft Home maximiert, groß, klein und bei sinnvoller Mindestgröße. Bei Zustimmung die Master-Lock-Entscheidung zurückmelden; bei Abweichung genau eine begrenzte visuelle Korrektur nennen.
+MODEL_PROFILE: terra
+MODEL_REASON: Eng begrenzter finaler Home-Conformance-/Runtime-Pass ohne Produktfunktionsausweitung.
+COMPUTER_USE: yes
+COMMIT/PR: Commit und Push dieses Handovers auf `dev/v1-foundation` nach erfolgreichem finalem Build-Gate.
+
 # Handoff 2026-08-21 — Home final sidebar and surface master-conformance pass
 
 STATUS: WAITING_FOR_TRISTAN

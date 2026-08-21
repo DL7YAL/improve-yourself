@@ -44,16 +44,66 @@ _THEME = {
     # Shared Midnight surfaces.  Each layer is intentionally close in value:
     # cards stay distinct from the background without turning into bright blue
     # tiles, while contours remain a quiet depth cue rather than a frame.
-    "night": "#020711", "deep": "#06111e", "panel": "#081827",
-    "panel_high": "#0b2031", "card": "#071624", "sidebar": "#040d18",
-    "metal": "#123956", "line": "#195379", "line_soft": "#102d47",
-    "accent": "#058cff", "ice": "#8edbff",
-    "ink": "#f1f7fc", "muted": "#8ca9bd", "success": "#58d69a",
+    "night": "#010D19", "deep": "#0a1828", "panel": "#182D4F",
+    "panel_high": "#30485A", "card": "#132946", "sidebar": "#071725",
+    "metal": "#075C94", "line": "#0A9AE7", "line_soft": "#173754",
+    "accent": "#075C94", "accent_bright": "#0A9AE7", "accent_strong": "#0065DA",
+    "ice": "#D0D1D3", "ink": "#D0D1D3", "secondary": "#8F97A4",
+    "muted": "#627188", "success": "#58d69a",
 }
 
 _UI_FONT = "Inter"
 _DISPLAY_FONT = "Orbitron"
 _PRIVATE_FONT_FLAG = 0x10
+_SYSTEM_SCAN_HOME_FIELDS = ("cpu", "gpu", "memory", "windows", "drivers", "display")
+
+
+def system_scan_home_view(payload: dict[str, object]) -> dict[str, object] | None:
+    """Project an existing read-only system scan into six honest Home cells.
+
+    The function deliberately consumes the existing `iy.system_check/v1`
+    payload.  It neither probes the machine nor infers missing facts.
+    """
+    if payload.get("schema") != "iy.system_check/v1":
+        return None
+    raw_checks = payload.get("checks")
+    if not isinstance(raw_checks, list):
+        return None
+    checks = {item.get("id"): item for item in raw_checks if isinstance(item, dict) and isinstance(item.get("id"), str)}
+
+    def check_value(check_id: str, fallback: str = "Nicht verfügbar") -> tuple[dict[str, object], str, str]:
+        check = checks.get(check_id)
+        if not isinstance(check, dict):
+            return {}, fallback, "REVIEW"
+        evidence = check.get("evidence")
+        return evidence if isinstance(evidence, dict) else {}, str(check.get("summary") or fallback), str(check.get("status") or "REVIEW")
+
+    cpu_evidence, cpu_fallback, cpu_status = check_value("cpu")
+    gpu_evidence, gpu_fallback, gpu_status = check_value("gpu")
+    memory_evidence, memory_fallback, memory_status = check_value("memory")
+    windows_evidence, windows_fallback, windows_status = check_value("windows")
+    display_evidence, display_fallback, display_status = check_value("display")
+    adapters = gpu_evidence.get("adapters")
+    first_adapter = adapters[0] if isinstance(adapters, list) and adapters and isinstance(adapters[0], dict) else {}
+    ram_gb = memory_evidence.get("total_gb")
+    refresh_rates = display_evidence.get("refresh_rates_hz")
+    entries = {
+        "cpu": ("CPU", str(cpu_evidence.get("name") or cpu_fallback), cpu_status),
+        "gpu": ("GPU", str(first_adapter.get("name") or gpu_fallback), gpu_status),
+        "memory": ("RAM", f"{ram_gb:g} GB" if isinstance(ram_gb, (int, float)) else memory_fallback, memory_status),
+        "windows": ("Windows", str(windows_evidence.get("caption") or windows_evidence.get("build") or windows_fallback), windows_status),
+        "drivers": ("Treiber", str(first_adapter.get("driver_version") or gpu_fallback), gpu_status),
+        "display": ("Monitor", f"{max(refresh_rates):g} Hz" if isinstance(refresh_rates, list) and refresh_rates and all(isinstance(rate, (int, float)) for rate in refresh_rates) else display_fallback, display_status),
+    }
+    summary = payload.get("summary")
+    counts = summary if isinstance(summary, dict) else {}
+    attention = [label for label, _value, status in entries.values() if status != "OK"]
+    return {
+        "generated_at_utc": str(payload.get("generated_at_utc") or "Zeitpunkt nicht verfügbar"),
+        "overall": f"{counts.get('OK', 0)} OK · {counts.get('REVIEW', 0)} zu prüfen · {counts.get('ACTION_REQUIRED', 0)} Handlungsbedarf",
+        "attention": "Hinweise: " + ", ".join(attention) if attention else "Keine offenen Hinweise aus dem letzten Scan.",
+        "entries": entries,
+    }
 
 
 def _register_private_fonts(root, assets: Path) -> tuple[str, str]:
@@ -149,11 +199,11 @@ class SidebarNavItem:
         canvas.delete("all")
         if self.active:
             # The outer layer is a restrained simulated glow, not a hard focus box.
-            self._rounded_rect(2, 3, width - 2, height - 3, 11, fill="#071d31")
-            self._rounded_rect(4, 5, width - 4, height - 5, 9, fill="#0a3150", outline="#1a79ad")
+            self._rounded_rect(2, 3, width - 2, height - 3, 11, fill="#061827")
+            self._rounded_rect(4, 5, width - 4, height - 5, 9, fill="#0d2942", outline="#1a6d9c")
             icon_color, label_color = "#9fe5ff", "#f4fbff"
         elif self.hovered:
-            self._rounded_rect(4, 5, width - 4, height - 5, 9, fill="#071b2c", outline="#123650")
+            self._rounded_rect(4, 5, width - 4, height - 5, 9, fill="#0a2035", outline="#1a4268")
             icon_color, label_color = "#76cfff", "#d7eaf7"
         else:
             icon_color, label_color = "#5f8eaa", _THEME["muted"]
@@ -248,8 +298,8 @@ def dashboard_layout_metrics(content_width: int, viewport_height: int) -> tuple[
     return (
         compact,
         196 + extra_height // 12,
-        184 + extra_height // 3,
-        116 + extra_height // 4,
+        214 + extra_height // 3,
+        86 + extra_height // 4,
         12 + extra_height // 20,
     )
 
@@ -584,18 +634,21 @@ class AnalyzerShellApp:
         # Home deliberately has its own component family.  The command-centre
         # layout is shared with the rest of the shell, while these styles keep
         # its cards from falling back to the generic/native looking controls.
-        style.configure("HomeStat.TFrame", background="#071624", relief="flat", borderwidth=1, bordercolor="#123752")
-        style.configure("HomeModule.TFrame", background=_THEME["card"], relief="flat", borderwidth=1, bordercolor="#123650")
-        style.configure("HomePanel.TFrame", background=_THEME["panel"], relief="flat", borderwidth=1, bordercolor="#123650")
+        style.configure("HomeStat.TFrame", background="#132946", relief="flat", borderwidth=1, bordercolor="#1a4268")
+        style.configure("HomeModule.TFrame", background=_THEME["card"], relief="flat", borderwidth=1, bordercolor="#1a4268")
+        style.configure("HomePanel.TFrame", background=_THEME["panel"], relief="flat", borderwidth=1, bordercolor="#1a4268")
         style.configure("HomeInner.TFrame", background=_THEME["panel"], relief="flat", borderwidth=0)
-        style.configure("HomeStat.TLabel", background="#071624", foreground=_THEME["ice"])
+        style.configure("HomeMetric.TFrame", background="#162946", relief="flat", borderwidth=1, bordercolor="#204463")
+        style.configure("HomeStat.TLabel", background="#132946", foreground=_THEME["ice"])
         style.configure("HomeModule.TLabel", background=_THEME["card"], foreground=_THEME["ink"])
         style.configure("HomePanel.TLabel", background=_THEME["panel"], foreground=_THEME["ink"])
-        style.configure("HomeMuted.TLabel", background=_THEME["card"], foreground="#8eafc2")
-        style.configure("HomePanelMuted.TLabel", background=_THEME["panel"], foreground="#8eafc2")
+        style.configure("HomeMetricLabel.TLabel", background="#162946", foreground=_THEME["secondary"])
+        style.configure("HomeMetricValue.TLabel", background="#162946", foreground=_THEME["ink"])
+        style.configure("HomeMuted.TLabel", background=_THEME["card"], foreground=_THEME["secondary"])
+        style.configure("HomePanelMuted.TLabel", background=_THEME["panel"], foreground=_THEME["secondary"])
         style.configure("HomeKicker.TLabel", background=_THEME["night"], foreground="#3bbaff", font=(self.display_font, 9))
-        style.configure("HomePrimary.TButton", background="#075f96", foreground="#f7fbff", padding=(13, 8), borderwidth=1, bordercolor="#27b8ff", relief="flat", font=(self.ui_font, 9, "bold"))
-        style.map("HomePrimary.TButton", background=[("active", "#078bd1"), ("pressed", "#064d7e"), ("disabled", "#0b2232")], bordercolor=[("active", "#a5e4ff"), ("disabled", "#1a3a50")])
+        style.configure("HomePrimary.TButton", background=_THEME["accent"], foreground="#f7fbff", padding=(13, 8), borderwidth=1, bordercolor=_THEME["accent_bright"], relief="flat", font=(self.ui_font, 9, "bold"))
+        style.map("HomePrimary.TButton", background=[("active", _THEME["accent_bright"]), ("pressed", "#05456f"), ("disabled", "#0b2232")], bordercolor=[("active", "#8fd9ff"), ("disabled", "#1a3a50")])
         style.configure("HomeTeal.TButton", background="#07574f", foreground="#ecfffb", padding=(13, 8), borderwidth=1, bordercolor="#20d0b0", relief="flat", font=(self.ui_font, 9, "bold"))
         style.map("HomeTeal.TButton", background=[("active", "#087b70"), ("pressed", "#06463f"), ("disabled", "#0b2232")], bordercolor=[("active", "#9fffe9"), ("disabled", "#1a3a50")])
         style.configure("HomeViolet.TButton", background="#38285e", foreground="#f6f0ff", padding=(13, 8), borderwidth=1, bordercolor="#a684ff", relief="flat", font=(self.ui_font, 9, "bold"))
@@ -678,6 +731,17 @@ class AnalyzerShellApp:
         self.dashboard_readiness = tk.StringVar(value="BEREIT\nLokaler Modus")
         self.dashboard_pipeline = tk.StringVar(value="Demo nicht geladen\nParser —  ·  Auswahl —  ·  Szenen —  ·  Review —")
         self.dashboard_recent = tk.StringVar(value="Noch keine lokale Analyse geöffnet.")
+        self.dashboard_progress_summary = tk.StringVar(value="Gesamtfortschritt: noch keine Datenbasis")
+        self.dashboard_progress_dimensions = {
+            name: tk.StringVar(value="Nicht verfügbar")
+            for name in ("AIM", "DUELS", "UTILITY", "GAME SENSE / POSITIONING", "PERFORMANCE")
+        }
+        self.dashboard_system_scan_time = tk.StringVar(value="Noch kein Systemscan")
+        self.dashboard_system_scan_overall = tk.StringVar(value="Noch keine lokalen Systemdaten vorhanden.")
+        self.dashboard_system_scan_attention = tk.StringVar(value="")
+        self.dashboard_system_scan_cells = {
+            name: tk.StringVar(value="—") for name in _SYSTEM_SCAN_HOME_FIELDS
+        }
         self.report_status = tk.StringVar(value="Nach einer Analyse stehen Report und Timeline lokal bereit.")
         self.system_status = tk.StringVar(value="System Check wurde noch nicht ausgeführt.")
         self.embedded_review: EmbeddedReviewSession | None = None
@@ -878,6 +942,7 @@ class AnalyzerShellApp:
         self._build_settings_page()
         self._build_system_page()
         self._build_tactical_page()
+        self._load_saved_system_scan()
         self._show_page("Analyzer / Review")
         self.root.protocol("WM_DELETE_WINDOW", self._close)
 
@@ -978,7 +1043,7 @@ class AnalyzerShellApp:
         stat_accents = ("#23d8bb", "#30aef4", "#a687ff", "#ffcf5a")
         for index, (variable, accent) in enumerate(zip((self.dashboard_readiness, self.dashboard_rounds, self.dashboard_players, self.dashboard_scenes), stat_accents)):
             card = RoundedHomeSurface(
-                self.tk, self.ttk, stats, style="HomeStat.TFrame", fill="#071624", outline="#123752", padding=(0, 7), min_height=58, min_width=104 if index == 0 else 62,
+                self.tk, self.ttk, stats, style="HomeStat.TFrame", fill=_THEME["card"], outline="#1a4268", padding=(0, 7), min_height=58, min_width=104 if index == 0 else 62,
             )
             card.pack(side="left", padx=(6, 0))
             self._home_accent(card.body, accent)
@@ -999,7 +1064,7 @@ class AnalyzerShellApp:
         for column, (icon, title, detail, action, target, enabled, accent, button_style) in enumerate(module_specs):
             modules.columnconfigure(column, weight=1, uniform="home-modules")
             card = RoundedHomeSurface(
-                self.tk, self.ttk, modules, style="HomeModule.TFrame", fill=_THEME["card"], outline="#123650", padding=7, min_height=196, radius=6,
+                self.tk, self.ttk, modules, style="HomeModule.TFrame", fill=_THEME["card"], outline="#1a4268", padding=7, min_height=196, radius=8,
             )
             card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 3, 0 if column == 5 else 3))
             card.columnconfigure(0, weight=1)
@@ -1024,50 +1089,64 @@ class AnalyzerShellApp:
         overview.columnconfigure(1, weight=5, uniform="home-overview")
         overview.columnconfigure(2, weight=6, uniform="home-overview")
 
-        progress = RoundedHomeSurface(
-            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#123650", padding=15, min_height=184,
+        system_scan = RoundedHomeSurface(
+            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#1a4268", padding=15, min_height=184,
         )
-        progress.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+        system_scan.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+        self._home_accent(system_scan.body, "#0A9AE7")
+        self.ttk.Label(system_scan.body, text="LETZTER SYSTEMSCAN", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
+        self.ttk.Label(system_scan.body, textvariable=self.dashboard_system_scan_time, style="HomePanelMuted.TLabel", wraplength=210, justify="left").pack(anchor="w", pady=(5, 4))
+        system_grid = self.ttk.Frame(system_scan.body, style="HomeInner.TFrame")
+        system_grid.pack(fill="x", pady=(2, 5))
+        system_labels = (("cpu", "CPU"), ("gpu", "GPU"), ("memory", "RAM"), ("windows", "Windows"), ("drivers", "Treiber"), ("display", "Monitor"))
+        for index, (key, label) in enumerate(system_labels):
+            cell = self.ttk.Frame(system_grid, style="HomeMetric.TFrame", padding=(5, 3))
+            column = index % 3
+            cell.grid(row=index // 3, column=column, sticky="ew", padx=(0 if column == 0 else 2, 0 if column == 2 else 2), pady=2)
+            self.ttk.Label(cell, text=label, style="HomeMetricLabel.TLabel", font=(self.ui_font, 7, "bold")).pack(anchor="w")
+            self.ttk.Label(cell, textvariable=self.dashboard_system_scan_cells[key], style="HomeMetricValue.TLabel", wraplength=62, justify="left", font=(self.ui_font, 7)).pack(anchor="w")
+            system_grid.columnconfigure(column, weight=1, uniform="system-scan")
+        self.ttk.Label(system_scan.body, textvariable=self.dashboard_system_scan_overall, style="HomePanel.TLabel", wraplength=210, justify="left", font=(self.ui_font, 7, "bold")).pack(anchor="w", pady=(1, 4))
+        self.dashboard_system_scan_details_button = self.ttk.Button(system_scan.body, text="Systemdetails anzeigen", style="HomePrimary.TButton", command=lambda: self._show_page("System Check / Optimizer"))
+        self.dashboard_system_scan_details_button.pack(fill="x")
+        self.dashboard_system_scan_attention_label = self.ttk.Label(system_scan.body, textvariable=self.dashboard_system_scan_attention, style="HomePanelMuted.TLabel", wraplength=210, justify="left", font=(self.ui_font, 7))
+
+        progress = RoundedHomeSurface(
+            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#1a4268", padding=15, min_height=184,
+        )
+        progress.grid(row=0, column=1, sticky="nsew", padx=5)
         self._home_accent(progress.body, "#2bdcbb")
         self.ttk.Label(progress.body, text="DEIN FORTSCHRITT – ÜBERBLICK", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
         progress_body = self.ttk.Frame(progress.body, style="HomeInner.TFrame")
-        progress_body.pack(fill="x", pady=(8, 9))
+        progress_body.pack(fill="x", pady=(7, 5))
         self._home_progress_gauge(progress_body).pack(side="left", padx=(0, 9))
-        self.ttk.Label(progress_body, textvariable=self.dashboard_pipeline, style="HomePanelMuted.TLabel", wraplength=180, justify="left").pack(side="left", fill="x", expand=True)
+        self.ttk.Label(progress_body, textvariable=self.dashboard_progress_summary, style="HomePanelMuted.TLabel", wraplength=160, justify="left").pack(side="left", fill="x", expand=True)
+        dimension_grid = self.ttk.Frame(progress.body, style="HomeInner.TFrame")
+        dimension_grid.pack(fill="x", pady=(0, 6))
+        for index, (label, variable) in enumerate(self.dashboard_progress_dimensions.items()):
+            cell = self.ttk.Frame(dimension_grid, style="HomeMetric.TFrame", padding=(5, 3))
+            column = index % 3
+            cell.grid(row=index // 3, column=column, sticky="ew", padx=(0 if column == 0 else 2, 0 if column == 2 else 2), pady=2)
+            self.ttk.Label(cell, text=label, style="HomeMetricLabel.TLabel", font=(self.ui_font, 7, "bold")).pack(anchor="w")
+            self.ttk.Label(cell, textvariable=variable, style="HomeMetricValue.TLabel", font=(self.ui_font, 7)).pack(anchor="w")
+            dimension_grid.columnconfigure(column, weight=1, uniform="progress-dimensions")
         self.ttk.Button(progress.body, text="Zum Analyzer", style="HomeTeal.TButton", command=lambda: self._show_page("Analyzer / Review")).pack(fill="x")
 
         recent = RoundedHomeSurface(
-            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#123650", padding=15, min_height=184,
+            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#1a4268", padding=15, min_height=184,
         )
-        recent.grid(row=0, column=1, sticky="nsew", padx=5)
+        recent.grid(row=0, column=2, sticky="nsew", padx=(5, 0))
         self._home_accent(recent.body, "#a687ff")
         self.ttk.Label(recent.body, text="LETZTE ANALYSEN", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
         self.ttk.Label(recent.body, textvariable=self.dashboard_recent, style="HomePanelMuted.TLabel", wraplength=230, justify="left").pack(anchor="w", pady=(10, 8))
         self.ttk.Label(recent.body, textvariable=self.overview_status, style="HomePanel.TLabel", wraplength=230, justify="left").pack(anchor="w")
-
-        quick = RoundedHomeSurface(
-            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#123650", padding=15, min_height=184,
-        )
-        quick.grid(row=0, column=2, sticky="nsew", padx=(5, 0))
-        self._home_accent(quick.body, "#238ffc")
-        self.ttk.Label(quick.body, text="SCHNELLZUGRIFF", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
-        quick_grid = self.ttk.Frame(quick.body, style="HomeInner.TFrame")
-        quick_grid.pack(fill="x", pady=(8, 0))
-        for index, (label, target) in enumerate((
-            ("Analyse öffnen  ›", "Analyzer / Review"), ("Demo laden  ›", "Analyzer / Review"),
-            ("2D Tactical  ›", "Tactical Replay"), ("System prüfen  ›", "System Check / Optimizer"),
-            ("Reports  ›", "Reports"), ("Einstellungen  ›", "Settings"),
-        )):
-            button = self.ttk.Button(quick_grid, text=label, style="HomePrimary.TButton", command=lambda value=target: self._show_page(value))
-            button.grid(row=index // 2, column=index % 2, sticky="ew", padx=(0 if index % 2 == 0 else 4, 4 if index % 2 == 0 else 0), pady=3)
-            quick_grid.columnconfigure(index % 2, weight=1, uniform="quick")
 
         lower = self.ttk.Frame(page, style="Content.TFrame")
         lower.pack(fill="x", pady=(12, 16))
         lower.columnconfigure(0, weight=1, uniform="home-lower")
         lower.columnconfigure(1, weight=1, uniform="home-lower")
         idea = RoundedHomeSurface(
-            self.tk, self.ttk, lower, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#123650", padding=15, min_height=116,
+            self.tk, self.ttk, lower, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#1a4268", padding=15, min_height=116,
         )
         idea.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
         self._home_accent(idea.body, "#2bdcbb")
@@ -1078,7 +1157,7 @@ class AnalyzerShellApp:
             style="HomePanelMuted.TLabel", wraplength=360, justify="left",
         ).pack(anchor="w", pady=(8, 0))
         community = RoundedHomeSurface(
-            self.tk, self.ttk, lower, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#123650", padding=15, min_height=116,
+            self.tk, self.ttk, lower, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#1a4268", padding=15, min_height=116,
         )
         community.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
         self._home_accent(community.body, "#a687ff")
@@ -1101,8 +1180,8 @@ class AnalyzerShellApp:
         return accent
 
     def _home_module_icon(self, parent: object, glyph: str, color: str) -> object:
-        canvas = self.tk.Canvas(parent, width=31, height=31, background="#0a1d30", highlightthickness=0, bd=0)
-        canvas.create_oval(3, 3, 28, 28, outline="#183a54", width=2)
+        canvas = self.tk.Canvas(parent, width=31, height=31, background=_THEME["card"], highlightthickness=0, bd=0)
+        canvas.create_oval(3, 3, 28, 28, outline="#1a4268", width=2)
         canvas.create_oval(7, 7, 24, 24, outline=color, width=1)
         canvas.create_line(15, 1, 15, 6, fill=color, width=1)
         canvas.create_line(15, 25, 15, 30, fill=color, width=1)
@@ -1110,8 +1189,8 @@ class AnalyzerShellApp:
         return canvas
 
     def _home_progress_gauge(self, parent: object) -> object:
-        canvas = self.tk.Canvas(parent, width=56, height=56, background="#091a2b", highlightthickness=0, bd=0)
-        canvas.create_oval(4, 4, 52, 52, outline="#12364f", width=4)
+        canvas = self.tk.Canvas(parent, width=56, height=56, background=_THEME["panel"], highlightthickness=0, bd=0)
+        canvas.create_oval(4, 4, 52, 52, outline="#1a4268", width=4)
         canvas.create_arc(4, 4, 52, 52, start=88, extent=214, style="arc", outline="#2bdcbb", width=3)
         canvas.create_arc(10, 10, 46, 46, start=305, extent=82, style="arc", outline="#2d9fe8", width=2)
         canvas.create_text(28, 25, text="LOCAL", fill="#dff8ff", font=(self.display_font, 7))
@@ -1802,11 +1881,35 @@ class AnalyzerShellApp:
                     f"Abgeschlossen: {summary['OK']} OK · {summary['REVIEW']} zu prüfen · "
                     f"{summary['ACTION_REQUIRED']} Handlungsbedarf · keine Änderungen angewendet."
                 )
+                self.root.after(0, lambda: self._apply_system_scan(payload, message))
             except Exception as error:
                 message = f"System Check fehlgeschlagen: {error}"
-            self.root.after(0, lambda: self.system_status.set(message))
+                self.root.after(0, lambda: self.system_status.set(message))
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def _load_saved_system_scan(self) -> None:
+        path = self.controller.output_root / "system-check.json"
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return
+        self._apply_system_scan(payload, "Vorhandener lokaler Systemscan geladen.")
+
+    def _apply_system_scan(self, payload: dict[str, object], status_message: str) -> None:
+        view = system_scan_home_view(payload)
+        if view is None:
+            self.system_status.set("Systemscan-Daten konnten nicht als iy.system_check/v1 bestätigt werden.")
+            return
+        entries = view["entries"]
+        for key in _SYSTEM_SCAN_HOME_FIELDS:
+            _label, value, _status = entries[key]
+            self.dashboard_system_scan_cells[key].set(value)
+        self.dashboard_system_scan_time.set(f"Letzter Scan: {view['generated_at_utc']}")
+        self.dashboard_system_scan_overall.set(view["overall"])
+        self.dashboard_system_scan_attention.set(view["attention"])
+        self.dashboard_system_scan_attention_label.pack(before=self.dashboard_system_scan_details_button, anchor="w", pady=(1, 4))
+        self.system_status.set(status_message)
 
     def _coordinator(self) -> Cs2ReviewCoordinator:
         manifest_path = self.controller.validate_current_workflow()

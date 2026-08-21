@@ -12,6 +12,7 @@ from improve_yourself.analyzer_shell import (
     UI_REFERENCE_STATUS,
     dashboard_layout_metrics,
     default_output_root,
+    system_scan_home_view,
 )
 
 
@@ -42,11 +43,38 @@ def test_dashboard_layout_keeps_cards_readable_without_global_scaling() -> None:
     tall = dashboard_layout_metrics(1400, 1080)
     assert wide[0] is False
     assert compact[0] is True
-    assert wide[1:] == (213, 254, 168, 22)
+    assert wide[1:] == (213, 284, 138, 22)
     assert tall[1] > wide[1]
     assert tall[2] > wide[2]
     assert tall[3] > wide[3]
     assert tall[4] > wide[4]
+
+
+def test_system_scan_home_view_projects_existing_read_only_evidence_without_fake_values() -> None:
+    payload = {
+        "schema": "iy.system_check/v1", "generated_at_utc": "2026-08-21T12:00:00+00:00",
+        "summary": {"OK": 5, "REVIEW": 1, "ACTION_REQUIRED": 0},
+        "checks": [
+            {"id": "cpu", "status": "OK", "summary": "CPU", "evidence": {"name": "Real CPU"}},
+            {"id": "gpu", "status": "OK", "summary": "GPU", "evidence": {"adapters": [{"name": "Real GPU", "driver_version": "1.2.3"}]}},
+            {"id": "memory", "status": "OK", "summary": "RAM", "evidence": {"total_gb": 32}},
+            {"id": "windows", "status": "OK", "summary": "Windows", "evidence": {"caption": "Windows 11"}},
+            {"id": "display", "status": "REVIEW", "summary": "Display", "evidence": {"refresh_rates_hz": [144]}},
+        ],
+    }
+    view = system_scan_home_view(payload)
+    assert view is not None
+    assert view["entries"]["cpu"] == ("CPU", "Real CPU", "OK")
+    assert view["entries"]["gpu"] == ("GPU", "Real GPU", "OK")
+    assert view["entries"]["memory"] == ("RAM", "32 GB", "OK")
+    assert view["entries"]["drivers"] == ("Treiber", "1.2.3", "OK")
+    assert view["entries"]["display"] == ("Monitor", "144 Hz", "REVIEW")
+    assert view["attention"] == "Hinweise: Monitor"
+
+
+def test_system_scan_home_view_rejects_untrusted_or_missing_payloads() -> None:
+    assert system_scan_home_view({}) is None
+    assert system_scan_home_view({"schema": "iy.system_check/v1", "checks": "not-a-list"}) is None
 
 
 def _write_result(root: Path, selected: tuple[str, ...] = (), source_hash: str = "a" * 64) -> Path:
