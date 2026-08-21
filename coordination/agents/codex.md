@@ -1032,12 +1032,12 @@ COMMIT/PR: `243287a feat: prepare optimizer rule pack readiness`, gepusht nach `
 STATUS: WAITING_FOR_MATRIX_PACK_01
 TASK: Ausschließlich Readiness prüfen; keine neue Optimizer-Infrastruktur, keine eigenen realen Regeln und keine Network-/BIOS-/Apply-Arbeit.
 BRANCH: `dev/v1-foundation`
-HEAD: `7faf9ff docs: record rule pack readiness handoff` vor diesem Status-Checkpoint.
+HEAD: `f2e59db docs: record matrix pack hold status`.
 HOLD CHECK: Arbeitsbaum sauber. Relevante Optimizer-/Evidence-/Rule-Pack-/Synthetic-/UI-Tests **33/33 PASS**. Der fail-closed Fixture-Pack-Import validiert, anschließend läuft die sofort ausführbare 150-System-Regression mit `valid: true`, `system_count: 150`, `real_validation_result_created: false`, `confidence_changed: false`. `git diff --check` PASS.
 SAFETY: EXPERIMENTAL, REJECTED, INSUFFICIENT_EVIDENCE und SECURITY_PERFORMANCE_TRADEOFF bleiben über die bestehende Foundation keine normale positive Improve-Empfehlung. Importierte Regeln benötigen keinen Rule-spezifischen UI-Code; der gemeinsame UI-/Detailvertrag bleibt read-only und `apply_available: false`.
 BLOCKER: Keiner. Der einzige erwartete fachliche Input ist der separat kuratierte Improve Matrix Pack 01.
 NEXT: Nach Lieferung Matrix Pack 01 exakt fail-closed importieren, Schema/IDs/Evidence/Compatibility/Exclusions validieren, vollständig gegen 150 Profile regressieren, Resultate pro Rule/Systemklasse dokumentieren und in Optimizer-UI/Detailpanel prüfen — ohne Systemänderung.
-COMMIT/PR: Wird nach diesem reinen Status-Checkpoint ergänzt.
+COMMIT/PR: `f2e59db docs: record matrix pack hold status`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
