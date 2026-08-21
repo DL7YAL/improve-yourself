@@ -24,6 +24,22 @@ _REVIEW_ARTIFACTS = (
     "analysis_flow", "timeline", "review", "cs2_review_commands"
 )
 
+UI_REFERENCE_STATUS = {
+    "Dashboard": "NEEDS_UI_REFERENCE",
+    "Analyzer / Review": "IMPLEMENTED",
+    "Rules": "IMPLEMENTED",
+    "Reports": "NEEDS_UI_REFERENCE",
+    "System Check / Optimizer": "PARTIAL_REFERENCE",
+    "Settings": "NEEDS_UI_REFERENCE",
+    "Tactical Replay": "IMPLEMENTED",
+}
+
+_THEME = {
+    "night": "#07111e", "deep": "#0b1727", "panel": "#102033",
+    "metal": "#264766", "line": "#386384", "ice": "#8edbff",
+    "ink": "#edf7ff", "muted": "#a9c7dc", "success": "#76ddb0",
+}
+
 
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
@@ -318,17 +334,27 @@ class AnalyzerShellApp:
         self.controller = controller
         self.root = tk.Tk()
         self.root.title("Improve Yourself – Experimental")
-        self.root.geometry("980x760")
-        self.root.configure(background="#080d15")
+        self.root.geometry("1360x860")
+        self.root.minsize(1080, 720)
+        self.root.configure(background=_THEME["night"])
         _enable_dark_titlebar(self.root)
         style = ttk.Style(self.root)
         style.theme_use("clam")
-        style.configure(".", background="#101824", foreground="#e8edf5", fieldbackground="#151f2e")
-        style.configure("TFrame", background="#080d15")
-        style.configure("TLabel", background="#080d15", foreground="#e8edf5")
-        style.configure("TLabelframe", background="#101824", foreground="#e8edf5")
-        style.configure("TLabelframe.Label", background="#101824", foreground="#e8edf5")
-        style.configure("TButton", background="#1d2a3a", foreground="#e8edf5", padding=7)
+        style.configure(".", background=_THEME["panel"], foreground=_THEME["ink"], fieldbackground=_THEME["deep"], font=("Segoe UI", 10))
+        style.configure("TFrame", background=_THEME["night"])
+        style.configure("Content.TFrame", background=_THEME["night"])
+        style.configure("Card.TFrame", background=_THEME["panel"], relief="solid", borderwidth=1)
+        style.configure("Sidebar.TFrame", background=_THEME["deep"])
+        style.configure("TLabel", background=_THEME["night"], foreground=_THEME["ink"])
+        style.configure("Card.TLabel", background=_THEME["panel"], foreground=_THEME["ink"])
+        style.configure("Muted.TLabel", background=_THEME["panel"], foreground=_THEME["muted"])
+        style.configure("TLabelframe", background=_THEME["panel"], foreground=_THEME["ink"], relief="solid", borderwidth=1)
+        style.configure("TLabelframe.Label", background=_THEME["panel"], foreground=_THEME["ice"], font=("Segoe UI Semibold", 10))
+        style.configure("TButton", background="#19334d", foreground="#dcefff", padding=(12, 8), borderwidth=1)
+        style.map("TButton", background=[("active", _THEME["metal"]), ("pressed", _THEME["line"])])
+        style.configure("Primary.TButton", background=_THEME["ice"], foreground="#06101a", font=("Segoe UI Semibold", 10))
+        style.configure("Nav.TButton", anchor="w", background=_THEME["deep"], foreground=_THEME["muted"], padding=(18, 12), borderwidth=0)
+        style.configure("NavActive.TButton", anchor="w", background=_THEME["metal"], foreground=_THEME["ink"], padding=(18, 12), borderwidth=0)
         self.status = tk.StringVar(value="Echte CS2-Demo auswählen")
         self.identity = tk.StringVar(value="Keine lokale Analyse geladen")
         self.demo_preflight = tk.StringVar(value="Demo-Preflight ausstehend")
@@ -339,14 +365,38 @@ class AnalyzerShellApp:
         self.filename_status = tk.StringVar(value="○ Dateiname: noch nicht geprüft")
         self.preflight_message = tk.StringVar(value="Vor dem Review CS2 prüfen.")
 
-        frame = ttk.Frame(self.root, padding=18)
-        frame.pack(fill="both", expand=True)
-        ttk.Label(frame, text="Improve Yourself", font=("Segoe UI", 23, "bold")).pack(anchor="w")
-        ttk.Label(frame, text="Make Up Your Mind. · Experimental", font=("Segoe UI", 11)).pack(anchor="w")
-        ttk.Label(frame, textvariable=self.status).pack(anchor="w", pady=(4, 14))
+        shell = ttk.Frame(self.root, style="Content.TFrame")
+        shell.pack(fill="both", expand=True)
+        sidebar = ttk.Frame(shell, style="Sidebar.TFrame", width=245)
+        sidebar.pack(side="left", fill="y")
+        sidebar.pack_propagate(False)
+        brand_path = Path(__file__).with_name("assets") / "improve-yourself-wordmark-v3.png"
+        try:
+            self.brand_image = tk.PhotoImage(file=str(brand_path)).subsample(3, 3)
+            tk.Label(sidebar, image=self.brand_image, background=_THEME["deep"]).pack(anchor="w", padx=18, pady=(22, 6))
+        except tk.TclError:
+            ttk.Label(sidebar, text="IMPROVE YOURSELF", style="Card.TLabel", font=("Segoe UI", 17, "bold")).pack(anchor="w", padx=18, pady=(24, 6))
+        tk.Label(sidebar, text="EXPERIMENTAL BUILD", background=_THEME["deep"], foreground=_THEME["ice"], font=("Segoe UI Semibold", 9)).pack(anchor="w", padx=19, pady=(0, 20))
+        content = ttk.Frame(shell, style="Content.TFrame", padding=(24, 18, 24, 24))
+        content.pack(side="left", fill="both", expand=True)
+        self.pages: dict[str, ttk.Frame] = {}
+        self.nav_buttons: dict[str, ttk.Button] = {}
+        for name in UI_REFERENCE_STATUS:
+            page = ttk.Frame(content, style="Content.TFrame")
+            page.place(relx=0, rely=0, relwidth=1, relheight=1)
+            self.pages[name] = page
+            button = ttk.Button(sidebar, text=name, style="Nav.TButton", command=lambda value=name: self._show_page(value))
+            button.pack(fill="x", padx=8, pady=1)
+            self.nav_buttons[name] = button
+        tk.Label(sidebar, text="LOCAL · PRIVATE · READ-ONLY WHERE MARKED", background=_THEME["deep"], foreground=_THEME["muted"], wraplength=205, justify="left", font=("Segoe UI", 8)).pack(side="bottom", anchor="w", padx=18, pady=18)
+
+        frame = self.pages["Analyzer / Review"]
+        ttk.Label(frame, text="Analyzer / Review", font=("Segoe UI", 24, "bold")).pack(anchor="w")
+        ttk.Label(frame, text="Demo → Parser → Auswahl → Profil → Regeln → Szenen → Review", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 3))
+        ttk.Label(frame, textvariable=self.status, foreground=_THEME["ice"]).pack(anchor="w", pady=(0, 14))
         source_actions = ttk.Frame(frame)
         source_actions.pack(fill="x")
-        ttk.Button(source_actions, text="Demo auswählen", command=self._choose_demo).pack(side="left")
+        ttk.Button(source_actions, text="Demo auswählen", style="Primary.TButton", command=self._choose_demo).pack(side="left")
         ttk.Button(source_actions, text="Vorhandene Analyse öffnen", command=self._open_existing).pack(side="left", padx=8)
         self.link_button = ttk.Button(source_actions, text="Quelldemo zuordnen", command=self._link_source, state="disabled")
         self.link_button.pack(side="left")
@@ -383,7 +433,9 @@ class AnalyzerShellApp:
         self.workflow_widgets.append(self.profile)
         self.rules = ttk.Label(profile_row, text="Objektive V1-Regeln · Details per Profil")
         self.rules.pack(side="left", padx=8)
-        rules_frame = ttk.LabelFrame(frame, text="Rules", padding=8)
+        rules_frame = ttk.LabelFrame(self.pages["Rules"], text="Objektive Szenenanker V1", padding=18)
+        ttk.Label(self.pages["Rules"], text="Rules", font=("Segoe UI", 24, "bold")).pack(anchor="w")
+        ttk.Label(self.pages["Rules"], text="Profile kombinieren belegte Marker; einzelne schwache Hinweise erzeugen keine Standard-Szene.", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
         rules_frame.pack(fill="x", pady=5)
         self.rule_vars: dict[str, tk.BooleanVar] = {}
         self.rule_checks = []
@@ -395,12 +447,12 @@ class AnalyzerShellApp:
         for rule_id in OBJECTIVE_RULES:
             variable = tk.BooleanVar(value=True)
             check = ttk.Checkbutton(rules_frame, text=labels[rule_id], variable=variable, command=self._save_custom_rules)
-            check.pack(side="left", padx=5)
+            check.pack(anchor="w", pady=4)
             check.bind("<Double-Button-1>", lambda _event, value=rule_id: self._show_rule_details(value))
             self.rule_vars[rule_id] = variable
             self.rule_checks.append(check)
         self.workflow_widgets.extend(self.rule_checks)
-        ttk.Label(frame, text=f"Lokale Profile: {controller.profile_store.root}").pack(anchor="w", pady=(0, 5))
+        ttk.Label(self.pages["Rules"], text=f"Lokale Profile: {controller.profile_store.root}", foreground=_THEME["muted"]).pack(anchor="w", pady=(10, 5))
 
         self.chosen = ttk.Label(frame, text="Full Demo")
         self.chosen.pack(anchor="w", pady=8)
@@ -417,7 +469,45 @@ class AnalyzerShellApp:
         preflight.pack(fill="x", pady=10)
         for variable in (self.netcon_status, self.demo_status, self.filename_status, self.preflight_message):
             ttk.Label(preflight, textvariable=variable).pack(anchor="w")
+        self._build_reference_page("Dashboard", "Dashboard", "Die verbindliche Detailreferenz für Kacheln, Kennzahlen und Leerzustand fehlt im Repository.")
+        self._build_reference_page("Reports", "Reports", "Der Bericht wird real erzeugt; für Listen-, Filter- und Detailansicht fehlt die verbindliche visuelle Referenz.")
+        self._build_reference_page("Settings", "Settings", "Midnight / Metallic Blue ist verbindlich aktiv. Das konkrete Settings-Layout benötigt die beschlossene Referenz.")
+        self._build_system_page()
+        self._build_tactical_page()
+        self._show_page("Analyzer / Review")
         self.root.protocol("WM_DELETE_WINDOW", self._close)
+
+    def _show_page(self, name: str) -> None:
+        self.pages[name].tkraise()
+        for page_name, button in self.nav_buttons.items():
+            button.configure(style="NavActive.TButton" if page_name == name else "Nav.TButton")
+
+    def _build_reference_page(self, key: str, title: str, detail: str) -> None:
+        page = self.pages[key]
+        self.ttk.Label(page, text=title, font=("Segoe UI", 24, "bold")).pack(anchor="w")
+        card = self.ttk.Frame(page, style="Card.TFrame", padding=24)
+        card.pack(fill="x", pady=(18, 0))
+        self.ttk.Label(card, text="NEEDS_UI_REFERENCE", style="Card.TLabel", foreground=_THEME["ice"], font=("Segoe UI Semibold", 10)).pack(anchor="w")
+        self.ttk.Label(card, text=detail, style="Muted.TLabel", wraplength=760, justify="left").pack(anchor="w", pady=(10, 0))
+        self.ttk.Label(card, text="Keine Ersatzmaske und keine erfundenen Produktdaten.", style="Muted.TLabel").pack(anchor="w", pady=(5, 0))
+
+    def _build_system_page(self) -> None:
+        page = self.pages["System Check / Optimizer"]
+        self.ttk.Label(page, text="System Check / Optimizer", font=("Segoe UI", 24, "bold")).pack(anchor="w")
+        self.ttk.Label(page, text="Read-only Evidenz · keine automatische Firmware-, Treiber-, Registry- oder Windows-Änderung", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
+        card = self.ttk.Frame(page, style="Card.TFrame", padding=24)
+        card.pack(fill="x")
+        self.ttk.Label(card, text="System Check", style="Card.TLabel", font=("Segoe UI Semibold", 15)).pack(anchor="w")
+        self.ttk.Label(card, text="Die technische Baseline ist vorhanden. Die vollständige Reiterdarstellung ist PARTIAL_REFERENCE und wird nicht durch erfundene Werte ersetzt.", style="Muted.TLabel", wraplength=780, justify="left").pack(anchor="w", pady=(8, 0))
+        self.ttk.Label(card, text="Optimizer bleibt außerhalb dieses Replay-Konsolidierungsschritts.", style="Muted.TLabel").pack(anchor="w", pady=(8, 0))
+
+    def _build_tactical_page(self) -> None:
+        page = self.pages["Tactical Replay"]
+        self.ttk.Label(page, text="Tactical Replay", font=("Segoe UI", 24, "bold")).pack(anchor="w")
+        card = self.ttk.Frame(page, style="Card.TFrame", padding=24)
+        card.pack(fill="x", pady=(18, 0))
+        self.ttk.Label(card, text="Eine gemeinsame Replay-Wahrheit", style="Card.TLabel", font=("Segoe UI Semibold", 15)).pack(anchor="w")
+        self.ttk.Label(card, text="Nach der Analyse wird der echte Tactical-Replay-HTML-Export zusammen mit Timeline, Report und CS2-Ticks erzeugt. Der Review-Einstieg bleibt im Analyzer freigegeben, sobald die lokale CS2-Prüfung bestanden ist.", style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(8, 0))
 
     def run(self) -> None:
         self.root.mainloop()

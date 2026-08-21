@@ -522,3 +522,17 @@ DIAGNOSIS: The earlier source transforms were arithmetically plausible but objec
 OPEN: BLOCKED only on marker-synchronized visual composition/acceptance, not Steam, Workshop Tools, missing geometry or runtime placement. Do not claim the full transition complete yet.
 NEXT: Capture Ancient water, Red Room approach/flash and Inferno stair exit against their VConsole markers on this baked build. If a landmark misses the frame, adjust only the corresponding camera keyframe/target, then Full Compile and repeat the complete sequence.
 COMMIT/PR: Pending checkpoint commit and push after final diff/test/sync verification.
+# Handoff 2026-08-21 — Experimental UI consolidation
+
+STATUS: partial / review-ready within available UI evidence
+TASK: Verbindliche Mockup-/UI-Zielrichtung mit dem realen Experimental-Demoablauf zusammenführen
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/analyzer_shell.py`, `src/improve_yourself/assets/improve-yourself-wordmark-v3.png`, `tests/test_analyzer_shell.py`, `docs/EXPERIMENTAL_V1.md`, `docs/AGENT_BASE.md`, `coordination/CURRENT.md`, `coordination/agents/codex.md`
+VERIFIED: Exakte Variant-3-Wordmark-Quelle per identischem SHA-256 `9fcec0bf8d8b05340b038cf30feaead97463fbd35a2fde157b7d06a34f9cfd80` übernommen; finale native Windows-Sichtprüfung bei 1360x860 PASS (dunkle Titelleiste, vollständige Wortmarke, Sidebar, aktiver Reiter, keine weiße Fremdfläche); `pytest` 120/120 PASS; `compileall` PASS; `git diff --check` PASS.
+DECISIONS: Keine neue Designsprache. Belegte Tokens/Typografie/Variant 3 sind verbindlich. `Dashboard`, `Reports` und `Settings` bleiben sichtbar `NEEDS_UI_REFERENCE`; `System Check / Optimizer` ist `PARTIAL_REFERENCE` und read-only. Keine Fake-Kennzahlen, Ersatzmasken oder Optimizer-Ausweitung.
+OPEN: Die konkreten beschlossenen Detailmockups für Dashboard, Reports und Settings sind weder im aktuellen Repository noch im geprüften Variant-3-Referenzcheckout eindeutig verfügbar. Funktionale Real-Demo-Läufe wurden nicht verändert oder neu begonnen.
+NEXT: Tristan ordnet die drei eindeutigen Detailreferenzen zu oder nimmt den konsolidierten Build ab; danach ausschließlich die belegten Reiterlayouts umsetzen.
+MODEL_PROFILE: terra
+MODEL_REASON: Zusammenhängende UI-/Funktionskonsolidierung mit Tests und visueller Runtime-Abnahme.
+COMPUTER_USE: yes
+COMMIT/PR: wird mit diesem Handoff committed und auf `origin/dev/v1-foundation` gepusht.

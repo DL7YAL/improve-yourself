@@ -49,7 +49,7 @@ Dieser Abschnitt ist der gemeinsame Einstiegspunkt für den aktuell gepushten Ar
 
 ### Aktuell nächster freigegebener Engineering-Schritt
 
-Der zusammenhängende Stand `Improve Yourself – Experimental` ist engineering-seitig abgeschlossen: objektiver Demo-Preflight, Auswahl, lokale Profile/Rules, zusammengeführte Szenen, neutrales Review, Tactical Replay, Report und CS2-Tick sind verbunden. Vollständige Spezifikation und Evidenz stehen in `docs/EXPERIMENTAL_V1.md`. Status: `WAITING_FOR_TRISTAN` für den ersten vollständigen Produktreview. Bis dahin keine weitere Feature-Erweiterung; `main` bleibt ohne ausdrückliche Review-/Merge-Freigabe unverändert.
+Der zusammenhängende Stand `Improve Yourself – Experimental` verbindet objektiven Demo-Preflight, Auswahl, lokale Profile/Rules, zusammengeführte Szenen, neutrales Review, Tactical Replay, Report und CS2-Tick. Die Desktop-Shell verwendet nun die verbindliche Variant-3-Wortmarke, Midnight-/Metallic-Blue, eine durchgehende dunkle Fensterfläche und eine gemeinsame Sidebar für alle festgelegten Produktbereiche. Analyzer/Review, Rules und Tactical Replay sind funktional eingeordnet; System Check/Optimizer bleibt read-only und nur teilreferenziert. Dashboard, Reports und Settings sind bewusst `NEEDS_UI_REFERENCE`, weil ihre eindeutigen Detailmockups im Repository nicht verfügbar sind. Status: `REVIEW`; nächster Schritt ist Tristans Produktprüfung beziehungsweise die Zuordnung dieser drei Referenzen. `main` bleibt ohne ausdrückliche Review-/Merge-Freigabe unverändert.
 
 ## Grundprinzip
 

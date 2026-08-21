@@ -49,4 +49,22 @@ No OBS, clip creation, video editor, automated rendering, forced window mode/res
 
 ## Acceptance status
 
-The engineering gate is complete. Further feature development stops here. Status is `WAITING_FOR_TRISTAN` for the first complete product review.
+The engineering gate is complete. Status is `REVIEW`: the functional flow and every available binding UI reference are consolidated. Dashboard, Reports and Settings remain explicitly `NEEDS_UI_REFERENCE`; they are not authorized for free redesign.
+
+# Verbindliche UI-Konsolidierung
+
+Der Experimental-Build verwendet die bereits freigegebene Variant-3-Markenquelle und die belegten Theme-Tokens: Midnight `#07111e`, Panel `#102033`, Metallic `#264766`, Ice `#8edbff` und Ink `#edf7ff`. Die Desktop-Typografie bleibt Segoe UI; Fenster, Sidebar, Navigation und Inhaltsflächen bilden eine durchgehend dunkle Anwendung ohne weiße Fremdfläche im Titel- oder Kopfbereich.
+
+Die gemeinsame Shell führt folgende Produktbereiche zusammen. `NEEDS_UI_REFERENCE` ist dabei ein bewusst sichtbarer, fail-closed Zustand und kein fertiges Reiterdesign:
+
+| Bereich | UI-Status | Verbindlicher Inhalt |
+| --- | --- | --- |
+| Dashboard | `NEEDS_UI_REFERENCE` | Keine erfundenen Kacheln, Kennzahlen oder Leerzustände. |
+| Analyzer / Review | `IMPLEMENTED` | Demoimport, Parser-Preflight, benannte Teams, Auswahl, Profil, Analyse und CS2-Readiness. |
+| Rules | `IMPLEMENTED` | Objektive V1-Anker und profilgebundene Regelwahl; Custom bleibt lokal. |
+| Reports | `NEEDS_UI_REFERENCE` | Reales Report-Artefakt vorhanden; Listen-/Filter-/Detailansicht nicht frei gestaltet. |
+| System Check / Optimizer | `PARTIAL_REFERENCE` | Read-only Grenze sichtbar; kein Apply und keine Replay-fremde Optimizer-Erweiterung. |
+| Settings | `NEEDS_UI_REFERENCE` | Verbindliches dunkles Standardtheme sichtbar, konkretes Einstellungs-Layout offen. |
+| Tactical Replay | `IMPLEMENTED` | Gemeinsame Replay-Wahrheit und vorhandener echter HTML-Export klar zugeordnet. |
+
+Die Referenzmatrix ist zusätzlich als `UI_REFERENCE_STATUS` in der Shell festgeschrieben und getestet. Für einen späteren Ausbau der drei offenen Reiter sind die ursprünglichen, eindeutig zuordenbaren Mockups oder eine neue ausdrückliche Freigabe erforderlich.
