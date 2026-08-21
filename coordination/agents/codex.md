@@ -786,6 +786,25 @@ MODEL_REASON: Eng begrenzter, bereits spezifizierter Desktop-Layout-Korrekturpas
 COMPUTER_USE: yes
 COMMIT/PR: Dieser Handoff ist Teil des gepushten `dev/v1-foundation`-Checkpoints; exakter HEAD steht im Abschlussbericht.
 
+# Handoff 2026-08-21 — Home final color / surface conformance pass
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Ausschließlich die angenommene Home-Struktur gegen das festgelegte Farbgewicht und die Oberflächentiefe des Improve-Home-Masters kalibrieren. Keine Route, Datenbindung, Geometrie, Typografie, Funktion oder Produkt-Scope erweitert.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/analyzer_shell.py`, `docs/AGENT_BASE.md`, `coordination/CURRENT.md`, `coordination/agents/codex.md`.
+THEME: Die zentrale Oberfläche verwendet nun App `#020A12`, Sidebar `#03101C`, Panel `#071725`, raised/Card `#0A1C2D`, Hover `#0D2236`, Border `#0A2132`, Border-soft `#071A27`, Active-Border `#1174AD`, Blau `#0B79C9`, Cyan `#13A7E8`, Text `#E4E8ED`, Secondary `#A0ABB8`, Muted `#687789`. Die Canvas-Surfaces, Home-ttk-Styles, Metrikzellen, Sidebar-Statusfläche, Navigation-Hover/Active, Icons, Gauge und Tech-Linie verwenden die zentrale Skala statt der bisherigen hellen stahlblauen Flächen oder permanenter leuchtender Konturen.
+SCOPE: Die verbindliche Reihe Letzter Systemscan → Dein Fortschritt – Überblick → Letzte Analysen, alle sechs Modulkarten, Sidebar-Routen, gerundete Ecken, Action-Grundlinie, Fonts, Systemscan-Projektion, echte/neutral leere Datenzustände und Responsive-Verhalten blieben unverändert. Modulidentitäten bleiben an Linie/Icon/Button vorhanden, bilden aber keine Card-Grundfläche mehr. Keine Analyzer-, Embedded-Review-, Tactical-, Rules-, System-Check- oder NetCon-Logik geändert.
+VISUAL_CHECK: Quell-Shell und anschließend die frisch paketierte Portable-EXE praktisch auf Home geöffnet. Gesamtfläche und Sidebar sind sehr dunkel; die Topmodule, mittleren drei Panels und unteren Informationsflächen unterscheiden sich nur über geringe Navy-Stufen und subtile Borders. Aktive Navigation bleibt als abgerundeter blauer Fokus lesbar, ohne dass die Sidebar oder alle Cards zum HUD werden. Text bleibt auf den dunkleren Flächen lesbar; die Portable zeigt erwartungsgemäß einen neutralen Systemscan, wenn ihr eigener lokaler Datenordner noch keinen Scan enthält.
+VERIFIED: Gezielte Analyzer-Shell-Tests **18/18 PASS**; vollständiger `pytest` **134/134 PASS**; `compileall` PASS; `git diff --check` PASS. Der Build-Gate führte erneut `pytest` **134/134 PASS** sowie `pip check` PASS aus. PyInstaller erzeugte die neue EXE; weil der lokale Wrapper-Prozess in dieser Umgebung vor seinem letzten Kopier-/ZIP-Schritt beendet wurde, wurde exakt dieser mechanische, im bestehenden Skript definierte Schritt anschließend mit der frisch erzeugten EXE ausgeführt, nachdem die vorher geöffnete Portable sauber geschlossen war.
+BUILD: Frisch geprüft und bereit: `dist/experimental/Improve Yourself Experimental/Improve Yourself Experimental.exe`, `dist/experimental/Improve-Yourself-Experimental-Portable.zip`, `dist/experimental/experimental-build.json`. EXE SHA-256 `87DD29463FCC11087E6E8830CE079D18F3D5947F29000AFA67DBDDF79A66997F`; Portable-ZIP SHA-256 `8077FBB2D59BAFDF2411CE479F3841803D0DA44A17FAEB65FD05CE4AF1852D9D`.
+WORKTREE: Vor Commit nur die vier oben genannten versionierten Dateien geändert; temporäre Testartefakte wurden entfernt, lokale Ergebnisdaten bleiben ignoriert.
+OPEN: Ausschließlich Tristans visueller Abgleich dieser neuen Portable gegen den Home-Master. Kein Merge nach `main` und kein neuer Product Slice.
+NEXT: Tristan prüft die neue Portable nur auf Home-Farbgewicht, Surface-Kontrast, Sidebar, aktive Navigation, Akzentdisziplin, Border-/Radius-Ruhe und Textkontrast. Bei Zustimmung `HOME: ACCEPTED / UI MASTER LOCKED`; ansonsten genau eine weitere begrenzte visuelle Abweichung melden.
+MODEL_PROFILE: terra
+MODEL_REASON: Eng begrenzter visueller Token-/Surface-Pass ohne Funktionsänderung.
+COMPUTER_USE: yes
+COMMIT/PR: Diesen Handoff mit dem Farb-/Surface-Checkpoint auf `dev/v1-foundation` committen und pushen; exakter HEAD folgt im Abschlussbericht.
+
 # Handoff 2026-08-21 — Final Home master pass
 
 STATUS: WAITING_FOR_TRISTAN

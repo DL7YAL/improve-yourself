@@ -41,15 +41,15 @@ UI_REFERENCE_STATUS = {
 }
 
 _THEME = {
-    # Shared Midnight surfaces.  Each layer is intentionally close in value:
-    # cards stay distinct from the background without turning into bright blue
-    # tiles, while contours remain a quiet depth cue rather than a frame.
-    "night": "#010D19", "deep": "#0a1828", "panel": "#182D4F",
-    "panel_high": "#30485A", "card": "#132946", "sidebar": "#071725",
-    "metal": "#075C94", "line": "#0A9AE7", "line_soft": "#173754",
-    "accent": "#075C94", "accent_bright": "#0A9AE7", "accent_strong": "#0065DA",
-    "ice": "#D0D1D3", "ink": "#D0D1D3", "secondary": "#8F97A4",
-    "muted": "#627188", "success": "#58d69a",
+    # Final Home master calibration: near-black Navy surfaces lead. Blue is
+    # reserved for wayfinding and intentional state, never the card ground.
+    "night": "#020A12", "deep": "#0A1C2D", "panel": "#071725",
+    "panel_high": "#0A1C2D", "panel_hover": "#0D2236", "card": "#0A1C2D", "sidebar": "#03101C",
+    "border": "#0A2132", "border_soft": "#071A27", "border_active": "#1174AD",
+    "metal": "#0B79C9", "cyan": "#13A7E8", "line": "#13A7E8", "line_soft": "#071A27",
+    "accent": "#0B79C9", "accent_bright": "#13A7E8", "accent_strong": "#0B79C9",
+    "ice": "#E4E8ED", "ink": "#E4E8ED", "secondary": "#A0ABB8",
+    "muted": "#687789", "success": "#58d69a",
 }
 
 _UI_FONT = "Inter"
@@ -199,12 +199,12 @@ class SidebarNavItem:
         canvas.delete("all")
         if self.active:
             # The outer layer is a restrained simulated glow, not a hard focus box.
-            self._rounded_rect(2, 3, width - 2, height - 3, 11, fill="#061827")
-            self._rounded_rect(4, 5, width - 4, height - 5, 9, fill="#0d2942", outline="#1a6d9c")
-            icon_color, label_color = "#9fe5ff", "#f4fbff"
+            self._rounded_rect(2, 3, width - 2, height - 3, 11, fill="#041522")
+            self._rounded_rect(4, 5, width - 4, height - 5, 9, fill=_THEME["panel_hover"], outline=_THEME["border_active"])
+            icon_color, label_color = "#9bdcff", _THEME["ice"]
         elif self.hovered:
-            self._rounded_rect(4, 5, width - 4, height - 5, 9, fill="#0a2035", outline="#1a4268")
-            icon_color, label_color = "#76cfff", "#d7eaf7"
+            self._rounded_rect(4, 5, width - 4, height - 5, 9, fill=_THEME["panel_hover"], outline=_THEME["border"])
+            icon_color, label_color = "#79c9ed", "#d7e1ea"
         else:
             icon_color, label_color = "#5f8eaa", _THEME["muted"]
         icon, label = self.text[:1], self.text[1:].strip()
@@ -229,14 +229,14 @@ class SidebarStatusPanel:
         width, height = max(canvas.winfo_width(), 1), max(canvas.winfo_height(), 1)
         canvas.delete("all")
         radius = 9
-        canvas.create_rectangle(8 + radius, 4, width - 8 - radius, height - 4, fill="#061522", outline="")
-        canvas.create_rectangle(8, 4 + radius, width - 8, height - 4 - radius, fill="#061522", outline="")
+        canvas.create_rectangle(8 + radius, 4, width - 8 - radius, height - 4, fill="#04131F", outline="")
+        canvas.create_rectangle(8, 4 + radius, width - 8, height - 4 - radius, fill="#04131F", outline="")
         for box, start in (((8, 4, 8 + 2 * radius, 4 + 2 * radius), 90), ((8, height - 4 - 2 * radius, 8 + 2 * radius, height - 4), 180), ((width - 8 - 2 * radius, height - 4 - 2 * radius, width - 8, height - 4), 270), ((width - 8 - 2 * radius, 4, width - 8, 4 + 2 * radius), 0)):
-            canvas.create_arc(*box, start=start, extent=90, fill="#061522", outline="#102d47")
-        canvas.create_line(8 + radius, 4, width - 8 - radius, 4, fill="#102d47")
+            canvas.create_arc(*box, start=start, extent=90, fill="#04131F", outline=_THEME["border_soft"])
+        canvas.create_line(8 + radius, 4, width - 8 - radius, 4, fill=_THEME["border_soft"])
         canvas.create_text(19, 20, text="●", fill="#2bdcbb", anchor="center", font=(self.ui_font, 9, "bold"))
-        canvas.create_text(31, 18, text="LOCAL / PRIVATE", fill="#b8d8e8", anchor="w", font=(self.ui_font, 8, "bold"))
-        canvas.create_text(19, 39, text="READ-ONLY WHERE MARKED", fill="#7395aa", anchor="w", font=(self.ui_font, 7))
+        canvas.create_text(31, 18, text="LOCAL / PRIVATE", fill=_THEME["secondary"], anchor="w", font=(self.ui_font, 8, "bold"))
+        canvas.create_text(19, 39, text="READ-ONLY WHERE MARKED", fill=_THEME["muted"], anchor="w", font=(self.ui_font, 7))
 
 
 class RoundedHomeSurface:
@@ -634,19 +634,19 @@ class AnalyzerShellApp:
         # Home deliberately has its own component family.  The command-centre
         # layout is shared with the rest of the shell, while these styles keep
         # its cards from falling back to the generic/native looking controls.
-        style.configure("HomeStat.TFrame", background="#132946", relief="flat", borderwidth=1, bordercolor="#1a4268")
-        style.configure("HomeModule.TFrame", background=_THEME["card"], relief="flat", borderwidth=1, bordercolor="#1a4268")
-        style.configure("HomePanel.TFrame", background=_THEME["panel"], relief="flat", borderwidth=1, bordercolor="#1a4268")
+        style.configure("HomeStat.TFrame", background=_THEME["card"], relief="flat", borderwidth=1, bordercolor=_THEME["border"])
+        style.configure("HomeModule.TFrame", background=_THEME["card"], relief="flat", borderwidth=1, bordercolor=_THEME["border"])
+        style.configure("HomePanel.TFrame", background=_THEME["panel"], relief="flat", borderwidth=1, bordercolor=_THEME["border"])
         style.configure("HomeInner.TFrame", background=_THEME["panel"], relief="flat", borderwidth=0)
-        style.configure("HomeMetric.TFrame", background="#162946", relief="flat", borderwidth=1, bordercolor="#204463")
-        style.configure("HomeStat.TLabel", background="#132946", foreground=_THEME["ice"])
+        style.configure("HomeMetric.TFrame", background=_THEME["panel_high"], relief="flat", borderwidth=1, bordercolor=_THEME["border_soft"])
+        style.configure("HomeStat.TLabel", background=_THEME["card"], foreground=_THEME["ice"])
         style.configure("HomeModule.TLabel", background=_THEME["card"], foreground=_THEME["ink"])
         style.configure("HomePanel.TLabel", background=_THEME["panel"], foreground=_THEME["ink"])
-        style.configure("HomeMetricLabel.TLabel", background="#162946", foreground=_THEME["secondary"])
-        style.configure("HomeMetricValue.TLabel", background="#162946", foreground=_THEME["ink"])
+        style.configure("HomeMetricLabel.TLabel", background=_THEME["panel_high"], foreground=_THEME["secondary"])
+        style.configure("HomeMetricValue.TLabel", background=_THEME["panel_high"], foreground=_THEME["ink"])
         style.configure("HomeMuted.TLabel", background=_THEME["card"], foreground=_THEME["secondary"])
         style.configure("HomePanelMuted.TLabel", background=_THEME["panel"], foreground=_THEME["secondary"])
-        style.configure("HomeKicker.TLabel", background=_THEME["night"], foreground="#3bbaff", font=(self.display_font, 9))
+        style.configure("HomeKicker.TLabel", background=_THEME["night"], foreground=_THEME["cyan"], font=(self.display_font, 9))
         style.configure("HomePrimary.TButton", background=_THEME["accent"], foreground="#f7fbff", padding=(13, 8), borderwidth=1, bordercolor=_THEME["accent_bright"], relief="flat", font=(self.ui_font, 9, "bold"))
         style.map("HomePrimary.TButton", background=[("active", _THEME["accent_bright"]), ("pressed", "#05456f"), ("disabled", "#0b2232")], bordercolor=[("active", "#8fd9ff"), ("disabled", "#1a3a50")])
         style.configure("HomeTeal.TButton", background="#07574f", foreground="#ecfffb", padding=(13, 8), borderwidth=1, bordercolor="#20d0b0", relief="flat", font=(self.ui_font, 9, "bold"))
@@ -1043,7 +1043,7 @@ class AnalyzerShellApp:
         stat_accents = ("#23d8bb", "#30aef4", "#a687ff", "#ffcf5a")
         for index, (variable, accent) in enumerate(zip((self.dashboard_readiness, self.dashboard_rounds, self.dashboard_players, self.dashboard_scenes), stat_accents)):
             card = RoundedHomeSurface(
-                self.tk, self.ttk, stats, style="HomeStat.TFrame", fill=_THEME["card"], outline="#1a4268", padding=(0, 7), min_height=58, min_width=104 if index == 0 else 62,
+                self.tk, self.ttk, stats, style="HomeStat.TFrame", fill=_THEME["card"], outline=_THEME["border"], padding=(0, 7), min_height=58, min_width=104 if index == 0 else 62,
             )
             card.pack(side="left", padx=(6, 0))
             self._home_accent(card.body, accent)
@@ -1064,7 +1064,7 @@ class AnalyzerShellApp:
         for column, (icon, title, detail, action, target, enabled, accent, button_style) in enumerate(module_specs):
             modules.columnconfigure(column, weight=1, uniform="home-modules")
             card = RoundedHomeSurface(
-                self.tk, self.ttk, modules, style="HomeModule.TFrame", fill=_THEME["card"], outline="#1a4268", padding=7, min_height=196, radius=8,
+                self.tk, self.ttk, modules, style="HomeModule.TFrame", fill=_THEME["card"], outline=_THEME["border"], padding=7, min_height=196, radius=8,
             )
             card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 3, 0 if column == 5 else 3))
             card.columnconfigure(0, weight=1)
@@ -1090,7 +1090,7 @@ class AnalyzerShellApp:
         overview.columnconfigure(2, weight=6, uniform="home-overview")
 
         system_scan = RoundedHomeSurface(
-            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#1a4268", padding=15, min_height=184,
+            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=15, min_height=184,
         )
         system_scan.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
         self._home_accent(system_scan.body, "#0A9AE7")
@@ -1112,7 +1112,7 @@ class AnalyzerShellApp:
         self.dashboard_system_scan_attention_label = self.ttk.Label(system_scan.body, textvariable=self.dashboard_system_scan_attention, style="HomePanelMuted.TLabel", wraplength=210, justify="left", font=(self.ui_font, 7))
 
         progress = RoundedHomeSurface(
-            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#1a4268", padding=15, min_height=184,
+            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=15, min_height=184,
         )
         progress.grid(row=0, column=1, sticky="nsew", padx=5)
         self._home_accent(progress.body, "#2bdcbb")
@@ -1133,7 +1133,7 @@ class AnalyzerShellApp:
         self.ttk.Button(progress.body, text="Zum Analyzer", style="HomeTeal.TButton", command=lambda: self._show_page("Analyzer / Review")).pack(fill="x")
 
         recent = RoundedHomeSurface(
-            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#1a4268", padding=15, min_height=184,
+            self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=15, min_height=184,
         )
         recent.grid(row=0, column=2, sticky="nsew", padx=(5, 0))
         self._home_accent(recent.body, "#a687ff")
@@ -1146,7 +1146,7 @@ class AnalyzerShellApp:
         lower.columnconfigure(0, weight=1, uniform="home-lower")
         lower.columnconfigure(1, weight=1, uniform="home-lower")
         idea = RoundedHomeSurface(
-            self.tk, self.ttk, lower, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#1a4268", padding=15, min_height=116,
+            self.tk, self.ttk, lower, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=15, min_height=116,
         )
         idea.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
         self._home_accent(idea.body, "#2bdcbb")
@@ -1157,7 +1157,7 @@ class AnalyzerShellApp:
             style="HomePanelMuted.TLabel", wraplength=360, justify="left",
         ).pack(anchor="w", pady=(8, 0))
         community = RoundedHomeSurface(
-            self.tk, self.ttk, lower, style="HomePanel.TFrame", fill=_THEME["panel"], outline="#1a4268", padding=15, min_height=116,
+            self.tk, self.ttk, lower, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=15, min_height=116,
         )
         community.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
         self._home_accent(community.body, "#a687ff")
@@ -1181,7 +1181,7 @@ class AnalyzerShellApp:
 
     def _home_module_icon(self, parent: object, glyph: str, color: str) -> object:
         canvas = self.tk.Canvas(parent, width=31, height=31, background=_THEME["card"], highlightthickness=0, bd=0)
-        canvas.create_oval(3, 3, 28, 28, outline="#1a4268", width=2)
+        canvas.create_oval(3, 3, 28, 28, outline=_THEME["border"], width=2)
         canvas.create_oval(7, 7, 24, 24, outline=color, width=1)
         canvas.create_line(15, 1, 15, 6, fill=color, width=1)
         canvas.create_line(15, 25, 15, 30, fill=color, width=1)
@@ -1190,7 +1190,7 @@ class AnalyzerShellApp:
 
     def _home_progress_gauge(self, parent: object) -> object:
         canvas = self.tk.Canvas(parent, width=56, height=56, background=_THEME["panel"], highlightthickness=0, bd=0)
-        canvas.create_oval(4, 4, 52, 52, outline="#1a4268", width=4)
+        canvas.create_oval(4, 4, 52, 52, outline=_THEME["border"], width=4)
         canvas.create_arc(4, 4, 52, 52, start=88, extent=214, style="arc", outline="#2bdcbb", width=3)
         canvas.create_arc(10, 10, 46, 46, start=305, extent=82, style="arc", outline="#2d9fe8", width=2)
         canvas.create_text(28, 25, text="LOCAL", fill="#dff8ff", font=(self.display_font, 7))
@@ -1200,12 +1200,12 @@ class AnalyzerShellApp:
     def _draw_home_tech_line(self, canvas: object, width: int, height: int) -> None:
         canvas.delete("all")
         baseline = max(1, height // 2)
-        canvas.create_line(0, baseline, width, baseline, fill="#103d5c", width=1)
+        canvas.create_line(0, baseline, width, baseline, fill="#0B2638", width=1)
         for offset in range(-20, width + 40, 42):
-            canvas.create_line(offset, height, offset + 18, 0, fill="#0c2c43", width=1)
-            canvas.create_line(offset + 20, height, offset + 38, 0, fill="#0a2135", width=1)
+            canvas.create_line(offset, height, offset + 18, 0, fill="#071B29", width=1)
+            canvas.create_line(offset + 20, height, offset + 38, 0, fill="#061622", width=1)
         for x in range(12, width, 96):
-            canvas.create_oval(x, baseline - 2, x + 4, baseline + 2, fill="#2daff2", outline="")
+            canvas.create_oval(x, baseline - 2, x + 4, baseline + 2, fill=_THEME["accent"], outline="")
 
     def _resize_scrollable_page(self, canvas: object, item: int, page: object, scrollbar: object, width: int) -> None:
         canvas.itemconfigure(item, width=width)
