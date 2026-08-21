@@ -955,6 +955,24 @@ MODEL_REASON: Integrations-/Explainability-Nachweis über sicherheitsrelevante D
 COMPUTER_USE: no
 COMMIT/PR: `6186a5c feat: prove optimizer evidence integration`, gepusht nach `origin/dev/v1-foundation`.
 
+# Handoff 2026-08-22 — Controlled Network Target Pack V1
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Einen kleinen privacy-reviewed und versionierten Katalog kontrollierter Ziele für den bestehenden Network Quality Collector implementieren, ohne versteckten Kontakt, Recommendation oder Netzwerkänderung.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/network_target_pack.py`, `src/improve_yourself/network_quality.py`, `tests/test_network_target_pack.py`, `docs/CONTROLLED_NETWORK_TARGET_PACK_V1.md`, `coordination/agents/codex.md`.
+SCHEMA: `iy.network_target_pack/v1` enthält Pack-ID/-Version und Targets mit stabiler ID, Anzeigename, Klasse, Host/Template, Protokoll, Zweck, Owner, Privacy Notice, erwarteter Offenlegung, Interpretationsscope, Target-Version, valid_from/until, ACTIVE/DEPRECATED/TEMPORARILY_DISABLED sowie technischen Voraussetzungen.
+V1 CATALOG: Aufgenommen wurde ausschließlich `local-gateway-template` (ACTIVE, LOCAL_GATEWAY, Version 1.0.0). Das Ziel enthält keinen eingebetteten Host: Nutzer bestätigt die lokale Gateway-Adresse vor jeder Messung. Das Ergebnis gilt nur für die lokale Verbindung, nicht für Internet-/CS2-/FACEIT-Latenz. **Verworfen / nicht aufgenommen:** öffentliche und game-relevante Hosts, weil für sie kein separat geprüfter Betreiber-/Zweck-/Stabilitäts-/Disclosure-/Game-Relevance-Vertrag vorliegt. Kein generischer öffentlicher Pinghost wurde erfunden.
+CONSENT / PRIVACY: `select_target()` akzeptiert nur bekanntes, ACTIVE, gültiges Pack-Target mit explizitem resolved_host und `user_confirmed=True`; es startet keine Messung. `selection_view_model()` stellt vor einem späteren UI-Start Ziel, Zweck, Klasse, Protokoll, Datenschutzhinweis und Offenlegung bereit. Pack-Laden verursacht keinen Kontakt. Messergebnisse bleiben lokal; der bestehende Collector persistiert keine öffentliche IP oder MAC.
+VERSIONING / COLLECTOR: Der ausgewählte NetworkTarget übergibt `target_pack_version` an jede Measurement Session, zusätzlich zu target_id, TargetClass und Target-Version. Deprecated/Disabled Targets bleiben für historische Resultate interpretierbar, starten aber keine neue Messung. Der Collector bleibt die einzige Messengine.
+VERIFIED: Target-Pack-Tests **5/5 PASS**: Schema, stabile ID, Version, Active/Deprecated/Expired, unbekanntes/ungültiges Target, zwingender Host/Consent, historische Pack-Version, Collector-Integration ohne Livekontakt, Timeout ohne falschen Packet-Loss-Schluss, Selection-View. Vollständiger `pytest` **160/160 PASS** (ein erster fremder Loopback-Origin-Guard-Test lieferte einmalig WinError 10053 statt HTTPError; unveränderter Wiederholungslauf vollständig grün); `compileall` PASS; `pip check` PASS; `git diff --check` PASS.
+KNOWN LIMITS: Es ist absichtlich kein externer V1-Host verfügbar. Gateway-Discovery wird nicht automatisch vorgenommen; der Host muss konkret bestätigt übergeben werden. Network-Collector-Unterbau gilt danach für V1 als ausreichend; keine weitere Vertiefung ohne Auftrag.
+NEXT: Genau ein empfohlener Folge-Slice nach neuer Freigabe: Integration eines kleinen kuratierten realen Optimizer-Regelkatalogs über die bestehende Evidence-/Recommendation-Foundation. Kein weiterer Network-Unterbau.
+MODEL_PROFILE: terra
+MODEL_REASON: Datenschutz- und Netzwerkkontakt-Governance mit versionierter historischer Nachvollziehbarkeit.
+COMPUTER_USE: no
+COMMIT/PR: Wird nach Commit/Push ergänzt.
+
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
 STATUS: WAITING_FOR_TRISTAN

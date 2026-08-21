@@ -43,6 +43,7 @@ class NetworkTarget:
     host: str
     purpose: str
     version: str = "v1"
+    target_pack_version: str | None = None
 
 
 @dataclass(frozen=True)
@@ -97,7 +98,8 @@ def collect_network_quality(target: NetworkTarget, *, sample_count: int = 8, int
             sleep(interval_ms / 1000)
     summary = summarize_probes(probes, requested=sample_count)
     sanitized_adapter = {key: value for key, value in (adapter_context or {}).items() if key in {"name", "manufacturer", "driver_version", "interface_index", "link_speed_mbps", "mtu", "connection_state", "rss"}}
-    return {"schema": NETWORK_QUALITY_SCHEMA, "measurement_session_id": measurement_session_id or str(uuid4()), "measured_at_utc": started.isoformat(), "policy": {"read_only": True, "external_transfer": False, "public_ip_persisted": False}, "target": asdict(target) | {"target_class": target.target_class.value}, "method": {"protocol": "ICMP_ECHO", "sample_count": sample_count, "interval_ms": interval_ms, "timeout_ms": timeout_ms, "jitter_definition": "mean absolute difference of consecutive successful RTT samples", "packet_loss_definition": "failed requested samples / requested samples; unavailable when no sample succeeds"}, "adapter_context": sanitized_adapter or {"status": "ADAPTER_UNAVAILABLE"}, "probes": [asdict(item) for item in probes], "summary": summary}
+    target_record = asdict(target) | {"target_class": target.target_class.value}
+    return {"schema": NETWORK_QUALITY_SCHEMA, "measurement_session_id": measurement_session_id or str(uuid4()), "measured_at_utc": started.isoformat(), "policy": {"read_only": True, "external_transfer": False, "public_ip_persisted": False}, "target": target_record, "target_pack_version": target.target_pack_version, "method": {"protocol": "ICMP_ECHO", "sample_count": sample_count, "interval_ms": interval_ms, "timeout_ms": timeout_ms, "jitter_definition": "mean absolute difference of consecutive successful RTT samples", "packet_loss_definition": "failed requested samples / requested samples; unavailable when no sample succeeds"}, "adapter_context": sanitized_adapter or {"status": "ADAPTER_UNAVAILABLE"}, "probes": [asdict(item) for item in probes], "summary": summary}
 
 
 def network_quality_evidence(measurement: dict[str, object]) -> EvidenceRecord:
