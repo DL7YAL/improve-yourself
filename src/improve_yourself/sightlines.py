@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Literal, Protocol
 
 from .replay_contract import PlayerState, ReplayFrame, Vec3
@@ -49,6 +50,51 @@ class UnknownSmokeEvidence:
 
     def segment_obstruction(self, frame: ReplayFrame, start: Vec3, end: Vec3) -> SegmentObstruction:
         return SegmentObstruction("unknown", reason=self.reason)
+
+
+V1_SMOKE_SPHERE_RADIUS = 144.0
+
+
+class CanonicalSmokeEvidence:
+    """Conservative V1 sphere approximation gated by complete canonical coverage."""
+
+    def __init__(self, utility_lifetimes: Literal["full", "partial", "unavailable"], *, radius: float = V1_SMOKE_SPHERE_RADIUS) -> None:
+        if radius <= 0.0 or not math.isfinite(radius):
+            raise ValueError("smoke approximation radius must be finite and positive")
+        self.utility_lifetimes = utility_lifetimes
+        self.radius = radius
+
+    @staticmethod
+    def _segment_distance_squared(start: Vec3, end: Vec3, point: Vec3) -> float:
+        dx, dy, dz = end.x - start.x, end.y - start.y, end.z - start.z
+        length_squared = dx * dx + dy * dy + dz * dz
+        if length_squared <= 1e-12:
+            return math.inf
+        fraction = ((point.x - start.x) * dx + (point.y - start.y) * dy + (point.z - start.z) * dz) / length_squared
+        fraction = min(1.0, max(0.0, fraction))
+        nearest = Vec3(start.x + dx * fraction, start.y + dy * fraction, start.z + dz * fraction)
+        return (point.x - nearest.x) ** 2 + (point.y - nearest.y) ** 2 + (point.z - nearest.z) ** 2
+
+    def segment_obstruction(self, frame: ReplayFrame, start: Vec3, end: Vec3) -> SegmentObstruction:
+        disclosure = f"V1 disclosed sphere approximation radius={self.radius:g} source_units"
+        if self.utility_lifetimes != "full":
+            return SegmentObstruction(
+                "unknown", reason=f"utility lifetime/position coverage is {self.utility_lifetimes}; {disclosure} not applied"
+            )
+        active_smokes = tuple(item for item in frame.utilities if item.utility_type == "smoke" and item.active)
+        for smoke in active_smokes:
+            if (
+                smoke.position is None
+                or smoke.end_tick is None
+                or smoke.evidence != "lifetime"
+                or not smoke.start_tick <= frame.tick <= smoke.end_tick
+            ):
+                return SegmentObstruction("unknown", reason=f"active smoke evidence is incomplete; {disclosure}")
+        for smoke in active_smokes:
+            assert smoke.position is not None
+            if self._segment_distance_squared(start, end, smoke.position) <= self.radius * self.radius:
+                return SegmentObstruction("blocked", reason=f"active smoke intersects; {disclosure}")
+        return SegmentObstruction("clear", reason=f"no active smoke intersects; {disclosure}")
 
 
 def _player(frame: ReplayFrame, player_id: str) -> PlayerState | None:

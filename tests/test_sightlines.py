@@ -2,8 +2,8 @@ from dataclasses import replace
 
 import pytest
 
-from improve_yourself.replay_contract import PlayerState, ReplayFrame, Vec3
-from improve_yourself.sightlines import SIGHTLINE_COLORS, UnknownSmokeEvidence, evaluate_sightline, present_sightline
+from improve_yourself.replay_contract import PlayerState, ReplayFrame, UtilityState, Vec3
+from improve_yourself.sightlines import CanonicalSmokeEvidence, SIGHTLINE_COLORS, UnknownSmokeEvidence, evaluate_sightline, present_sightline
 from improve_yourself.visibility_mesh import SegmentObstruction
 
 
@@ -34,6 +34,13 @@ def _frame(*, target_position=Vec3(100, 0, 0), target_active=True):
         ),
         utilities=(),
         events=(),
+    )
+
+
+def _frame_with_smoke(position, *, evidence="lifetime", end_tick=800):
+    return replace(
+        _frame(),
+        utilities=(UtilityState("smoke:1", "smoke", None, 700, end_tick, position, None, True, evidence),),
     )
 
 
@@ -105,3 +112,49 @@ def test_v1_sightline_palette_is_fixed_and_distinct():
         "unknown": (0.62, 0.66, 0.72, 1.0),
     }
     assert len(set(SIGHTLINE_COLORS.values())) == 3
+
+
+def test_full_smoke_coverage_reports_clear_intersection_and_tangent_boundary():
+    provider = CanonicalSmokeEvidence("full")
+    clear = provider.segment_obstruction(_frame_with_smoke(Vec3(50, 145, 64)), Vec3(0, 0, 64), Vec3(100, 0, 64))
+    blocked = provider.segment_obstruction(_frame_with_smoke(Vec3(50, 0, 64)), Vec3(0, 0, 64), Vec3(100, 0, 64))
+    tangent = provider.segment_obstruction(_frame_with_smoke(Vec3(50, 144, 64)), Vec3(0, 0, 64), Vec3(100, 0, 64))
+    assert clear.state == "clear"
+    assert blocked.state == tangent.state == "blocked"
+    assert "sphere approximation radius=144" in blocked.reason
+
+
+@pytest.mark.parametrize("coverage", ["partial", "unavailable"])
+def test_incomplete_smoke_coverage_is_unknown_even_when_frame_has_no_smoke(coverage):
+    result = CanonicalSmokeEvidence(coverage).segment_obstruction(_frame(), Vec3(0, 0, 64), Vec3(100, 0, 64))
+    assert result.state == "unknown"
+    assert f"coverage is {coverage}" in result.reason
+
+
+@pytest.mark.parametrize(
+    "frame",
+    [
+        _frame_with_smoke(None),
+        _frame_with_smoke(Vec3(50, 0, 64), end_tick=None),
+        _frame_with_smoke(Vec3(50, 0, 64), evidence="detonation_only"),
+    ],
+)
+def test_full_coverage_still_fails_unknown_for_incomplete_active_smoke(frame):
+    result = CanonicalSmokeEvidence("full").segment_obstruction(frame, Vec3(0, 0, 64), Vec3(100, 0, 64))
+    assert result.state == "unknown"
+
+
+def test_sightline_uses_gated_smoke_evidence_without_changing_geometry_result():
+    visible = evaluate_sightline(
+        _frame(), "observer", "target", _Geometry("clear"), smoke_evidence=CanonicalSmokeEvidence("full")
+    )
+    smoked = evaluate_sightline(
+        _frame_with_smoke(Vec3(50, 0, 64)), "observer", "target", _Geometry("clear"),
+        smoke_evidence=CanonicalSmokeEvidence("full"),
+    )
+    partial = evaluate_sightline(
+        _frame(), "observer", "target", _Geometry("clear"), smoke_evidence=CanonicalSmokeEvidence("partial")
+    )
+    assert (visible.smoke_state, visible.result) == ("clear", "visible")
+    assert (smoked.smoke_state, smoked.result) == ("blocked", "occluded")
+    assert (partial.smoke_state, partial.result) == ("unknown", "unknown")

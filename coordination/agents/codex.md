@@ -1,5 +1,17 @@
 # Codex
 
+## 2026-08-21 — Canonical smoke evidence gate
+
+STATUS: done
+TASK: Implement only the SightlineResult smoke-evidence gate: full lifetime/position coverage before a fixed disclosed V1 approximation may return clear/blocked; partial/unavailable remains unknown; no smoke rendering.
+BRANCH: `dev/v1-foundation`
+CHANGED: Added `CanonicalSmokeEvidence` with explicit coverage gate, fixed disclosed 144-Source-Unit sphere approximation, segment/sphere intersection and fail-unknown validation of active lifetime evidence. Added synthetic boundary/integration tests and evidence documentation; updated CURRENT/handoff. No renderer, asset, benchmark, utility/event overlay, player model, replay schema/controller semantics, Optimizer/System Check or packaging change.
+VERIFIED: 15/15 focused sightline/smoke tests and 91/91 complete tests pass; full Setup-V1 and five CLI smokes pass. Full-coverage synthetic cases prove outside clear, inside blocked and exact tangent blocked; partial/unavailable and malformed active full-coverage cases are unknown. Real Anubis reports `utility_lifetimes=partial`; at round 1/tick 6401 the geometry-clear nearby pair stays smoke unknown/final unknown despite zero listed active smokes, with evidence stating that the approximation was not applied.
+DECISIONS: The 144-unit sphere is a disclosed V1 analytical approximation, not engine truth and not replay state. Clear is permitted only when full whole-replay lifetime/position coverage makes the current active-smoke set exhaustive. Absence under partial coverage is not evidence of clear.
+OPEN: Real Anubis cannot produce smoke-clear/visible results from this dataset; no data is invented to close that limitation. Smoke/utility visualization remains unimplemented.
+NEXT: Implement only the ReplayController-to-renderer session adapter: consume snapshots, restore the canonical typed frame, map existing FP/fixed-TP modes, and update selected player/frame without owning playback/parsing. Prove seek, selection and view switching preserve requested/resolved tick semantics. Do not add product UI, smoke rendering, utility/event overlays or another state authority.
+COMPUTER_USE: no UI action in this slice.
+
 ## 2026-08-21 — Sightline renderer presentation boundary
 
 STATUS: done
