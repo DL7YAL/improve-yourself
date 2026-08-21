@@ -41,9 +41,37 @@ def test_coordinator_fails_closed_for_wrong_scene_or_demo(tmp_path: Path) -> Non
     coordinator = Cs2ReviewCoordinator(_flow(tmp_path / "flow.json"), "match.dem", netcon=netcon)
     with pytest.raises(ValueError, match="scene/tick pair"):
         coordinator.open_scene("r1-t3654-0", 999)
-    with pytest.raises(RuntimeError, match="wrong demo"):
+    with pytest.raises(RuntimeError, match="Falsche Demo"):
         coordinator.open_scene("r1-t3654-0", 3654)
     assert netcon.sent == []
+
+
+def test_preflight_reports_each_readiness_boundary(tmp_path: Path) -> None:
+    class MissingNetcon:
+        def readiness(self) -> DemoReadiness:
+            raise ConnectionRefusedError("offline")
+
+    missing = Cs2ReviewCoordinator(_flow(tmp_path / "missing.json"), "match.dem", netcon=MissingNetcon())
+    assert missing.preflight().netcon_reachable is False
+
+    inactive = Cs2ReviewCoordinator(
+        _flow(tmp_path / "inactive.json"),
+        "match.dem",
+        netcon=FakeNetcon(DemoReadiness(False, None, "Server: Inactive")),
+    ).preflight()
+    assert inactive.netcon_reachable is True
+    assert inactive.demo_active is False
+    assert inactive.ready is False
+
+    ready = Cs2ReviewCoordinator(
+        _flow(tmp_path / "ready.json"),
+        "MATCH.DEM",
+        netcon=FakeNetcon(DemoReadiness(True, "match.dem", "Client: Connected [DEMO]")),
+    ).preflight()
+    assert ready.netcon_reachable is True
+    assert ready.demo_active is True
+    assert ready.filename_matches is True
+    assert ready.ready is True
 
 
 def test_loopback_server_enforces_origin_and_returns_status(tmp_path: Path) -> None:

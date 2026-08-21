@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-from .cs2_review_coordinator import Cs2ReviewCoordinator, ReviewCoordinatorServer
+from .cs2_review_coordinator import Cs2ReviewCoordinator, ReviewCoordinatorServer, ReviewPreflight
 from .demo_workflow import rerender_demo_workflow, run_demo_workflow
 
 
@@ -140,6 +140,10 @@ class AnalyzerShellApp:
         self.status = tk.StringVar(value="Echte CS2-Demo auswählen")
         self.player_by_label: dict[str, str] = {}
         self.review_server: ReviewCoordinatorServer | None = None
+        self.netcon_status = tk.StringVar(value="○ Lokale CS2-Verbindung: noch nicht geprüft")
+        self.demo_status = tk.StringVar(value="○ Demo-Modus: noch nicht geprüft")
+        self.filename_status = tk.StringVar(value="○ Dateiname: noch nicht geprüft")
+        self.preflight_message = tk.StringVar(value="Vor dem Review CS2 prüfen.")
 
         frame = ttk.Frame(self.root, padding=18)
         frame.pack(fill="both", expand=True)
@@ -169,7 +173,13 @@ class AnalyzerShellApp:
         actions = ttk.Frame(frame)
         actions.pack(fill="x", pady=8)
         ttk.Button(actions, text="Analyse starten", command=self._analyze).pack(side="left")
-        ttk.Button(actions, text="Review öffnen", command=self._open_review).pack(side="left", padx=8)
+        ttk.Button(actions, text="CS2 prüfen", command=self._preflight).pack(side="left", padx=8)
+        self.review_button = ttk.Button(actions, text="Review öffnen", command=self._open_review, state="disabled")
+        self.review_button.pack(side="left")
+        preflight = ttk.LabelFrame(frame, text="CS2-Readiness", padding=10)
+        preflight.pack(fill="x", pady=10)
+        for variable in (self.netcon_status, self.demo_status, self.filename_status, self.preflight_message):
+            ttk.Label(preflight, textvariable=variable).pack(anchor="w")
         self.root.protocol("WM_DELETE_WINDOW", self._close)
 
     def run(self) -> None:
@@ -213,6 +223,7 @@ class AnalyzerShellApp:
         )
         self.chosen.configure(text=selection_text)
         self.status.set(f"{result.map_id} · {len(result.players)} Spieler · {result.scene_count} Szenen")
+        self._reset_preflight()
 
     def _full(self) -> None:
         self.controller.set_full_demo()
@@ -236,15 +247,64 @@ class AnalyzerShellApp:
         self._background("Auswahl wird aus demselben Replay neu berechnet …", self.controller.analyze_selection)
 
     def _open_review(self) -> None:
+        self._preflight(open_after=True)
+
+    def _coordinator(self) -> Cs2ReviewCoordinator:
+        result = self.controller._require_result()
+        manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+        flow_path = result.manifest_path.parent / manifest["artifacts"]["analysis_flow"]
+        return Cs2ReviewCoordinator(flow_path, result.source_demo_name)
+
+    def _preflight(self, open_after: bool = False) -> None:
+        self.review_button.configure(state="disabled")
+        self.preflight_message.set("Prüfe lokale CS2-Bereitschaft …")
+        try:
+            coordinator = self._coordinator()
+        except Exception as error:
+            self.preflight_message.set(f"Nicht bereit: {error}")
+            return
+
+        def worker() -> None:
+            result = coordinator.preflight()
+            self.root.after(0, lambda: self._finish_preflight(result, coordinator, open_after))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _finish_preflight(
+        self, preflight: ReviewPreflight, coordinator: Cs2ReviewCoordinator, open_after: bool
+    ) -> None:
+        self.netcon_status.set(
+            ("✓" if preflight.netcon_reachable else "✗") + " Lokale CS2-Verbindung: "
+            + ("erreichbar" if preflight.netcon_reachable else "nicht erreichbar")
+        )
+        self.demo_status.set(
+            ("✓" if preflight.demo_active else "✗") + " Demo-Modus: "
+            + ("aktiv" if preflight.demo_active else "nicht belegt")
+        )
+        active = preflight.active_demo_name or "nicht erkannt"
+        self.filename_status.set(
+            ("✓" if preflight.filename_matches else "✗")
+            + f" Dateiname: erwartet {preflight.expected_demo_name} · aktiv {active}"
+        )
+        self.preflight_message.set(preflight.message)
+        self.review_button.configure(state="normal" if preflight.ready else "disabled")
+        if preflight.ready and open_after:
+            self._start_review(coordinator)
+
+    def _start_review(self, coordinator: Cs2ReviewCoordinator) -> None:
         result = self.controller._require_result()
         if self.review_server:
             self.review_server.close()
-        manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
-        flow_path = result.manifest_path.parent / manifest["artifacts"]["analysis_flow"]
-        coordinator = Cs2ReviewCoordinator(flow_path, result.source_demo_name)
         self.review_server = ReviewCoordinatorServer(result.review_path, coordinator)
         self.review_server.start()
         webbrowser.open(self.review_server.url)
+
+    def _reset_preflight(self) -> None:
+        self.netcon_status.set("○ Lokale CS2-Verbindung: noch nicht geprüft")
+        self.demo_status.set("○ Demo-Modus: noch nicht geprüft")
+        self.filename_status.set("○ Dateiname: noch nicht geprüft")
+        self.preflight_message.set("Vor dem Review CS2 prüfen.")
+        self.review_button.configure(state="disabled")
 
     def _close(self) -> None:
         if self.review_server:

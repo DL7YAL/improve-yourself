@@ -37,3 +37,15 @@ The real canonical Ancient flow allowed `r1-t3654-0` only at tick `3654`. The co
 ## Boundary
 
 The coordinator does not launch or restart CS2, set Steam launch options, add a netcon port, copy or rename demos, pause playback or decide which scene is relevant. A renamed runtime copy is deliberately rejected because the source identity cannot be proven equivalent from CS2's filename evidence alone.
+
+## Desktop readiness preflight
+
+Before review, the shell displays three independent evidence states:
+
+1. local netcon reachable;
+2. CS2 reports active `[DEMO]` playback;
+3. `demo_info` filename exactly matches the workflow source basename.
+
+`Review öffnen` remains disabled until all states pass. A Review click repeats the probe asynchronously, so an earlier green result cannot become a stale authorization after CS2 or the active demo changes. Import and selection changes reset the displayed state. The panel explains a missing local connection, inactive demo, missing filename or exact mismatch but performs no corrective system or CS2 action.
+
+Live evidence separated the identity boundary correctly: expected/active `iy_ancient.dem` returned ready, while expected `fut-vs-mouz-m2-ancient.dem` with active `iy_ancient.dem` returned a filename mismatch despite both files being related in the manual test setup.

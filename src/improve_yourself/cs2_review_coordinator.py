@@ -17,6 +17,20 @@ class DemoReadiness:
     evidence: str
 
 
+@dataclass(frozen=True)
+class ReviewPreflight:
+    netcon_reachable: bool
+    demo_active: bool
+    filename_matches: bool
+    expected_demo_name: str
+    active_demo_name: str | None
+    message: str
+
+    @property
+    def ready(self) -> bool:
+        return self.netcon_reachable and self.demo_active and self.filename_matches
+
+
 class NetconClient:
     def __init__(self, port: int = 21212, *, timeout: float = 1.5) -> None:
         self.port = port
@@ -62,21 +76,39 @@ class Cs2ReviewCoordinator:
         self.expected_demo_name = expected_demo_name
         self.netcon = netcon or NetconClient()
 
+    def preflight(self) -> ReviewPreflight:
+        try:
+            readiness = self.netcon.readiness()
+        except OSError:
+            return ReviewPreflight(
+                False, False, False, self.expected_demo_name, None,
+                "Lokale CS2-Verbindung nicht erreichbar. CS2 muss mit lokalem netcon gestartet sein.",
+            )
+        demo_active = readiness.connected and readiness.demo_name is not None
+        filename_matches = demo_active and (
+            Path(readiness.demo_name or "").name.casefold() == Path(self.expected_demo_name).name.casefold()
+        )
+        if not readiness.connected:
+            message = "CS2 ist erreichbar, meldet aber keine aktive Demo-Wiedergabe."
+        elif not readiness.demo_name:
+            message = "CS2 meldet Demo-Modus, aber keinen prüfbaren Demo-Dateinamen."
+        elif not filename_matches:
+            message = f"Falsche Demo aktiv: erwartet {self.expected_demo_name}, erkannt {readiness.demo_name}."
+        else:
+            message = f"Bereit: {readiness.demo_name} ist aktiv und eindeutig zugeordnet."
+        return ReviewPreflight(
+            True, demo_active, filename_matches, self.expected_demo_name, readiness.demo_name, message
+        )
+
     def open_scene(self, scene_id: str, tick: int) -> dict[str, object]:
         expected_tick = self.scenes.get(scene_id)
         if expected_tick is None or expected_tick != tick:
             raise ValueError("scene/tick pair is not present in the generated analysis flow")
-        readiness = self.netcon.readiness()
-        if not readiness.connected:
-            raise RuntimeError("CS2 is not connected to demo playback over local netcon")
-        if not readiness.demo_name:
-            raise RuntimeError("CS2 did not disclose the active demo filename")
-        if Path(readiness.demo_name).name.casefold() != Path(self.expected_demo_name).name.casefold():
-            raise RuntimeError(
-                f"wrong demo is active: expected {self.expected_demo_name}, got {readiness.demo_name}"
-            )
+        preflight = self.preflight()
+        if not preflight.ready:
+            raise RuntimeError(preflight.message)
         self.netcon.goto_tick(tick)
-        return {"status": "sent", "scene_id": scene_id, "tick": tick, "demo_name": readiness.demo_name}
+        return {"status": "sent", "scene_id": scene_id, "tick": tick, "demo_name": preflight.active_demo_name}
 
 
 class ReviewCoordinatorServer:

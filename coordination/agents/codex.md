@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-21 — Analyzer-shell CS2 readiness preflight
+
+STATUS: done
+TASK: Add the documented explanatory preflight to the desktop shell without launching/restarting CS2, editing Steam options or copying demos.
+BRANCH: `dev/v1-foundation`
+CHANGED: Added immutable `ReviewPreflight` and `Cs2ReviewCoordinator.preflight()` with separate netcon-reachable, demo-active and exact-filename states plus user-facing corrective messages. Analyzer shell now shows a CS2-Readiness panel and `CS2 prüfen`; Review remains disabled until all three checks pass. Review click repeats the probe asynchronously before opening, so stale green state cannot authorize a later launch. Import/selection changes reset readiness. No parser, rule, scene, timeline, CS2 launch or file-management change.
+VERIFIED: 104/104 tests, dependency check, eight CLI smokes, compile and diff check PASS. Visible Windows smoke confirmed the three-state panel, explanatory message and disabled Review initial state. Live CS2 preflight returned PASS for reachable/[DEMO]/`iy_ancient.dem`, and correctly returned filename FAIL for expected `fut-vs-mouz-m2-ancient.dem` while `iy_ancient.dem` was active. Missing netcon and inactive-demo paths are deterministic tests.
+DECISIONS: Readiness is evidence, not inference: reachable netcon alone is not demo-ready; demo mode without a disclosed filename is not identity-ready; renamed files are not assumed equivalent. Review is revalidated at action time and all checks run off the GUI thread.
+OPEN: The shell currently imports/parses a demo per new session; it cannot explicitly reopen a previously generated workflow manifest. Final styling/packaging remains deferred. CS2/netcon preparation stays manual and instructional.
+NEXT: Add an explicit “Vorhandene Analyse öffnen” path that validates an existing `iy.demo_workflow/v1` manifest, source hash metadata and required local artifacts, then restores roster/selection/review without Awpy reparse. Do not scan arbitrary folders, silently select recent data or weaken local-path validation.
+MODEL_PROFILE: terra
+MODEL_REASON: Narrow state/UI integration with fail-closed runtime checks and deterministic coverage.
+COMPUTER_USE: yes; local shell layout/state was visually checked and closed cleanly; no CS2 input was issued.
+
 ## 2026-08-21 — Fail-closed scene-to-CS2 review coordinator
 
 STATUS: done
