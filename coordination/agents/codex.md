@@ -1,5 +1,17 @@
 # Codex
 
+## 2026-08-21 — ReplayController-to-renderer session adapter
+
+STATUS: done
+TASK: Implement only the one-way ReplayController-to-renderer session adapter, preserving requested/resolved tick semantics, selection and FP/fixed-TP mapping without owning playback, parsing or UI.
+BRANCH: `dev/v1-foundation`
+CHANGED: Added `renderer_session.py` with immutable session state, committed-snapshot subscription, canonical frame restore, controller-view mapping, render readiness and lifecycle cleanup. Added focused tests and evidence documentation; updated CURRENT/handoff. No ReplayController behavior, timer, parser, product UI, sightline target policy, smoke/utility/event rendering, asset, benchmark, Optimizer/System Check or packaging change.
+VERIFIED: 9/9 focused controller/session tests and 93/93 complete tests pass; full Setup-V1 and five CLI smokes pass. Tests preserve requested 14/resolved 12 and reject frame/resolved mismatches. Tactical 2D/no player does not render. Real Anubis ReplayStore/ReplayController round 1/tick 6401, player `steam:76561198009555616`, flowed through FP then analysis-TP with requested/resolved 6401/6401, renderer canonical tick 6401, two renders and clean dispose.
+DECISIONS: ReplayController remains the sole mutable playback authority. Session only mirrors committed state and cannot seek, advance, parse or choose targets. It owns renderer subscription/disposal; Tactical 2D is explicitly outside 3D render readiness.
+OPEN: Sightline evaluation/presentation exists but is not yet refreshed by the session; target choice is deliberately not inferred. No product UI exists.
+NEXT: Connect the evaluated sightline pipeline to ReplayRendererSession only through an injected explicit-target coordinator: same frame, selected observer, caller-supplied target IDs, verified geometry and capability-gated smoke. Pass ready segments and clear them on Tactical 2D/no selection/tick change. Do not invent target-selection UI/policy or add utility/event rendering.
+COMPUTER_USE: no UI action in this slice.
+
 ## 2026-08-21 — Canonical smoke evidence gate
 
 STATUS: done
