@@ -989,7 +989,7 @@ NEXT: Genau ein empfohlener Folge-Slice nach neuer Freigabe: den separat geliefe
 MODEL_PROFILE: terra
 MODEL_REASON: Finaler deterministischer Validierungs-/Safety-Pass vor dem realen kuratierten Regelkatalog.
 COMPUTER_USE: no
-COMMIT/PR: Wird nach Commit/Push ergänzt.
+COMMIT/PR: `4754ac6 feat: finalize synthetic matrix validation`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
