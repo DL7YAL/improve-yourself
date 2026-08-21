@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-21 — Runtime-compatible Ancient end-to-end proof
+
+STATUS: done
+TASK: Close the remaining real Demo→Awpy→Selection→Rules→Merged Scenes→Timeline/JSON→CS2 tick-review criterion without changing the accepted analyzer rules.
+BRANCH: `dev/v1-foundation`
+CHANGED: No analyzer code or rule change. Ran the existing `iy-demo-workflow` unchanged on `fut-vs-mouz-m2-ancient.dem`; generated match artifacts remain ignored/local. Added only this completion evidence and the matching E2E evidence note.
+VERIFIED: Source SHA-256 `c183dd61fc6a619f7af435d45eab374cd6f0097a7bd0da779971b15ef6746f7f`, 270,062,278 bytes. Awpy 2.0.2 completed: Ancient, 18 rounds, 10 named players, 235 objective indicators/rule matches merged into 54 scenes. Timeline/JSON/HTML/commands were produced. First scene is round 1 with generated `demo_gototick 3654`. The installed CS2 client loaded and normally played the same demo beyond the earlier incompatible-source failure point. After demo readiness, `demo_gototick 3654` was issued over localhost-only netcon and visibly returned to the first-round combat context; `demo_togglepause` then held the review at 0:58.3 with no parse error. Existing full gate remains 97/97 tests, dependency check, seven CLI smokes and diff check PASS.
+DECISIONS: The earlier Mirage failure remains valid source-demo incompatibility evidence but is no longer the acceptance source. Ancient supplies the runtime-compatible proof. No rule threshold, scene window, parser interpretation or evidence requirement was weakened. Local netcon was used only to avoid startup-command timing and transmitted nothing externally.
+OPEN: Product-shell wiring for choosing a `.dem`, displaying roster selection and opening generated review output is not implemented by this proof. The temporary CS2 game-directory copies `iy_review.dem` and `iy_ancient.dem` remain local; removal requires an explicit cleanup action. Toggle Console may still need manual restoration from temporary `F6` to the user's original `^` if not already restored.
+NEXT: Integrate the proven `iy-demo-workflow` as the Analyzer shell's real local import action and bind its existing roster/Full Demo/Player Select/review output without duplicating parsing or rule state. Keep Optimizer/System Check, video/OBS/ML and V2/V3 scope out.
+MODEL_PROFILE: terra
+MODEL_REASON: Real parser and runtime acceptance proof completed with the existing implementation; no architecture escalation required.
+COMPUTER_USE: yes; runtime-compatible Ancient playback and the generated tick-3654 review landing were visibly checked in installed CS2. Localhost netcon only, no external transmission.
+
 ## 2026-08-21 — Real neutral demo-to-review workflow
 
 STATUS: blocked

@@ -3,6 +3,14 @@
 Date: 2026-08-21
 Branch: `dev/v1-foundation`
 
+## Runtime-compatible acceptance proof
+
+The strict CS2 review criterion is closed with the real local demo `fut-vs-mouz-m2-ancient.dem` (SHA-256 `c183dd61fc6a619f7af435d45eab374cd6f0097a7bd0da779971b15ef6746f7f`, 270,062,278 bytes). The unchanged workflow produced 18 rounds, 10 named players, 235 objective indicators/rule matches and 54 merged scenes. Its first scene generated `demo_gototick 3654`.
+
+The installed CS2 client loaded and normally played the same Ancient demo. After demo readiness, the generated tick command was sent through a localhost-only CS2 netcon connection, visibly returned playback to the first-round combat context, and `demo_togglepause` held the review at 0:58.3 without a parse error. This is runtime evidence for the generated scene tick, not a parser-only claim. No analyzer rule, threshold or evidence boundary was changed for the proof.
+
+The earlier Mirage demo remains useful Awpy evidence but is not the runtime acceptance source because the current CS2 client also fails during its ordinary playback with `Failed to parse message`.
+
 ## Implemented flow
 
 ```text
