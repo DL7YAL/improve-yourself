@@ -1025,7 +1025,7 @@ NEXT: Erwarteter nächster Input ist ausschließlich der separat kuratierte Impr
 MODEL_PROFILE: terra
 MODEL_REASON: Finaler Import-/Safety-Gate vor kuratiertem Inhalt, mit deterministischer Regression und UI-Durchstich.
 COMPUTER_USE: no
-COMMIT/PR: Wird nach Commit/Push ergänzt.
+COMMIT/PR: `243287a feat: prepare optimizer rule pack readiness`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
