@@ -53,6 +53,12 @@ No OBS, clip creation, video editor, automated rendering, forced window mode/res
 
 The engineering gate is complete. Status is `REVIEW`: the functional flow and the canonical references under `docs/design/` are consolidated. No unsupported product metric or setting is fabricated.
 
+## Portable Experimental distribution
+
+`tools/dev/Build-Experimental.ps1` produces a branded Windows Portable distribution and ZIP from `packaging/improve-yourself-experimental.spec`. The packaged application uses the canonical Variant-3 wordmark and the exact ascending-bars/final-I crop for EXE, window and taskbar identity. Its writable default is `%LOCALAPPDATA%\Improve Yourself\Experimental\results`, independent of the launching process or installation directory.
+
+No Setup distribution is currently claimed: the repository has no accepted installer identity, install scope, upgrade/uninstall or signing contract and no supported Inno/WiX/NSIS/MSIX toolchain. Portable is therefore the only generated Experimental distribution in this pass.
+
 # Verbindliche UI-Konsolidierung
 
 Der Experimental-Build verwendet die bereits freigegebene Variant-3-Markenquelle und die belegten Theme-Tokens: Midnight `#07111e`, Panel `#102033`, Metallic `#264766`, Ice `#8edbff` und Ink `#edf7ff`. Die Desktop-Typografie bleibt Segoe UI; Fenster, Sidebar, Navigation und Inhaltsflächen bilden eine durchgehend dunkle Anwendung ohne weiße Fremdfläche im Titel- oder Kopfbereich.

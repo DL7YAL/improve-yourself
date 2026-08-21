@@ -1,0 +1,65 @@
+[CmdletBinding()]
+param(
+    [Parameter()]
+    [string]$OutputRoot = 'dist\experimental',
+
+    [Parameter()]
+    [switch]$SkipTests
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+$repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
+$python = Join-Path $repositoryRoot '.venv\Scripts\python.exe'
+$spec = Join-Path $repositoryRoot 'packaging\improve-yourself-experimental.spec'
+$buildLock = Join-Path $repositoryRoot 'requirements-build.lock'
+$output = Join-Path $repositoryRoot $OutputRoot
+$work = Join-Path $repositoryRoot 'build\pyinstaller-experimental'
+
+if (-not (Test-Path -LiteralPath $python -PathType Leaf)) {
+    throw 'Locked development environment is missing. Run tools/dev/Setup-V1.ps1 first.'
+}
+
+Push-Location $repositoryRoot
+try {
+    if (-not $SkipTests) {
+        & $python -m pytest
+        if ($LASTEXITCODE -ne 0) { throw "Tests failed with exit code $LASTEXITCODE." }
+    }
+    & $python -m pip install -r $buildLock
+    if ($LASTEXITCODE -ne 0) { throw "Build dependency setup failed with exit code $LASTEXITCODE." }
+    & $python -m pip check
+    if ($LASTEXITCODE -ne 0) { throw "Dependency check failed with exit code $LASTEXITCODE." }
+    & $python -m PyInstaller --noconfirm --clean --distpath $output --workpath $work $spec
+    if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed with exit code $LASTEXITCODE." }
+
+    $portable = Join-Path $output 'Improve Yourself Experimental'
+    $executable = Join-Path $portable 'Improve Yourself Experimental.exe'
+    if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
+        throw "Portable executable is missing: $executable"
+    }
+    $zip = Join-Path $output 'Improve-Yourself-Experimental-Portable.zip'
+    Compress-Archive -LiteralPath $portable -DestinationPath $zip -CompressionLevel Optimal -Force
+    $executableHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $executable).Hash
+    $zipHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash
+    $manifest = [ordered]@{
+        schema = 'iy.experimental_build/v1'
+        channel = 'experimental'
+        distribution = 'portable'
+        tests_skipped = [bool]$SkipTests
+        executable = [ordered]@{ path = 'Improve Yourself Experimental\Improve Yourself Experimental.exe'; sha256 = $executableHash; bytes = (Get-Item -LiteralPath $executable).Length }
+        archive = [ordered]@{ path = 'Improve-Yourself-Experimental-Portable.zip'; sha256 = $zipHash; bytes = (Get-Item -LiteralPath $zip).Length }
+    }
+    $manifestPath = Join-Path $output 'experimental-build.json'
+    $manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $manifestPath -Encoding utf8
+    Get-FileHash -Algorithm SHA256 -LiteralPath $executable, $zip
+    Write-Host 'PASS: Experimental portable build is ready.' -ForegroundColor Green
+    Write-Host "Portable: $portable"
+    Write-Host "Archive:  $zip"
+    Write-Host "Manifest: $manifestPath"
+    Write-Host 'Setup:    not generated; no supported installer toolchain is currently defined.'
+}
+finally {
+    Pop-Location
+}

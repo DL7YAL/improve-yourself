@@ -35,6 +35,8 @@ The logo and wordmark treatment visible in `Improve_Yourself_Concept_Preview_Dis
 - horizontal `IMPROVE YOURSELF` wordmark in the application header;
 - square/multi-size application icon based on the original bar / `I` symbol for EXE, window title and taskbar.
 
+Canonical repository source: `src/improve_yourself/assets/improve-yourself-logo-v3-full.png`, preserved byte-for-byte from `Improve-Yourself-Logo-Variante-3-vollstaendig.png` with SHA-256 `3b33d2af88e97092506a1005012ba315e0484800585ef215b379f3f28390a25b`. The header wordmark and compact PNG/ICO are technical crops/exports of this source, not independent marks.
+
 Do not create a new logo variant during consolidation.
 
 Do not redraw, reinterpret or replace the master mark. Cropping, scaling and multi-size exports are allowed only when they preserve its proportions, spacing, color treatment and legibility.

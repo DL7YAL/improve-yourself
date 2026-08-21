@@ -1,5 +1,20 @@
 # Codex
 
+## 2026-08-21 — Branded Portable Experimental integration
+
+STATUS: review
+TASK: Aktuellen Funktionsstand mit der verbindlichen UI-/Branding-Masterreferenz verbinden, vollständig regressionsprüfen und als praktisch testbaren Experimental-Build ausgeben.
+BRANCH: `dev/v1-foundation`
+CHANGED: Kanonische `Improve-Yourself-Logo-Variante-3-vollstaendig.png` bytegenau als `improve-yourself-logo-v3-full.png` integriert; deterministische kompakte PNG-/ICO-Exports ausschließlich aus dem genehmigten Balken-/Final-I-Bereich ergänzt. Shell verwendet die Marke als Fenster-/Taskleistenicon, konsistentere Card-/Button-Borders und ein eigenes vollständig dunkles Regeldetail-Unterfenster. Reproduzierbare PyInstaller-Portable-Pipeline, Build-Lock, Spec, ZIP und Buildmanifest ergänzt. Gepackter Standardausgabepfad nach realem Laufzeitbefund auf `%LOCALAPPDATA%\Improve Yourself\Experimental\results` korrigiert. Keine Parser-, Rule-, Szenen-, Replay-, Benchmark-, Optimizer- oder Systemänderungslogik geändert.
+VERIFIED: Canonical source SHA-256 `3b33d2af88e97092506a1005012ba315e0484800585ef215b379f3f28390a25b`, 490x770; Brandingtests prüfen Quelle und PNG/ICO. Frischer echter E2E-Lauf aus `fut-vs-mouz-m2-ancient.dem`: Awpy PASS, `de_ancient`, 18 Runden, 10 benannte Spieler, 3.179 grundlegende Events, 235 Indikatoren/Regelresultate, 54 zusammengeführte Szenen und READY_FOR_REVIEW mit Review/Timeline/Tactical/Report/CS2-Ticks. Read-only System Check real: 6 OK, 2 REVIEW, 0 ACTION_REQUIRED. Portable EXE startete zweimal; Brand/Icon, dunkle Titelleiste, Analyzer, Dashboard, Rules, Reports, System Check, Settings und Tactical Replay öffneten crashfrei. Erster Packaged-Lauf deckte falschen cwd-abhängigen Profilpfad auf; Regressionstest und zweiter Lauf belegen den korrigierten LocalAppData-Pfad. Finaler Full-Gate-Build: 125/125 Tests, Buildabhängigkeiten, PyInstaller, ZIP, `compileall` und `git diff --check` PASS. EXE SHA-256 `d5c2fe8fbed6f7b18cc3ee20fd6f963b4b295313da9c77958d69d0304fbd0018`; Portable-ZIP SHA-256 `efae02edc21dfa58f347f46134dbf73ff1e524ef8a26e8066f95f94aa1115e98`.
+DECISIONS: Portable ist die einzige behauptete Distribution. Kein Setup erzeugt, weil kein akzeptierter Installer-/Upgrade-/Uninstall-/Signingvertrag und keine unterstützte Installer-Toolchain bestehen. Kein `NEEDS_BRAND_ASSET`: Vollmarke ist vorhanden und hashgesichert. `System Check / Optimizer` bleibt `PARTIAL_REFERENCE`; Setup bleibt `NEEDS_INSTALLER_SPEC`, nicht `NEEDS_UI_REFERENCE`.
+OPEN: Setup/Installer, Code Signing und menschliche Gesamtproduktabnahme bleiben offen. Native Windows-Dateiauswahldialoge folgen dem Betriebssystem; eigene Produktunterfenster bleiben dark. Der Portable-Build ist nicht signiert und Windows kann deshalb einen unbekannten Herausgeber anzeigen.
+NEXT: Tristan entpackt den Portable-ZIP, startet `Improve Yourself Experimental.exe`, lädt die echte Ancient-Demo und prüft nacheinander Preflight/Line-ups, Full Demo und Player Select, Profile/Rules, 54 Szenen, Review/Tactical/Reports sowie den read-only System Check. Danach nur konkrete Laufzeit-/UI-Befunde priorisieren; Installer separat spezifizieren.
+MODEL_PROFILE: terra
+MODEL_REASON: Zusammenhängende UI-/Branding-/Packaging-Integration mit realem Demo- und Windows-Runtime-Gate.
+COMPUTER_USE: yes
+COMMIT/PR: pending final gate and push on `dev/v1-foundation`.
+
 ## 2026-08-21 — Improve Yourself Experimental consolidation
 
 STATUS: waiting_for_tristan

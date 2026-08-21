@@ -4,7 +4,9 @@ import argparse
 import ctypes
 import hashlib
 import json
+import os
 import re
+import sys
 import threading
 import webbrowser
 from dataclasses import dataclass, replace
@@ -48,6 +50,15 @@ def _sha256_file(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def default_output_root() -> Path:
+    """Use a stable user-writable root in packaged Windows builds."""
+    if getattr(sys, "frozen", False) and os.name == "nt":
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        if local_app_data:
+            return Path(local_app_data) / "Improve Yourself" / "Experimental" / "results"
+    return Path("results/analyzer-shell")
 
 
 def _enable_dark_titlebar(root) -> None:
@@ -339,12 +350,18 @@ class AnalyzerShellApp:
         self.root.minsize(1080, 720)
         self.root.configure(background=_THEME["night"])
         _enable_dark_titlebar(self.root)
+        icon_path = Path(__file__).with_name("assets") / "improve-yourself-icon-v3.png"
+        try:
+            self.app_icon = tk.PhotoImage(file=str(icon_path))
+            self.root.iconphoto(True, self.app_icon)
+        except tk.TclError:
+            self.app_icon = None
         style = ttk.Style(self.root)
         style.theme_use("clam")
         style.configure(".", background=_THEME["panel"], foreground=_THEME["ink"], fieldbackground=_THEME["deep"], font=("Segoe UI", 10))
         style.configure("TFrame", background=_THEME["night"])
         style.configure("Content.TFrame", background=_THEME["night"])
-        style.configure("Card.TFrame", background=_THEME["panel"], relief="solid", borderwidth=1)
+        style.configure("Card.TFrame", background=_THEME["panel"], relief="solid", borderwidth=1, bordercolor=_THEME["line"])
         style.configure("CardInner.TFrame", background=_THEME["panel"], relief="flat", borderwidth=0)
         style.configure("Sidebar.TFrame", background=_THEME["deep"])
         style.configure("TLabel", background=_THEME["night"], foreground=_THEME["ink"])
@@ -352,8 +369,8 @@ class AnalyzerShellApp:
         style.configure("Muted.TLabel", background=_THEME["panel"], foreground=_THEME["muted"])
         style.configure("TLabelframe", background=_THEME["panel"], foreground=_THEME["ink"], relief="solid", borderwidth=1)
         style.configure("TLabelframe.Label", background=_THEME["panel"], foreground=_THEME["ice"], font=("Segoe UI Semibold", 10))
-        style.configure("TButton", background="#19334d", foreground="#dcefff", padding=(12, 8), borderwidth=1)
-        style.map("TButton", background=[("active", _THEME["metal"]), ("pressed", _THEME["line"])])
+        style.configure("TButton", background="#19334d", foreground="#dcefff", padding=(12, 8), borderwidth=1, bordercolor=_THEME["line"])
+        style.map("TButton", background=[("active", _THEME["metal"]), ("pressed", _THEME["line"]), ("disabled", _THEME["deep"])], foreground=[("disabled", _THEME["muted"])])
         style.configure("Primary.TButton", background=_THEME["ice"], foreground="#06101a", font=("Segoe UI Semibold", 10))
         style.configure(
             "TCombobox", background=_THEME["deep"], fieldbackground=_THEME["deep"],
@@ -696,15 +713,31 @@ class AnalyzerShellApp:
         self.rules.configure(text=f"Custom · lokal gespeichert: {path.name}")
 
     def _show_rule_details(self, rule_id: str) -> None:
-        from tkinter import messagebox
-
-        messagebox.showinfo(
-            "Regeldetails",
-            f"{rule_id}\n\nObjektiver, aus der Demo belegter Szenenanker. "
-            "Mehrere Marker derselben Situation werden zu einer Szene zusammengeführt. "
-            "Die Interpretation bleibt beim Nutzer.",
-            parent=self.root,
-        )
+        dialog = self.tk.Toplevel(self.root)
+        dialog.title("Improve Yourself – Regeldetails")
+        dialog.configure(background=_THEME["night"])
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        _enable_dark_titlebar(dialog)
+        if self.app_icon is not None:
+            dialog.iconphoto(True, self.app_icon)
+        card = self.ttk.Frame(dialog, style="Card.TFrame", padding=22)
+        card.pack(fill="both", expand=True, padx=16, pady=16)
+        self.ttk.Label(card, text="Regeldetails", style="Card.TLabel", font=("Segoe UI Semibold", 16)).pack(anchor="w")
+        self.ttk.Label(card, text=rule_id, style="Muted.TLabel").pack(anchor="w", pady=(4, 14))
+        self.ttk.Label(
+            card,
+            text=("Objektiver, aus der Demo belegter Szenenanker. Mehrere Marker derselben "
+                  "Situation werden zu einer Szene zusammengeführt. Die Interpretation bleibt beim Nutzer."),
+            style="Card.TLabel", wraplength=460, justify="left",
+        ).pack(anchor="w")
+        self.ttk.Button(card, text="Schließen", style="Primary.TButton", command=dialog.destroy).pack(anchor="e", pady=(18, 0))
+        dialog.protocol("WM_DELETE_WINDOW", dialog.destroy)
+        dialog.update_idletasks()
+        x = self.root.winfo_rootx() + max(0, (self.root.winfo_width() - dialog.winfo_reqwidth()) // 2)
+        y = self.root.winfo_rooty() + max(0, (self.root.winfo_height() - dialog.winfo_reqheight()) // 2)
+        dialog.geometry(f"+{x}+{y}")
 
     def _full(self) -> None:
         self.controller.set_full_demo()
@@ -834,7 +867,7 @@ class AnalyzerShellApp:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Open the local real-demo Analyzer shell")
-    parser.add_argument("--output", type=Path, default=Path("results/analyzer-shell"))
+    parser.add_argument("--output", type=Path, default=default_output_root())
     parser.add_argument(
         "--workflow", type=Path,
         help="Open one explicitly selected, fail-closed validated demo-workflow.json at startup",

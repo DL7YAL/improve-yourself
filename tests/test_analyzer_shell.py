@@ -1,11 +1,22 @@
 import gzip
 import hashlib
 import json
+import os
+import sys
 from pathlib import Path
 
 import pytest
 
-from improve_yourself.analyzer_shell import AnalyzerShellController, UI_REFERENCE_STATUS
+from improve_yourself.analyzer_shell import AnalyzerShellController, UI_REFERENCE_STATUS, default_output_root
+
+
+def test_packaged_windows_default_output_is_stable_and_user_writable(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(os, "name", "nt")
+    monkeypatch.setenv("LOCALAPPDATA", r"C:\Users\tester\AppData\Local")
+    assert default_output_root() == Path(
+        r"C:\Users\tester\AppData\Local\Improve Yourself\Experimental\results"
+    )
 
 
 def test_experimental_shell_exposes_binding_product_sections_from_canonical_design_spec() -> None:
