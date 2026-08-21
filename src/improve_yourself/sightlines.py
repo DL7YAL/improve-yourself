@@ -7,6 +7,12 @@ from .replay_contract import PlayerState, ReplayFrame, Vec3
 from .visibility_mesh import ObstructionState, SegmentObstruction, VisibilityGeometry
 
 SightlineOutcome = Literal["visible", "occluded", "unknown"]
+SightlineColor = tuple[float, float, float, float]
+SIGHTLINE_COLORS: dict[SightlineOutcome, SightlineColor] = {
+    "visible": (0.20, 0.85, 0.42, 1.0),
+    "occluded": (0.95, 0.30, 0.22, 1.0),
+    "unknown": (0.62, 0.66, 0.72, 1.0),
+}
 
 
 @dataclass(frozen=True)
@@ -18,6 +24,17 @@ class SightlineResult:
     smoke_state: ObstructionState
     result: SightlineOutcome
     evidence: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class SightlineSegment:
+    observer_player_id: str
+    target_player_id: str
+    tick: int
+    start: Vec3
+    end: Vec3
+    result: SightlineOutcome
+    color: SightlineColor
 
 
 class SmokeEvidence(Protocol):
@@ -94,4 +111,25 @@ def evaluate_sightline(
         smoke.state,
         outcome,
         tuple(evidence),
+    )
+
+
+def present_sightline(
+    frame: ReplayFrame, result: SightlineResult, *, eye_height: float = 64.0
+) -> SightlineSegment | None:
+    """Create renderer-ready coordinates without re-evaluating geometry or smoke."""
+    if result.tick != frame.tick:
+        raise ValueError("sightline result tick differs from the canonical frame")
+    start = _eye(_player(frame, result.observer_player_id), eye_height)
+    end = _eye(_player(frame, result.target_player_id), eye_height)
+    if start is None or end is None:
+        return None
+    return SightlineSegment(
+        observer_player_id=result.observer_player_id,
+        target_player_id=result.target_player_id,
+        tick=result.tick,
+        start=start,
+        end=end,
+        result=result.result,
+        color=SIGHTLINE_COLORS[result.result],
     )

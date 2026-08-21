@@ -11,6 +11,7 @@ from improve_yourself.renderer import (
 )
 from improve_yourself.replay_contract import PlayerState, ReplayFrame, Vec3
 from improve_yourself.visibility_mesh import SegmentObstruction, UnknownVisibilityGeometry
+from improve_yourself.sightlines import SightlineSegment
 
 
 def _frame(*, active=True, alive=True, position=Vec3(100.0, 200.0, 10.0), yaw=90.0, pitch=0.0):
@@ -98,10 +99,16 @@ def test_null_renderer_proves_protocol_lifecycle_and_guards_dispose():
     renderer.set_frame(_frame())
     renderer.set_camera_player("p1")
     renderer.set_view_mode("third_person")
+    sightline = SightlineSegment("p1", "p2", 123, Vec3(0, 0, 0), Vec3(1, 1, 1), "unknown", (0.62, 0.66, 0.72, 1.0))
+    renderer.set_sightlines((sightline,))
     renderer.resize(1280, 720)
     renderer.render()
     assert renderer.size == (1280, 720)
     assert renderer.render_count == 1
+    renderer.set_view_mode("first_person")
+    assert renderer.sightlines == (sightline,)
+    renderer.set_view_mode("third_person")
+    assert renderer.sightlines == (sightline,)
     renderer.dispose()
     with pytest.raises(RuntimeError, match="disposed"):
         renderer.render()

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Literal, Protocol, runtime_checkable
 
 from .replay_contract import PlayerState, ReplayFrame, Vec3
+from .sightlines import SightlineSegment
 from .visibility_mesh import ObstructionState, VisibilityGeometry
 
 ViewMode = Literal["first_person", "third_person"]
@@ -37,6 +38,8 @@ class ReplayRenderer(Protocol):
     def set_camera_player(self, player_id: str) -> None: ...
 
     def set_view_mode(self, mode: ViewMode) -> None: ...
+
+    def set_sightlines(self, sightlines: tuple[SightlineSegment, ...]) -> None: ...
 
     def render(self) -> None: ...
 
@@ -136,6 +139,7 @@ class NullRenderer:
         self.player_id: str | None = None
         self.view_mode: ViewMode = "first_person"
         self.size = (0, 0)
+        self.sightlines: tuple[SightlineSegment, ...] = ()
         self.render_count = 0
         self.disposed = False
 
@@ -160,6 +164,10 @@ class NullRenderer:
         if mode not in ("first_person", "third_person"):
             raise ValueError(f"unsupported V1 view mode: {mode}")
         self.view_mode = mode
+
+    def set_sightlines(self, sightlines: tuple[SightlineSegment, ...]) -> None:
+        self._require_live()
+        self.sightlines = tuple(sightlines)
 
     def render(self) -> None:
         self._require_live()

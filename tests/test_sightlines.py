@@ -1,5 +1,9 @@
+from dataclasses import replace
+
+import pytest
+
 from improve_yourself.replay_contract import PlayerState, ReplayFrame, Vec3
-from improve_yourself.sightlines import UnknownSmokeEvidence, evaluate_sightline
+from improve_yourself.sightlines import SIGHTLINE_COLORS, UnknownSmokeEvidence, evaluate_sightline, present_sightline
 from improve_yourself.visibility_mesh import SegmentObstruction
 
 
@@ -71,3 +75,33 @@ def test_missing_inactive_or_same_player_state_is_unknown_without_querying_fallb
     same = evaluate_sightline(_frame(), "observer", "observer", _Geometry("clear"))
     assert missing.result == inactive.result == same.result == "unknown"
     assert missing.geometry_state == inactive.geometry_state == same.geometry_state == "unknown"
+
+
+def test_presentation_uses_same_tick_players_and_fixed_result_color_without_reevaluation():
+    frame = _frame()
+    result = evaluate_sightline(frame, "observer", "target", _Geometry("blocked"))
+    segment = present_sightline(frame, result)
+    assert segment is not None
+    assert (segment.tick, segment.observer_player_id, segment.target_player_id) == (777, "observer", "target")
+    assert segment.start == Vec3(0, 0, 64)
+    assert segment.end == Vec3(100, 0, 64)
+    assert segment.color == SIGHTLINE_COLORS["occluded"]
+
+
+def test_presentation_rejects_cross_tick_result_and_skips_missing_endpoints():
+    frame = _frame()
+    other_tick = replace(frame, tick=778)
+    result = evaluate_sightline(frame, "observer", "target", _Geometry("clear"))
+    with pytest.raises(ValueError, match="tick differs"):
+        present_sightline(other_tick, result)
+    missing = evaluate_sightline(_frame(target_position=None), "observer", "target", _Geometry("clear"))
+    assert present_sightline(_frame(target_position=None), missing) is None
+
+
+def test_v1_sightline_palette_is_fixed_and_distinct():
+    assert SIGHTLINE_COLORS == {
+        "visible": (0.20, 0.85, 0.42, 1.0),
+        "occluded": (0.95, 0.30, 0.22, 1.0),
+        "unknown": (0.62, 0.66, 0.72, 1.0),
+    }
+    assert len(set(SIGHTLINE_COLORS.values())) == 3

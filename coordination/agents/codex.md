@@ -1,5 +1,17 @@
 # Codex
 
+## 2026-08-21 — Sightline renderer presentation boundary
+
+STATUS: done
+TASK: Add only the renderer presentation boundary for already evaluated SightlineResult values, fixed colors and eye-to-eye segments from the same canonical frame; prove FP/fixed-TP switching preserves tick/player/result without recomputing geometry or smoke.
+BRANCH: `dev/v1-foundation`
+CHANGED: Added immutable `SightlineSegment`, fixed V1 green/red/neutral palette and tick-matched presentation builder. Extended ReplayRenderer/NullRenderer/Panda candidate with `set_sightlines`; Panda draws only supplied coordinates/colors and replaces prior line nodes. Extended the local spike for exact round/tick/player/targets and controlled TP→FP→TP proof. Added tests/evidence doc and updated CURRENT/handoff. No evaluator rule, smoke approximation, utility/event overlay, asset, benchmark, model, freecam, ReplayController semantics, Optimizer/System Check or packaging change.
+VERIFIED: 18/18 focused sightline/renderer tests and 84/84 complete tests pass. Native real-Anubis round 1/tick 6401 with observer `steam:76561198009555616` preserved the precomputed nearby unknown and map-blocked occluded results across `third_person -> first_person -> third_person`, resize `1100x700 -> 900x560`, and dispose. Ignored screenshot visibly confirms the red occluded line plus local wireframe; the nearby neutral line is not claimed as a fully isolated visual proof in this composition, while exact gray mapping/persistence are deterministic tests.
+DECISIONS: Result color is presentation-only and fixed: visible green, occluded red, unknown neutral gray. Renderer accepts ready segments and never calls geometry/smoke providers. Missing endpoints produce no segment rather than an invented position; cross-tick results are rejected.
+OPEN: Smoke remains unknown for the real clear-geometry pair because the real replay capability is partial and no accepted V1 volume approximation exists. No smoke or other utility visualization is present.
+NEXT: Implement only the canonical smoke-evidence gate required by SightlineResult: require explicit full lifetime/position coverage before a fixed disclosed V1 smoke-volume approximation may return clear or blocked; partial/unavailable stays unknown. Validate synthetic boundaries and report real Anubis capability, without drawing smoke or other utility/event overlays.
+COMPUTER_USE: Timed local native renderer/view-switch proof only; no external transmission or persistent setting change.
+
 ## 2026-08-21 — Canonical SightlineResult evaluator
 
 STATUS: done

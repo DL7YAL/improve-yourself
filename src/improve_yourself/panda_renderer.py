@@ -5,6 +5,7 @@ from pathlib import Path
 from .map_assets import assess_map_asset
 from .renderer import ReplayRenderer, ViewMode, first_person_camera, third_person_camera
 from .replay_contract import ReplayFrame
+from .sightlines import SightlineSegment
 from .visibility_mesh import TriVisibilityMesh
 
 
@@ -32,6 +33,7 @@ class PandaReplayRenderer:
         self._map = None
         self._visibility = None
         self._camera_pose = None
+        self._sightline_node = None
         self._disposed = False
 
     def _require_live(self) -> None:
@@ -74,6 +76,23 @@ class PandaReplayRenderer:
             raise ValueError(f"unsupported V1 view mode: {mode}")
         self._view_mode = mode
         self._camera_pose = None
+
+    def set_sightlines(self, sightlines: tuple[SightlineSegment, ...]) -> None:
+        self._require_live()
+        if self._sightline_node is not None:
+            self._sightline_node.removeNode()
+            self._sightline_node = None
+        if not sightlines:
+            return
+        from panda3d.core import LineSegs
+
+        lines = LineSegs("canonical-sightlines")
+        lines.setThickness(3.0)
+        for sightline in sightlines:
+            lines.setColor(*sightline.color)
+            lines.moveTo(sightline.start.x, sightline.start.y, sightline.start.z)
+            lines.drawTo(sightline.end.x, sightline.end.y, sightline.end.z)
+        self._sightline_node = self._base.render.attachNewNode(lines.create())
 
     def render(self) -> None:
         self._require_live()
