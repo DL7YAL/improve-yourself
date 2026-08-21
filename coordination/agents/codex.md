@@ -1007,7 +1007,7 @@ NEXT: Genau ein empfohlener Folge-Slice nach neuer Freigabe: den separat geliefe
 MODEL_PROFILE: terra
 MODEL_REASON: Produktintegration einer bestehenden sicherheitskritischen Read-only-Datenkette mit UI-/ViewModel-Regressionen.
 COMPUTER_USE: no
-COMMIT/PR: Wird nach Commit/Push ergänzt.
+COMMIT/PR: `e19ddff feat: integrate optimizer foundation into UI`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
