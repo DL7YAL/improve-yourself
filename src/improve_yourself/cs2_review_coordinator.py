@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import socket
+import subprocess
 import threading
 import time
 from dataclasses import dataclass
@@ -67,22 +68,64 @@ class NetconClient:
         return b"".join(chunks).decode("utf-8", errors="replace")
 
 
+def cs2_process_running() -> bool | None:
+    """Return whether CS2 is running on Windows, or None when it cannot be determined."""
+    try:
+        result = subprocess.run(
+            ("tasklist", "/FI", "IMAGENAME eq cs2.exe", "/FO", "CSV", "/NH"),
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=False,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if result.returncode != 0:
+        return None
+    return any(line.lstrip().lower().startswith('"cs2.exe"') for line in result.stdout.splitlines())
+
+
 class Cs2ReviewCoordinator:
-    def __init__(self, flow_path: Path, expected_demo_name: str, *, netcon: NetconClient | None = None) -> None:
+    def __init__(
+        self,
+        flow_path: Path,
+        expected_demo_name: str,
+        *,
+        netcon: NetconClient | None = None,
+        process_probe=cs2_process_running,
+    ) -> None:
         flow = json.loads(flow_path.read_text(encoding="utf-8"))
         self.scenes = {scene["scene_id"]: int(scene["review"]["tick"]) for scene in flow["scenes"]}
         if not expected_demo_name:
             raise ValueError("workflow does not disclose the expected demo filename")
         self.expected_demo_name = expected_demo_name
         self.netcon = netcon or NetconClient()
+        self.process_probe = process_probe
 
     def preflight(self) -> ReviewPreflight:
         try:
             readiness = self.netcon.readiness()
         except OSError:
+            running = self.process_probe()
+            if running is True:
+                message = (
+                    "CS2 läuft, aber NetCon ist nicht erreichbar. Unter Windows CS2 über die Workshop Tools "
+                    "mit -usercon -netconport 21212 starten."
+                )
+            elif running is False:
+                message = (
+                    "CS2/NetCon ist nicht erreichbar. CS2 über die Workshop Tools mit "
+                    "-usercon -netconport 21212 starten."
+                )
+            else:
+                message = (
+                    "Lokale CS2-Verbindung nicht erreichbar. Unter Windows CS2 über die Workshop Tools "
+                    "mit -usercon -netconport 21212 starten."
+                )
             return ReviewPreflight(
                 False, False, False, self.expected_demo_name, None,
-                "Lokale CS2-Verbindung nicht erreichbar. CS2 muss mit lokalem netcon gestartet sein.",
+                message,
             )
         demo_active = readiness.connected and readiness.demo_name is not None
         filename_matches = demo_active and (

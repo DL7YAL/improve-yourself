@@ -51,8 +51,21 @@ def test_preflight_reports_each_readiness_boundary(tmp_path: Path) -> None:
         def readiness(self) -> DemoReadiness:
             raise ConnectionRefusedError("offline")
 
-    missing = Cs2ReviewCoordinator(_flow(tmp_path / "missing.json"), "match.dem", netcon=MissingNetcon())
+    missing = Cs2ReviewCoordinator(
+        _flow(tmp_path / "missing.json"), "match.dem", netcon=MissingNetcon(), process_probe=lambda: False
+    )
     assert missing.preflight().netcon_reachable is False
+    assert "CS2/NetCon ist nicht erreichbar" in missing.preflight().message
+
+    wrong_mode = Cs2ReviewCoordinator(
+        _flow(tmp_path / "wrong-mode.json"),
+        "match.dem",
+        netcon=MissingNetcon(),
+        process_probe=lambda: True,
+    ).preflight()
+    assert wrong_mode.netcon_reachable is False
+    assert "CS2 läuft, aber NetCon ist nicht erreichbar" in wrong_mode.message
+    assert "Workshop Tools" in wrong_mode.message
 
     inactive = Cs2ReviewCoordinator(
         _flow(tmp_path / "inactive.json"),

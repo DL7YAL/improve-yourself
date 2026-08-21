@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-21 — Real NetCon multi-scene acceptance and connection guidance
+
+STATUS: review
+TASK: Tristans erfolgreichen praktischen Ancient-/NetCon-Nachtest übernehmen, den externen Review-Aufruf gegen die V1-UX-Vorgaben abgleichen und den belegten Normal-CS2-vs.-Workshop-Tools-Fehler verständlich unterscheiden.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/cs2_review_coordinator.py` erkennt beim fehlgeschlagenen NetCon-Aufbau read-only, ob `cs2.exe` bereits läuft. Die Meldung unterscheidet nun „CS2 läuft, NetCon fehlt“ mit konkretem Workshop-Tools-/Port-Hinweis von „CS2/NetCon nicht erreichbar“. `tests/test_cs2_review_coordinator.py` deckt beide Zustände ab. Dieser Handoff dokumentiert die Nutzerabnahme. Keine Parser-, Demo-, Regel-, Szenen-, Tick-, Benchmark-, Optimizer- oder Systemlogik geändert.
+VERIFIED: Nutzerabnahme mit echter `fut-vs-mouz-m2-ancient.dem`: Demo geladen und verarbeitet, NetCon nach Start über Workshop Tools erreichbar, mindestens drei verschiedene Szenen/Ticks gewählt und jeder Tick zuverlässig in der laufenden Demo angesprungen. Screenshot-/Konsolenevidenz belegt `de_ancient`, `valve_demo_2` sowie 130.466 Playback-Ticks/-Frames. Prozessprobe erkannte den real laufenden `cs2.exe`; gezielte Coordinator-Tests 4/4 und vollständige Suite 125/125 PASS; `git diff --check` PASS.
+DECISIONS: Der Browser-Review ist der aktuelle lokale V1-Adapter (`127.0.0.1`, Origin-/Scene-/Tick-geprüft), aber kein dokumentierter finaler UX-Vertrag. Die bindende UI-Spezifikation behandelt Analyzer/Review als Kernworkflow der gemeinsamen Anwendung; Empfehlung: Review im finalen UX-Flow in die Improve-Yourself-UI integrieren und Browser/HTML nur als lokalen Export-/Fallbackpfad behalten. Eine konkrete WebView-/native Rendererwahl bleibt eine freizugebende Implementierungsentscheidung.
+OPEN: Finale Entscheidung über eingebetteten Review-Host und Browser-Fallback; `tasklist` kann bei nicht bestimmbarer Prozesslage bewusst nur die generische sichere Meldung liefern.
+NEXT: Den aktuellen Portable-Build mit laufendem normalem CS2 gegen die neue falscher-Modus-Meldung und danach mit Workshop-Tools-NetCon gegen READY praktisch nachtesten; anschließend den eingebetteten Review als eigenen begrenzten UI-Slice spezifizieren.
+MODEL_PROFILE: terra
+MODEL_REASON: Begrenzte Runtime-Diagnose und sichere UX-Fehlerzustände mit Windows-Prozessgrenze.
+COMPUTER_USE: no
+
 ## 2026-08-21 — Final Portable real-workflow acceptance
 
 STATUS: review
