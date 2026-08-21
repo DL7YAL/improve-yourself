@@ -1,5 +1,19 @@
 # Codex
 
+## 2026-08-21 — Hash-bound source-demo relink
+
+STATUS: done
+TASK: Execute only the documented explicit source-demo relink for an already open workflow, with exact SHA-256 equality and no discovery/copy/reparse behavior.
+BRANCH: `dev/v1-foundation`
+CHANGED: Analyzer shell now exposes `Quelldemo zuordnen`. The user selects one existing `.dem`/`.dem.zst`; the controller first revalidates the open workflow, streams the source through SHA-256, rejects any mismatch without touching the manifest, and on equality atomically persists only `source_demo_name` as a basename. The UI resets stale readiness and immediately rechecks CS2 after success. No absolute source path, parser invocation, file copy/rename, folder scan, rule/scene/timeline, Optimizer/System Check or benchmark change.
+VERIFIED: 111/111 tests, dependency check, eight CLI smokes, compile and diff check PASS. Tests prove matching-basename-only persistence, absence of the private parent path, mismatch byte preservation and temp-file cleanup. No original Ancient source was present at the three already known direct candidate paths, so no new real-source relink PASS is claimed; the prior real workflow restore remains valid.
+DECISIONS: Hash equality is the only accepted identity bridge between an existing workflow and a user-selected source. Write happens only after full streaming digest completion and uses same-directory replace. Successful linking triggers fresh runtime evidence rather than carrying forward an old green readiness state.
+OPEN: A manifest can still be externally altered after opening and before a later rerender/review action; those action boundaries should independently revalidate it. Final styling/packaging remains deferred.
+NEXT: Revalidate the currently open `demo-workflow.json` and required artifacts immediately before selection rerender and CS2 coordinator creation, then fail closed and clear readiness if anything changed since open. Do not add watchers, background scans or a second cached trust model.
+MODEL_PROFILE: terra
+MODEL_REASON: Narrow local identity/write boundary with deterministic mismatch safety and UI refresh.
+COMPUTER_USE: no; no new visual/runtime semantics beyond the labeled source action and automatic existing preflight.
+
 ## 2026-08-21 — Existing-analysis restore path
 
 STATUS: done

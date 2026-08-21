@@ -8,14 +8,13 @@ import pytest
 from improve_yourself.analyzer_shell import AnalyzerShellController
 
 
-def _write_result(root: Path, selected: tuple[str, ...] = ()) -> Path:
+def _write_result(root: Path, selected: tuple[str, ...] = (), source_hash: str = "a" * 64) -> Path:
     root.mkdir(parents=True, exist_ok=True)
     roster = [
         {"player_id": "ct1", "display_name": "CT One", "initial_team": "CT"},
         {"player_id": "ct2", "display_name": "CT Two", "initial_team": "CT"},
         {"player_id": "t1", "display_name": "T One", "initial_team": "T"},
     ]
-    source_hash = "a" * 64
     source = {"sha256": source_hash, "map_id": "de_ancient", "tick_rate": 64.0, "parser": {"name": "awpy", "version": "2.0.2"}}
     flow = {
         "schema": "iy.analysis_flow/v1",
@@ -145,3 +144,31 @@ def test_shell_rejects_replay_hash_mismatch(tmp_path: Path) -> None:
     replay_path.write_text(json.dumps(replay), encoding="utf-8")
     with pytest.raises(ValueError, match="replay source metadata differs"):
         AnalyzerShellController(tmp_path).open_existing_workflow(path)
+
+
+def test_shell_links_explicit_matching_source_by_basename_only(tmp_path: Path) -> None:
+    demo = tmp_path / "private" / "match.dem"
+    demo.parent.mkdir()
+    demo.write_bytes(b"matching real demo")
+    source_hash = hashlib.sha256(demo.read_bytes()).hexdigest()
+    manifest_path = _write_result(tmp_path / "run", source_hash=source_hash)
+    controller = AnalyzerShellController(tmp_path)
+    controller.open_existing_workflow(manifest_path)
+    result = controller.link_source_demo(demo)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert result.source_demo_name == "match.dem"
+    assert manifest["source_demo_name"] == "match.dem"
+    assert str(demo.parent) not in manifest_path.read_text(encoding="utf-8")
+
+
+def test_shell_rejects_source_hash_mismatch_without_modifying_manifest(tmp_path: Path) -> None:
+    manifest_path = _write_result(tmp_path / "run")
+    controller = AnalyzerShellController(tmp_path)
+    controller.open_existing_workflow(manifest_path)
+    before = manifest_path.read_bytes()
+    demo = tmp_path / "wrong.dem"
+    demo.write_bytes(b"wrong")
+    with pytest.raises(ValueError, match="SHA-256 differs"):
+        controller.link_source_demo(demo)
+    assert manifest_path.read_bytes() == before
+    assert not manifest_path.with_name("demo-workflow.json.tmp").exists()

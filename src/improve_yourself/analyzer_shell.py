@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import threading
@@ -18,6 +19,14 @@ _SOURCE_HASH = re.compile(r"[0-9a-f]{64}")
 _REQUIRED_ARTIFACTS = (
     "analysis", "replay_v2", "analysis_flow", "timeline", "review", "cs2_review_commands"
 )
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
 def validate_existing_workflow(manifest_path: Path) -> Path:
@@ -132,6 +141,26 @@ class AnalyzerShellController:
         self.selection_mode = self.result.selection_mode
         return self.result
 
+    def link_source_demo(self, demo: Path) -> ShellResult:
+        result = self._require_result()
+        manifest_path = validate_existing_workflow(result.manifest_path)
+        demo = demo.resolve()
+        if not demo.is_file() or (demo.suffix.lower() != ".dem" and not demo.name.lower().endswith(".dem.zst")):
+            raise ValueError("select an existing .dem or .dem.zst file")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if _sha256_file(demo) != manifest["source_sha256"]:
+            raise ValueError("selected demo SHA-256 differs from workflow source")
+        manifest["source_demo_name"] = demo.name
+        temporary = manifest_path.with_name("demo-workflow.json.tmp")
+        try:
+            temporary.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+            temporary.replace(manifest_path)
+        finally:
+            if temporary.exists():
+                temporary.unlink()
+        self.result = self._load(manifest_path)
+        return self.result
+
     def set_full_demo(self) -> None:
         self._require_result()
         self.selected_ids.clear()
@@ -229,6 +258,7 @@ class AnalyzerShellApp:
         source_actions.pack(fill="x")
         ttk.Button(source_actions, text="Demo auswählen", command=self._choose_demo).pack(side="left")
         ttk.Button(source_actions, text="Vorhandene Analyse öffnen", command=self._open_existing).pack(side="left", padx=8)
+        ttk.Button(source_actions, text="Quelldemo zuordnen", command=self._link_source).pack(side="left")
 
         teams = ttk.Frame(frame)
         teams.pack(fill="x", pady=14)
@@ -284,7 +314,26 @@ class AnalyzerShellApp:
                 lambda: self.controller.open_existing_workflow(Path(path)),
             )
 
-    def _background(self, message: str, operation: Callable[[], ShellResult]) -> None:
+    def _link_source(self) -> None:
+        from tkinter import filedialog
+
+        if self.controller.result is None:
+            self.status.set("Fehler: zuerst eine vorhandene Analyse öffnen")
+            return
+        path = filedialog.askopenfilename(
+            title="Passende Quelldemo zuordnen",
+            filetypes=[("CS2 Demo", "*.dem *.dem.zst"), ("Alle Dateien", "*.*")],
+        )
+        if path:
+            self._background(
+                "Quelldemo wird per SHA-256 geprüft …",
+                lambda: self.controller.link_source_demo(Path(path)),
+                recheck=True,
+            )
+
+    def _background(
+        self, message: str, operation: Callable[[], ShellResult], *, recheck: bool = False
+    ) -> None:
         self.status.set(message)
 
         def worker() -> None:
@@ -293,9 +342,14 @@ class AnalyzerShellApp:
             except Exception as error:
                 self.root.after(0, lambda: self.status.set(f"Fehler: {error}"))
             else:
-                self.root.after(0, lambda: self._draw(result))
+                self.root.after(0, lambda: self._finish_background(result, recheck))
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def _finish_background(self, result: ShellResult, recheck: bool) -> None:
+        self._draw(result)
+        if recheck:
+            self._preflight()
 
     def _draw(self, result: ShellResult) -> None:
         for box in (self.ct, self.t):
