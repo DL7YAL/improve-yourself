@@ -991,6 +991,24 @@ MODEL_REASON: Finaler deterministischer Validierungs-/Safety-Pass vor dem realen
 COMPUTER_USE: no
 COMMIT/PR: `4754ac6 feat: finalize synthetic matrix validation`, gepusht nach `origin/dev/v1-foundation`.
 
+# Handoff 2026-08-22 — Optimizer UI Integration V1
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Die bestehende read-only Optimizer Foundation als echten Produktfluss in der vorhandenen Improve-Shell darstellen, ohne neue Engine, reale Regeln, Apply oder visuellen Gesamt-Neubau.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/analyzer_shell.py`, `tests/test_analyzer_shell.py`, `docs/OPTIMIZER_UI_INTEGRATION_V1.md`, `coordination/agents/codex.md`.
+FLOW: Nach einem bestätigten read-only System-Check zeigt die bestehende System Check / Optimizer-Route nun Improve Empfehlungen: Zusammenfassung geprüfter, technischer Fixture-Treffer, bereits passender, Conditional-, Insufficient-Evidence- und manueller/BIOS-Fälle. Darunter liegen vier gleichwertige Buttons/Unteransichten für System, Graphics, Network und BIOS. Sie filtern dieselben datengesteuerten Resultate, nicht vier separate Engines.
+CARDS / DETAILS: Jede Setting-Card zeigt Name, aktuellen Zustand, Fixture-markierte Improve-Empfehlung, Status, Evidenzkontext und ggf. manuellen BIOS-Hinweis. Details anzeigen öffnet das eine gemeinsame Detailpanel mit Was ist das, Zustand, Empfehlung, systemspezifischer Begründung, möglicher Wirkung, Evidence/Gültigkeit, Risiko/Trade-off, Restore-Information, BIOS Guidance sowie Compatibility-/Missing-Explainability. Es gibt ausdrücklich keinen Apply-Button oder Write-Pfad.
+NETWORK / BIOS: Observed Network Quality bleibt im Foundation-Vertrag von Configuration Evidence getrennt; fehlende Messung wird nicht als 0 dargestellt. BIOS bleibt manuell mit Guidance-/Screenshot-Vorbereitung und keinem Apply. Fixtures werden immer als `FIXTURE_ONLY — <state>` gerendert und nie wie echte Improve-Empfehlungen behandelt.
+SYNTHETIC TEST: `optimizer_product_view(synthetic_profile, internal_test=True)` erlaubt den begrenzten internen Weg für ein ausgewähltes kanonisches Matrixprofil (u.a. #037), ohne ihn als normalen Nutzerzustand oder Debug-Schalter auszustellen. Künftige kuratierte Rule Packs fließen über Foundation → ViewModel → bestehende UI ohne neue Rule-spezifische UI.
+VERIFIED: UI-/ViewModel-/Synthetic-Profile-Tests **23/23 PASS**; vollständiger `pytest` **164/164 PASS**; `compileall` PASS; `pip check` PASS; `git diff --check` PASS.
+KNOWN LIMITS: Keine kuratierten realen Regeln, keine echte Network-Messanzeige ohne lokale gültige Messung, kein visueller Endpolish und kein Apply. Der Detailtext zeigt strukturierte Evidenz transparent; die spätere finale Komponenten-/Spacing-Abnahme bleibt getrennt.
+NEXT: Genau ein empfohlener Folge-Slice nach neuer Freigabe: den separat gelieferten kuratierten realen V1-Matrix-/Rule-Pack einspielen und gegen die 150-System-Matrix sowie diese UI testen. Keine weitere Infrastruktur ohne Auftrag.
+MODEL_PROFILE: terra
+MODEL_REASON: Produktintegration einer bestehenden sicherheitskritischen Read-only-Datenkette mit UI-/ViewModel-Regressionen.
+COMPUTER_USE: no
+COMMIT/PR: Wird nach Commit/Push ergänzt.
+
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
 STATUS: WAITING_FOR_TRISTAN

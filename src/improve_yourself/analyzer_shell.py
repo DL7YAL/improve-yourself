@@ -21,6 +21,7 @@ from .embedded_review import EmbeddedReviewSession
 from .embedded_tactical import EmbeddedTacticalSession
 from .local_profiles import OBJECTIVE_RULES, LocalProfileStore
 from .optimizer_evidence import evaluate_profile, profile_from_system_check
+from .optimizer_foundation import integration_proof
 from .replay_store import ReplayStore
 from .system_check import run_system_check
 
@@ -206,6 +207,25 @@ def optimizer_evidence_view(payload: dict[str, object]) -> dict[str, object] | N
         "missing_input_data": [str(item) for item in report["missing_input_data"]],
         "excluded_rules": [item for item in report["excluded_rules"] if isinstance(item, dict)],
     }
+
+
+def optimizer_product_view(profile: dict[str, object], *, internal_test: bool = False) -> dict[str, object]:
+    """Common read-only Optimizer product/UI contract for real or synthetic profiles."""
+    proof = integration_proof(profile, ())
+    models = proof["view_models"]
+    domains: dict[str, list[dict[str, object]]] = {}
+    counts = {"checked": len(models), "recommended": 0, "already": 0, "conditional": 0, "manual_bios": 0, "insufficient": 0, "tradeoffs": 0}
+    for model in models:
+        domain = str(model["domain"])
+        domains.setdefault(domain, []).append(model)
+        status = str(model["status"])
+        counts["recommended"] += status == "RECOMMENDED"
+        counts["already"] += status == "ALREADY_RECOMMENDED"
+        counts["conditional"] += status == "CONDITIONAL"
+        counts["insufficient"] += status == "INSUFFICIENT_EVIDENCE"
+        counts["manual_bios"] += bool(model["guidance"]["manual_action_required"])
+        counts["tradeoffs"] += model["risk_notes"] == "HIGH" and "Trade-off" in str(model["title"])
+    return {"read_only": True, "internal_test": internal_test, "counts": counts, "domains": domains, "models": models}
 
 
 def _register_private_fonts(root, assets: Path) -> tuple[str, str]:
@@ -1489,6 +1509,20 @@ class AnalyzerShellApp:
         self.optimizer_evidence_rows = self.ttk.Frame(self.optimizer_evidence_card, style="CardInner.TFrame")
         self.optimizer_evidence_rows.pack(fill="x")
 
+        self.optimizer_product_card = self.ttk.Frame(page, style="Card.TFrame", padding=18)
+        self.ttk.Label(self.optimizer_product_card, text="IMPROVE EMPFEHLUNGEN", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
+        self.optimizer_product_meta = self.ttk.Label(self.optimizer_product_card, text="", style="Muted.TLabel", wraplength=940, justify="left")
+        self.optimizer_product_meta.pack(anchor="w", pady=(6, 10))
+        self.optimizer_domain_actions = self.ttk.Frame(self.optimizer_product_card, style="CardInner.TFrame")
+        self.optimizer_domain_actions.pack(fill="x")
+        self.optimizer_product_rows = self.ttk.Frame(self.optimizer_product_card, style="CardInner.TFrame")
+        self.optimizer_product_rows.pack(fill="x", pady=(10, 0))
+        self.optimizer_detail_card = self.ttk.Frame(page, style="Card.TFrame", padding=18)
+        self.optimizer_detail_title = self.ttk.Label(self.optimizer_detail_card, text="SETTING-DETAILS", style="Card.TLabel", font=(self.display_font, 10, "bold"))
+        self.optimizer_detail_title.pack(anchor="w")
+        self.optimizer_detail_text = self.ttk.Label(self.optimizer_detail_card, text="Wähle eine geprüfte Einstellung, um Evidenz und Grenzen nachzuvollziehen.", style="Muted.TLabel", wraplength=940, justify="left")
+        self.optimizer_detail_text.pack(anchor="w", pady=(7, 0))
+
     def _build_tactical_page(self) -> None:
         page = self.pages["Tactical Replay"]
         header = self.ttk.Frame(page, style="Content.TFrame")
@@ -2107,6 +2141,9 @@ class AnalyzerShellApp:
         self.dashboard_system_scan_attention_label.pack(before=self.dashboard_system_scan_details_button, anchor="w", pady=(1, 4))
         self._render_system_check_results(payload)
         self._render_optimizer_evidence(payload)
+        profile = profile_from_system_check(payload)
+        if profile is not None:
+            self._render_optimizer_product(optimizer_product_view(profile))
         self.system_status.set(status_message)
 
     def _render_system_check_results(self, payload: dict[str, object]) -> None:
@@ -2165,6 +2202,46 @@ class AnalyzerShellApp:
                 self.ttk.Label(item, text=f"Erwartete Wirkung: {row['effect']}", style="Muted.TLabel", wraplength=880, justify="left").pack(anchor="w", pady=(4, 0))
                 self.ttk.Label(item, text=f"Risiko: {row['risk']}\nRücknahme: {row['restore']}", style="Muted.TLabel", wraplength=880, justify="left").pack(anchor="w", pady=(3, 0))
         self.optimizer_evidence_card.pack(fill="x", pady=(14, 0))
+
+    def _render_optimizer_product(self, view: dict[str, object], domain_filter: str | None = None) -> None:
+        for frame in (self.optimizer_domain_actions, self.optimizer_product_rows):
+            for child in frame.winfo_children():
+                child.destroy()
+        counts = view["counts"]
+        self.optimizer_product_meta.configure(text=(f"{counts['checked']} geprüfte Fixture-Einstellungen · {counts['recommended']} technische Treffer · "
+            f"{counts['already']} bereits passend · {counts['conditional']} conditional · {counts['insufficient']} unzureichende Evidenz. "
+            "Read-only: Fixtures sind keine realen Improve-Empfehlungen."))
+        domains = view["domains"]
+        labels = {"SYSTEM_OPTIMIZER": "System Optimizer", "GRAPHICS_OPTIMIZER": "Graphics Optimizer", "NETWORK_OPTIMIZER": "Network Optimizer", "BIOS_OPTIMIZER": "BIOS Optimizer"}
+        for domain, label in labels.items():
+            self.ttk.Button(self.optimizer_domain_actions, text=label, command=lambda value=domain: self._render_optimizer_product(view, value)).pack(side="left", padx=(0, 7))
+        self.ttk.Button(self.optimizer_domain_actions, text="Alle", command=lambda: self._render_optimizer_product(view)).pack(side="left")
+        selected = {domain_filter: domains.get(domain_filter, [])} if domain_filter else domains
+        for _domain, models in selected.items():
+            for model in models:
+                item = self.ttk.Frame(self.optimizer_product_rows, style="Card.TFrame", padding=(12, 9))
+                item.pack(fill="x", pady=(0, 6))
+                self.ttk.Label(item, text=f"{model['title']} · {model['status']}", style="Card.TLabel", font=(self.ui_font, 9, "bold")).pack(anchor="w")
+                self.ttk.Label(item, text=f"Aktueller Zustand: {model['current_state']} · {model['improve_recommendation']}\n{model['why_for_this_system']}\nEvidenz: {model['evidence_validity']}", style="Muted.TLabel", wraplength=880, justify="left").pack(anchor="w", pady=(4, 0))
+                self.ttk.Button(item, text="Details anzeigen", command=lambda value=model: self._show_optimizer_detail(value)).pack(anchor="w", pady=(6, 0))
+                if model["guidance"]["manual_action_required"]:
+                    self.ttk.Label(item, text="Manuelle Aktion / BIOS Guidance vorbereitet · kein Apply", style="Muted.TLabel").pack(anchor="w", pady=(3, 0))
+        self.optimizer_product_card.pack(fill="x", pady=(14, 0))
+
+    def _show_optimizer_detail(self, model: dict[str, object]) -> None:
+        guidance = model["guidance"]
+        explainability = model["explainability"]
+        self.optimizer_detail_title.configure(text=str(model["title"]))
+        self.optimizer_detail_text.configure(text=(
+            f"Was ist das? {model['what_is_it']}\nDein aktueller Zustand: {model['current_state']}\n"
+            f"Improve Empfehlung: {model['improve_recommendation']} · Status: {model['status']}\n"
+            f"Warum für dieses System? {model['why_for_this_system']}\nWas kann sich verändern? {model['what_can_change']}\n"
+            f"Evidenz & Gültigkeit: {model['evidence_validity']}\nRisiken / Trade-offs: {model['risk_notes']}\n"
+            f"Restore-/Änderungsinformation: {model['restore_change_information']}\n"
+            f"Guidance: {guidance}\nExplainability: {explainability}\n"
+            "Kein Apply: diese Ansicht ist ausschließlich Erklärung und Transparenz."
+        ))
+        self.optimizer_detail_card.pack(fill="x", pady=(14, 0))
 
     def _coordinator(self) -> Cs2ReviewCoordinator:
         manifest_path = self.controller.validate_current_workflow()

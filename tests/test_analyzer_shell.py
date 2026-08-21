@@ -13,9 +13,22 @@ from improve_yourself.analyzer_shell import (
     dashboard_layout_metrics,
     default_output_root,
     optimizer_evidence_view,
+    optimizer_product_view,
     system_check_result_view,
     system_scan_home_view,
 )
+
+
+def test_optimizer_product_view_is_domain_driven_read_only_and_accepts_synthetic_profile() -> None:
+    from improve_yourself.optimizer_evidence import synthetic_system_matrix
+
+    view = optimizer_product_view(synthetic_system_matrix()["systems"][36], internal_test=True)
+    assert view["read_only"] is True
+    assert view["internal_test"] is True
+    assert set(view["domains"]) == {"SYSTEM_OPTIMIZER", "GRAPHICS_OPTIMIZER", "NETWORK_OPTIMIZER", "BIOS_OPTIMIZER"}
+    assert view["counts"]["checked"] >= 5
+    assert all(model["apply_available"] is False for model in view["models"])
+    assert all(str(model["improve_recommendation"]).startswith("FIXTURE_ONLY") for model in view["models"])
 
 
 def test_optimizer_evidence_view_keeps_missing_cs2_state_explicit() -> None:
