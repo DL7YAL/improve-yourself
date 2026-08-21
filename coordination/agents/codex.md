@@ -522,6 +522,21 @@ DIAGNOSIS: The earlier source transforms were arithmetically plausible but objec
 OPEN: BLOCKED only on marker-synchronized visual composition/acceptance, not Steam, Workshop Tools, missing geometry or runtime placement. Do not claim the full transition complete yet.
 NEXT: Capture Ancient water, Red Room approach/flash and Inferno stair exit against their VConsole markers on this baked build. If a landmark misses the frame, adjust only the corresponding camera keyframe/target, then Full Compile and repeat the complete sequence.
 COMMIT/PR: Pending checkpoint commit and push after final diff/test/sync verification.
+# Handoff 2026-08-21 — Binding visual master integration
+
+STATUS: review
+TASK: Die nachgereichte neunseitige Concept-Preview als verbindliche visuelle Master-Referenz in den aktuellen Beast-Stand integrieren, ohne funktionale Wahrheit oder bestehende Arbeit zu verändern.
+BRANCH: `dev/v1-foundation`
+CHANGED: Exakte PDF unter `docs/design/Improve_Yourself_Concept_Preview_Discord_Q98.pdf` versioniert; `docs/design/README.md`, `UI_SPEC.md`, `BRANDING.md`, `MOCKUP_INDEX.md`, `docs/EXPERIMENTAL_V1.md`, `docs/AGENT_BASE.md`, `coordination/CURRENT.md` und dieser Handoff auf die Zwei-Wahrheiten-Regel und den tatsächlichen Sichtabgleich aktualisiert. Keine Produkt-, Parser-, Rule-, Replay-, Benchmark-, System-Check- oder Optimizer-Funktion geändert.
+VERIFIED: Quell- und Repository-PDF sind SHA-256-identisch (`6CB861CCC49DD5D834975FE7474E5E2BE9A44208ADC18158561FAB0A6FF63606`); alle neun bildbasierten Seiten visuell geprüft und Repository-PDF mit neun lesbaren Seiten validiert. Konform: Variant-3-Marke, Midnight/Metallic-Grundsystem, dunkle Titelfläche, gemeinsame Sidebar, ruhige Karten-/Panelhierarchie, restrained cyan accents und keine weißen Fremdflächen. Restabweichungen: flachere Oberflächen, weniger metallische Tiefen-/Reflexionswirkung, sparsame Iconografie und geringere Paneldichte. `pytest` 122/122 PASS; `compileall` PASS; `git diff --check` PASS.
+DECISIONS: PDF ist visuelle Wahrheit, aktueller Branch ist funktionale Wahrheit. PDF-Beispieldaten, Scores, langfristige Trends, automatische Apply-Aktionen und nicht vorhandene Module sind illustrativ und dürfen nicht als Funktion zurückkehren. Keine neue Designsprache und kein Redraw des Master-Logos.
+OPEN: Menschliche Produktabnahme bleibt Tristan vorbehalten. Die dokumentierten visuellen Deltas sind nur nach konkreter Priorisierung umzusetzen; sie rechtfertigen keine freie Neugestaltung.
+NEXT: Experimental-Build gegen die versionierte Master-PDF vollständig abnehmen und eine konkrete, priorisierte visuelle Abweichung zur Korrektur freigeben; bis dahin keine zusätzliche Funktion entwickeln.
+MODEL_PROFILE: terra
+MODEL_REASON: Verbindlicher Designabgleich und Repository-Konsolidierung ohne Architektur- oder Funktionsänderung.
+COMPUTER_USE: no
+COMMIT/PR: pending final gate and push on `dev/v1-foundation`.
+
 # Handoff 2026-08-21 — Experimental UI consolidation
 
 STATUS: partial / review-ready within available UI evidence

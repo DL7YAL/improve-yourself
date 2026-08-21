@@ -2,14 +2,17 @@
 
 ## Source status
 
-The approved visual concept set exists as the **Improve Yourself Concept Preview** (10-page English preview, created 2026-08-17). The concept screens use example data. This index translates those approved screens into an implementation reference so agents do not need chat history to understand the target.
+`Improve_Yourself_Concept_Preview_Discord_Q98.pdf` is checked into this directory as the **binding visual master reference**. It contains nine image-based pages and uses illustrative example data. This index maps those pages to current product areas so agents do not need chat history to understand the target.
 
-The original raster mockup exports are not yet stored as standalone files in this repository. Until they are added, this document plus `UI_SPEC.md` is the canonical implementation reference. Do **not** invent missing visual details.
+The PDF, `UI_SPEC.md` and `BRANDING.md` are the canonical visual implementation reference. Standalone raster exports are optional convenience assets, not a missing authority. Do **not** invent missing visual details or copy illustrative data into the product.
 
 ## Approved screens
 
 ### 01 — Concept cover
 Purpose: product presentation only. Not an application-screen contract.
+
+### 02 — Product summary
+Purpose: module identity, compact icon/card language and brand presentation. Module claims and example scope remain subject to current functional truth.
 
 ### 03 — Home / Overview
 Binding visual ideas:
@@ -22,18 +25,13 @@ Binding visual ideas:
 Illustrative only:
 - exact user profile, counters, scores and module metrics.
 
-### 04 — Improve Analyzer
+### 04 — My Improvement
 Binding visual ideas:
-- analyzer as dense but ordered workspace;
-- filters/profile/rules at top;
-- overview/analysis results and comparison visible without becoming a raw spreadsheet;
-- findings/scenes/patterns arranged in panels;
-- lower supporting areas for strengths/weaknesses/next steps/rules where functionality exists.
+- category trend cards across top;
+- strengths, weaknesses and next focus areas in a second row;
+- concrete scenes connected to scores/trends below.
 
-Superseded by current product decisions:
-- current neutral scene/review language;
-- current profile/player-selection/rule-engine workflow;
-- no fabricated scoring just to resemble the concept.
+Do not implement fake longitudinal metrics in V1 if persistence/data is not ready.
 
 ### 05 — Demo Analyzer
 Binding visual ideas:
@@ -55,15 +53,7 @@ Binding visual ideas:
 
 Existing tested Tactical Replay behavior is authoritative for zoom/pan/reset and functional details.
 
-### 07 — My Improvement
-Binding visual ideas for the later persistent-development view:
-- category trend cards across top;
-- strengths, weaknesses and next focus areas in a second row;
-- concrete scenes connected to scores/trends below.
-
-Do not implement fake longitudinal metrics in V1 if persistence/data is not ready.
-
-### 08 — Improve Optimizer
+### 07 — Improve Optimizer
 Binding visual ideas:
 - safety/transparency statement prominent;
 - system overview cards near top;
@@ -74,7 +64,7 @@ Binding visual ideas:
 
 Current read-only System Check/Optimizer boundaries override old illustrative apply actions.
 
-### 09 — Improve Benchmark
+### 08 — Improve Benchmark
 Binding visual ideas:
 - start/control area;
 - current result and frametime/performance visualization;
@@ -83,6 +73,9 @@ Binding visual ideas:
 - prior benchmark history where backed by data.
 
 Benchmark runtime itself is a separate workstream.
+
+### 09 — Product philosophy / analysis model
+Purpose: reinforces analysis, filtering, viewer and timestamp/review concepts plus the protected-core/community-extension boundary. It is not a separate application tab.
 
 ## Missing standalone references
 

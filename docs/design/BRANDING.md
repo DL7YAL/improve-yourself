@@ -31,11 +31,13 @@ Canonical visual family:
 
 ## Existing approved mark
 
-Use the already approved **Variant 3** brand source where present in the current branch/build assets:
+The logo and wordmark treatment visible in `Improve_Yourself_Concept_Preview_Discord_Q98.pdf` is the approved visual source. The existing **Variant 3** assets in the current branch are the faithful implementation assets for that source:
 - horizontal `IMPROVE YOURSELF` wordmark in the application header;
 - square/multi-size application icon based on the original bar / `I` symbol for EXE, window title and taskbar.
 
 Do not create a new logo variant during consolidation.
+
+Do not redraw, reinterpret or replace the master mark. Cropping, scaling and multi-size exports are allowed only when they preserve its proportions, spacing, color treatment and legibility.
 
 If an implementation cannot locate the authoritative asset, mark `NEEDS_BRAND_ASSET` rather than redrawing it from memory.
 

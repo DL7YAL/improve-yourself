@@ -37,7 +37,9 @@ Each completed analysis writes `analysis-flow.json`, `timeline.json`, neutral `r
 
 ## Visual/UI acceptance
 
-The shell uses one dark Midnight/Metallic surface, native dark title bar, `Improve Yourself` and the fixed claim `Make Up Your Mind.`. Workflow-dependent controls are disabled until a real workflow is loaded. The UI shows local manifest/source/hash identity and the disclosed local profile path. No new logo or branding source is introduced.
+The checked-in `docs/design/Improve_Yourself_Concept_Preview_Discord_Q98.pdf` is the binding visual master reference; the current branch remains the functional truth. The shell uses one dark Midnight/Metallic surface, native dark title bar, `Improve Yourself` and the fixed claim `Make Up Your Mind.`. Workflow-dependent controls are disabled until a real workflow is loaded. The UI shows local manifest/source/hash identity and the disclosed local profile path. No new logo or branding source is introduced.
+
+Current conformance is established for Variant-3 branding, common dark shell/sidebar, restrained cyan accents, card hierarchy and absence of white foreign surfaces. Remaining master-reference deltas are flatter surface depth, fewer subtle blue reflection/light cues, sparse iconography and lower panel density. They remain explicit visual follow-up evidence; this documentation pass does not add functions, fake data, scores or unsupported controls to imitate the reference.
 
 ## Real evidence
 

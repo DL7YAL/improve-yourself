@@ -6,6 +6,8 @@ Canonical standard theme: **Midnight / Metallic Blue**.
 
 The interface should feel technical, calm, precise and mature. Metallic does **not** mean glow, chrome, neon or animated shine. It means subtle tonal changes across dark blue surfaces, comparable to automotive metallic paint under different viewing/light conditions: restrained highlights, depth and reflection cues without becoming decorative.
 
+The binding visual evidence is `Improve_Yourself_Concept_Preview_Discord_Q98.pdf`. It establishes deep blue-black backgrounds, fine blue contours, selective silver/ice typography, controlled reflection bands and subtle technical texture. These cues should be reproduced with restraint and consistent tokens; they must not become a new neon, glassmorphism or RGB theme.
+
 A light alternative is allowed later/where already supported: light surfaces with a slight cool blue cast rather than aggressive pure white.
 
 ## 2. Global shell
@@ -158,3 +160,5 @@ A screen is visually consolidated when:
 4. current functionality is preserved;
 5. old mockup-only features are not fabricated;
 6. a new user can identify the next action without developer knowledge.
+7. surface depth, blue contour/light cues and brand treatment remain recognizably aligned with the visual master;
+8. illustrative master data or unavailable actions have not been turned into fake functionality.
