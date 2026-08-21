@@ -48,3 +48,12 @@ Reset clears Player Select. It does not silently turn an empty selection into Fu
 ## Deferred
 
 Final branding and installer packaging remain separate product work. The next small shell usability slice may explicitly disable workflow-dependent controls until a workflow is loaded and display the currently trusted workflow/source identity; it must not change parsing, review or trust semantics.
+# Reproduzierbarer Produktreview
+
+Ein ausdrücklich gewählter vorhandener Workflow kann ohne erneutes Parsen direkt beim Start geöffnet werden:
+
+```powershell
+iy-analyzer-shell --workflow <pfad-zur-demo-workflow.json>
+```
+
+Der Parameter verwendet dieselbe fail-closed Prüfung wie `Vorhandene Analyse öffnen`: exakt eine benannte Datei, kein Ordnerscan, kein Recent-Autoselect und keine Umgehung der Schema-, Hash-, Artefakt- oder Replay-Chunk-Validierung. Der native Dateidialog bleibt der normale interaktive Einstieg.

@@ -355,6 +355,17 @@ class AnalyzerShellApp:
         style.configure("TButton", background="#19334d", foreground="#dcefff", padding=(12, 8), borderwidth=1)
         style.map("TButton", background=[("active", _THEME["metal"]), ("pressed", _THEME["line"])])
         style.configure("Primary.TButton", background=_THEME["ice"], foreground="#06101a", font=("Segoe UI Semibold", 10))
+        style.configure(
+            "TCombobox", background=_THEME["deep"], fieldbackground=_THEME["deep"],
+            foreground=_THEME["ink"], arrowcolor=_THEME["ice"], bordercolor=_THEME["line"],
+        )
+        style.map(
+            "TCombobox",
+            fieldbackground=[("readonly", _THEME["deep"]), ("disabled", _THEME["deep"])],
+            foreground=[("readonly", _THEME["ink"]), ("disabled", _THEME["muted"])],
+            selectbackground=[("readonly", _THEME["deep"])],
+            selectforeground=[("readonly", _THEME["ink"])],
+        )
         style.configure("Nav.TButton", anchor="w", background=_THEME["deep"], foreground=_THEME["muted"], padding=(18, 12), borderwidth=0)
         style.configure("NavActive.TButton", anchor="w", background=_THEME["metal"], foreground=_THEME["ink"], padding=(18, 12), borderwidth=0)
         self.status = tk.StringVar(value="Echte CS2-Demo auswählen")
@@ -814,8 +825,16 @@ class AnalyzerShellApp:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Open the local real-demo Analyzer shell")
     parser.add_argument("--output", type=Path, default=Path("results/analyzer-shell"))
+    parser.add_argument(
+        "--workflow", type=Path,
+        help="Open one explicitly selected, fail-closed validated demo-workflow.json at startup",
+    )
     args = parser.parse_args()
-    AnalyzerShellApp(AnalyzerShellController(args.output)).run()
+    controller = AnalyzerShellController(args.output)
+    app = AnalyzerShellApp(controller)
+    if args.workflow is not None:
+        app._draw(controller.open_existing_workflow(args.workflow))
+    app.run()
     return 0
 
 

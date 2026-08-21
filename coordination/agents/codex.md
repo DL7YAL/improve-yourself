@@ -551,3 +551,18 @@ MODEL_PROFILE: terra
 MODEL_REASON: Verbindliche Design-/Funktionsintegration mit lokalem Artefaktzugriff, Tests und GUI-Abnahme.
 COMPUTER_USE: yes
 COMMIT/PR: wird als abschließender kanonischer UI-Abgleich auf `dev/v1-foundation` committed und gepusht.
+
+## Handoff 2026-08-21 — Real-workflow product review
+
+STATUS: review
+TASK: Den gepushten Experimental-Build vollständig mit dem bestehenden realen Ancient-Workflow gegen `docs/design/` prüfen und nur belegte Abweichungen korrigieren.
+BRANCH: `dev/v1-foundation`
+CHANGED: Optionalen `--workflow`-Start für exakt ein explizit benanntes, über dieselbe fail-closed Grenze validiertes Manifest ergänzt; kein Scan und kein Reparse. Read-only-/disabled-Combobox-Zustände vollständig in Midnight/Metallic überführt. Reproduzierbaren Start dokumentiert.
+VERIFIED: Reale vorhandene Ancient-Wahrheit ohne Reparse geladen: de_ancient, 18 Runden, 10 benannte Spieler, 54 Szenen, Hashpräfix `c183dd61fc6a`. Analyzer/Review, Dashboard und Reports visuell bei 1360x860 geprüft; Dashboard und Reports zeigen ausschließlich diese echten Workflowdaten, Report-/Timeline-Aktionen sind nur im READY_FOR_REVIEW-Zustand aktiv. Helle Combobox-Systemfläche reproduziert, korrigiert und im selben Realzustand erneut mit PASS geprüft. 120/120 pytest, compileall und `git diff --check` PASS.
+DECISIONS: Der Startparameter ist ein reproduzierbarer Test-/Power-User-Einstieg und kein zweiter Vertrauenspfad. Native Dateiauswahl bleibt erhalten. Keine Parser-, Regel-, Szenen-, Benchmark-, System- oder Optimizer-Änderung.
+OPEN: CS2-Live-Readiness wurde nicht erneut ausgelöst; Tick 3654 bleibt die vorhandene Runtime-Evidenz. Merge und Gesamtproduktabnahme bleiben Tristan vorbehalten.
+NEXT: Tristan führt den vollständigen Nutzerreview auf dem gepushten Build aus; Engineering korrigiert danach nur konkret gemeldete Design-/Funktionsabweichungen.
+MODEL_PROFILE: terra
+MODEL_REASON: Realer produktweiter UI-Zustandscheck mit kleiner sicherheitsrelevanter CLI-Erweiterung und Runtime-QA.
+COMPUTER_USE: yes
+COMMIT/PR: pending final gate and push on `dev/v1-foundation`.
