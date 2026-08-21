@@ -581,3 +581,18 @@ MODEL_PROFILE: terra
 MODEL_REASON: Reale tabübergreifende Runtime-QA mit UI-Zustands- und Sicherheitscopy-Korrektur.
 COMPUTER_USE: yes
 COMMIT/PR: wird als verbleibender Tab-/System-Check-Review auf `dev/v1-foundation` committed und gepusht.
+
+## Handoff 2026-08-21 — Supported Experimental tester start
+
+STATUS: review
+TASK: Den zusammenhängenden Endnutzer-Abnahmelauf über einen unterstützten lokalen Experimental-Start reproduzierbar machen.
+BRANCH: `dev/v1-foundation`
+CHANGED: `tools/dev/Start-Experimental.ps1` ergänzt. Ohne `-Workflow` öffnet er die normale Shell-Auswahl; mit `-Workflow` akzeptiert er nur eine vorhandene, ausdrücklich benannte `demo-workflow.json` und übergibt sie an die bestehende fail-closed Shell-Grenze. Locked Setup ist Standard, `-SkipSetup` nur explizit. README/Tools-Doku und zwei Windows-Launcher-Negativtests ergänzt. Keine Änderung am älteren `Start-V1Review.ps1`.
+VERIFIED: Launcher real mit vorhandenem Ancient-Workflow und separatem OutputRoot gestartet; lokale Policy und exakt aufgelöster Manifestpfad sichtbar, Shell öffnete erfolgreich. Fehlender Pfad und vorhandene Nicht-Manifestdatei enden vor Shellstart mit verständlichem Fehler. 122/122 pytest, compileall, PowerShell-Help-Smoke und `git diff --check` PASS.
+DECISIONS: Experimental erhält einen eigenen unterstützten Testerstart; der ältere integrierte V1-Review-Launcher bleibt unverändert. Kein Ordnerscan, Recent-Autoselect, Reparse, Upload oder automatischer System-/Optimizer-Apply.
+OPEN: Menschliche Gesamtproduktabnahme und Merge bleiben Tristan vorbehalten. Kein Installer/EXE-Paket in diesem Slice; der Launcher verwendet bewusst die gesperrte Projektumgebung.
+NEXT: Tristan startet `.\tools\dev\Start-Experimental.ps1 -SkipSetup -Workflow '.\results\demo-workflow-ancient\c183dd61fc6a\demo-workflow.json'` für die Endnutzerabnahme; danach nur konkrete Befunde korrigieren.
+MODEL_PROFILE: terra
+MODEL_REASON: Unterstützter lokaler Produkteinstieg mit Fail-closed-Grenze, Windows-Tests und Realstart.
+COMPUTER_USE: yes
+COMMIT/PR: pending commit/push on `dev/v1-foundation`.

@@ -28,3 +28,6 @@ Current utilities:
 - `dev/Start-V1Review.ps1` — supported local product entry point: locked Python
   setup, integrated workflow, explicit review URL and loopback-only review
   service; it never applies system or Optimizer changes
+- `dev/Start-Experimental.ps1` — supported tester entry point for the unified
+  Experimental desktop shell; opens the normal local picker or one explicit,
+  fail-closed validated `demo-workflow.json` without scanning or reparsing

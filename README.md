@@ -65,6 +65,26 @@ supported local start is `tools/dev/Start-V1Review.ps1`; it also provides the
 reduced review surface and source-bound local review-state persistence.
 Optimizer apply/restore remains a separate later safety boundary.
 
+## Experimental desktop build
+
+Start the unified local desktop shell with the normal demo/workflow selection:
+
+```powershell
+.\tools\dev\Start-Experimental.ps1
+```
+
+For a reproducible review of one existing result without parsing the demo again:
+
+```powershell
+.\tools\dev\Start-Experimental.ps1 `
+  -Workflow '.\results\demo-workflow-ancient\c183dd61fc6a\demo-workflow.json'
+```
+
+The explicit workflow path passes through the same fail-closed schema, policy,
+hash, artifact and replay-chunk validation as the native Open action. The shell
+is local-only; generated demos/results remain ignored and no System Check or
+Optimizer change is applied automatically.
+
 ## Demo Analyzer V1 foundation
 
 Local, traceable processing of CS2 demos. Automated markers are review cues and
