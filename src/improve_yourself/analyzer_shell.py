@@ -836,16 +836,21 @@ class AnalyzerShellApp:
             modules.columnconfigure(column, weight=1, uniform="home-modules")
             card = self.ttk.Frame(modules, style="HomeModule.TFrame", padding=13)
             card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 3, 0 if column == 5 else 3))
+            card.columnconfigure(0, weight=1)
+            # One shared vertical grid keeps every action in the same card row.
+            # Description height may vary; only the spacer absorbs that variance.
+            card.rowconfigure(3, weight=1)
             self.dashboard_module_cards.append(card)
-            self._home_accent(card, accent)
+            self._home_accent(card, accent, pack=False).grid(row=0, column=0, sticky="ew")
             icon_row = self.ttk.Frame(card, style="HomeModule.TFrame")
-            icon_row.pack(fill="x", pady=(5, 6))
+            icon_row.grid(row=1, column=0, sticky="ew", pady=(5, 6))
             self._home_module_icon(icon_row, icon, accent).pack(side="left", padx=(0, 8))
             self.ttk.Label(icon_row, text=title, style="HomeModule.TLabel", font=(self.display_font, 9, "bold"), justify="left").pack(side="left", anchor="w")
-            self.ttk.Label(card, text=detail, style="HomeMuted.TLabel", wraplength=150, justify="left").pack(anchor="w", pady=(2, 10), fill="x")
+            self.ttk.Label(card, text=detail, style="HomeMuted.TLabel", wraplength=150, justify="left").grid(row=2, column=0, sticky="ew", pady=(2, 10))
+            self.ttk.Frame(card, style="HomeModule.TFrame").grid(row=3, column=0, sticky="nsew")
             button = self.ttk.Button(card, text=action, style=button_style, command=(lambda value=target: self._show_page(value)))
             button.configure(state="normal" if enabled else "disabled")
-            button.pack(fill="x")
+            button.grid(row=4, column=0, sticky="ew")
 
         overview = self.ttk.Frame(page, style="Content.TFrame")
         overview.pack(fill="x", pady=(12, 0))
@@ -912,10 +917,12 @@ class AnalyzerShellApp:
         self.dashboard_lower = lower
         page.bind("<Configure>", lambda event: self._layout_dashboard(event.width))
 
-    def _home_accent(self, parent: object, color: str) -> None:
+    def _home_accent(self, parent: object, color: str, *, pack: bool = True) -> object:
         """Add the thin illuminated edge used throughout the Home master."""
         accent = self.tk.Frame(parent, height=3, background=color, borderwidth=0, highlightthickness=0)
-        accent.pack(fill="x", anchor="n")
+        if pack:
+            accent.pack(fill="x", anchor="n")
+        return accent
 
     def _home_module_icon(self, parent: object, glyph: str, color: str) -> object:
         canvas = self.tk.Canvas(parent, width=31, height=31, background="#0a1d30", highlightthickness=0, bd=0)

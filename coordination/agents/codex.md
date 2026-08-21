@@ -768,3 +768,20 @@ MODEL_PROFILE: terra
 MODEL_REASON: Eng abgegrenzter nativer Desktop-Theme-/Viewport-Pass mit Runtime- und Paketprüfung.
 COMPUTER_USE: yes
 COMMIT/PR: Diesen Handoff mit dem finalen Home-Korrekturcheckpoint auf `dev/v1-foundation` committen und pushen; exakten HEAD anschließend berichten.
+
+# Handoff 2026-08-21 — Home module action alignment correction
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Ausschließlich die gemeinsame vertikale Ausrichtung der sechs oberen Home-Modulaktionen korrigieren, ohne die angenommene Page-03-Struktur, Typografie, Datenbindung oder sonstige Home-Visuals zu verändern.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/analyzer_shell.py`, `docs/AGENT_BASE.md`, `coordination/CURRENT.md`, `coordination/agents/codex.md`.
+IMPLEMENTATION: Alle Modul-Cards verwenden nun denselben fünfzeiligen Grid-Aufbau: Akzentkante, Icon/Titel, Beschreibung, flexibler Spacer und Action. Die Card-Grid-Zeile des Spacers trägt das verbleibende Höhenwachstum; die Action liegt stets in der gemeinsamen letzten Zeile. Dadurch können Beschreibungen unterschiedlich lang bleiben, ohne die Button-Höhe zu verändern. Es gibt keine individuellen Offsets oder Card-Sonderregeln.
+SCOPE: Keine sonstige Home-Struktur oder -Typografie geändert. Keine Analyzer-, Review-, Tactical-, Rules-, Optimizer-, Benchmark-, 3D/POV-, Clip- oder Videofunktion begonnen. Kein Merge nach `main`.
+VERIFIED: `compileall` PASS; `git diff --check` PASS; gezielte Analyzer-Shell-Tests 16/16 PASS; vollständiger `pytest` 132/132 PASS. Direkte Quell-Sichtprüfung: (A) breite 6x1-Modulzeile mit allen sechs Actions auf derselben Grundlinie; (B) 1080x720 mit responsivem 3x2-Reflow und je Reihe weiterhin gleicher Action-Grundlinie. Bestehende große/kleine Card-Breiten und volle Buttonbreite bleiben erhalten.
+BUILD: Frisch erzeugt und praktisch geöffnet: `dist/experimental/Improve Yourself Experimental/Improve Yourself Experimental.exe`, `dist/experimental/Improve-Yourself-Experimental-Portable.zip`, `dist/experimental/experimental-build.json`. Die Portable zeigt den Alignment-Fix selbst im normalen 6x1-Home. EXE SHA-256 `A8141463760CBB74C1CDE0C17BF16C8449F47F2C812577F4F5BB737BCAED3ED7`; Portable-ZIP SHA-256 `483AA6C91699679192375D1ACE5CAE145FA671209B0001F4B958A8194AA0062A`. Kein Installer/Signing, weil kein freigegebener Vertrag vorliegt.
+OPEN: Ausschließlich menschliche Home-Endabnahme durch Tristan.
+NEXT: Tristan prüft die frische Portable ausschließlich auf gleich hohe Modul-Cards, ausgerichtete Actions und den bekannten Responsive-Reflow; anschließend Abnahme oder konkrete Restabweichung. Bis dahin keine weitere Produktarbeit.
+MODEL_PROFILE: terra
+MODEL_REASON: Eng begrenzter, bereits spezifizierter Desktop-Layout-Korrekturpass mit Runtime- und Paketprüfung.
+COMPUTER_USE: yes
+COMMIT/PR: Dieser Handoff ist Teil des gepushten `dev/v1-foundation`-Checkpoints; exakter HEAD steht im Abschlussbericht.
