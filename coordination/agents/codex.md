@@ -26,7 +26,7 @@ MODEL_REASON: Bestehende native Desktopoberfläche mit eng begrenztem Strukturum
 
 COMPUTER_USE: yes
 
-COMMIT/PR: `3d0004d feat: rebuild optimizer reference layout`; documentation checkpoint and push follow on `dev/v1-foundation`.
+COMMIT/PR: `3d0004d feat: rebuild optimizer reference layout`; `547a314 docs: record optimizer reference handoff`; both pushed to `origin/dev/v1-foundation`.
 
 ## 2026-08-22 — UI Visual Source-of-Truth final Portable inspection
 
