@@ -16,6 +16,8 @@ from improve_yourself.analyzer_shell import (
     optimizer_domain_overview,
     optimizer_evidence_view,
     optimizer_product_view,
+    optimizer_table_cell,
+    optimizer_visible_models,
     status_presentation,
     system_check_result_view,
     system_scan_home_view,
@@ -96,6 +98,27 @@ def test_optimizer_overview_keeps_four_areas_visible_and_does_not_claim_preview_
     ]
     assert all(card["state"].startswith("PREVIEW") for card in cards)
     assert "kein Apply" in cards[-1]["description"]
+
+
+def test_optimizer_visible_models_filters_one_domain_without_reinterpreting_results() -> None:
+    view = {
+        "domains": {
+            "SYSTEM_OPTIMIZER": [
+                {"title": "Real System State", "status": "CONDITIONAL", "current_state": "Unknown", "improve_recommendation": "Read-only", "why_for_this_system": "Evidence missing"},
+                {"title": "Already matched", "status": "ALREADY_RECOMMENDED", "current_state": "Enabled", "improve_recommendation": "Keep", "why_for_this_system": "Known local fact"},
+            ],
+            "GRAPHICS_OPTIMIZER": [{"title": "Other domain", "status": "RECOMMENDED"}],
+        }
+    }
+    assert [item["title"] for item in optimizer_visible_models(view, "SYSTEM_OPTIMIZER")] == ["Real System State", "Already matched"]
+    assert [item["title"] for item in optimizer_visible_models(view, "SYSTEM_OPTIMIZER", query="unknown")] == ["Real System State"]
+    assert [item["title"] for item in optimizer_visible_models(view, "SYSTEM_OPTIMIZER", status_filter="ALREADY_RECOMMENDED")] == ["Already matched"]
+    assert optimizer_visible_models(view, "NETWORK_OPTIMIZER") == ()
+
+
+def test_optimizer_table_cell_preserves_short_values_and_marks_visual_truncation() -> None:
+    assert optimizer_table_cell("KNOWN_STATE") == "KNOWN STATE"
+    assert optimizer_table_cell("x" * 40, maximum=12) == "xxxxxxxxxxx…"
 
 
 def test_dashboard_layout_keeps_cards_readable_without_global_scaling() -> None:
