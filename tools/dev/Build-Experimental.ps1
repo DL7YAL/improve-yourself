@@ -54,8 +54,17 @@ try {
 
     $portable = Join-Path $output 'Improve Yourself Experimental'
     $executable = Join-Path $portable 'Improve Yourself Experimental.exe'
+    $testerReadme = Join-Path $repositoryRoot 'packaging\EXTERNAL_TEST_CANDIDATE_README.txt'
+    $testerReadmeTarget = Join-Path $portable 'EXTERNAL_TEST_CANDIDATE_README.txt'
     if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
         throw "Portable executable is missing: $executable"
+    }
+    if (-not (Test-Path -LiteralPath $testerReadme -PathType Leaf)) {
+        throw "External tester readme is missing: $testerReadme"
+    }
+    Copy-Item -LiteralPath $testerReadme -Destination $testerReadmeTarget -Force
+    if (-not (Test-Path -LiteralPath $testerReadmeTarget -PathType Leaf)) {
+        throw "External tester readme was not staged: $testerReadmeTarget"
     }
     $zip = Join-Path $output 'Improve-Yourself-Experimental-Portable.zip'
     Compress-Archive -LiteralPath $portable -DestinationPath $zip -CompressionLevel Optimal -Force

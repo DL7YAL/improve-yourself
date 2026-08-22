@@ -103,7 +103,10 @@ def test_experimental_shell_exposes_binding_product_sections_from_canonical_desi
     assert UI_REFERENCE_STATUS["Benchmark"] == "IMPLEMENTED"
     assert "Demo Analyzer" not in SIDEBAR_NAVIGATION
     assert "Rules" not in SIDEBAR_NAVIGATION
-    assert SIDEBAR_NAVIGATION[2] == "Analyzer"
+    assert SIDEBAR_NAVIGATION == (
+        "Dashboard", "Analyzer", "Tactical Replay", "My Improvement",
+        "Reports", "System Check / Optimizer", "Settings", "Benchmark",
+    )
 
 
 def test_profile_criteria_view_is_semantic_and_reports_the_actual_profile_count() -> None:

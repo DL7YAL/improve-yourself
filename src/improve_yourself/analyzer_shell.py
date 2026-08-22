@@ -50,12 +50,12 @@ UI_REFERENCE_STATUS = {
 # truth instead of presenting separate product modules.
 SIDEBAR_NAVIGATION = (
     "Dashboard",
-    "My Improvement",
     "Analyzer",
+    "Tactical Replay",
+    "My Improvement",
     "Reports",
     "System Check / Optimizer",
     "Settings",
-    "Tactical Replay",
     "Benchmark",
 )
 
@@ -1464,13 +1464,16 @@ class AnalyzerShellApp:
                 page = ttk.Frame(host, style="Content.TFrame")
                 page.pack(fill="both", expand=True)
             self.pages[name] = page
-            if name in SIDEBAR_NAVIGATION:
-                button = SidebarNavItem(
-                    tk, sidebar, text=nav_labels[name], ui_font=self.ui_font,
-                    command=lambda value=name: self._show_page(value),
-                )
-                button.pack(fill="x", padx=11, pady=2)
-                self.nav_buttons[name] = button
+        # Hosts follow the canonical product-section map above.  Navigation,
+        # however, must follow the explicit workflow order rather than the
+        # implementation order of that map.
+        for name in SIDEBAR_NAVIGATION:
+            button = SidebarNavItem(
+                tk, sidebar, text=nav_labels[name], ui_font=self.ui_font,
+                command=lambda value=name: self._show_page(value),
+            )
+            button.pack(fill="x", padx=11, pady=2)
+            self.nav_buttons[name] = button
         SidebarStatusPanel(tk, sidebar, ui_font=self.ui_font).pack(side="bottom", fill="x", padx=12, pady=16)
 
         frame = self.pages["Analyzer"]
@@ -1856,6 +1859,11 @@ class AnalyzerShellApp:
         for page_name, button in self.nav_buttons.items():
             button.set_active(page_name == name)
 
+    def _show_analyzer_overview(self) -> None:
+        """Enter the one Analyzer workflow at its honest demo-preflight step."""
+        self._show_page("Analyzer")
+        self._show_analyzer_tab("Übersicht")
+
     def _build_dashboard_page(self) -> None:
         page = self.pages["Dashboard"]
         home_line = self.tk.Canvas(page, height=10, background=_THEME["night"], highlightthickness=0, bd=0)
@@ -1895,7 +1903,7 @@ class AnalyzerShellApp:
             ("⚔", "2D\nTACTICAL", "Rundenpositionen aus derselben Replay-Wahrheit ansehen.", "Replay öffnen", "Tactical Replay", True, "#2db8ff", "HomePrimary.TButton"),
             ("◉", "IMPROVE\nOPTIMIZER", "Systemfakten sicher und read-only erfassen.", "System prüfen", "System Check / Optimizer", True, "#ffcc54", "HomeGold.TButton"),
             ("▥", "IMPROVE\nBENCHMARK", "Separater, derzeit geparkter Arbeitsstrang.", "Nicht in diesem Slice", "", False, "#6587a0", "HomePrimary.TButton"),
-            ("◯", "MY\nIMPROVEMENT", "Lokale Reports und aktuelle Analyseartefakte öffnen.", "Übersicht öffnen", "Reports", True, "#238ffc", "HomePrimary.TButton"),
+            ("◯", "MY\nIMPROVEMENT", "Lokale Reports und aktuelle Analyseartefakte öffnen.", "Übersicht öffnen", "My Improvement", True, "#238ffc", "HomePrimary.TButton"),
         )
         for column, (icon, title, detail, action, target, enabled, accent, button_style) in enumerate(module_specs):
             modules.columnconfigure(column, weight=1, uniform="home-modules")
@@ -1917,7 +1925,7 @@ class AnalyzerShellApp:
             self.ttk.Frame(card.body, style="HomeModule.TFrame").grid(row=3, column=0, sticky="nsew")
             RoundedHomeAction(
                 self.tk, card.body, text=action, accent=accent,
-                command=(lambda value=target: self._show_page(value)), enabled=enabled,
+                command=(self._show_analyzer_overview if target == "Analyzer" else lambda value=target: self._show_page(value)), enabled=enabled,
                 font=(self.ui_font, 9, "bold"),
             ).grid(row=4, column=0, sticky="ew")
 
@@ -1972,7 +1980,7 @@ class AnalyzerShellApp:
         # action language as the six primary module cards.
         self.dashboard_progress_action = RoundedHomeAction(
             self.tk, progress.body, text="Zum Analyzer", accent="#2bdcbb",
-            command=lambda: self._show_page("Analyzer"), enabled=True,
+            command=self._show_analyzer_overview, enabled=True,
             font=(self.ui_font, 9, "bold"),
         )
         self.dashboard_progress_action.pack(fill="x")
