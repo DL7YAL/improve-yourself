@@ -35,12 +35,15 @@ _REVIEW_ARTIFACTS = (
 
 UI_REFERENCE_STATUS = {
     "Dashboard": "IMPLEMENTED",
+    "My Improvement": "IMPLEMENTED",
     "Analyzer / Review": "IMPLEMENTED",
+    "Demo Analyzer": "IMPLEMENTED",
     "Rules": "IMPLEMENTED",
     "Reports": "IMPLEMENTED",
     "System Check / Optimizer": "IMPLEMENTED",
     "Settings": "IMPLEMENTED",
     "Tactical Replay": "IMPLEMENTED",
+    "Benchmark": "IMPLEMENTED",
 }
 
 _THEME = {
@@ -1358,18 +1361,21 @@ class AnalyzerShellApp:
         self.nav_buttons: dict[str, SidebarNavItem] = {}
         nav_labels = {
             "Dashboard": "⌂   Dashboard",
+            "My Improvement": "↗   My Improvement",
             "Analyzer / Review": "◎   Analyzer / Review",
+            "Demo Analyzer": "▣   Demo Analyzer",
             "Rules": "◇   Rules",
             "Reports": "▤   Reports",
             "System Check / Optimizer": "◈   System Check / Optimizer",
             "Settings": "⚙   Settings",
             "Tactical Replay": "⌖   Tactical Replay",
+            "Benchmark": "▱   Improve Benchmark",
         }
         for name in UI_REFERENCE_STATUS:
             host = ttk.Frame(content, style="Content.TFrame")
             host.place(relx=0, rely=0, relwidth=1, relheight=1)
             self.page_hosts[name] = host
-            if name in {"Analyzer / Review", "Dashboard", "System Check / Optimizer"}:
+            if name in {"Analyzer / Review", "Dashboard", "System Check / Optimizer", "My Improvement", "Demo Analyzer", "Benchmark"}:
                 canvas = tk.Canvas(
                     host, background=_THEME["night"], borderwidth=0, highlightthickness=0,
                 )
@@ -1396,7 +1402,7 @@ class AnalyzerShellApp:
                 elif name == "Dashboard":
                     self.dashboard_canvas = canvas
                     self.dashboard_scrollbar = scrollbar
-                else:
+                elif name == "System Check / Optimizer":
                     self.system_canvas = canvas
             else:
                 page = ttk.Frame(host, style="Content.TFrame")
@@ -1516,10 +1522,13 @@ class AnalyzerShellApp:
             ttk.Label(preflight, textvariable=variable).pack(anchor="w")
         self._build_embedded_review(frame)
         self._build_dashboard_page()
+        self._build_my_improvement_page()
+        self._build_demo_analyzer_page()
         self._build_reports_page()
         self._build_settings_page()
         self._build_system_page()
         self._build_tactical_page()
+        self._build_benchmark_page()
         self._select_profile()
         self._load_saved_system_scan()
         self._show_page("Analyzer / Review")
@@ -1861,6 +1870,83 @@ class AnalyzerShellApp:
         self.report_button.pack(side="left")
         self.timeline_button = self.ttk.Button(actions, text="Timeline JSON öffnen", command=lambda: self._open_artifact("timeline"), state="disabled")
         self.timeline_button.pack(side="left", padx=8)
+
+    def _reference_page_header(self, page, title: str, subtitle: str) -> None:
+        """Shared MASTER-screen heading; content remains deliberately truthful."""
+        header = self.ttk.Frame(page, style="Content.TFrame")
+        header.pack(fill="x", pady=(0, 16))
+        self.ttk.Label(header, text=title, style="PageTitle.TLabel").pack(anchor="w")
+        self.ttk.Label(header, text=subtitle, style="Muted.TLabel", wraplength=1100, justify="left").pack(anchor="w", pady=(3, 0))
+
+    def _reference_info_card(self, parent, *, title: str, text: str, accent: str = "#13A7E8") -> object:
+        card = RoundedHomeSurface(
+            self.tk, self.ttk, parent, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
+            padding=16, min_height=148, radius=10,
+        )
+        self._home_accent(card.body, accent)
+        self.ttk.Label(card.body, text=title, style="HomePanel.TLabel", font=(self.display_font, 9, "bold")).pack(anchor="w", pady=(8, 0))
+        self.ttk.Label(card.body, text=text, style="HomePanelMuted.TLabel", wraplength=310, justify="left").pack(anchor="w", pady=(10, 0))
+        return card
+
+    def _build_my_improvement_page(self) -> None:
+        page = self.pages["My Improvement"]
+        self._reference_page_header(page, "Meine Entwicklung", "Echte Analyseergebnisse werden hier erst dargestellt, wenn sie aus einer geladenen lokalen Demo abgeleitet wurden.")
+        summary = self.ttk.Frame(page, style="Content.TFrame")
+        summary.pack(fill="x")
+        cards = (
+            ("AIM", "Noch keine vergleichbare lokale Verlaufsevidenz." , "#13A7E8"),
+            ("DUELS", "Noch keine vergleichbare lokale Verlaufsevidenz." , "#E25B5B"),
+            ("UTILITY", "Noch keine vergleichbare lokale Verlaufsevidenz." , "#A782E8"),
+            ("GAME SENSE", "Noch keine vergleichbare lokale Verlaufsevidenz." , "#2BDCB9"),
+            ("PERFORMANCE", "Noch keine vergleichbare lokale Verlaufsevidenz." , "#E5B854"),
+        )
+        for index, (title, text, accent) in enumerate(cards):
+            summary.columnconfigure(index, weight=1, uniform="improvement")
+            self._reference_info_card(summary, title=title, text=text, accent=accent).grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 4, 0 if index == len(cards) - 1 else 4))
+        lower = self.ttk.Frame(page, style="Content.TFrame")
+        lower.pack(fill="both", expand=True, pady=(14, 0))
+        for index, (title, text, accent) in enumerate((
+            ("DEINE STÄRKEN", "Eine belastbare Stärkenbewertung benötigt mehrere echte lokale Analysen.", "#58D69A"),
+            ("DEINE SCHWÄCHEN", "Keine Schwächen werden ohne nachvollziehbare lokale Analyse abgeleitet.", "#E25B5B"),
+            ("NÄCHSTE FOKUS-BEREICHE", "Nach einer echten Analyse erscheinen hier nur belegte, nicht erfundene nächste Schritte.", "#13A7E8"),
+        )):
+            lower.columnconfigure(index, weight=1, uniform="improvement-lower")
+            self._reference_info_card(lower, title=title, text=text, accent=accent).grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 5, 0 if index == 2 else 5))
+
+    def _build_demo_analyzer_page(self) -> None:
+        page = self.pages["Demo Analyzer"]
+        self._reference_page_header(page, "Demo Analyzer", "Lokale CS2-Demos auswählen, parsebar prüfen und anschließend im Improve Analyzer mit derselben Replay-Wahrheit analysieren.")
+        layout = self.ttk.Frame(page, style="Content.TFrame")
+        layout.pack(fill="both", expand=True)
+        library = self._reference_info_card(layout, title="DEMO BIBLIOTHEK", text="Keine lokale Demo ist automatisch ausgewählt. Wähle eine echte .dem oder .dem.zst bewusst aus.", accent="#A782E8")
+        library.pack(side="left", fill="both", expand=True, padx=(0, 7))
+        self.ttk.Button(library.body, text="Echte CS2-Demo auswählen", style="Primary.TButton", command=lambda: self._show_page("Analyzer / Review")).pack(fill="x", pady=(16, 0))
+        selected = self._reference_info_card(layout, title="AUSGEWÄHLTE DEMO", text="Noch keine bestätigte lokale Demodatei geladen. Import- und Analyse-Status bleiben bis dahin ausdrücklich offen.", accent="#13A7E8")
+        selected.pack(side="left", fill="both", expand=True, padx=(7, 0))
+        readiness = self.ttk.Frame(page, style="Content.TFrame")
+        readiness.pack(fill="x", pady=(14, 0))
+        for index, (title, text, accent) in enumerate((
+            ("IMPORT-STATUS", "Keine Demo importiert.", "#687789"),
+            ("ANALYSE-STATUS", "Keine Analyse gestartet.", "#687789"),
+            ("BEREIT ZUR ANALYSE", "Erfordert eine erfolgreich geladene echte Demo.", "#58D69A"),
+        )):
+            readiness.columnconfigure(index, weight=1, uniform="demo-ready")
+            self._reference_info_card(readiness, title=title, text=text, accent=accent).grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 5, 0 if index == 2 else 5))
+
+    def _build_benchmark_page(self) -> None:
+        page = self.pages["Benchmark"]
+        self._reference_page_header(page, "Improve Benchmark", "Reproduzierbare Benchmark-Ergebnisse werden erst nach einer freigegebenen, real gebauten Map und einem tatsächlichen Lauf dargestellt.")
+        row = self.ttk.Frame(page, style="Content.TFrame")
+        row.pack(fill="x")
+        for index, (title, text, accent) in enumerate((
+            ("BENCHMARK STARTEN", "Der Benchmark-Lauf ist derzeit nicht freigegeben; keine Messung oder FPS-Aussage wird erzeugt.", "#13A7E8"),
+            ("AKTUELLES ERGEBNIS", "Kein belegter aktueller Lauf. FPS, 1% Low und Frametime bleiben unbekannt.", "#58D69A"),
+            ("BENCHMARK MAP", "Die bestehende Benchmark-Arbeit bleibt außerhalb dieses UI-Passes unverändert.", "#E5B854"),
+        )):
+            row.columnconfigure(index, weight=1, uniform="benchmark")
+            self._reference_info_card(row, title=title, text=text, accent=accent).grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 5, 0 if index == 2 else 5))
+        scenes = self._reference_info_card(page, title="BENCHMARK SZENEN – TESTABLAUF", text="Kein gebaute oder freigegebene Benchmark-Szenenablauf verfügbar. Dieser Status ist absichtlich kein Ersatz für eine Messung.", accent="#13A7E8")
+        scenes.pack(fill="x", pady=(14, 0))
 
     def _build_settings_page(self) -> None:
         page = self.pages["Settings"]

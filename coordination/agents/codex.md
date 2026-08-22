@@ -1,5 +1,31 @@
 # Codex
 
+## 2026-08-22 — UI Master Alignment Sequence (laufend)
+
+STATUS: `in_progress`
+
+TASK: Die sechs nicht-Optimizer `MASTER`-Screens in der verbindlichen Reihenfolge abgleichen: Dashboard, Improve Analyzer, Demo Analyzer, Tactical Viewer, My Improvement, Benchmark. Die beiden Optimizer-MASTER bleiben unverändert.
+
+BRANCH: `dev/v1-foundation`
+
+REFERENCE: `README_UI_REFERENCE.md` und `UI_REFERENCE_MANIFEST.json` erneut gelesen. Alle sechs genannten Dateien sind `MASTER`; die einzige Legacy-Optimizerdatei bleibt `SUPERSEDED`. PDF und frühere Zwischenstände werden nicht als Ersatzreferenz verwendet. Variant 3 bleibt die gemeinsame Shell-Regel.
+
+CHANGED SO FAR: Die bestehende Dashboard-/Analyzer-/Tactical-Shell bleibt erhalten. `My Improvement`, `Demo Analyzer` und `Improve Benchmark` sind nun sichtbare, eigene Master-orientierte Routen mit derselben Variant-3-Shell, aktiver Navigation und dunklen Karten. Sie zeigen ausschließlich ehrliche lokale Bereitschafts-/Unknown-Zustände: keine erfundenen Verlaufswerte, Demos, Ergebnisse, FPS, Benchmark-Maps oder Produktaktionen. Neue UI-Routen ändern weder Parser, Replay, Regeln, Evidence, Hardware-Support noch Apply-/Write-Verhalten.
+
+VERIFIED SO FAR: `compileall` PASS; fokussierte Shell-Tests PASS; volle Suite **188 passed**; `git diff --check` PASS; frischer Portable-Build PASS. Runtime-Captures im frischen Portable: Dashboard und My Improvement. Dashboard folgt bereits dem sechsmoduligen Command-Center mit realen lokalen Statuswerten. My Improvement entspricht sichtbar dem Master-Raster (fünf Dimensionen plus drei Fokuspanels), zeigt aber bewusst nur fehlende lokale Vergleichsevidenz.
+
+CURRENT ASSESSMENT: Dashboard und My Improvement sind im Rahmen der verfügbaren realen Daten strukturell/visuell MASTER-nah. Der Analyzer ist funktional richtig, trägt aber noch sein technisches Import-/Auswahl-Layout und benötigt vor einem PASS den nächsten strukturellen Master-Abgleich. Demo Analyzer, Tactical Viewer und Benchmark sind als Reihenfolge nachfolgend und noch nicht final abgenommen.
+
+NEXT: Ausschließlich `analyzer_MASTER.png` gegen die laufende Analyzer-/Review-Route ausrichten, danach erst `demo_analyzer_MASTER.png`.
+
+MODEL_PROFILE: terra
+
+MODEL_REASON: Mehrere zusammenhängende native UI-Umsetzungen mit echten lokalen Daten und strikter Produktgrenze.
+
+COMPUTER_USE: yes
+
+COMMIT/PR: pending current tested checkpoint on `dev/v1-foundation`.
+
 ## 2026-08-22 — UI Reference Pack verified / Optimizer + Shell alignment
 
 STATUS: `WAITING_FOR_TRISTAN`
