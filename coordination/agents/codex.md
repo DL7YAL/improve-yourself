@@ -1,5 +1,21 @@
 # Codex
 
+## 2026-08-22 — Portable Candidate Executable Metadata Correction
+
+STATUS: `DONE — WAITING_FOR_TRISTAN`
+
+TASK: Ausschließlich den vorhandenen Portable-Candidate-Pfad auf direkt startbare EXE, Anwendungssymbol, Windows-Versionsinformationen und vollständige Runtime prüfen und, falls nötig, ohne Installer-Technologie korrigieren.
+
+BRANCH / IMPLEMENTATION COMMIT: `dev/v1-foundation` / `765b47a build: polish portable candidate metadata`. Der nachfolgende Handoff-Commit dokumentiert nur diesen Zustand.
+
+FINDING / FIX: Der vorherige Candidate enthielt die vollständige Runtime und ein eingebettetes Symbol, führte jedoch noch `Improve Yourself Experimental.exe` und leere Windows-Versionseigenschaften. Der unveränderte vorhandene PyInstaller-Pfad erzeugt nun direkt `Improve Yourself.exe` im Portable-Wurzelordner. `packaging/windows-version-info.txt` übernimmt ausschließlich die vorhandene Projektversion `0.1.0` aus `pyproject.toml`/Paket: `ProductName=Improve Yourself`, `FileDescription=Improve Yourself External Test Candidate`, `FileVersion=0.1.0`, `ProductVersion=0.1.0`, `OriginalFilename=Improve Yourself.exe`. Das Variant-3-ICO bleibt unverändert eingebettet. Keine Anwendung-, Daten-, Analyzer-, Optimizer- oder Installerfunktion geändert.
+
+PACKAGE CHECK: Der frische ZIP enthält unmittelbar `Improve Yourself/Improve Yourself.exe`, `Improve Yourself/_internal/` mit der vollständigen PyInstaller-Runtime und `Improve Yourself/EXTERNAL_TEST_CANDIDATE_README.txt`. Die Build-Manifest-Referenz wurde auf den neuen EXE-Pfad aktualisiert. Direkter manueller Start der neuen EXE aus `dist/experimental/Improve Yourself/Improve Yourself.exe` im Windows-Runtimefenster: PASS; ehrlicher Analyzer-Empty-State sichtbar, danach sauber geschlossen.
+
+BUILD / INTEGRITY: Vollständiger bestehender Build-Gate: **189 passed**, `pip check` PASS, `compileall` PASS, PyInstaller-COLLECT PASS, ZIP/Manifest PASS, `git diff --check` PASS. Frische Artefakte: EXE SHA-256 `54F094A15EE5F1379D48C3F26E8023874D1000E50046007F0064492A2EA20E6A` (19.881.203 Bytes); ZIP SHA-256 `7DDF941BBB38776699A8B6285805F51325100DEE1034291E3D96169527038ECC` (168.800.258 Bytes). Der Portable-ZIP bleibt der einzige zulässige externe Candidate; kein Setup/Installer, Updater oder Signiervertrag wurde eingeführt.
+
+NEXT: `WAITING_FOR_TRISTAN`. Tester entpackt nur `dist/experimental/Improve-Yourself-Experimental-Portable.zip` vollständig und startet anschließend `Improve Yourself/Improve Yourself.exe`. Keine weitere Arbeit ohne neuen Auftrag.
+
 ## 2026-08-22 — External Test Candidate
 
 STATUS: `DONE — WAITING_FOR_TRISTAN`
