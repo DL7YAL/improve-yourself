@@ -2128,6 +2128,14 @@ class AnalyzerShellApp:
         )):
             readiness.columnconfigure(index, weight=1, uniform="demo-ready")
             self._reference_info_card(readiness, title=title, textvariable=variable, accent=accent).grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 5, 0 if index == 2 else 5))
+        self.demo_overview_text = self.tk.StringVar(value="Nach dem bestätigten Import erscheinen hier ausschließlich aus dem Workflow belegte Demo-Fakten.")
+        overview = self._reference_info_card(page, title="DEMO-ÜBERSICHT", textvariable=self.demo_overview_text, accent="#13A7E8")
+        overview.pack(fill="x", pady=(14, 0))
+        demo_actions = self.ttk.Frame(overview.body, style="HomeInner.TFrame")
+        demo_actions.pack(fill="x", pady=(14, 0))
+        self.ttk.Button(demo_actions, text="Im Improve Analyzer öffnen", command=lambda: self._show_page("Analyzer / Review")).pack(side="left")
+        self.demo_review_button = self.ttk.Button(demo_actions, text="Szenen im Review", command=self._open_review, state="disabled")
+        self.demo_review_button.pack(side="left", padx=8)
 
     def _render_demo_analyzer_page(self, result: ShellResult) -> None:
         self.demo_library_text.set("Die aktuelle Auswahl stammt aus dem lokalen, fail-closed Workflow. Es werden keine Demos automatisch importiert oder kopiert.")
@@ -2139,9 +2147,21 @@ class AnalyzerShellApp:
         if result.status == "READY_FOR_REVIEW":
             self.demo_analysis_text.set(f"Analyse abgeschlossen · {result.scene_count} zusammengeführte Szenen")
             self.demo_ready_text.set("Bereit für den lokalen Review; Tick-Sprung bleibt separat abgesichert.")
+            self.demo_overview_text.set(
+                f"{result.map_id} · {result.round_count} Runden · {len(result.players)} Spieler · "
+                f"{result.basic_event_count} grundlegende Events · {result.scene_count} zusammengeführte Szenen\n"
+                "Kein Match-Score, K/D oder Performancevergleich vorhanden: Diese Werte werden nicht geschätzt."
+            )
+            self.demo_review_button.configure(state="normal")
         else:
             self.demo_analysis_text.set("Auswahl bereit · Analyse wurde noch nicht ausdrücklich gestartet.")
             self.demo_ready_text.set("Bereit für eine explizite Analyse im Improve Analyzer.")
+            self.demo_overview_text.set(
+                f"{result.map_id} · {result.round_count} Runden · {len(result.players)} Spieler · "
+                f"{result.basic_event_count} grundlegende Events\n"
+                "Szenen und Review entstehen erst nach der expliziten Analyse."
+            )
+            self.demo_review_button.configure(state="disabled")
 
     def _build_benchmark_page(self) -> None:
         page = self.pages["Benchmark"]
