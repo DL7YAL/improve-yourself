@@ -55,6 +55,31 @@ _THEME = {
     "muted": "#687789", "success": "#58d69a",
 }
 
+# Optimizer visual-fidelity tokens.  These are deliberately independent from
+# the shared Home surface scale: this approved pilot needs the deeper metallic
+# blue hierarchy, compact cyan edge-light and cooler text of the Optimizer
+# reference without rolling a new, unreviewed treatment across other routes.
+_OPTIMIZER_THEME = {
+    "page": "#020A12",
+    "surface": "#071827",
+    "surface_raised": "#0A1D2E",
+    "surface_hero": "#081B2B",
+    "surface_detail": "#061521",
+    "surface_input": "#04111C",
+    "surface_hover": "#0B2639",
+    "border": "#123852",
+    "border_soft": "#0B263A",
+    "border_bright": "#127EC0",
+    "accent": "#159BE1",
+    "accent_soft": "#0B4D73",
+    "text": "#E8F0F5",
+    "secondary": "#AAB9C5",
+    "muted": "#728696",
+    "success": "#6DBE6A",
+    "warning": "#E5B854",
+    "unknown": "#9AAAB6",
+}
+
 _UI_FONT = "Inter"
 _DISPLAY_FONT = "Orbitron"
 _PRIVATE_FONT_FLAG = 0x10
@@ -622,6 +647,133 @@ class RoundedHomeAction:
         self.canvas.create_text(width // 2, height // 2, text=self.text, fill=foreground, font=self.font, tags="action")
 
 
+class RoundedOptimizerSurface(RoundedHomeSurface):
+    """Optimizer-only metallic card perimeter over the existing Tk content.
+
+    The body continues to host the existing labels, result adapters and table.
+    This class owns only the rounded dark surface and restrained blue contour,
+    so visual fidelity does not change application behaviour or data flow.
+    """
+
+    def __init__(self, tk, ttk, parent, *, style: str, fill: str, padding, min_height: int, min_width: int = 1, radius: int = 12) -> None:
+        super().__init__(
+            tk, ttk, parent, style=style, fill=fill,
+            outline=_OPTIMIZER_THEME["border"], padding=padding,
+            min_height=min_height, min_width=min_width, radius=radius,
+        )
+
+
+class RoundedOptimizerAction:
+    """Low-fill outlined action used only by the reference-locked Optimizer.
+
+    Tk buttons otherwise retain a platform rectangle even under the dark theme.
+    The canvas forwards the same callback and keyboard activation while keeping
+    the reference's dark interior, cyan contour and compact rounded form.
+    """
+
+    def __init__(self, tk, parent, *, text: str, command: Callable[[], None], primary: bool = False, enabled: bool = True, font=None) -> None:
+        self.tk = tk
+        self.text = text
+        self.command = command
+        self.primary = primary
+        self.enabled = enabled
+        self.font = font
+        self.hovered = False
+        self.canvas = tk.Canvas(
+            parent, height=38, background=_OPTIMIZER_THEME["surface"],
+            highlightthickness=0, borderwidth=0, bd=0, takefocus=1 if enabled else 0,
+        )
+        self.canvas.bind("<Configure>", self._draw)
+        self.canvas.bind("<Enter>", self._enter)
+        self.canvas.bind("<Leave>", self._leave)
+        self.canvas.bind("<ButtonRelease-1>", self._activate)
+        self.canvas.bind("<Return>", self._activate)
+        self.canvas.bind("<space>", self._activate)
+
+    def pack(self, **kwargs) -> None:
+        self.canvas.pack(**kwargs)
+
+    def grid(self, **kwargs) -> None:
+        self.canvas.grid(**kwargs)
+
+    def _enter(self, _event=None) -> None:
+        if self.enabled:
+            self.hovered = True
+            self._draw()
+
+    def _leave(self, _event=None) -> None:
+        self.hovered = False
+        self._draw()
+
+    def _activate(self, _event=None) -> str | None:
+        if not self.enabled:
+            return "break"
+        self.command()
+        return "break"
+
+    def _rounded_rect(self, width: int, height: int, *, fill: str, outline: str) -> None:
+        radius = min(8, max(1, height // 2 - 1), max(1, width // 2 - 1))
+        canvas = self.canvas
+        canvas.create_rectangle(radius, 1, width - radius - 1, height - 2, fill=fill, outline="", tags="action")
+        canvas.create_rectangle(1, radius, width - 2, height - radius - 1, fill=fill, outline="", tags="action")
+        for box, start in (
+            ((1, 1, 1 + 2 * radius, 1 + 2 * radius), 90),
+            ((1, height - 2 - 2 * radius, 1 + 2 * radius, height - 2), 180),
+            ((width - 2 - 2 * radius, height - 2 - 2 * radius, width - 2, height - 2), 270),
+            ((width - 2 - 2 * radius, 1, width - 2, 1 + 2 * radius), 0),
+        ):
+            canvas.create_arc(*box, start=start, extent=90, fill=fill, outline=outline, tags="action")
+        canvas.create_line(1 + radius, 1, width - 2 - radius, 1, fill=outline, tags="action")
+        canvas.create_line(1 + radius, height - 2, width - 2 - radius, height - 2, fill=outline, tags="action")
+        canvas.create_line(1, 1 + radius, 1, height - 2 - radius, fill=outline, tags="action")
+        canvas.create_line(width - 2, 1 + radius, width - 2, height - 2 - radius, fill=outline, tags="action")
+
+    def _draw(self, _event=None) -> None:
+        width, height = max(self.canvas.winfo_width(), 1), max(self.canvas.winfo_height(), 1)
+        if not self.enabled:
+            fill, outline, foreground = _OPTIMIZER_THEME["surface_input"], _OPTIMIZER_THEME["border_soft"], _OPTIMIZER_THEME["muted"]
+        elif self.primary:
+            fill = "#0A3150" if self.hovered else "#082B46"
+            outline, foreground = _OPTIMIZER_THEME["accent"], _OPTIMIZER_THEME["text"]
+        else:
+            fill = _OPTIMIZER_THEME["surface_hover"] if self.hovered else _OPTIMIZER_THEME["surface_raised"]
+            outline = _OPTIMIZER_THEME["border_bright"] if self.hovered else _OPTIMIZER_THEME["border"]
+            foreground = _OPTIMIZER_THEME["text"]
+        self.canvas.delete("action")
+        self._rounded_rect(width, height, fill=fill, outline=outline)
+        self.canvas.create_text(width // 2, height // 2, text=self.text, fill=foreground, font=self.font, tags="action")
+
+
+class OptimizerHardwareChip:
+    """A compact two-line hardware chip with a reference-style blue contour."""
+
+    def __init__(self, tk, parent, *, label: str, value: str, ui_font: str) -> None:
+        self.tk = tk
+        self.label = label
+        self.value = value
+        self.ui_font = ui_font
+        self.canvas = tk.Canvas(parent, width=112, height=48, background=_THEME["night"], highlightthickness=0, borderwidth=0, bd=0)
+        self.canvas.bind("<Configure>", self._draw)
+
+    def pack(self, **kwargs) -> None:
+        self.canvas.pack(**kwargs)
+
+    def _draw(self, _event=None) -> None:
+        canvas = self.canvas
+        width, height = max(canvas.winfo_width(), 1), max(canvas.winfo_height(), 1)
+        canvas.delete("all")
+        radius = 8
+        fill, outline = _OPTIMIZER_THEME["surface_raised"], _OPTIMIZER_THEME["border_soft"]
+        canvas.create_rectangle(radius, 1, width - radius - 1, height - 2, fill=fill, outline="")
+        canvas.create_rectangle(1, radius, width - 2, height - radius - 1, fill=fill, outline="")
+        for box, start in (((1, 1, 1 + 2 * radius, 1 + 2 * radius), 90), ((1, height - 2 - 2 * radius, 1 + 2 * radius, height - 2), 180), ((width - 2 - 2 * radius, height - 2 - 2 * radius, width - 2, height - 2), 270), ((width - 2 - 2 * radius, 1, width - 2, 1 + 2 * radius), 0)):
+            canvas.create_arc(*box, start=start, extent=90, fill=fill, outline=outline)
+        canvas.create_line(radius, 1, width - radius - 1, 1, fill=outline)
+        canvas.create_line(radius, height - 2, width - radius - 1, height - 2, fill=outline)
+        canvas.create_text(10, 13, text=self.label, fill=_OPTIMIZER_THEME["muted"], anchor="w", font=(self.ui_font, 6, "bold"))
+        canvas.create_text(10, 30, text=self.value, fill=_OPTIMIZER_THEME["text"], anchor="w", width=max(1, width - 20), font=(self.ui_font, 7, "bold"))
+
+
 def dashboard_layout_metrics(content_width: int, viewport_height: int) -> tuple[bool, int, int, int, int]:
     """Return responsive Home metrics without scaling the whole interface."""
     compact = content_width < 1000
@@ -965,30 +1117,31 @@ class AnalyzerShellApp:
         # border is a depth cue, not a permanently lit frame.
         style.configure("Card.TFrame", background=_THEME["card"], relief="flat", borderwidth=1, bordercolor=_THEME["border_soft"])
         style.configure("CardInner.TFrame", background=_THEME["card"], relief="flat", borderwidth=0)
-        # Optimizer area selection is deliberately a quiet card family, not a
-        # technical canvas treatment.  These styles are shared by all four
-        # domains so the active state is unambiguous without a glowing frame.
-        style.configure("OptimizerArea.TFrame", background=_THEME["panel"], relief="flat", borderwidth=1, bordercolor=_THEME["border_soft"])
-        style.configure("OptimizerAreaActive.TFrame", background=_THEME["panel_high"], relief="flat", borderwidth=1, bordercolor=_THEME["border_active"])
-        style.configure("OptimizerArea.TLabel", background=_THEME["panel"], foreground=_THEME["ink"])
-        style.configure("OptimizerAreaMuted.TLabel", background=_THEME["panel"], foreground=_THEME["muted"])
-        style.configure("OptimizerAreaActive.TLabel", background=_THEME["panel_high"], foreground=_THEME["ink"])
-        style.configure("OptimizerAreaActiveMuted.TLabel", background=_THEME["panel_high"], foreground=_THEME["secondary"])
-        # Reference-locked Optimizer surfaces.  Unlike the retired linear
-        # screen, these styles support a two-panel product workspace: a
-        # readable data area and a persistent explanation pane.
-        style.configure("OptimizerHero.TFrame", background="#0A2133", relief="flat", borderwidth=1, bordercolor=_THEME["border"])
-        style.configure("OptimizerHero.TLabel", background="#0A2133", foreground=_THEME["ink"])
-        style.configure("OptimizerHeroMuted.TLabel", background="#0A2133", foreground=_THEME["secondary"])
-        style.configure("OptimizerDetail.TFrame", background="#071725", relief="flat", borderwidth=1, bordercolor=_THEME["border"])
-        style.configure("OptimizerDetail.TLabel", background="#071725", foreground=_THEME["ink"])
-        style.configure("OptimizerDetailMuted.TLabel", background="#071725", foreground=_THEME["secondary"])
-        style.configure("OptimizerMetric.TFrame", background="#0D2236", relief="flat", borderwidth=1, bordercolor=_THEME["border_soft"])
-        style.configure("OptimizerMetric.TLabel", background="#0D2236", foreground=_THEME["ink"])
-        style.configure("OptimizerMetricMuted.TLabel", background="#0D2236", foreground=_THEME["muted"])
-        style.configure("Optimizer.Treeview", background="#071725", fieldbackground="#071725", foreground=_THEME["ink"], rowheight=39, borderwidth=0, relief="flat")
-        style.map("Optimizer.Treeview", background=[("selected", "#123C58")], foreground=[("selected", "#ffffff")])
-        style.configure("Optimizer.Treeview.Heading", background="#0D2236", foreground=_THEME["secondary"], relief="flat", borderwidth=0, font=(self.ui_font, 8, "bold"))
+        # Reference-locked Optimizer token family.  It intentionally derives
+        # its values from the approved metallic master rather than inheriting
+        # the older generic shell widgets.
+        style.configure("OptimizerArea.TFrame", background=_OPTIMIZER_THEME["surface"], relief="flat", borderwidth=0)
+        style.configure("OptimizerAreaActive.TFrame", background=_OPTIMIZER_THEME["surface_raised"], relief="flat", borderwidth=0)
+        style.configure("OptimizerArea.TLabel", background=_OPTIMIZER_THEME["surface"], foreground=_OPTIMIZER_THEME["text"])
+        style.configure("OptimizerAreaMuted.TLabel", background=_OPTIMIZER_THEME["surface"], foreground=_OPTIMIZER_THEME["muted"])
+        style.configure("OptimizerAreaActive.TLabel", background=_OPTIMIZER_THEME["surface_raised"], foreground=_OPTIMIZER_THEME["text"])
+        style.configure("OptimizerAreaActiveMuted.TLabel", background=_OPTIMIZER_THEME["surface_raised"], foreground=_OPTIMIZER_THEME["secondary"])
+        style.configure("OptimizerHero.TFrame", background=_OPTIMIZER_THEME["surface_hero"], relief="flat", borderwidth=0)
+        style.configure("OptimizerHero.TLabel", background=_OPTIMIZER_THEME["surface_hero"], foreground=_OPTIMIZER_THEME["text"])
+        style.configure("OptimizerHeroMuted.TLabel", background=_OPTIMIZER_THEME["surface_hero"], foreground=_OPTIMIZER_THEME["secondary"])
+        style.configure("OptimizerDetail.TFrame", background=_OPTIMIZER_THEME["surface_detail"], relief="flat", borderwidth=0)
+        style.configure("OptimizerDetail.TLabel", background=_OPTIMIZER_THEME["surface_detail"], foreground=_OPTIMIZER_THEME["text"])
+        style.configure("OptimizerDetailMuted.TLabel", background=_OPTIMIZER_THEME["surface_detail"], foreground=_OPTIMIZER_THEME["secondary"])
+        style.configure("OptimizerMetric.TFrame", background=_OPTIMIZER_THEME["surface_raised"], relief="flat", borderwidth=0)
+        style.configure("OptimizerMetric.TLabel", background=_OPTIMIZER_THEME["surface_raised"], foreground=_OPTIMIZER_THEME["text"])
+        style.configure("OptimizerMetricMuted.TLabel", background=_OPTIMIZER_THEME["surface_raised"], foreground=_OPTIMIZER_THEME["muted"])
+        style.configure("Optimizer.Treeview", background=_OPTIMIZER_THEME["surface_input"], fieldbackground=_OPTIMIZER_THEME["surface_input"], foreground=_OPTIMIZER_THEME["text"], rowheight=42, borderwidth=0, relief="flat")
+        style.map("Optimizer.Treeview", background=[("selected", "#0B3857")], foreground=[("selected", "#F4FBFF")])
+        style.configure("Optimizer.Treeview.Heading", background=_OPTIMIZER_THEME["surface_raised"], foreground=_OPTIMIZER_THEME["secondary"], relief="flat", borderwidth=0, font=(self.ui_font, 8, "bold"))
+        style.configure("Optimizer.TEntry", background=_OPTIMIZER_THEME["surface_input"], fieldbackground=_OPTIMIZER_THEME["surface_input"], foreground=_OPTIMIZER_THEME["text"], bordercolor=_OPTIMIZER_THEME["border"], insertcolor=_OPTIMIZER_THEME["accent"], padding=(10, 8))
+        style.map("Optimizer.TEntry", bordercolor=[("focus", _OPTIMIZER_THEME["border_bright"])])
+        style.configure("Optimizer.TCombobox", background=_OPTIMIZER_THEME["surface_input"], fieldbackground=_OPTIMIZER_THEME["surface_input"], foreground=_OPTIMIZER_THEME["text"], arrowcolor=_OPTIMIZER_THEME["secondary"], bordercolor=_OPTIMIZER_THEME["border"], padding=(10, 8))
+        style.map("Optimizer.TCombobox", fieldbackground=[("readonly", _OPTIMIZER_THEME["surface_input"])], foreground=[("readonly", _OPTIMIZER_THEME["text"])], bordercolor=[("focus", _OPTIMIZER_THEME["border_bright"])])
         style.configure("PageTitle.TLabel", background=_THEME["night"], foreground=_THEME["ink"], font=(self.display_font, 22, "bold"))
         style.configure("PageKicker.TLabel", background=_THEME["night"], foreground=_THEME["cyan"], font=(self.display_font, 8))
         style.configure("StatusBadge.TLabel", background=_THEME["panel_high"], foreground=_THEME["secondary"], padding=(9, 5), font=(self.ui_font, 8, "bold"))
@@ -1722,13 +1875,21 @@ class AnalyzerShellApp:
         content.pack(fill="both", expand=True)
         left = self.ttk.Frame(content, style="Content.TFrame")
         left.pack(side="left", fill="both", expand=True, padx=(0, 12))
-        right = self.ttk.Frame(content, style="OptimizerDetail.TFrame", padding=18, width=330)
-        right.pack(side="right", fill="y")
-        right.pack_propagate(False)
-        self.optimizer_overview_details = right
+        right_surface = RoundedOptimizerSurface(
+            self.tk, self.ttk, content, style="OptimizerDetail.TFrame", fill=_OPTIMIZER_THEME["surface_detail"],
+            padding=18, min_height=560, min_width=330,
+        )
+        right_surface.pack(side="right", fill="y")
+        right_surface.canvas.pack_propagate(False)
+        right = right_surface.body
+        self.optimizer_overview_details = right_surface
 
-        self.optimizer_overview_hero = self.ttk.Frame(left, style="OptimizerHero.TFrame", padding=22)
-        self.optimizer_overview_hero.pack(fill="x")
+        hero_surface = RoundedOptimizerSurface(
+            self.tk, self.ttk, left, style="OptimizerHero.TFrame", fill=_OPTIMIZER_THEME["surface_hero"],
+            padding=22, min_height=210,
+        )
+        hero_surface.pack(fill="x")
+        self.optimizer_overview_hero = hero_surface.body
         hero_header = self.ttk.Frame(self.optimizer_overview_hero, style="OptimizerHero.TFrame")
         hero_header.pack(fill="x")
         self.ttk.Label(hero_header, text="EMPFEHLUNGEN & STATUS", style="OptimizerHero.TLabel", font=(self.display_font, 12, "bold")).pack(side="left")
@@ -1745,13 +1906,23 @@ class AnalyzerShellApp:
         self.optimizer_overview_metric_values: dict[str, object] = {}
         for index, (key, label) in enumerate((("checked", "GEPRÜFT"), ("already", "BEREITS PASSEND"), ("conditional", "ZU PRÜFEN"))):
             metrics.columnconfigure(index, weight=1, uniform="optimizer-summary")
-            metric = self.ttk.Frame(metrics, style="OptimizerMetric.TFrame", padding=(11, 8))
-            metric.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 4, 0 if index == 2 else 4))
+            metric_surface = RoundedOptimizerSurface(
+                self.tk, self.ttk, metrics, style="OptimizerMetric.TFrame", fill=_OPTIMIZER_THEME["surface_raised"],
+                padding=(11, 8), min_height=76, radius=9,
+            )
+            metric_surface.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 4, 0 if index == 2 else 4))
+            metric = metric_surface.body
             self.ttk.Label(metric, text=label, style="OptimizerMetricMuted.TLabel", font=(self.ui_font, 7, "bold")).pack(anchor="w")
-            value = self.ttk.Label(metric, text="—", style="OptimizerMetric.TLabel", font=(self.display_font, 15, "bold"))
+            metric_color = (_OPTIMIZER_THEME["accent"], _OPTIMIZER_THEME["success"], _OPTIMIZER_THEME["warning"])[index]
+            value = self.ttk.Label(metric, text="—", style="OptimizerMetric.TLabel", foreground=metric_color, font=(self.display_font, 15, "bold"))
             value.pack(anchor="w", pady=(3, 0))
             self.optimizer_overview_metric_values[key] = value
-        self.ttk.Button(self.optimizer_overview_hero, text="System Check ausführen", style="Primary.TButton", command=self._run_system_check).pack(anchor="w", pady=(15, 0))
+        self.optimizer_overview_run_action = RoundedOptimizerAction(
+            self.tk, self.optimizer_overview_hero, text="System Check ausführen", command=self._run_system_check,
+            primary=True, font=(self.ui_font, 9, "bold"),
+        )
+        self.optimizer_overview_run_action.canvas.configure(background=_OPTIMIZER_THEME["surface_hero"])
+        self.optimizer_overview_run_action.pack(anchor="w", pady=(15, 0))
         self.ttk.Label(self.optimizer_overview_hero, textvariable=self.system_status, style="OptimizerHeroMuted.TLabel", wraplength=690, justify="left").pack(anchor="w", pady=(8, 0))
 
         self.ttk.Label(left, text="OPTIMIZER BEREICHE", style="PageKicker.TLabel").pack(anchor="w", pady=(18, 7))
@@ -1774,8 +1945,12 @@ class AnalyzerShellApp:
         self.optimizer_overview_detail_text.pack(anchor="w", pady=(0, 14))
         self.optimizer_overview_detail_status = self.ttk.Label(panel, text="Keine Bewertung geladen", style="OptimizerDetail.TLabel", foreground=_THEME["cyan"], wraplength=285, justify="left")
         self.optimizer_overview_detail_status.pack(anchor="w", pady=(0, 18))
-        self.optimizer_overview_open_button = self.ttk.Button(panel, text="System Optimizer öffnen", style="Primary.TButton", command=lambda: self._show_optimizer_detail_screen(self.optimizer_active_domain))
-        self.optimizer_overview_open_button.pack(fill="x")
+        self.optimizer_overview_open_action = RoundedOptimizerAction(
+            self.tk, panel, text="System Optimizer öffnen", primary=True,
+            command=lambda: self._show_optimizer_detail_screen(self.optimizer_active_domain), font=(self.ui_font, 9, "bold"),
+        )
+        self.optimizer_overview_open_action.canvas.configure(background=_OPTIMIZER_THEME["surface_detail"])
+        self.optimizer_overview_open_action.pack(fill="x")
         self.ttk.Label(panel, text="Technische Evidenz, Provenance und Pack-Daten erscheinen nur nach Auswahl einer Einstellung in der Detailansicht.", style="OptimizerDetailMuted.TLabel", wraplength=285, justify="left").pack(anchor="w", pady=(18, 0))
 
     def _build_optimizer_detail_view(self) -> None:
@@ -1787,31 +1962,44 @@ class AnalyzerShellApp:
         self.optimizer_detail_metric_values: dict[str, object] = {}
         for index, (key, label) in enumerate((("checked", "GEPRÜFTE EINSTELLUNGEN"), ("already", "BEREITS PASSEND"), ("conditional", "BEDINGT / UNKNOWN"))):
             metrics.columnconfigure(index, weight=1, uniform="optimizer-detail-metrics")
-            metric = self.ttk.Frame(metrics, style="OptimizerMetric.TFrame", padding=(14, 11))
-            metric.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 4, 0 if index == 2 else 4))
+            metric_surface = RoundedOptimizerSurface(
+                self.tk, self.ttk, metrics, style="OptimizerMetric.TFrame", fill=_OPTIMIZER_THEME["surface_raised"],
+                padding=(14, 11), min_height=84, radius=9,
+            )
+            metric_surface.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 4, 0 if index == 2 else 4))
+            metric = metric_surface.body
             self.ttk.Label(metric, text=label, style="OptimizerMetricMuted.TLabel", font=(self.ui_font, 7, "bold")).pack(anchor="w")
-            value = self.ttk.Label(metric, text="—", style="OptimizerMetric.TLabel", font=(self.display_font, 16, "bold"))
+            metric_color = (_OPTIMIZER_THEME["accent"], _OPTIMIZER_THEME["success"], _OPTIMIZER_THEME["warning"])[index]
+            value = self.ttk.Label(metric, text="—", style="OptimizerMetric.TLabel", foreground=metric_color, font=(self.display_font, 16, "bold"))
             value.pack(anchor="w", pady=(4, 0))
             self.optimizer_detail_metric_values[key] = value
 
         controls = self.ttk.Frame(self.optimizer_detail_view, style="Content.TFrame")
         controls.pack(fill="x", pady=(16, 10))
         self.ttk.Label(controls, text="EINSTELLUNGEN", style="PageKicker.TLabel").pack(side="left")
-        self.optimizer_filter = self.ttk.Combobox(controls, textvariable=self.optimizer_filter_var, state="readonly", width=24, values=("Alle Status", "RECOMMENDED", "ALREADY_RECOMMENDED", "CONDITIONAL", "INSUFFICIENT_EVIDENCE", "NO_CHANGE", "EXCLUSION"))
+        self.optimizer_filter = self.ttk.Combobox(controls, textvariable=self.optimizer_filter_var, style="Optimizer.TCombobox", state="readonly", width=24, values=("Alle Status", "RECOMMENDED", "ALREADY_RECOMMENDED", "CONDITIONAL", "INSUFFICIENT_EVIDENCE", "NO_CHANGE", "EXCLUSION"))
         self.optimizer_filter.pack(side="right")
         self.optimizer_filter.bind("<<ComboboxSelected>>", lambda _event: self._render_optimizer_detail_table())
-        self.optimizer_search = self.ttk.Entry(controls, textvariable=self.optimizer_search_var, width=30)
+        self.optimizer_search = self.ttk.Entry(controls, textvariable=self.optimizer_search_var, style="Optimizer.TEntry", width=30)
         self.optimizer_search.pack(side="right", padx=(0, 8))
         self.optimizer_search.bind("<KeyRelease>", lambda _event: self._render_optimizer_detail_table())
 
         content = self.ttk.Frame(self.optimizer_detail_view, style="Content.TFrame")
         content.pack(fill="both", expand=True)
-        table_card = self.ttk.Frame(content, style="Card.TFrame", padding=0)
-        table_card.pack(side="left", fill="both", expand=True, padx=(0, 12))
-        detail = self.ttk.Frame(content, style="OptimizerDetail.TFrame", padding=18, width=350)
-        detail.pack(side="right", fill="y")
-        detail.pack_propagate(False)
-        self.optimizer_detail_card = detail
+        table_surface = RoundedOptimizerSurface(
+            self.tk, self.ttk, content, style="OptimizerArea.TFrame", fill=_OPTIMIZER_THEME["surface_input"],
+            padding=0, min_height=420, radius=12,
+        )
+        table_surface.pack(side="left", fill="both", expand=True, padx=(0, 12))
+        table_card = table_surface.body
+        detail_surface = RoundedOptimizerSurface(
+            self.tk, self.ttk, content, style="OptimizerDetail.TFrame", fill=_OPTIMIZER_THEME["surface_detail"],
+            padding=18, min_height=420, min_width=350,
+        )
+        detail_surface.pack(side="right", fill="y")
+        detail_surface.canvas.pack_propagate(False)
+        detail = detail_surface.body
+        self.optimizer_detail_card = detail_surface
         self.optimizer_detail_tree = self.ttk.Treeview(table_card, style="Optimizer.Treeview", columns=("current", "recommendation", "status"), show="tree headings", selectmode="browse")
         self.optimizer_detail_tree.heading("#0", text="EINSTELLUNG")
         self.optimizer_detail_tree.heading("current", text="AKTUELLER ZUSTAND")
@@ -1821,6 +2009,10 @@ class AnalyzerShellApp:
         self.optimizer_detail_tree.column("current", width=152, minwidth=120, anchor="w")
         self.optimizer_detail_tree.column("recommendation", width=165, minwidth=130, anchor="w")
         self.optimizer_detail_tree.column("status", width=112, minwidth=95, anchor="w")
+        self.optimizer_detail_tree.tag_configure("ready", foreground=_OPTIMIZER_THEME["success"])
+        self.optimizer_detail_tree.tag_configure("evidence", foreground=_OPTIMIZER_THEME["accent"])
+        self.optimizer_detail_tree.tag_configure("conditional", foreground=_OPTIMIZER_THEME["warning"])
+        self.optimizer_detail_tree.tag_configure("unknown", foreground=_OPTIMIZER_THEME["unknown"])
         self.optimizer_detail_tree.pack(fill="both", expand=True)
         self.optimizer_detail_tree.bind("<<TreeviewSelect>>", self._select_optimizer_setting)
         self.ttk.Label(detail, text="DETAILS & ERKLÄRUNG", style="OptimizerDetail.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
@@ -1828,8 +2020,12 @@ class AnalyzerShellApp:
         self.optimizer_detail_title.pack(anchor="w", pady=(16, 5))
         self.optimizer_detail_text = self.ttk.Label(detail, text="Wähle eine Zeile, um aktuellen Zustand, Empfehlung, Begründung und Grenzen anzuzeigen.", style="OptimizerDetailMuted.TLabel", wraplength=310, justify="left")
         self.optimizer_detail_text.pack(anchor="w")
-        self.optimizer_detail_technical_button = self.ttk.Button(detail, text="Technische Details", style="Primary.TButton", command=self._toggle_optimizer_technical_detail)
-        self.optimizer_detail_technical_button.pack(fill="x", pady=(10, 0))
+        self.optimizer_detail_technical_action = RoundedOptimizerAction(
+            self.tk, detail, text="Technische Details", command=self._toggle_optimizer_technical_detail,
+            font=(self.ui_font, 9, "bold"),
+        )
+        self.optimizer_detail_technical_action.canvas.configure(background=_OPTIMIZER_THEME["surface_detail"])
+        self.optimizer_detail_technical_action.pack(fill="x", pady=(10, 0))
         self.optimizer_detail_technical_text = self.ttk.Label(detail, text="", style="OptimizerDetailMuted.TLabel", wraplength=310, justify="left")
         self.optimizer_detail_technical_visible = False
 
@@ -1838,10 +2034,7 @@ class AnalyzerShellApp:
             for child in host.winfo_children():
                 child.destroy()
             for label, value in self.optimizer_hardware_values.items():
-                chip = self.ttk.Frame(host, style="OptimizerMetric.TFrame", padding=(8, 5))
-                chip.pack(side="left", padx=(5, 0))
-                self.ttk.Label(chip, text=label, style="OptimizerMetricMuted.TLabel", font=(self.ui_font, 6, "bold")).pack(anchor="w")
-                self.ttk.Label(chip, text=value, style="OptimizerMetric.TLabel", font=(self.ui_font, 7, "bold"), wraplength=108, justify="left").pack(anchor="w")
+                OptimizerHardwareChip(self.tk, host, label=label, value=value, ui_font=self.ui_font).pack(side="left", padx=(5, 0))
 
     def _show_optimizer_overview(self) -> None:
         self.optimizer_detail_view.pack_forget()
@@ -1874,18 +2067,28 @@ class AnalyzerShellApp:
         self.optimizer_overview_detail_title.configure(text=str(selected["title"]))
         self.optimizer_overview_detail_text.configure(text=str(selected["description"]))
         self.optimizer_overview_detail_status.configure(text=str(selected["state"]))
-        self.optimizer_overview_open_button.configure(text=f"{selected['title']} öffnen", command=lambda value=selected["domain"]: self._show_optimizer_detail_screen(value))
+        self.optimizer_overview_open_action.text = f"{selected['title']} öffnen"
+        self.optimizer_overview_open_action.command = lambda value=selected["domain"]: self._show_optimizer_detail_screen(value)
+        self.optimizer_overview_open_action._draw()
         for index, item in enumerate(cards):
             active = item["domain"] == self.optimizer_active_domain
-            card = self.ttk.Frame(self.optimizer_domain_grid, style="OptimizerAreaActive.TFrame" if active else "OptimizerArea.TFrame", padding=(16, 14))
-            card.grid(row=index // 2, column=index % 2, sticky="nsew", padx=(0 if index % 2 == 0 else 5, 5 if index % 2 == 0 else 0), pady=(0 if index < 2 else 10, 10 if index < 2 else 0))
+            card_surface = RoundedOptimizerSurface(
+                self.tk, self.ttk, self.optimizer_domain_grid,
+                style="OptimizerAreaActive.TFrame" if active else "OptimizerArea.TFrame",
+                fill=_OPTIMIZER_THEME["surface_raised"] if active else _OPTIMIZER_THEME["surface"],
+                padding=(16, 14), min_height=192, radius=12,
+            )
+            card_surface.grid(row=index // 2, column=index % 2, sticky="nsew", padx=(0 if index % 2 == 0 else 5, 5 if index % 2 == 0 else 0), pady=(0 if index < 2 else 10, 10 if index < 2 else 0))
+            card = card_surface.body
             label_style = "OptimizerAreaActive.TLabel" if active else "OptimizerArea.TLabel"
             muted_style = "OptimizerAreaActiveMuted.TLabel" if active else "OptimizerAreaMuted.TLabel"
-            self.ttk.Label(card, text="AKTIV" if active else "OPTIMIZER BEREICH", style=muted_style, foreground=_THEME["cyan"] if active else _THEME["muted"], font=(self.ui_font, 7, "bold")).pack(anchor="w")
+            self.ttk.Label(card, text="AKTIV" if active else "OPTIMIZER BEREICH", style=muted_style, foreground=_OPTIMIZER_THEME["accent"] if active else _OPTIMIZER_THEME["muted"], font=(self.ui_font, 7, "bold")).pack(anchor="w")
             self.ttk.Label(card, text=item["title"], style=label_style, font=(self.display_font, 10, "bold")).pack(anchor="w", pady=(6, 3))
             self.ttk.Label(card, text=item["description"], style=muted_style, wraplength=270, justify="left").pack(anchor="w")
-            self.ttk.Label(card, text=item["state"], style=label_style, foreground=_THEME["cyan"], wraplength=270, justify="left", font=(self.ui_font, 8, "bold")).pack(anchor="w", pady=(12, 12))
-            self.ttk.Button(card, text="Öffnen", style="Primary.TButton" if active else "TButton", command=lambda value=item["domain"]: self._show_optimizer_detail_screen(value)).pack(fill="x")
+            self.ttk.Label(card, text=item["state"], style=label_style, foreground=_OPTIMIZER_THEME["accent"], wraplength=270, justify="left", font=(self.ui_font, 8, "bold")).pack(anchor="w", pady=(12, 12))
+            action = RoundedOptimizerAction(self.tk, card, text="Öffnen", primary=active, command=lambda value=item["domain"]: self._show_optimizer_detail_screen(value), font=(self.ui_font, 9, "bold"))
+            action.canvas.configure(background=_OPTIMIZER_THEME["surface_raised"] if active else _OPTIMIZER_THEME["surface"])
+            action.pack(fill="x")
 
     def _render_optimizer_detail_table(self) -> None:
         for item in self.optimizer_detail_tree.get_children():
@@ -1901,7 +2104,7 @@ class AnalyzerShellApp:
         for index, model in enumerate(visible):
             iid = f"setting-{index}"
             self.optimizer_detail_models[iid] = model
-            status_label, _semantic = status_presentation(model.get("status"))
+            status_label, semantic = status_presentation(model.get("status"))
             self.optimizer_detail_tree.insert(
                 "", "end", iid=iid, text=str(model.get("title") or "Unbenannte Einstellung"),
                 values=(
@@ -1909,6 +2112,7 @@ class AnalyzerShellApp:
                     optimizer_table_cell(model.get("improve_recommendation")),
                     optimizer_table_cell(status_label, maximum=20),
                 ),
+                tags=(semantic,),
             )
         if visible:
             self.optimizer_detail_tree.selection_set("setting-0")
@@ -1924,18 +2128,19 @@ class AnalyzerShellApp:
         self.optimizer_selected_model = model
         self.optimizer_detail_technical_visible = False
         self.optimizer_detail_technical_text.pack_forget()
-        self.optimizer_detail_technical_button.configure(text="Technische Details")
+        self.optimizer_detail_technical_action.text = "Technische Details"
+        self.optimizer_detail_technical_action.enabled = model is not None
+        self.optimizer_detail_technical_action._draw()
         if model is None:
             self.optimizer_detail_title.configure(text="Keine passende Einstellung")
             self.optimizer_detail_text.configure(text="Für diesen Bereich liegen unter dem gewählten Filter keine bestätigten lokalen Prüfpunkte vor. Das ist keine negative oder positive Empfehlung.")
-            self.optimizer_detail_technical_button.configure(state="disabled")
             return
-        self.optimizer_detail_technical_button.configure(state="normal")
         self.optimizer_detail_title.configure(text=str(model.get("title") or "Unbenannte Einstellung"))
+        status_label, _semantic = status_presentation(model.get("status"))
         self.optimizer_detail_text.configure(text=(
-            f"Aktueller Zustand: {model.get('current_state') or 'Nicht verfügbar'}\n"
-            f"Improve Empfehlung: {model.get('improve_recommendation') or 'Nicht verfügbar'}\n"
-            f"Status: {model.get('status') or 'UNKNOWN'}\n\n"
+            f"Aktueller Zustand: {optimizer_table_cell(model.get('current_state'), maximum=56)}\n"
+            f"Improve Empfehlung: {optimizer_table_cell(model.get('improve_recommendation'), maximum=56)}\n"
+            f"Status: {optimizer_table_cell(status_label, maximum=56)}\n\n"
             f"Warum für dieses System? {model.get('why_for_this_system') or 'Nicht sicher belegt.'}\n\n"
             f"Effekt: {model.get('what_can_change') or 'Keine Wirkung behauptet.'}\n"
             f"Risiko: {model.get('risk_notes') or 'Nicht verfügbar.'} · Read-only."
@@ -1943,6 +2148,9 @@ class AnalyzerShellApp:
         guidance = model.get("guidance") if isinstance(model.get("guidance"), dict) else {}
         explainability = model.get("explainability") if isinstance(model.get("explainability"), dict) else {}
         self.optimizer_detail_technical_text.configure(text=(
+            f"Rohwerte: current_state={model.get('current_state') or 'Nicht verfügbar'}; "
+            f"recommendation={model.get('improve_recommendation') or 'Nicht verfügbar'}; "
+            f"status={model.get('status') or 'UNKNOWN'}\n"
             f"Evidenz & Gültigkeit: {model.get('evidence_validity') or 'Nicht verfügbar'}\n"
             f"Restore-/Änderungsinformation: {model.get('restore_change_information') or 'Nicht verfügbar'}\n"
             f"Guidance: {guidance}\nProvenance / Explainability: {explainability}"
@@ -1954,10 +2162,11 @@ class AnalyzerShellApp:
         self.optimizer_detail_technical_visible = not self.optimizer_detail_technical_visible
         if self.optimizer_detail_technical_visible:
             self.optimizer_detail_technical_text.pack(anchor="w", pady=(12, 0))
-            self.optimizer_detail_technical_button.configure(text="Technische Details ausblenden")
+            self.optimizer_detail_technical_action.text = "Technische Details ausblenden"
         else:
             self.optimizer_detail_technical_text.pack_forget()
-            self.optimizer_detail_technical_button.configure(text="Technische Details")
+            self.optimizer_detail_technical_action.text = "Technische Details"
+        self.optimizer_detail_technical_action._draw()
 
     def _build_tactical_page(self) -> None:
         page = self.pages["Tactical Replay"]
