@@ -202,7 +202,7 @@ def evaluate_recommendations(profile: dict[str, object], rules: Iterable[Optimiz
         for condition in rule.compatibility.excluded:
             matched, absent = _matches(profile, condition)
             trace["exclusions"].append({"condition": condition, "matched": matched, "missing": absent})
-        if rule.rule_type is RuleType.SECURITY_PERFORMANCE_TRADEOFF:
+        if rule.rule_type is RuleType.SECURITY_PERFORMANCE_TRADEOFF and state in {RecommendationState.RECOMMENDED, RecommendationState.ALREADY_RECOMMENDED}:
             state, rationale = RecommendationState.NO_CHANGE, "Security/performance trade-off fixtures are never automatically recommended or applied."
         if state in {RecommendationState.RECOMMENDED, RecommendationState.ALREADY_RECOMMENDED}:
             accepted.add(rule.rule_id)
@@ -214,7 +214,20 @@ def recommendation_detail_view_model(result: dict[str, object]) -> dict[str, obj
     """Stable no-apply panel contract for later desktop UI work."""
     rule = result["rule"]
     assert isinstance(rule, dict)
-    return {"optimizer": "Optimizer", "recommendation_group": "Improve Empfehlungen", "domain": result["domain"], "title": rule["title"], "current_state": "unknown/not_available", "improve_recommendation": "FIXTURE_ONLY — " + str(result["state"]) if result.get("fixture_only") else result["state"], "status": result["state"], "what_is_it": rule["setting"], "why_for_this_system": result["rationale"], "what_can_change": rule["goal"], "evidence_validity": result.get("evidence_records", rule["evidence"]), "risk_notes": rule["risk_class"], "restore_change_information": {"restore_capable": rule["restore_capable"], "changeable_later": rule["changeable_later"]}, "guidance": {"manual_action_required": rule["manual_action_required"], "guidance_available": rule["guidance_available"], "screenshot_verification_later": rule["screenshot_verification_later"]}, "explainability": {"compatibility": result.get("compatibility_trace", {}), "missing_evidence": result.get("missing_evidence", [])}, "apply_available": False}
+    state = str(result["state"])
+    missing = result.get("missing_evidence", [])
+    trace = result.get("compatibility_trace", {})
+    exclusions = trace.get("exclusions", []) if isinstance(trace, dict) else []
+    if missing:
+        current_state = "UNKNOWN / NOT AVAILABLE"
+    elif any(item.get("matched") for item in exclusions if isinstance(item, dict)):
+        current_state = "UNSUPPORTED / EXCLUDED"
+    elif state == RecommendationState.CONDITIONAL.value:
+        current_state = "CONDITIONAL / NOT CONFIRMED"
+    else:
+        current_state = "READ-ONLY FACTS AVAILABLE"
+    recommendation = "FIXTURE_ONLY — " + state if result.get("fixture_only") else "NO AUTOMATIC IMPROVE RECOMMENDATION — " + state
+    return {"optimizer": "Optimizer", "recommendation_group": "Improve Empfehlungen", "domain": result["domain"], "title": rule["title"], "current_state": current_state, "improve_recommendation": recommendation, "status": state, "what_is_it": rule["setting"], "why_for_this_system": result["rationale"], "what_can_change": rule["goal"], "evidence_validity": result.get("evidence_records", rule["evidence"]), "risk_notes": rule["risk_class"], "restore_change_information": {"restore_capable": rule["restore_capable"], "changeable_later": rule["changeable_later"]}, "guidance": {"manual_action_required": rule["manual_action_required"], "guidance_available": rule["guidance_available"], "screenshot_verification_later": rule["screenshot_verification_later"]}, "explainability": {"compatibility": trace, "missing_evidence": missing}, "apply_available": False}
 
 
 def system_profile_from_facts(facts: dict[str, Any]) -> dict[str, object]:

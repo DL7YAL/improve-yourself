@@ -23,6 +23,7 @@ from .local_profiles import OBJECTIVE_RULES, LocalProfileStore
 from .optimizer_evidence import evaluate_profile, profile_from_system_check
 from .optimizer_foundation import OptimizationRule, integration_proof
 from .replay_store import ReplayStore
+from .rule_pack import RulePackValidationError, import_rule_pack, load_rule_pack_document
 from .system_check import run_system_check
 
 
@@ -58,6 +59,13 @@ _UI_FONT = "Inter"
 _DISPLAY_FONT = "Orbitron"
 _PRIVATE_FONT_FLAG = 0x10
 _SYSTEM_SCAN_HOME_FIELDS = ("cpu", "gpu", "memory", "windows", "drivers", "display")
+_MATRIX_PACK_01_RELATIVE_PATH = Path("config") / "rule-packs" / "improve-matrix-pack-01.json"
+
+
+def matrix_pack_01_rules() -> tuple[OptimizationRule, ...]:
+    """Load the bundled, fail-closed Pack 01 without adding a second rule path."""
+    resource_root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[2]))
+    return import_rule_pack(load_rule_pack_document(resource_root / _MATRIX_PACK_01_RELATIVE_PATH))
 
 
 def system_scan_home_view(payload: dict[str, object]) -> dict[str, object] | None:
@@ -225,7 +233,7 @@ def optimizer_product_view(profile: dict[str, object], *, internal_test: bool = 
         counts["insufficient"] += status == "INSUFFICIENT_EVIDENCE"
         counts["manual_bios"] += bool(model["guidance"]["manual_action_required"])
         counts["tradeoffs"] += model["risk_notes"] == "HIGH" and "Trade-off" in str(model["title"])
-    return {"read_only": True, "internal_test": internal_test, "counts": counts, "domains": domains, "models": models}
+    return {"read_only": True, "internal_test": internal_test, "fixture_only": bool(models) and all(bool(model["improve_recommendation"].startswith("FIXTURE_ONLY")) for model in models), "counts": counts, "domains": domains, "models": models}
 
 
 def _register_private_fonts(root, assets: Path) -> tuple[str, str]:
@@ -2143,7 +2151,11 @@ class AnalyzerShellApp:
         self._render_optimizer_evidence(payload)
         profile = profile_from_system_check(payload)
         if profile is not None:
-            self._render_optimizer_product(optimizer_product_view(profile))
+            try:
+                self._render_optimizer_product(optimizer_product_view(profile, rules=matrix_pack_01_rules()))
+            except RulePackValidationError:
+                self._clear_optimizer_product()
+                status_message += " Matrix Pack 01 konnte nicht fail-closed validiert werden; keine Optimizerbewertung angezeigt."
         self.system_status.set(status_message)
 
     def _render_system_check_results(self, payload: dict[str, object]) -> None:
@@ -2208,9 +2220,11 @@ class AnalyzerShellApp:
             for child in frame.winfo_children():
                 child.destroy()
         counts = view["counts"]
-        self.optimizer_product_meta.configure(text=(f"{counts['checked']} geprüfte Fixture-Einstellungen · {counts['recommended']} technische Treffer · "
+        label = "Fixture-Einstellungen" if view["fixture_only"] else "Read-only Pack-01-Prüfpunkte"
+        notice = "Read-only: Fixtures sind keine realen Improve-Empfehlungen." if view["fixture_only"] else "Read-only: Pack 01 zeigt Fakten, Bedingungen und Unknowns; keine automatische Improve-Empfehlung."
+        self.optimizer_product_meta.configure(text=(f"{counts['checked']} geprüfte {label} · {counts['recommended']} technische Treffer · "
             f"{counts['already']} bereits passend · {counts['conditional']} conditional · {counts['insufficient']} unzureichende Evidenz. "
-            "Read-only: Fixtures sind keine realen Improve-Empfehlungen."))
+            + notice))
         domains = view["domains"]
         labels = {"SYSTEM_OPTIMIZER": "System Optimizer", "GRAPHICS_OPTIMIZER": "Graphics Optimizer", "NETWORK_OPTIMIZER": "Network Optimizer", "BIOS_OPTIMIZER": "BIOS Optimizer"}
         for domain, label in labels.items():
@@ -2226,6 +2240,13 @@ class AnalyzerShellApp:
                 self.ttk.Button(item, text="Details anzeigen", command=lambda value=model: self._show_optimizer_detail(value)).pack(anchor="w", pady=(6, 0))
                 if model["guidance"]["manual_action_required"]:
                     self.ttk.Label(item, text="Manuelle Aktion / BIOS Guidance vorbereitet · kein Apply", style="Muted.TLabel").pack(anchor="w", pady=(3, 0))
+        self.optimizer_product_card.pack(fill="x", pady=(14, 0))
+
+    def _clear_optimizer_product(self) -> None:
+        for frame in (self.optimizer_domain_actions, self.optimizer_product_rows):
+            for child in frame.winfo_children():
+                child.destroy()
+        self.optimizer_product_meta.configure(text="Matrix Pack 01 ist nicht gültig. Aus Sicherheitsgründen wird keine Optimizerbewertung angezeigt.")
         self.optimizer_product_card.pack(fill="x", pady=(14, 0))
 
     def _show_optimizer_detail(self, model: dict[str, object]) -> None:

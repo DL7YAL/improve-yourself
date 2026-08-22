@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import asdict
 from enum import StrEnum
+import json
+from pathlib import Path
 from typing import Any
 
 from .optimizer_foundation import (
@@ -26,6 +28,17 @@ class RulePackClass(StrEnum):
 
 class RulePackValidationError(ValueError):
     pass
+
+
+def load_rule_pack_document(path: Path) -> dict[str, object]:
+    """Load a versioned JSON pack before its existing fail-closed import gate."""
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise RulePackValidationError(f"rule pack cannot be read: {path.name}") from error
+    if not isinstance(document, dict):
+        raise RulePackValidationError("rule pack document must be an object")
+    return document
 
 
 def fixture_rule_pack_document() -> dict[str, object]:

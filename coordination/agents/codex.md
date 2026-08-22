@@ -1055,6 +1055,26 @@ MODEL_REASON: Bestehende sicherheitskritische Read-only-Regelstrecke geprüft; v
 COMPUTER_USE: no
 COMMIT/PR: `c9b8703 docs: record matrix pack input blocker`, gepusht nach `origin/dev/v1-foundation`.
 
+# Handoff 2026-08-22 — Improve Matrix Pack 01 integrated
+
+STATUS: DONE — WAITING_FOR_TRISTAN
+TASK: Improve Matrix Pack 01 als versionierte, maschinenlesbare Read-only-System-Check-Basis importieren, fail-closed validieren, über die bestehende 150-System-Matrix regressieren und im vorhandenen Optimizer-UI-/Detailvertrag prüfen.
+BRANCH: `dev/v1-foundation`
+CHANGED: `config/rule-packs/improve-matrix-pack-01.json`, `src/improve_yourself/rule_pack.py`, `src/improve_yourself/optimizer_foundation.py`, `src/improve_yourself/analyzer_shell.py`, `packaging/improve-yourself-experimental.spec`, `tests/test_matrix_pack_01.py`, `docs/IMPROVE_MATRIX_PACK_01.md`, `coordination/agents/codex.md`.
+PACK: `iy.improve_rule_pack/v1`, `improve-matrix-pack-01`, Version `1.0.0`, `READ_ONLY_SYSTEM_CHECK_BASIS`. Es enthält ausschließlich die vorhandenen 12 System-Check-Basen `windows`, `cpu`, `memory`, `motherboard`, `gpu`, `gpu_driver`, `chipset_driver`, `graphics_settings_profile`, `display`, `monitor`, `secure_boot`, `tpm` sowie die separaten vorhandenen Setting-IDs `latency`, `upscaling`, `frame_pacing`, `sync`, `sharpening`, `quality_overrides`, `game_tuning`. Alle 12 Regeln sind read-only, Apply/Restore false; kein neuer Tweaksatz.
+PROVENANCE: Exakter bestehender Source-Contract `origin/main@2cd358c`, `src/improve_yourself/system_check.py`; drei Quellen AMD RX 7900 XTX, Gigabyte X870 GAMING X WIFI7 und AMD X870 sind enthalten. Ihre live beobachteten Werte sind ausdrücklich nicht release-fixiert. Nicht gemappte Hardware, nicht auslesbare Profilwerte und fehlende Live-Vergleiche bleiben Unknown/Unsupported/Review.
+IMPORT / VALIDATE: `load_rule_pack_document()` liest das JSON, dann bleibt `import_rule_pack()` der einzige bestehende fail-closed Gate. Format, Regeln, Evidence und UI laufen über dieselbe Foundation; kein zweiter Importer und keine Rule-spezifische UI.
+REGRESSION: Vollständige deterministische 150-System-Auswertung: 1.800 Rule-System-Ergebnisse = RECOMMENDED 0, ALREADY_RECOMMENDED 0, NO_CHANGE 1.159, CONDITIONAL 172, INSUFFICIENT_EVIDENCE 469. 90 AMD-only Profilexclusions, 143 bedingte statt geratene Chipsatzzuordnungen. Mainboard-/Treiber-/Monitor-Missing sowie alle 300 fehlenden Secure-Boot-/TPM-Evidenzen bleiben INSUFFICIENT_EVIDENCE. Es gibt keine fachlich vorhandenen Pack-01-Konflikte; der bestehende Fixture-Contract beweist weiterhin die allgemeine deterministische Konfliktbehandlung, ohne eine reale Regel zu erfinden. Synthetic erzeugt keine reale VALIDATION_RESULT und ändert keine Confidence.
+FIX: Trade-off-Schutz überschrieb vorher auch fehlende Secure-Boot-/TPM-Evidenz mit NO_CHANGE. Er unterdrückt nun ausschließlich positive RECOMMENDED/ALREADY_RECOMMENDED-Zustände; Unknown bleibt korrekt INSUFFICIENT_EVIDENCE.
+UI REVIEW: Der bestehende generische Detailvertrag zeigt für Pack-Regeln nachvollziehbar `READ-ONLY FACTS AVAILABLE`, `CONDITIONAL / NOT CONFIRMED`, `UNSUPPORTED / EXCLUDED` oder `UNKNOWN / NOT AVAILABLE`, einschließlich Compatibility-Trace, Missing-Pfade, Evidence und Risiko. Die normale Desktop-System-Check-/Optimizer-Route lädt das gebündelte Pack 01 über denselben fail-closed Importer; bei ungültigem Pack leert sie die Bewertung und fällt nicht auf Fixtures zurück. Jede Pack-Karte meldet `NO AUTOMATIC IMPROVE RECOMMENDATION — <state>` und `apply_available: false`. Keine neue Ansicht, keine Remote-Schnittstelle, kein Apply.
+VERIFIED: Neue Matrix-Pack-Tests plus vollständiger `pytest` **175/175 PASS**; `compileall` PASS; pack-native Import/Validate/150-Regressions-Smoke PASS; `git diff --check` PASS. Der Packaging-Check bestätigt das JSON im Portable-Laufzeitpfad `_internal/config/rule-packs/improve-matrix-pack-01.json`. Die neue Teststrecke prüft Version/JSON, 12+7 Contract-IDs, drei nicht release-fixierte Quellen, fail-closed Import, deterministische 150-System-Verteilung, no-positive-recommendation, no-apply sowie Unknown/Conditional-Darstellung.
+RISKS / LIMITS: Kein Anspruch auf reale 150-Hardware-Golden-Master, keine reale Performance- oder Confidence-Aussage. Pack 01 enthält bewusst nur die vorhandenen exakten AMD-/Gigabyte-/AMD-Mappings; alles andere bleibt offen. Es existiert keine Pack-01-Konfliktregel, weil der bestehende System-Check-Vertrag keine definiert.
+NEXT: Tristan prüft den gepushten Pack-01-Checkpoint und entscheidet über die nächste explizite, weiterhin read-only fachliche Erweiterung oder reale Tester-Evidenz. Keine Apply-/Write-, Registry-, BIOS-, Network-, Benchmark- oder weitere Optimizer-Infrastruktur ohne Auftrag.
+MODEL_PROFILE: terra
+MODEL_REASON: Sicherheitskritische, bestehende Read-only-Semantik in ein versioniertes Pack integriert und bis UI-Vertrag/150-Profil-Regression nachgewiesen.
+COMPUTER_USE: no
+COMMIT/PR: Wird nach diesem vollständigen Pack-01-Checkpoint ergänzt.
+
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
 STATUS: WAITING_FOR_TRISTAN
