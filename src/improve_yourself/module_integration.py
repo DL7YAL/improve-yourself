@@ -5,7 +5,9 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Mapping, Protocol
+from typing import Any, Callable, Protocol
+
+from .analyzer_data_hub import AnalyzerDataHub
 
 
 MODULE_ADAPTER_CONTRACT_V1 = "iy.module_adapter/v1"
@@ -60,33 +62,42 @@ class ModuleAdapterV1(Protocol):
     def create_module_context(self, prepared_input: Any) -> ModuleContextV1: ...
 
 
-class AnalyzerDataHubV1:
-    """Versioned projections only; it never parses demos or exposes raw parser data."""
+class ProjectionProvider(Protocol):
+    """Narrow read-only boundary between the controller and a data owner."""
 
-    def __init__(self, projections: Mapping[str, Any] | None = None) -> None:
-        self._projections = deepcopy(dict(projections or {}))
+    def get_projection(self, contract: str) -> Any | None: ...
+
+
+class AnalyzerDataHubProjectionProvider:
+    """ProjectionProvider over the existing AnalyzerDataHub, never a second hub."""
+
+    _CONSUMERS = {
+        ANALYZER_PROJECTION_V1: "analyzer",
+        TACTICAL_PROJECTION_V1: "tactical",
+        REVIEW_PROJECTION_V1: "review",
+        REPORT_PROJECTION_V1: "report",
+    }
+
+    def __init__(self, data_hub: AnalyzerDataHub) -> None:
+        self._data_hub = data_hub
 
     def get_projection(self, contract: str) -> Any | None:
-        value = self._projections.get(contract)
-        return None if value is None else deepcopy(value)
+        consumer = self._CONSUMERS.get(contract)
+        return None if consumer is None else self._data_hub.for_consumer(consumer)
 
 
 class ModuleRegistry:
     def __init__(self) -> None:
-        self._entries: dict[str, tuple[ModuleDefinitionV1, ModuleAdapterV1]] = {}
+        self._entries: dict[str, tuple[ModuleDefinitionV1, Callable[[], ModuleAdapterV1]]] = {}
 
-    def register(self, definition: ModuleDefinitionV1, adapter: ModuleAdapterV1) -> None:
-        if definition.module_id != adapter.module_id:
-            raise ValueError("module definition and adapter ids differ")
+    def register(self, definition: ModuleDefinitionV1, adapter_factory: Callable[[], ModuleAdapterV1]) -> None:
         if definition.adapter_contract != MODULE_ADAPTER_CONTRACT_V1:
             raise ValueError("unsupported adapter contract")
-        if adapter.required_contract != definition.required_projection:
-            raise ValueError("adapter and required projection differ")
         if definition.module_id in self._entries:
             raise ValueError(f"module already registered: {definition.module_id}")
-        self._entries[definition.module_id] = (definition, adapter)
+        self._entries[definition.module_id] = (definition, adapter_factory)
 
-    def get(self, module_id: str) -> tuple[ModuleDefinitionV1, ModuleAdapterV1] | None:
+    def get(self, module_id: str) -> tuple[ModuleDefinitionV1, Callable[[], ModuleAdapterV1]] | None:
         return self._entries.get(module_id)
 
     def known_modules(self) -> tuple[ModuleDefinitionV1, ...]:
@@ -94,21 +105,26 @@ class ModuleRegistry:
 
 
 class ModuleController:
-    def __init__(self, registry: ModuleRegistry, data_hub: AnalyzerDataHubV1) -> None:
+    def __init__(self, registry: ModuleRegistry, projection_provider: ProjectionProvider) -> None:
         self._registry = registry
-        self._data_hub = data_hub
+        self._projection_provider = projection_provider
 
     def resolve(self, module_id: str) -> ModuleResolutionV1:
         entry = self._registry.get(module_id)
         if entry is None:
             return ModuleResolutionV1(module_id, ModuleStatus.UNAVAILABLE, detail="module is not registered")
-        definition, adapter = entry
+        definition, adapter_factory = entry
         if not definition.enabled:
             return ModuleResolutionV1(module_id, ModuleStatus.DISABLED, detail="module is disabled")
-        projection = self._data_hub.get_projection(definition.required_projection)
+        projection = self._projection_provider.get_projection(definition.required_projection)
         if projection is None:
             return ModuleResolutionV1(module_id, ModuleStatus.UNAVAILABLE, detail="required projection is unavailable")
         try:
+            adapter = adapter_factory()
+            if adapter.module_id != module_id:
+                raise ValueError("module definition and adapter ids differ")
+            if adapter.required_contract != definition.required_projection:
+                raise ValueError("adapter and required projection differ")
             adapter.validate_dependencies(projection)
             prepared = adapter.prepare_input(projection)
             context = adapter.create_module_context(deepcopy(prepared))

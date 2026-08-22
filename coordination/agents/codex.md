@@ -515,6 +515,20 @@ OPEN: Production renderer/UI choice and distributable art remain undecided by de
 NEXT: Implement only the verified visibility-mesh query boundary and the fixed Third-Person camera-to-anchor obstruction adjustment, including `camera_adjusted=true` plus clear/blocked/unknown tests. Do not add overlays, smoke interpretation, models, free camera, packaging or another replay truth.
 COMPUTER_USE: Local native window was launched for a timed visual proof; no authentication, external transmission or persistent app/system setting change.
 
+## 2026-08-22 — Module Integration Foundation V1 follow-up
+
+STATUS: done
+TASK: Remove the duplicate integration-side hub and ensure disabled adapters are genuinely lazy, as requested after the initial foundation delivery.
+BRANCH: `dev/v1-foundation`
+CHANGED: Removed `AnalyzerDataHubV1`. `ModuleController` now depends only on the narrow `ProjectionProvider` protocol. `AnalyzerDataHubProjectionProvider` maps the four accepted projection contracts to the existing `AnalyzerDataHub.for_consumer()` API, so Analyzer Data Hub remains the sole data owner. `ModuleRegistry` now stores adapter factories and instantiates an adapter only after a module is enabled and its projection is available.
+VERIFIED: `tests/test_module_integration.py`: 8 passed; source-only syntax compilation without bytecode writes passed; `git diff --check` passed. The test explicitly proves a disabled module never calls its factory and the narrow provider maps the existing hub contract.
+OPEN: The requested full-suite/`compileall` rerun remains blocked by this worktree's file-write policy. Existing `__pycache__` directories are present, but pytest cannot delete its scratch marker (`WinError 5`) and `compileall` cannot atomically write `.pyc` files. A rerun produced 140 passed before 66 errors, all rooted in that same permission failure; do not call it a full PASS.
+NEXT: WAITING_FOR_TRISTAN
+COMMIT/PR: Pending this follow-up commit and push.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Narrow correction of an architectural ownership boundary and lazy lifecycle guarantee.
+COMPUTER_USE: no
+
 ## 2026-08-22 — Module Integration Foundation V1
 
 STATUS: done

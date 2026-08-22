@@ -15,7 +15,9 @@ registered explicitly with `ModuleDefinitionV1` and a `ModuleAdapterV1`.
 Definitions declare the stable module id/version, adapter contract, one required
 projection, and `enabled`/`optional` state.
 
-- The **Data Hub** owns only explicit, versioned projections. It never parses a
+- The existing **Analyzer Data Hub** owns only explicit, versioned projections. The
+  controller sees it solely through the narrow `ProjectionProvider` boundary; it
+  never parses a
   demo on demand, exposes raw awpy data, or lets a consumer mutate stored data.
 - The **Controller** manages registration, enabled state, dependency checks and
   `READY`, `UNAVAILABLE`, `DISABLED`, or `ERROR` resolution. Optional adapter
@@ -31,6 +33,9 @@ The recognised analyzer-facing projection identifiers are
 `iy.review_projection/v1`, and `iy.report_projection/v1`. A missing or
 incompatible projection resolves to `UNAVAILABLE`; there is deliberately no raw
 parser fallback or best-effort reparse.
+
+Registry entries retain an adapter factory, not a constructed adapter. A disabled
+module is therefore returned as `DISABLED` without instantiating its adapter.
 
 `My Improvement` remains a future independent consumer/module. It may later
 combine explicit results from Analyzer, Tactical, Review, Reports and history;
