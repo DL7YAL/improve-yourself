@@ -1091,7 +1091,7 @@ NEXT: Tristan entscheidet ausschließlich über den vorgeschlagenen nächsten fa
 MODEL_PROFILE: terra
 MODEL_REASON: Realer, privacy-bewusster read-only Evidence-Abgleich mit gezielter Datenpfadkorrektur und Release-Gate.
 COMPUTER_USE: no
-COMMIT/PR: Wird nach erfolgreichem vollständigem Build-Gate ergänzt.
+COMMIT/PR: `da9cd34 feat: validate matrix pack against real system evidence`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
