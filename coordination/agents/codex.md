@@ -1,5 +1,27 @@
 # Codex
 
+## 2026-08-22 — External Test Candidate
+
+STATUS: `DONE — WAITING_FOR_TRISTAN`
+
+TASK: Den laufenden Unified-Analyzer-Auftrag in einen stabilen externen Test Candidate überführen. Zulässig waren ausschließlich finale Sidebar-Sortierung, kritische Navigationskorrekturen, Portable-/Testerpaket, End-to-End-Smoke und Handoff. Keine neue Produktfunktion, kein zusätzlicher UI-Polish, keine Benchmark-, Replay-, Parser-, Optimizer- oder Architekturarbeit.
+
+BRANCH / IMPLEMENTATION COMMIT: `dev/v1-foundation` / `42347d1 chore: prepare external test candidate`. Der nachfolgende Handoff-Commit dokumentiert nur diesen Zustand.
+
+CHANGED: Die Sidebar wird nun tatsächlich über die explizite Workflow-Reihenfolge gerendert — **Dashboard → Analyzer → Tactical Replay → My Improvement → Reports → System Check / Optimizer → Settings → Improve Benchmark** — statt implizit über die technische Seiten-Registrierungsreihenfolge. Es bleibt genau ein Top-Level-`Analyzer`; `Demo Analyzer` und `Rules` bleiben nicht in der Sidebar. Die zwei Dashboard-Einstiege in den Analyzer führen zuverlässig zur internen **Übersicht** (Demo-Preflight), unabhängig vom zuletzt aktiven Analyzer-Tab. Die Karte **My Improvement** öffnet die passende bestehende Entwicklungsübersicht statt der separaten Reports-Seite. Es wurden keinerlei Analyzer-Daten, Rules, Szenen, Ticks, CS2-/NetCon-Logik oder Replaypfade verändert.
+
+TESTER PACKAGE: `packaging/EXTERNAL_TEST_CANDIDATE_README.txt` liegt im Portable-Verzeichnis direkt neben der EXE und ist im ZIP enthalten. Es beschreibt den lokalen/read-only Testweg, die Datenablage, den optionalen vorhandenen CS2-/NetCon-Pfad, die zu meldenden Fehler und den Manifest-Hash. Der Packaging-Gate prüft das Staging der Datei vor dem ZIP-Erstellen. Das Paket ist absichtlich weiter ein **Portable Experimental**: Es existiert kein akzeptierter Inno-/WiX-/NSIS-/MSIX-Installervertrag. Deshalb ist `Setup: not generated` kein Buildfehler und es wurde kein unfreigegebener Installer, Updater, Signier- oder Installationspfad ergänzt.
+
+PORTABLE / INTEGRITY: Voller frischer Build erfolgreich. Artefakte: `dist/experimental/Improve Yourself Experimental/Improve Yourself Experimental.exe`, `dist/experimental/Improve-Yourself-Experimental-Portable.zip`, `dist/experimental/experimental-build.json`. EXE SHA-256: `3E476A0F6D3D0362313BCA21A6BD08B883DCC2EE89C0FFD7E021F5465A571B56`; ZIP SHA-256: `82B2727307CE346CB9DFF9FDFA7FBCC326F9F142F00E68B2079BCCBD3D0F8707`; ZIP-Größe: `168870493` Bytes. Die Anleitung wurde sowohl im extrahierten Portable als auch im ZIP direkt nachgewiesen.
+
+RUNTIME SMOKE: Der **frische** Portable startete auf dem ehrlichen Analyzer-Empty-State ohne automatische Demoauswahl. Die finale Sidebar wurde praktisch geprüft: Dashboard aktiv, Analyzer direkt darunter, Tactical direkt als nächster Workflow-Schritt; der Dashboard-My-Improvement-Einstieg öffnet die reale `Meine Entwicklung`-Ansicht. Für den echten lokalen Nachweis wurde das vorhandene hashgebundene Ancient-Workflowartefakt im frischen Portable geöffnet: `de_ancient`, **18 Runden**, **10 benannte Spieler**, **3179** Basis-Events und **54** zusammengeführte Szenen. Der Analyse-Tab zeigte Full-Demo/CT/T/Spielerauswahl, Profil `review_v1` und sieben objektive Kriterien. Der Review-Tab öffnete den eingebetteten echten Szenenreview; ausgewählt war `Runde 01 · Tick 3654 · 3 Marker` mit tatsächlichem Kontext `3526–3961`, Spielern und objektiven Regeln `entry`, `headshot`, `kill`. Das ist dieselbe bereits praktisch getestete lokale Demo-/Szenenbasis des Unified-Analyzer-Handoffs; weder Demo- noch Analyseergebnisse wurden für den Smoke erfunden. Der bestehende Tactical-Übergang und die CS2-Tick-Sicherheitsgrenzen wurden in diesem Candidate nicht geändert; ihre erfolgreiche Runtime-Evidenz bleibt im unmittelbar vorherigen Unified-Analyzer-Handoff festgehalten. Ein optionaler CS2-Sprung wurde nicht ausgelöst.
+
+TESTS / CLEANLINESS: Fokussierter Shell-Test zuvor **29 passed**; der finale vollständige Packaging-Gate: **189 passed**, `pip check` PASS, PyInstaller PASS, Portable PASS, ZIP PASS, Manifest PASS. `compileall` PASS und `git diff --check` PASS. Das frische Portable-Fenster wurde nach dem Smoke kontrolliert geschlossen. Keine generierten Resultate oder Buildartefakte werden versioniert.
+
+KNOWN BOUNDARY: Für einen echten Installer bräuchte das Projekt eine separate Produktentscheidung zu Installationsbereich, Upgrade-/Uninstall-Identität, Verknüpfungen und Signierung. Das wäre ausdrücklich außerhalb dieses Candidate-Scope. Der zulässige Tester-Deliverable ist daher der hashgebundene Portable-ZIP mit Anleitung, nicht ein nur behaupteter Setup-Installer.
+
+NEXT: `WAITING_FOR_TRISTAN`. Tristan kann den Portable-ZIP extrahieren, die direkte Testeranleitung neben der EXE verwenden und den lokalen Ablauf prüfen. Keine weitere Produkt-, UI-, Optimizer-, Benchmark-, Replay- oder Infrastrukturarbeit ohne neuen Auftrag.
+
 ## 2026-08-22 — Unified Analyzer Final Integration
 
 STATUS: `DONE — WAITING_FOR_TRISTAN`
