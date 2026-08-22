@@ -1,5 +1,33 @@
 # Codex
 
+## 2026-08-22 — Optimizer Visual Fidelity Pass
+
+STATUS: `WAITING_FOR_TRISTAN`
+
+TASK: Ausschließlich den angenommenen Optimizer-Piloten gegen die zwei verbindlichen visuellen Optimizer-Referenzen kalibrieren. Struktur, Navigation, Daten-, Evidence-, Matrix-Pack-, Rule-Pack- und read-only-Sicherheitslogik bleiben unverändert. Keine andere Produktseite bearbeiten.
+
+BRANCH: `dev/v1-foundation`
+
+CHANGED: Zentrale optimizer-exklusive Midnight-/Metallic-Tokens und eine kleine gemeinsame Komponentenfamilie ergänzen echte gerundete Oberflächen, Low-Fill-Actions, Hardware-Chips, metrische Statusflächen und Detail-/Tabellen-Chrome über den vorhandenen Tk-Inhalt. Übersicht und Systemdetail behalten ihre angenommene Struktur. Die vier Bereichskarten haben eine gemeinsame Mindesthöhe, damit auch die längere Network-Statuszeile ihre Aktion nicht abschneidet. Der primäre rechte Erklärungstext verdichtet nur vorhandene Contract-Werte zu lesbaren deutschen Darstellungslabels; die unveränderten Rohwerte bleiben ausschließlich hinter `Technische Details` zugänglich. Keine Produktregel, Bewertung, Hardwareerkennung, Datenquelle, Sicherheitsgrenze, Aktion oder andere Seite geändert.
+
+RUNTIME EVIDENCE: Der frische finale Portable wurde nach dem letzten Packaging bei normaler Experimental-Größe (`1360x860`) geöffnet. Capture 1: Optimizer-Hauptübersicht mit dunklem Grund, Kompaktchips, abgerundeter Statusfläche, vier vollständigen 2x2-Karten, aktiver System-Karte und fester dunkler Detailspalte. Capture 2: System Optimizer mit Rücknavigation, dunklen Kennzahlenkarten, Such-/Filterzeile, Tabellenkopf/Zeilen/Selected-State, lesbarer rechter Erklärung und sekundärem `Technische Details`. Keine weiße oder helle native Fläche sichtbar. Die Portable verbleibt auf dem finalen System-Optimizer-Screen für Tristans Sichtcheck.
+
+CURRENT-vs-TARGET: **PASS im Visual-Fidelity-Scope.** Farbwirkung folgt der Referenz: fast schwarzes Navy führt, tiefe Blau-Schwarz-Surfaces trennen die Ebenen, Cyan ist Kante/Fokus/aktive Führung statt dominierende Grundfläche. Cards, Chips, Actions, Tabelle und Detailspalte tragen nun dieselbe ruhige abgerundete Metallic-Formsprache; der frühere Tk-/Developer-Standardlook ist nicht mehr dominant. Keine pixelgenaue Bitmapkopie behauptet; reale read-only Daten und fehlende/unsichere Werte ersetzen die Mockupwerte wahrheitsgemäß.
+
+VERIFIED: Vollständiger Build-Gate **187 passed**; `compileall` PASS; `git diff --check` PASS. Finales Manifest: `dist/experimental/experimental-build.json`; EXE SHA-256 `A721203F811CA56736132716F242552DF3B1D7B195B6903D17E3860B6FEF4D80`; ZIP SHA-256 `78661DB219DEDE2B6EC08CC6899F32AF2D8C942B2FDCC50387337F52BB2B3D62`.
+
+OPEN: Ausschließlich Tristans visueller Vergleich der zwei finalen Runtime-Screens mit den bereitgestellten Optimizer-Referenzen.
+
+NEXT: Keine weitere Arbeit. Bis zu einer neuen ausdrücklichen Freigabe: `WAITING_FOR_TRISTAN`.
+
+MODEL_PROFILE: terra
+
+MODEL_REASON: Eng begrenzte Runtime-Visualkalibrierung einer bestehenden native Desktopoberfläche ohne Logik-, Daten- oder Sicherheitsänderung.
+
+COMPUTER_USE: yes
+
+COMMIT/PR: `b244f73 feat: refine optimizer visual fidelity`; final handoff checkpoint and push follow on `dev/v1-foundation`.
+
 ## 2026-08-22 — Optimizer Reference-Locked Rebuild
 
 STATUS: `WAITING_FOR_TRISTAN`
