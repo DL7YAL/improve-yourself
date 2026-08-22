@@ -1045,6 +1045,17 @@ class AnalyzerShellController:
         self.selected_ids: list[str] = []
         self.selection_mode = "full_demo"
 
+    def begin_import(self) -> None:
+        """Clear the prior workflow before an explicitly chosen new demo parses.
+
+        The UI must never leave an old workflow actionable while a different
+        demo is being imported.  This changes no parser or analysis semantics:
+        it only makes the selected-demo boundary explicit and fail-closed.
+        """
+        self.result = None
+        self.selected_ids.clear()
+        self.selection_mode = "full_demo"
+
     def import_demo(self, demo: Path, *, max_bytes: int = 2_000_000_000) -> ShellResult:
         demo = demo.resolve()
         if demo.suffix.lower() != ".dem" and not demo.name.lower().endswith(".dem.zst"):
@@ -1562,6 +1573,36 @@ class AnalyzerShellApp:
         self.rules.pack(side="left", padx=8)
         self.profile_criteria = ttk.Label(profile_row, style="StatusBadge.TLabel")
         self.profile_criteria.pack(side="right")
+
+        self.chosen = ttk.Label(selection_card, text="Full Demo", style="Muted.TLabel")
+        self.chosen.pack(anchor="w", pady=(4, 0))
+
+        # Keep the primary workflow action immediately below the selection
+        # controls.  Rules remain available as configuration context, but a
+        # loaded real demo must not require scrolling past the whole ruleset
+        # before the user can start the existing analysis.
+        review_strip = ttk.Frame(analysis_tab, style="Content.TFrame")
+        review_strip.pack(fill="x", pady=(12, 0))
+        self.analyzer_review_strip = review_strip
+        actions = ttk.Frame(review_strip, style="Card.TFrame", padding=14)
+        actions.pack(side="left", fill="both", expand=True, padx=(0, 6))
+        ttk.Label(actions, text="ANALYSE & REVIEW", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w", pady=(0, 8))
+        action_row = ttk.Frame(actions, style="CardInner.TFrame")
+        action_row.pack(fill="x")
+        self.analyze_button = ttk.Button(action_row, text="Analyse starten", command=self._analyze, state="disabled")
+        self.analyze_button.pack(side="left")
+        self.cs2_button = ttk.Button(action_row, text="CS2 prüfen", command=self._preflight, state="disabled")
+        self.cs2_button.pack(side="left", padx=8)
+        self.workflow_widgets.extend((self.analyze_button, self.cs2_button))
+        self.review_button = ttk.Button(action_row, text="Review anzeigen", command=self._open_review, state="disabled")
+        self.review_button.pack(side="left")
+        self.analysis_action_status = tk.StringVar(value="Analyse starten wird nach einem erfolgreichen lokalen Demo-Import verfügbar.")
+        ttk.Label(actions, textvariable=self.analysis_action_status, style="Muted.TLabel", wraplength=520, justify="left").pack(anchor="w", pady=(9, 0))
+        preflight = ttk.LabelFrame(review_strip, text="CS2-READINESS", padding=12)
+        preflight.pack(side="left", fill="both", expand=True, padx=(6, 0))
+        for variable in (self.netcon_status, self.demo_status, self.filename_status, self.preflight_message):
+            ttk.Label(preflight, textvariable=variable).pack(anchor="w")
+
         rules_frame = ttk.LabelFrame(analysis_tab, text="Objektive Szenenanker V1", padding=18)
         ttk.Label(analysis_tab, text="REGELSET", style="SectionTitle.TLabel").pack(anchor="w", pady=(16, 0))
         ttk.Label(analysis_tab, text="Profile kombinieren belegte Marker; einzelne schwache Hinweise erzeugen keine Standard-Szene.", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
@@ -1589,25 +1630,6 @@ class AnalyzerShellApp:
         ttk.Label(architecture, text="Standardprofile erzeugen Szenen nur aus vollständig definierten objektiven Kombinationen.", style="Muted.TLabel").pack(anchor="w", pady=(6, 0))
         ttk.Label(analysis_tab, text=f"Lokale Profile: {controller.profile_store.root}", foreground=_THEME["muted"]).pack(anchor="w", pady=(10, 5))
 
-        self.chosen = ttk.Label(selection_card, text="Full Demo", style="Muted.TLabel")
-        self.chosen.pack(anchor="w", pady=(4, 0))
-        review_strip = ttk.Frame(analysis_tab, style="Content.TFrame")
-        review_strip.pack(fill="x", pady=(12, 0))
-        self.analyzer_review_strip = review_strip
-        actions = ttk.Frame(review_strip, style="Card.TFrame", padding=14)
-        actions.pack(side="left", fill="both", expand=True, padx=(0, 6))
-        ttk.Label(actions, text="ERKANNTE SITUATIONEN & REVIEW", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w", pady=(0, 8))
-        self.analyze_button = ttk.Button(actions, text="Analyse starten", command=self._analyze, state="disabled")
-        self.analyze_button.pack(side="left")
-        self.cs2_button = ttk.Button(actions, text="CS2 prüfen", command=self._preflight, state="disabled")
-        self.cs2_button.pack(side="left", padx=8)
-        self.workflow_widgets.extend((self.analyze_button, self.cs2_button))
-        self.review_button = ttk.Button(actions, text="Review anzeigen", command=self._open_review, state="disabled")
-        self.review_button.pack(side="left")
-        preflight = ttk.LabelFrame(review_strip, text="CS2-READINESS", padding=12)
-        preflight.pack(side="left", fill="both", expand=True, padx=(6, 0))
-        for variable in (self.netcon_status, self.demo_status, self.filename_status, self.preflight_message):
-            ttk.Label(preflight, textvariable=variable).pack(anchor="w")
         self._build_analyzer_result_projection(review_tab)
         self._build_embedded_review(review_tab)
         self._build_dashboard_page()
@@ -1640,8 +1662,14 @@ class AnalyzerShellApp:
         self.ttk.Label(header, text="ANALYSE", style="SectionTitle.TLabel").pack(side="left")
         self.analyzer_result_state = self.tk.StringVar(value="Demo und objektive Szenen noch nicht geladen")
         self.ttk.Label(header, textvariable=self.analyzer_result_state, style="StatusBadge.TLabel").pack(side="right")
-        self.ttk.Button(header, text="Review öffnen", command=self._open_review).pack(side="right", padx=(0, 8))
-        self.ttk.Button(header, text="Analyse konfigurieren", command=self._show_analyzer_setup).pack(side="right", padx=(0, 8))
+        self.analyzer_projection_review_button = self.ttk.Button(
+            header, text="Review öffnen", command=self._open_review, state="disabled"
+        )
+        self.analyzer_projection_review_button.pack(side="right", padx=(0, 8))
+        self.analyzer_projection_setup_button = self.ttk.Button(
+            header, text="Analyse konfigurieren", command=self._show_analyzer_setup
+        )
+        self.analyzer_projection_setup_button.pack(side="right", padx=(0, 8))
 
         # This is deliberately a presentation-only flow rail.  It makes the
         # already existing analysis -> embedded review transition visible in
@@ -1681,7 +1709,10 @@ class AnalyzerShellApp:
         self.ttk.Label(situations, text="ERKANNTE SITUATIONEN", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
         self.analyzer_situations = self.tk.StringVar(value="Nach der Analyse stehen hier die ersten zusammengeführten Szenen.")
         self.ttk.Label(situations, textvariable=self.analyzer_situations, style="Muted.TLabel", justify="left", wraplength=340).pack(anchor="w", pady=(10, 0))
-        self.ttk.Button(situations, text="Szenen im Review öffnen", command=self._open_review).pack(anchor="w", pady=(12, 0))
+        self.analyzer_projection_scenes_button = self.ttk.Button(
+            situations, text="Szenen im Review öffnen", command=self._open_review, state="disabled"
+        )
+        self.analyzer_projection_scenes_button.pack(anchor="w", pady=(12, 0))
 
         next_steps = self.ttk.Frame(middle, style="Card.TFrame", padding=16)
         next_steps.pack(side="left", fill="both", expand=True, padx=(6, 0))
@@ -2176,6 +2207,8 @@ class AnalyzerShellApp:
         self.ttk.Label(period, text="Lokale Analysen erforderlich", style="StatusBadge.TLabel").pack(side="left")
         summary = self.ttk.Frame(page, style="Content.TFrame")
         summary.pack(fill="x")
+        self.improvement_summary = summary
+        self.improvement_summary_cards: list[object] = []
         cards = (
             ("AIM", "#13A7E8"),
             ("DUELS", "#E25B5B"),
@@ -2184,12 +2217,11 @@ class AnalyzerShellApp:
             ("PERFORMANCE", "#E5B854"),
         )
         for index, (title, accent) in enumerate(cards):
-            summary.columnconfigure(index, weight=1, uniform="improvement")
             card = RoundedHomeSurface(
                 self.tk, self.ttk, summary, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
-                padding=14, min_height=230, radius=10,
+                padding=(10, 14), min_height=230, radius=10,
             )
-            card.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 4, 0 if index == len(cards) - 1 else 4))
+            self.improvement_summary_cards.append(card)
             self._home_accent(card.body, accent)
             self.ttk.Label(card.body, text=title, style="HomePanel.TLabel", font=(self.display_font, 9, "bold"), wraplength=190, justify="left").pack(anchor="w", pady=(8, 7))
             self.ttk.Label(card.body, text="Noch nicht bewertet", style="HomePanelMuted.TLabel").pack(anchor="w")
@@ -2199,11 +2231,14 @@ class AnalyzerShellApp:
             ).pack(anchor="w", pady=(8, 14))
             metric_row = self.ttk.Frame(card.body, style="HomeInner.TFrame")
             metric_row.pack(fill="x", side="bottom")
-            for metric_title, metric_value in (("AKTUELL", "–"), ("VERGLEICH", "–")):
-                metric = self.ttk.Frame(metric_row, style="HomeInner.TFrame", padding=(7, 6))
-                metric.pack(side="left", fill="x", expand=True, padx=(0, 3) if metric_title == "AKTUELL" else (3, 0))
+            for metric_index, (metric_title, metric_value) in enumerate((("AKTUELL", "–"), ("VERGLEICH", "–"))):
+                metric_row.columnconfigure(metric_index, weight=1, uniform="improvement-metrics")
+                metric = self.ttk.Frame(metric_row, style="HomeInner.TFrame", padding=(2, 6))
+                metric.grid(row=0, column=metric_index, sticky="nsew", padx=(0, 1) if metric_index == 0 else (1, 0))
                 self.ttk.Label(metric, text=metric_title, style="PageKicker.TLabel").pack(anchor="w")
                 self.ttk.Label(metric, text=metric_value, style="HomePanel.TLabel", font=(self.display_font, 12, "bold")).pack(anchor="w", pady=(2, 0))
+        summary.bind("<Configure>", lambda event: self._layout_my_improvement_cards(event.width))
+        self.root.after_idle(lambda: self._layout_my_improvement_cards(summary.winfo_width()))
         lower = self.ttk.Frame(page, style="Content.TFrame")
         lower.pack(fill="x", pady=(14, 0))
         for index, (title, text, accent) in enumerate((
@@ -2221,6 +2256,21 @@ class AnalyzerShellApp:
             min_height=132,
         )
         influenced.pack(fill="x", pady=(14, 0))
+
+    def _layout_my_improvement_cards(self, width: int) -> None:
+        """Keep comparison labels readable instead of squeezing five cards."""
+        columns = 5 if width >= 1_000 else 3
+        for column in range(5):
+            self.improvement_summary.columnconfigure(
+                column, weight=1 if column < columns else 0, uniform="improvement" if column < columns else ""
+            )
+        for index, card in enumerate(self.improvement_summary_cards):
+            column, row = index % columns, index // columns
+            card.grid(
+                row=row, column=column, sticky="nsew",
+                padx=(0 if column == 0 else 4, 0 if column == columns - 1 else 4),
+                pady=(0 if row == 0 else 8, 0),
+            )
 
     def _build_demo_analyzer_page(self, page) -> None:
         """Build the Overview tab of the unified Analyzer.
@@ -2600,7 +2650,39 @@ class AnalyzerShellApp:
         )
         detail_surface.pack(side="right", fill="y")
         detail_surface.canvas.pack_propagate(False)
-        detail = detail_surface.body
+        # The explanation column can legitimately be taller than the table
+        # viewport (especially for Graphics/Network evidence).  It therefore
+        # owns an explicit local scroll surface instead of silently clipping
+        # the lower sections inside the fixed rounded card.
+        detail_host = detail_surface.body
+        detail_canvas = self.tk.Canvas(
+            detail_host, background=_OPTIMIZER_THEME["surface_detail"],
+            borderwidth=0, highlightthickness=0,
+        )
+        detail_scrollbar = self.ttk.Scrollbar(detail_host, orient="vertical", command=detail_canvas.yview)
+        detail_canvas.configure(yscrollcommand=detail_scrollbar.set)
+        detail_scrollbar.pack(side="right", fill="y")
+        detail_canvas.pack(side="left", fill="both", expand=True)
+        detail = self.ttk.Frame(detail_canvas, style="OptimizerDetail.TFrame")
+        detail_window = detail_canvas.create_window((0, 0), window=detail, anchor="nw")
+        detail.bind(
+            "<Configure>",
+            lambda _event, canvas=detail_canvas: canvas.configure(scrollregion=canvas.bbox("all")),
+        )
+        detail_canvas.bind(
+            "<Configure>",
+            lambda event, canvas=detail_canvas, item=detail_window: canvas.itemconfigure(item, width=event.width),
+        )
+        detail_canvas.bind(
+            "<MouseWheel>",
+            lambda event, canvas=detail_canvas: canvas.yview_scroll(int(-event.delta / 120), "units"),
+        )
+        detail.bind(
+            "<MouseWheel>",
+            lambda event, canvas=detail_canvas: canvas.yview_scroll(int(-event.delta / 120), "units"),
+        )
+        self.optimizer_detail_scroll_canvas = detail_canvas
+        self.optimizer_detail_scrollbar = detail_scrollbar
         self.optimizer_detail_card = detail_surface
         self.optimizer_detail_tree = self.ttk.Treeview(table_card, style="Optimizer.Treeview", columns=("current", "recommendation", "status", "open"), show="tree headings", selectmode="browse")
         self.optimizer_detail_tree.heading("#0", text="EINSTELLUNG")
@@ -2758,6 +2840,7 @@ class AnalyzerShellApp:
 
     def _set_optimizer_detail(self, model: dict[str, object] | None) -> None:
         self.optimizer_selected_model = model
+        self.optimizer_detail_scroll_canvas.yview_moveto(0.0)
         self.optimizer_detail_technical_visible = False
         self.optimizer_detail_technical_text.pack_forget()
         self.optimizer_detail_technical_action.text = "Technische Details"
@@ -2923,7 +3006,58 @@ class AnalyzerShellApp:
 
         path = filedialog.askopenfilename(filetypes=[("CS2 Demo", "*.dem *.dem.zst"), ("Alle Dateien", "*.*")])
         if path:
-            self._background("Demo wird lokal geparst …", lambda: self.controller.import_demo(Path(path)))
+            demo = Path(path)
+            self.controller.begin_import()
+            self._mark_demo_import_started(demo)
+            self._background(
+                "Demo wird lokal geparst …",
+                lambda: self.controller.import_demo(demo),
+                on_error=lambda message, selected=demo: self._mark_demo_import_failed(selected, message),
+            )
+
+    def _set_analysis_controls_available(self, available: bool) -> None:
+        for widget in self.workflow_widgets:
+            if not available:
+                widget.configure(state="disabled")
+            elif widget in (self.player, self.profile):
+                widget.configure(state="readonly")
+            else:
+                widget.configure(state="normal")
+        self.link_button.configure(state="normal" if available else "disabled")
+
+    def _mark_demo_import_started(self, demo: Path) -> None:
+        """Project an explicit, non-actionable parsing state into all tabs."""
+        self._set_analysis_controls_available(False)
+        self.review_button.configure(state="disabled")
+        self.demo_review_button.configure(state="disabled")
+        self.analyzer_projection_review_button.configure(state="disabled")
+        self.analyzer_projection_scenes_button.configure(state="disabled")
+        self.identity.set(f"Ausgewählte Demo: {demo.name} · lokaler Import und Parse laufen …")
+        self.demo_preflight.set("Analyse, Review und Tick-Sprung bleiben gesperrt, bis der Parser diese Demo bestätigt.")
+        self.analysis_action_status.set("Parser läuft für die ausgewählte Demo. Analyse starten wird erst nach erfolgreichem Import freigegeben.")
+        self.demo_library_text.set(f"Ausgewählte Datei: {demo.name}\nLokaler Import und Parse laufen. Keine vorherige Demo bleibt aktiv.")
+        self.demo_selected_text.set(f"{demo.name}\nImport-/Parse-Status: läuft\nNoch keine bestätigten Match-Fakten verfügbar.")
+        self.demo_import_text.set("Import läuft · Parser prüft die explizit ausgewählte Demodatei.")
+        self.demo_analysis_text.set("Analyse gesperrt · Import/Parse noch nicht bestätigt.")
+        self.demo_ready_text.set("Noch nicht analysebereit · auf Parser-Ergebnis warten.")
+        self.demo_overview_text.set("Die ausgewählte Demo wird lokal geprüft. Ergebnisse werden erst nach einem erfolgreichen Parse angezeigt.")
+
+    def _mark_demo_import_failed(self, demo: Path, message: str) -> None:
+        self._set_analysis_controls_available(False)
+        self.review_button.configure(state="disabled")
+        self.demo_review_button.configure(state="disabled")
+        self.analyzer_projection_review_button.configure(state="disabled")
+        self.analyzer_projection_scenes_button.configure(state="disabled")
+        self.status.set(f"Import fehlgeschlagen: {message}")
+        self.identity.set(f"Keine bestätigte Demo geladen · {demo.name} konnte nicht importiert werden.")
+        self.demo_preflight.set("Analyse, Review und Tick-Sprung bleiben gesperrt. Eine gültige .dem oder .dem.zst erneut auswählen.")
+        self.analysis_action_status.set("Analyse starten nicht verfügbar: Der lokale Demo-Import wurde nicht bestätigt.")
+        self.demo_library_text.set(f"Letzter Importversuch: {demo.name}\nFehlgeschlagen: {message}")
+        self.demo_selected_text.set(f"{demo.name}\nImport-/Parse-Status: fehlgeschlagen\nKeine Demo ist analysebereit.")
+        self.demo_import_text.set(f"Import fehlgeschlagen · {message}")
+        self.demo_analysis_text.set("Keine Analyse gestartet.")
+        self.demo_ready_text.set("Nicht analysebereit · gültige Demo auswählen und Import wiederholen.")
+        self.demo_overview_text.set("Für diese Auswahl liegen keine bestätigten Demo-Fakten vor. Es werden keine Ergebnisse geschätzt oder übernommen.")
 
     def _open_existing(self) -> None:
         from tkinter import filedialog
@@ -2956,7 +3090,8 @@ class AnalyzerShellApp:
             )
 
     def _background(
-        self, message: str, operation: Callable[[], ShellResult], *, recheck: bool = False
+        self, message: str, operation: Callable[[], ShellResult], *, recheck: bool = False,
+        on_error: Callable[[str], None] | None = None,
     ) -> None:
         self.status.set(message)
 
@@ -2964,7 +3099,11 @@ class AnalyzerShellApp:
             try:
                 result = operation()
             except Exception as error:
-                self.root.after(0, lambda: self.status.set(f"Fehler: {error}"))
+                error_message = str(error)
+                if on_error is None:
+                    self.root.after(0, lambda text=error_message: self.status.set(f"Fehler: {text}"))
+                else:
+                    self.root.after(0, lambda text=error_message: on_error(text))
             else:
                 self.root.after(0, lambda: self._finish_background(result, recheck))
 
@@ -2977,9 +3116,7 @@ class AnalyzerShellApp:
             self._preflight()
 
     def _draw(self, result: ShellResult) -> None:
-        for widget in self.workflow_widgets:
-            widget.configure(state="readonly" if widget in (self.player, self.profile) else "normal")
-        self.link_button.configure(state="normal")
+        self._set_analysis_controls_available(True)
         for box in (self.ct, self.t):
             for child in box.winfo_children():
                 child.destroy()
@@ -3003,6 +3140,11 @@ class AnalyzerShellApp:
             f"{len(result.players)} Spieler · {result.basic_event_count} grundlegende Events"
         )
         phase = "Auswahl bereit" if result.status == "READY_FOR_SELECTION" else f"{result.scene_count} Szenen · Review bereit"
+        self.analysis_action_status.set(
+            "Demo und Parser-Fakten bestätigt. Analyseprofil und Spielerauswahl prüfen, dann Analyse starten."
+            if result.status == "READY_FOR_SELECTION" else
+            "Analyse abgeschlossen. Review, Szenen und vorhandener 2D-Pfad sind für diese bestätigte Demo verfügbar."
+        )
         self.status.set(f"{result.map_id} · {phase}")
         self.overview_status.set(
             f"{result.source_demo_name or 'Lokaler Workflow'} · {result.map_id} · {result.round_count} Runden · "
@@ -3030,6 +3172,8 @@ class AnalyzerShellApp:
             button.configure(state="normal" if ready else "disabled")
         self.cs2_button.configure(state="normal" if result.status == "READY_FOR_REVIEW" else "disabled")
         self.review_button.configure(state="normal" if ready else "disabled")
+        self.analyzer_projection_review_button.configure(state="normal" if ready else "disabled")
+        self.analyzer_projection_scenes_button.configure(state="normal" if ready else "disabled")
         self._render_analyzer_result_projection(result)
         self._set_analyzer_result_mode(result)
         self._close_embedded_review()

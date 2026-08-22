@@ -361,6 +361,23 @@ def test_shell_import_stops_at_objective_preflight_before_analysis(tmp_path: Pat
     assert calls == ["preflight", "analyze:review_v1"]
 
 
+def test_shell_begin_import_clears_the_prior_workflow_until_the_new_parse_confirms(tmp_path: Path) -> None:
+    manifest = _write_preflight(tmp_path / "run")
+    demo = tmp_path / "match.dem"
+    demo.write_bytes(b"demo")
+    controller = AnalyzerShellController(tmp_path, runner=lambda *_args, **_kwargs: manifest)
+    controller.import_demo(demo)
+    controller.add_player("ct1")
+
+    controller.begin_import()
+
+    assert controller.result is None
+    assert controller.selected_ids == []
+    assert controller.selection_mode == "full_demo"
+    with pytest.raises(RuntimeError, match="import a demo first"):
+        controller.analyze_selection()
+
+
 def test_shell_full_demo_reset_and_validation(tmp_path: Path) -> None:
     manifest = _write_result(tmp_path / "run")
     controller = AnalyzerShellController(tmp_path, runner=lambda *_args, **_kwargs: manifest)
