@@ -1053,7 +1053,7 @@ NEXT: Tristan liefert das versionierte kuratierte Improve Matrix Pack 01 als Rep
 MODEL_PROFILE: terra
 MODEL_REASON: Bestehende sicherheitskritische Read-only-Regelstrecke geprüft; vollständige Integration ist ausschließlich durch den fehlenden kuratierten Eingabeinhalt blockiert.
 COMPUTER_USE: no
-COMMIT/PR: Wird mit diesem reinen Blocker-Handoff ergänzt.
+COMMIT/PR: `c9b8703 docs: record matrix pack input blocker`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
