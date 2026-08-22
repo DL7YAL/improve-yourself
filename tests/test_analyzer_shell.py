@@ -271,6 +271,15 @@ def _write_result(root: Path, selected: tuple[str, ...] = (), source_hash: str =
         "capabilities": {name: "unavailable" for name in ("positions", "view_yaw", "view_pitch", "alive_state", "weapon_state", "velocity", "utility_lifetimes", "utility_trajectories", "flash_effect", "sound", "map_geometry")},
     }
     (root / "replay-v2" / "replay-v2.json").write_text(json.dumps(replay), encoding="utf-8")
+    (root / "improve-match-data-v1.json").write_text(json.dumps({
+        "schema": "iy.improve_match_data/v1",
+        "metrics": {"source": {"sha256": source_hash}, "match": {"map_id": "de_ancient"}, "kills": [], "available_channels": [], "unavailable_channels": []},
+        "validation": {"schema": "iy.validation_report/v1", "status": "PASS"},
+        "replay": replay,
+    }), encoding="utf-8")
+    (root / "validation-report-v1.json").write_text(
+        json.dumps({"schema": "iy.validation_report/v1", "status": "PASS"}), encoding="utf-8"
+    )
     (root / "timeline.json").write_text(json.dumps({"source": source, "timeline": []}), encoding="utf-8")
     (root / "review.html").write_text("review", encoding="utf-8")
     (root / "cs2-review-commands.txt").write_text("demo_gototick 1\n", encoding="utf-8")
@@ -281,7 +290,7 @@ def _write_result(root: Path, selected: tuple[str, ...] = (), source_hash: str =
         "selection": flow["selection"],
         "counts": {"players": len(roster), "scenes": len(flow["scenes"])},
         "policy": {"real_demo_required": True, "fake_results": False, "local_only": True},
-        "artifacts": {"analysis": "analysis.json", "replay_v2": "replay-v2/replay-v2.json", "analysis_flow": "analysis-flow.json", "timeline": "timeline.json", "review": "review.html", "cs2_review_commands": "cs2-review-commands.txt"},
+        "artifacts": {"analysis": "analysis.json", "replay_v2": "replay-v2/replay-v2.json", "improve_match_data": "improve-match-data-v1.json", "validation_report": "validation-report-v1.json", "analysis_flow": "analysis-flow.json", "timeline": "timeline.json", "review": "review.html", "cs2_review_commands": "cs2-review-commands.txt"},
     }
     path = root / "demo-workflow.json"
     path.write_text(json.dumps(manifest), encoding="utf-8")
@@ -303,7 +312,7 @@ def _write_preflight(root: Path) -> Path:
         "parser_status": "PASS", "basic_event_count": 0,
     }
     manifest["counts"] = {"players": 3, "rounds": 1, "basic_events": 0, "scenes": 0}
-    manifest["artifacts"] = {key: value for key, value in manifest["artifacts"].items() if key in {"analysis", "replay_v2"}}
+    manifest["artifacts"] = {key: value for key, value in manifest["artifacts"].items() if key in {"analysis", "replay_v2", "improve_match_data", "validation_report"}}
     path.write_text(json.dumps(manifest), encoding="utf-8")
     return path
 

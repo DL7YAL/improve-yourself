@@ -1497,3 +1497,27 @@ MODEL_PROFILE: terra
 MODEL_REASON: Bestehenden Datenvertrag und fail-closed Integritätsgrenzen konsolidieren, real messen und ohne semantische Änderung regressionsprüfen.
 COMPUTER_USE: yes — ausschließlich für den lokalen echten Analyzer→Review→Tactical→Review-Runtime-Nachweis.
 COMMIT/PR: `a9b833a perf: consolidate demo pipeline`, gepusht nach `origin/dev/v1-foundation`.
+
+# Handoff 2026-08-22 — Improve Analyzer Core Foundation V1
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Den bestehenden, einmalig geparsten lokalen Demo-Pfad unter den verbindlichen Core-Vertrag ziehen: **Analyzer → AnalysisRequestV1 → AnalyzerCore → AwpyAdapter → Raw Parser Result → Validator/Normalizer → ImproveMatchDataV1 → AnalyzerDataHub**. Die bestehende objektive Analyse-, Szenen-, Review- und Replay-Semantik bleibt unverändert.
+BRANCH / BASE: `dev/v1-foundation`, Ausgangs-HEAD `cceb6f9`.
+CHANGED:
+- `docs/ANALYZER_CORE_FOUNDATION_V1.md`: verbindlicher, implementierter V1-Vertrag mit Grenzen, Schemas, technischen Gates und Hub-Projektionen.
+- `src/improve_yourself/analyzer_core.py`: `AnalysisRequestV1` (`iy.analysis_request/v1`), expliziter `METRICS_V1`-Vertrag (`iy.metrics/v1`), `ValidationReportV1`, `ImproveMatchNormalizer`, `ImproveMatchDataV1` (`iy.improve_match_data/v1`) und der einzige Produktpfad, der einen `AwpyAdapter` für einen Request koordiniert.
+- `src/improve_yourself/analyzer_data_hub.py`: rein lesender, fail-closed Hub mit den klaren Projektionen `overview`, `analysis` und `replay`; kein Parser und keine Raw-Awpy-Exposition.
+- `src/improve_yourself/demo_workflow.py`: persistiert `improve-match-data-v1.json` und `validation-report-v1.json`, bindet Request/Hash/Replay zusammen und akzeptiert Reuse nur mit beiden validierten Core-Artefakten.
+- `src/improve_yourself/analyzer_shell.py`: öffnet Workflows erst nach bestehender Integritätsprüfung **und** validiertem Match Data; der Controller hält den Hub als Analyzer-Dateneingang. Keine UI-/Regeländerung.
+- `src/improve_yourself/service.py`, `replay_builder.py`, `replay.py`: keine Produktmodule importieren Awpy direkt mehr. Standalone-Pfade gehen über den Core; der Adapter bleibt die alleinige Awpy-Importgrenze.
+- `tests/test_analyzer_core.py`, `tests/test_demo_workflow.py`, `tests/test_analyzer_shell.py`: Request-/Schema-/Hub-Projektionen, Unknown/fail-closed-Verhalten, neue zwingende Workflow-Artefakte und Shell-Validierung regressionsgesichert.
+CORE CONTRACT: `METRICS_V1` deklariert Match-/Map-/Teams-/Spieler-/Runden-Fakten, Tick-/Zeit-/State-/Positions-/Blickwinkel-Klassen, Kills/Deaths/Assists/Damage/Shots/Weapons/Utility/Grenades/Smokes/Infernos/Bomb/Footsteps sowie Economy. Es behauptet keine Verfügbarkeit: der Parser meldet vorhandene und nicht vorhandene Kanäle explizit. Neue Metriken benötigen eine explizite Contract-Erweiterung oder V2.
+VALIDATION: Unlesbarer Header, fehlende referenzierbare Runden, ungültige Tickrate und das Fehlen sämtlicher referenzierbarer Kills blockieren fail-closed. Warm-up-/unzugeordnete Ereignisse werden als `unknown_records` gezählt und ohne Deutung verworfen; sie werden weder erraten noch zu Szenen gemacht. Doppelte Events werden gezählt und verworfen. Die bestehende Chunk-/Hashvalidierung von `iy.replay/v2` bleibt unverändert aktiv.
+REAL E2E: Mit `fut-vs-mouz-m2-ancient.dem` (SHA-256 `c183dd61fc6a619f7af435d45eab374cd6f0097a7bd0da779971b15ef6746f7f`) in einem frischen lokalen Lauf geprüft: `READY_FOR_REVIEW`; `iy.analysis_request/v1`, `iy.metrics/v1`, `iy.improve_match_data/v1` und `iy.validation_report/v1` PASS vorhanden; `de_ancient`, **18** Runden, **10** Spieler, **124** referenzierbare Kill-Datensätze, **4** unbekannte/unzugeordnete Ereignisse verworfen, **0** Duplikate, anschließend die unveränderte Analyse mit **54** realen zusammengeführten Szenen. Ein anschließend geöffneter existierender Workflow lieferte über `AnalyzerDataHub` wieder `de_ancient` und dieselben 10 Spieler. Kein Fake-Resultat, keine neue Parser- oder Replay-Engine.
+VERIFIED: gezielte Core-/Workflow-/Shell-Regression **37/37 PASS**; vollständige Suite **197/197 PASS**; `compileall` PASS; `git diff --check` PASS. Der reale Lauf wurde getrennt von Fixtures nach geschriebenem `demo-workflow.json` und validiertem Hub geprüft.
+KNOWN LIMITS: Die Core-Validierung ist eine technische Datenqualitätsgrenze, keine Gameplay-Bewertung. `iy.replay/v2` bleibt die bestehende kanonische Replay-Wahrheit; Match Data verweist/projiziert sie, statt einen zweiten Replay-State zu erzeugen. Es wurde keine Tactical-/Review-/3D-/POV-/Report-/Optimizer-/Benchmark-Funktion begonnen.
+NEXT: Tristan prüft den Core-Contract-Checkpoint. Ein möglicher nächster fachlicher Schritt benötigt eine explizite Freigabe zur Erweiterung von Metrics V1 oder zu einem klar getrennten Consumer-Slice; ohne Freigabe keine weitere Analyse-/Replay-/Benchmark-Arbeit.
+MODEL_PROFILE: terra
+MODEL_REASON: Versionierter, fail-closed Core-Schnitt und reale E2E-Validierung über einen bestehenden großen Demo-Pfad.
+COMPUTER_USE: no
+COMMIT/PR: folgt nach diesem Handoff-Checkpoint.

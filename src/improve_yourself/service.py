@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .awpy_adapter import AwpyAdapter
+from .analyzer_core import AnalysisRequestV1, AnalyzerCore, CoreParseResult
 from .domain import round_multikills
 from .importer import materialize_demo
 from .model import AnalysisResult
@@ -26,15 +26,23 @@ def analyze(
     *,
     source_sha256: str | None = None,
     parsed_demo: Any | None = None,
+    core_result: CoreParseResult | None = None,
 ) -> Path:
     """Write the existing iy.analysis/v1 artifact from a canonical source."""
     source = source.resolve()
     checksum = source_sha256 or _sha256(source)
-    if parsed_demo is None:
+    if core_result is not None:
+        header, kills, channels, quality = core_result.analysis_input
+    elif parsed_demo is None:
         with materialize_demo(source, max_bytes=max_bytes) as demo_path:
-            header, kills, channels, quality = AwpyAdapter().parse(str(demo_path))
+            prepared = AnalyzerCore().prepare(
+                AnalysisRequestV1.create(source), parser_path=demo_path, source_sha256=checksum, source_name=source.name
+            )
+            header, kills, channels, quality = prepared.analysis_input
     else:
-        header, kills, channels, quality = AwpyAdapter().adapt(parsed_demo)
+        # Compatibility for the former private call path.  New product code
+        # passes ``core_result`` so the Core remains the Awpy boundary.
+        raise ValueError("parsed_demo is internal; pass a CoreParseResult")
     tickrate_value = header.get("tick_rate", header.get("tickrate"))
     result = AnalysisResult(
         source_name=source.name,

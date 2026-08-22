@@ -8,9 +8,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from awpy import Demo
-
-from .awpy_adapter import REPLAY_PLAYER_PROPS
+from .analyzer_core import AnalysisRequestV1, AnalyzerCore
 from .importer import materialize_demo
 from .replay_contract import (
     REPLAY_V2_SCHEMA,
@@ -323,9 +321,10 @@ def export_replay_v2(
 
     if parsed_demo is None:
         with materialize_demo(source, max_bytes=2_000_000_000) as demo_path:
-            demo = Demo(str(demo_path), verbose=False)
-            demo.parse(player_props=list(REPLAY_PLAYER_PROPS))
-            return _export_replay_v2_from_parsed(source, analysis, output, digest, demo)
+            prepared = AnalyzerCore().prepare(
+                AnalysisRequestV1.create(source), parser_path=demo_path, source_sha256=digest, source_name=source.name
+            )
+            return _export_replay_v2_from_parsed(source, analysis, output, digest, prepared.parsed_demo)
     return _export_replay_v2_from_parsed(source, analysis, output, digest, parsed_demo)
 
 

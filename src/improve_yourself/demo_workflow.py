@@ -8,7 +8,13 @@ from pathlib import Path
 from typing import Any
 
 from .analysis_flow import AnalysisProfile, PlayerSelection, build_from_store, render_analysis_review
-from .awpy_adapter import AwpyAdapter
+from .analyzer_core import (
+    ANALYSIS_REQUEST_V1_SCHEMA,
+    IMPROVE_MATCH_DATA_V1_SCHEMA,
+    VALIDATION_REPORT_V1_SCHEMA,
+    AnalysisRequestV1,
+    AnalyzerCore,
+)
 from .importer import materialize_demo, validate_source
 from .replay_builder import export_replay_v2
 from .replay_store import ReplayStore, validate_store
@@ -76,6 +82,15 @@ def _validate_reusable_workflow(path: Path, source_hash: str) -> bool:
         replay_path = artifact("replay_v2")
         store_summary = validate_store(replay_path)
         if store_summary.get("source_sha256") != source_hash:
+            return False
+        match_data = json.loads(artifact("improve_match_data").read_text(encoding="utf-8"))
+        validation = json.loads(artifact("validation_report").read_text(encoding="utf-8"))
+        if (
+            match_data.get("schema") != IMPROVE_MATCH_DATA_V1_SCHEMA
+            or match_data.get("metrics", {}).get("source", {}).get("sha256") != source_hash
+            or validation.get("schema") != VALIDATION_REPORT_V1_SCHEMA
+            or validation.get("status") != "PASS"
+        ):
             return False
         if manifest["status"] == "READY_FOR_REVIEW":
             for name in ("analysis_flow", "timeline", "review", "cs2_review_commands", "report"):
@@ -170,14 +185,23 @@ def preflight_demo_workflow(demo: Path, output_root: Path, *, max_bytes: int = 2
     root.mkdir(parents=True, exist_ok=True)
     with materialize_demo(demo, max_bytes=max_bytes) as demo_path:
         phases["T3_AWPY_PARSE_STARTED"] = time.monotonic()
-        parsed_demo = AwpyAdapter().parse_demo(str(demo_path))
+        request = AnalysisRequestV1.create(demo)
+        prepared = AnalyzerCore().prepare(
+            request, parser_path=demo_path, source_sha256=source_hash, source_name=demo.name
+        )
         phases["T4_AWPY_PARSE_COMPLETE"] = time.monotonic()
         analysis_path = analyze(
-            demo, root / "analysis", max_bytes=max_bytes, source_sha256=source_hash, parsed_demo=parsed_demo
+            demo, root / "analysis", max_bytes=max_bytes, source_sha256=source_hash, core_result=prepared
         )
         replay_path = export_replay_v2(
-            demo, analysis_path, root / "replay-v2", source_sha256=source_hash, parsed_demo=parsed_demo
+            demo, analysis_path, root / "replay-v2", source_sha256=source_hash, parsed_demo=prepared.parsed_demo
         )
+    replay_manifest = json.loads(replay_path.read_text(encoding="utf-8"))
+    match_data = AnalyzerCore().finalize(prepared, replay_manifest)
+    match_data_path = root / "improve-match-data-v1.json"
+    match_data_path.write_text(json.dumps(match_data, ensure_ascii=False, indent=2), encoding="utf-8")
+    validation_path = root / "validation-report-v1.json"
+    validation_path.write_text(json.dumps(prepared.validation_report.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
     store = ReplayStore(replay_path)
     chunks = [store.load_round(number) for number in store.round_numbers]
     teams: dict[str, set[str]] = {"CT": set(), "T": set()}
@@ -198,12 +222,14 @@ def preflight_demo_workflow(demo: Path, output_root: Path, *, max_bytes: int = 2
             teams[player["initial_team"]].add(player["display_name"])
     artifacts = {
         "analysis": analysis_path.relative_to(root).as_posix(), "replay_v2": replay_path.relative_to(root).as_posix(),
+        "improve_match_data": match_data_path.name, "validation_report": validation_path.name,
     }
     phases["T5_REPLAY_V2_WRITTEN_AND_VALIDATED"] = time.monotonic()
     phases["T6_WORKFLOW_READY_FOR_SELECTION"] = time.monotonic()
     manifest = {
         "schema": "iy.demo_workflow/v1", "status": "READY_FOR_SELECTION", "source_sha256": source_hash,
         "source_demo_name": demo.name,
+        "analysis_request": request.to_dict(),
         "parser": store.manifest["source"]["parser"], "selection": {"mode": "full_demo", "player_ids": []},
         "profile": None,
         "preflight": {"map_id": store.manifest["source"]["map_id"], "rounds": len(store.round_numbers),

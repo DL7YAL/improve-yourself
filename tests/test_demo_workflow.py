@@ -1,6 +1,7 @@
 import json
 from contextlib import contextmanager
 from pathlib import Path
+from types import SimpleNamespace
 
 import improve_yourself.demo_workflow as workflow
 
@@ -37,11 +38,20 @@ def test_preflight_shares_one_source_hash_and_one_awpy_parse(tmp_path: Path, mon
         yield path
 
     parsed = object()
+    prepared = SimpleNamespace(
+        parsed_demo=parsed,
+        validation_report=SimpleNamespace(to_dict=lambda: {"schema": "iy.validation_report/v1", "status": "PASS"}),
+        request=SimpleNamespace(to_dict=lambda: {"schema": "iy.analysis_request/v1"}),
+        analysis_input=({}, [], [], object()),
+    )
     monkeypatch.setattr(workflow, "materialize_demo", materialize)
-    monkeypatch.setattr(workflow.AwpyAdapter, "parse_demo", lambda _self, path: calls.append(("parse", path)) or parsed)
+    monkeypatch.setattr(workflow.AnalyzerCore, "prepare", lambda _self, _request, *, parser_path, **_kwargs: calls.append(("parse", parser_path)) or prepared)
+    monkeypatch.setattr(workflow.AnalyzerCore, "finalize", lambda _self, _prepared, replay: {
+        "schema": "iy.improve_match_data/v1", "metrics": {"source": {"sha256": source_hash}}, "replay": replay,
+    })
 
-    def analyze(source: Path, output: Path, *, source_sha256: str, parsed_demo: object, **_kwargs) -> Path:
-        calls.append(("analysis", source_sha256, parsed_demo))
+    def analyze(source: Path, output: Path, *, source_sha256: str, core_result: object, **_kwargs) -> Path:
+        calls.append(("analysis", source_sha256, core_result))
         output.mkdir(parents=True)
         path = output / "analysis.json"
         path.write_text("{}", encoding="utf-8")
@@ -63,7 +73,7 @@ def test_preflight_shares_one_source_hash_and_one_awpy_parse(tmp_path: Path, mon
 
     assert [entry[0] for entry in calls].count("hash") == 1
     assert [entry[0] for entry in calls].count("parse") == 1
-    assert ("analysis", source_hash, parsed) in calls
+    assert ("analysis", source_hash, prepared) in calls
     assert ("replay", source_hash, parsed) in calls
     assert set(manifest["timing"]["phases"]) == {
         "T0_DEMO_SELECTED",
@@ -74,6 +84,9 @@ def test_preflight_shares_one_source_hash_and_one_awpy_parse(tmp_path: Path, mon
         "T5_REPLAY_V2_WRITTEN_AND_VALIDATED",
         "T6_WORKFLOW_READY_FOR_SELECTION",
     }
+    assert manifest["analysis_request"]["schema"] == "iy.analysis_request/v1"
+    assert set(manifest["artifacts"]) == {"analysis", "replay_v2", "improve_match_data", "validation_report"}
+    assert json.loads((manifest_path.parent / manifest["artifacts"]["validation_report"]).read_text(encoding="utf-8"))["status"] == "PASS"
 
 
 def test_preflight_reuses_only_a_prevalidated_hash_bound_workflow(tmp_path: Path, monkeypatch) -> None:
@@ -86,7 +99,7 @@ def test_preflight_reuses_only_a_prevalidated_hash_bound_workflow(tmp_path: Path
     monkeypatch.setattr(workflow, "validate_source", lambda *_args: None)
     monkeypatch.setattr(workflow, "_sha256", lambda _path: source_hash)
     monkeypatch.setattr(workflow, "_validate_reusable_workflow", lambda path, digest: path == existing and digest == source_hash)
-    monkeypatch.setattr(workflow.AwpyAdapter, "parse_demo", lambda *_args: (_ for _ in ()).throw(AssertionError("must not parse reused workflow")))
+    monkeypatch.setattr(workflow.AnalyzerCore, "prepare", lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("must not parse reused workflow")))
 
     assert workflow.preflight_demo_workflow(demo, tmp_path / "out") == existing
 

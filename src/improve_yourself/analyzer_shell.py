@@ -19,6 +19,7 @@ from typing import Any, Callable
 from .analysis_flow import AnalysisProfile
 from .cs2_review_coordinator import Cs2ReviewCoordinator, ReviewCoordinatorServer, ReviewPreflight
 from .demo_workflow import ensure_tactical_replay_export, preflight_demo_workflow, rerender_demo_workflow
+from .analyzer_data_hub import AnalyzerDataHub
 from .embedded_review import EmbeddedReviewSession
 from .embedded_tactical import EmbeddedTacticalSession
 from .local_profiles import OBJECTIVE_RULES, LocalProfileStore
@@ -30,7 +31,7 @@ from .system_check import run_system_check
 
 
 _SOURCE_HASH = re.compile(r"[0-9a-f]{64}")
-_BASE_ARTIFACTS = ("analysis", "replay_v2")
+_BASE_ARTIFACTS = ("analysis", "replay_v2", "improve_match_data", "validation_report")
 _REVIEW_ARTIFACTS = (
     "analysis_flow", "timeline", "review", "cs2_review_commands"
 )
@@ -927,6 +928,15 @@ def validate_existing_workflow(manifest_path: Path) -> Path:
     if store.manifest["source"]["sha256"] != source_hash:
         raise ValueError("replay source metadata differs from workflow")
     loaded_chunks = [store.load_round(round_number) for round_number in store.round_numbers]
+    match_data = json.loads(resolved["improve_match_data"].read_text(encoding="utf-8"))
+    hub = AnalyzerDataHub(match_data)
+    if hub.overview()["source"].get("sha256") != source_hash:
+        raise ValueError("Improve Match Data source metadata differs from workflow")
+    if hub.replay_projection().get("source", {}).get("sha256") != source_hash:
+        raise ValueError("Improve Match Data replay differs from workflow")
+    validation = json.loads(resolved["validation_report"].read_text(encoding="utf-8"))
+    if validation.get("schema") != "iy.validation_report/v1" or validation.get("status") != "PASS":
+        raise ValueError("Improve Match Data validation report is not PASS")
 
     if status == "READY_FOR_SELECTION":
         preflight = manifest.get("preflight")
@@ -962,6 +972,19 @@ def validate_existing_workflow(manifest_path: Path) -> Path:
     if "tactical_replay" in resolved and not resolved["tactical_replay"].read_text(encoding="utf-8").strip():
         raise ValueError("tactical replay artifact is empty")
     return manifest_path
+
+
+def _load_analyzer_data_hub(manifest_path: Path) -> AnalyzerDataHub:
+    """Load the validated, local Match Data gate for the Analyzer controller."""
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    artifacts = manifest.get("artifacts")
+    if not isinstance(artifacts, dict) or not isinstance(artifacts.get("improve_match_data"), str):
+        raise ValueError("workflow lacks Improve Match Data")
+    root = manifest_path.parent.resolve()
+    path = (root / artifacts["improve_match_data"]).resolve()
+    if root not in path.parents:
+        raise ValueError("Improve Match Data artifact escapes workflow root")
+    return AnalyzerDataHub(json.loads(path.read_text(encoding="utf-8")))
 
 
 @dataclass(frozen=True)
@@ -1049,6 +1072,7 @@ class AnalyzerShellController:
         self.profiles = {profile.profile_id: profile for profile in self.profile_store.list_profiles()}
         self.profile_id = "review_v1"
         self.result: ShellResult | None = None
+        self.data_hub: AnalyzerDataHub | None = None
         self.selected_ids: list[str] = []
         self.selection_mode = "full_demo"
 
@@ -1060,6 +1084,7 @@ class AnalyzerShellController:
         it only makes the selected-demo boundary explicit and fail-closed.
         """
         self.result = None
+        self.data_hub = None
         self.selected_ids.clear()
         self.selection_mode = "full_demo"
 
@@ -1071,11 +1096,13 @@ class AnalyzerShellController:
         self.selected_ids.clear()
         self.selection_mode = "full_demo"
         self.result = self._load(manifest)
+        self.data_hub = _load_analyzer_data_hub(manifest)
         return self.result
 
     def open_existing_workflow(self, manifest_path: Path) -> ShellResult:
         manifest = validate_existing_workflow(manifest_path)
         self.result = self._load(manifest)
+        self.data_hub = _load_analyzer_data_hub(manifest)
         self.selected_ids = list(self.result.selected_ids)
         self.selection_mode = self.result.selection_mode
         return self.result
@@ -1098,6 +1125,7 @@ class AnalyzerShellController:
             if temporary.exists():
                 temporary.unlink()
         self.result = self._load(manifest_path)
+        self.data_hub = _load_analyzer_data_hub(manifest_path)
         return self.result
 
     def set_full_demo(self) -> None:
@@ -1142,6 +1170,7 @@ class AnalyzerShellController:
             manifest_path, player_ids=tuple(self.selected_ids), profile=self.profiles[self.profile_id]
         )
         self.result = self._load(manifest)
+        self.data_hub = _load_analyzer_data_hub(manifest)
         return self.result
 
     def select_profile(self, profile_id: str) -> None:
