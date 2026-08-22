@@ -801,7 +801,7 @@ NEXT: Genau ein zulässiger Folgeblock nach Freigabe: denselben read-only Eviden
 MODEL_PROFILE: terra
 MODEL_REASON: Enger Vertrag-/Evidenzabgleich mit fail-closed Sicherheitsgrenze und realer Read-only-Gegenprobe.
 COMPUTER_USE: no
-COMMIT/PR: `19bb881 fix: align active system check contract`; Push nach `origin/dev/v1-foundation` folgt unmittelbar.
+COMMIT/PR: `19bb881 fix: align active system check contract` plus `e0eeceb docs: record active contract alignment handoff`; gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Improve Yourself UI completion pass
 
