@@ -1,5 +1,31 @@
 # Codex
 
+## 2026-08-22 — UI Reference Pack authority update
+
+STATUS: `WAITING_FOR_TRISTAN`
+
+TASK: Die neue verbindliche Referenzhierarchie für künftige UI-Arbeit festhalten, ohne eine weitere Screen-Implementierung zu beginnen.
+
+BRANCH: `dev/v1-foundation`
+
+CHANGED: `docs/design/README.md`, `docs/design/MOCKUP_INDEX.md` und `docs/design/UI_SPEC.md` ordnen das UI Reference Pack v1.0.0 als Screen-Authority vor den älteren PDF-Kontext ein. `docs/UI_REFERENCE_PACK_POLICY.md` beschreibt den fail-closed Ablauf. Pack-`MASTER` ist verbindlich, `SUPERSEDED` ist ausgeschlossen. Für Optimizer sind ausschließlich `optimizer_overview_MASTER.png` und `system_optimizer_detail_MASTER.png` maßgeblich; die ältere PDF-Optimizeransicht ist kein Ziel mehr. Variant 3 bleibt für globale Shell, obere Übergänge/Header, Branding, linke Shell und Navigation bindend. Keine Produkt-, UI- oder Datenlogik geändert.
+
+REFERENCE ACCESS: `/mnt/data/Improve_Yourself_UI_Reference_Pack_v1.0.0.zip` war in diesem Windows-Workspace weder als `/mnt/data` noch als `C:\\mnt\\data` oder `D:\\mnt\\data` erreichbar. README, Manifest und MASTER-Dateien konnten deshalb nicht gelesen oder gegen den aktuellen Portable geprüft werden. Entsprechend wurde nichts aus der PDF, Erinnerung oder dem zuletzt gepushten Optimizer-Stand rekonstruiert.
+
+VERIFIED: Pfadverfügbarkeit explizit geprüft; Working Tree vor Dokumentation sauber. Für die Dokumentationsänderung folgt nur `git diff --check`; kein neuer Build/Test ist erforderlich, weil keine ausführbare Produktdatei geändert wird.
+
+OPEN: Das UI Reference Pack muss dem Workspace zugänglich bereitgestellt oder erneut angehängt werden. Erst danach: README/Manifest lesen, MASTER/SUPERSEDED-Klassifikation belegen und einen neuen begrenzten Optimizer-/Shell-Abgleich gegen diese tatsächlichen Dateien freigeben.
+
+NEXT: `WAITING_FOR_TRISTAN` — zugängliches ZIP oder die entpackten Referenzdateien bereitstellen. Keine UI-Änderung vorher.
+
+MODEL_PROFILE: luna
+
+MODEL_REASON: Eng begrenzte Referenz-/Handoff-Konsolidierung ohne Code-, Sicherheits- oder Produktentscheidung.
+
+COMPUTER_USE: no
+
+COMMIT/PR: pending documentation-only checkpoint and push on `dev/v1-foundation`.
+
 ## 2026-08-22 — Optimizer Visual Fidelity Pass
 
 STATUS: `WAITING_FOR_TRISTAN`

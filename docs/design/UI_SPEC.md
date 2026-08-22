@@ -6,7 +6,16 @@ Canonical standard theme: **Midnight / Metallic Blue**.
 
 The interface should feel technical, calm, precise and mature. Metallic does **not** mean glow, chrome, neon or animated shine. It means subtle tonal changes across dark blue surfaces, comparable to automotive metallic paint under different viewing/light conditions: restrained highlights, depth and reflection cues without becoming decorative.
 
-The binding visual evidence is `Improve_Yourself_Concept_Preview_Discord_Q98.pdf`. It establishes deep blue-black backgrounds, fine blue contours, selective silver/ice typography, controlled reflection bands and subtle technical texture. These cues should be reproduced with restraint and consistent tokens; they must not become a new neon, glassmorphism or RGB theme.
+The UI Reference Pack v1.0.0 is the binding screen-level evidence. Its
+`MASTER` files define the target for their named screens; `SUPERSEDED` files
+must not be implemented. Variant 3 is binding for the app-wide upper shell,
+branding, header transition and shared navigation. The older
+`Improve_Yourself_Concept_Preview_Discord_Q98.pdf` remains historical concept
+context only where it is not superseded by a Pack `MASTER`. Midnight/Metallic
+Blue still means deep blue-black backgrounds, fine blue contours, selective
+silver/ice typography, controlled reflection bands and subtle technical
+texture. These cues should be reproduced with restraint and consistent tokens;
+they must not become a new neon, glassmorphism or RGB theme.
 
 A light alternative is allowed later/where already supported: light surfaces with a slight cool blue cast rather than aggressive pure white.
 

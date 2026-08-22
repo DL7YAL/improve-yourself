@@ -2,9 +2,17 @@
 
 ## Source status
 
-`Improve_Yourself_Concept_Preview_Discord_Q98.pdf` is checked into this directory as the **binding visual master reference**. It contains nine image-based pages and uses illustrative example data. This index maps those pages to current product areas so agents do not need chat history to understand the target.
+`Improve_Yourself_Concept_Preview_Discord_Q98.pdf` is checked into this
+directory as historical concept context. The UI Reference Pack v1.0.0 is the
+binding screen-level authority: its `MASTER` files supersede older target
+images, while `SUPERSEDED` files are not implementation targets. This index
+maps the older concept pages to product areas only where no newer `MASTER`
+governs the screen.
 
-The PDF, `UI_SPEC.md` and `BRANDING.md` are the canonical visual implementation reference. Standalone raster exports are optional convenience assets, not a missing authority. Do **not** invent missing visual details or copy illustrative data into the product.
+Variant 3 remains canonical for shared branding, the upper shell/header,
+transition treatment, left navigation and app-wide shell unity. Do **not**
+invent missing visual details or copy illustrative data into the product. If
+the required Pack `MASTER` is unavailable, mark the work `WAITING_FOR_TRISTAN`.
 
 ## Approved screens
 

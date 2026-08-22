@@ -1,18 +1,38 @@
 # Improve Yourself — Design Reference
 
-Status: BINDING VISUAL MASTER REFERENCE for the current Experimental/V1.1 consolidation.
+Status: UI Reference Pack is the BINDING VISUAL MASTER REFERENCE for the
+current Experimental/V1.1 consolidation.
 
 This directory exists so implementation agents do not have to reconstruct approved UI decisions from chat history.
 
 Read in this order:
-1. `Improve_Yourself_Concept_Preview_Discord_Q98.pdf` — binding visual master reference.
-2. `UI_SPEC.md` — visual language, layout rules and per-module targets.
-3. `BRANDING.md` — product name, claim, wordmark/icon usage and tone.
-4. `MOCKUP_INDEX.md` — page-by-page authority and what is binding vs illustrative.
+1. `Improve_Yourself_UI_Reference_Pack_v1.0.0.zip` — its
+   `README_UI_REFERENCE.md`, `UI_REFERENCE_MANIFEST.json`, then the applicable
+   `MASTER` screen image. This is the visual authority when the pack is made
+   available to the workspace.
+2. Variant 3 in `BRANDING.md` — the authority for the global shell, upper
+   transition/header, Improve branding and shared navigation treatment.
+3. `UI_SPEC.md` — shared visual language and current functional constraints.
+4. `MOCKUP_INDEX.md` — legacy concept-page mapping and non-master context.
 
 ## Authority
 
-The checked-in nine-page PDF is the **visual master reference**, not optional inspiration. Its composition, logo treatment, dark Midnight/Metallic direction, information hierarchy, sidebar/navigation model, restrained technical character, tonal depth and blue light/reflection accents are binding visual decisions. Pixel coordinates, example numbers, example data, obsolete module labels and features superseded by current product decisions are not functional contracts.
+The UI Reference Pack is the central visual authority. Only files classified as
+`MASTER` in its manifest may be implemented as a screen target. Files marked
+`SUPERSEDED` are explicitly excluded from implementation. For the Optimizer,
+`optimizer_overview_MASTER.png` and `system_optimizer_detail_MASTER.png`
+supersede the earlier PDF-derived target.
+
+Variant 3 remains the global authority for the upper shell, header/transition,
+logo treatment, left shell and shared navigation. A screen `MASTER` controls
+that screen's content composition; Variant 3 controls the shared shell where
+the two overlap.
+
+The checked-in nine-page PDF is retained as historical concept context only.
+It must not be used to reconstruct, infer or override a superseded screen.
+If the applicable Reference Pack archive or its required `MASTER` is missing,
+unclear or inaccessible, stop the UI task with `WAITING_FOR_TRISTAN` rather
+than deriving a new target from the PDF, memory or an older implementation.
 
 Two truths apply together:
 
