@@ -1039,6 +1039,22 @@ BLOCKER: Keiner. Der einzige erwartete fachliche Input ist der separat kuratiert
 NEXT: Nach Lieferung Matrix Pack 01 exakt fail-closed importieren, Schema/IDs/Evidence/Compatibility/Exclusions validieren, vollständig gegen 150 Profile regressieren, Resultate pro Rule/Systemklasse dokumentieren und in Optimizer-UI/Detailpanel prüfen — ohne Systemänderung.
 COMMIT/PR: `f2e59db docs: record matrix pack hold status`, gepusht nach `origin/dev/v1-foundation`.
 
+# Handoff 2026-08-22 — Matrix Pack 01 integration attempt
+
+STATUS: BLOCKED — WAITING_FOR_MATRIX_PACK_01
+TASK: Den freigegebenen festen Ablauf IMPORT → VALIDATE → 150-SYSTEM REGRESSION → UI REVIEW für das kuratierte reale Improve Matrix Pack 01 ausführen, ausschließlich read-only innerhalb der bestehenden Foundation.
+BRANCH: `dev/v1-foundation`
+CHANGED: Nur dieser Handoff; keine Produktcode-, Regel-, Infrastruktur-, Apply-/Write-, Network-/BIOS- oder Benchmark-Änderung.
+INPUT CHECK: Weder der aktuelle Checkout noch `origin/dev/v1-foundation` enthält ein tatsächliches kuratiertes Matrix-Pack-01-Artefakt. Auffindbar sind nur `src/improve_yourself/rule_pack.py`, `tests/test_rule_pack.py` und die Readiness-Dokumentation. Der einzig importierbare Inhalt ist `fixture-rule-pack`; alle Regeln sind als `fixture_only: true` gekennzeichnet und dürfen nicht als reale Improve-Regeln ausgegeben werden.
+VERIFIED: Projekt-venv (Python 3.13) — relevante Rule-Pack-/Synthetic-/Integration-/UI-Tests **33/33 PASS**. Der bestehende fail-closed Fixture-Import liefert `valid: true`, `fixture_rules: true`, `system_count: 150`, `real_validation_result_created: false`, `confidence_changed: false`. `git diff --check` PASS; Arbeitsbaum vor diesem Handoff sauber. Ein erster Aufruf über den globalen Python-3.14-Interpreter schlug lediglich wegen fehlendem `pytest` fehl; die verbindliche Projektumgebung läuft danach grün.
+UI REVIEW: Für den Fixture-Pack ist der bestehende generische UI-Pfad getestet: Domainzuordnung und gemeinsames Detailmodell werden ohne Rule-spezifischen UI-Code dargestellt, alle Modelle sind sichtbar `FIXTURE_ONLY`, `apply_available: false`. Dies ist ausdrücklich kein UI-Review eines realen Matrix Pack 01, weil dessen Daten nicht vorliegen.
+RISKS / UNKNOWN: Reale Rule-IDs, Provenance, Evidence, Compatibility, Exclusions, Konflikte und Unknown-/Conditional-Verteilung sind ohne das kuratierte Artefakt nicht prüfbar. Eine Ersetzung durch Fixture- oder selbst recherchierte Regeln wäre fachlich falsch und außerhalb des freigegebenen Scopes.
+NEXT: Tristan liefert das versionierte kuratierte Improve Matrix Pack 01 als Repository-Datei oder eindeutig referenziertes Artefakt. Danach genau einmal den vorgesehenen read-only Ablauf ausführen: fail-closed Import, vollständige Validation, 150-System-Report pro Rule/Systemklasse, Konflikt-/Unknown-/Exclusion-Auswertung und generischen UI-/Detailpanel-Review.
+MODEL_PROFILE: terra
+MODEL_REASON: Bestehende sicherheitskritische Read-only-Regelstrecke geprüft; vollständige Integration ist ausschließlich durch den fehlenden kuratierten Eingabeinhalt blockiert.
+COMPUTER_USE: no
+COMMIT/PR: Wird mit diesem reinen Blocker-Handoff ergänzt.
+
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
 STATUS: WAITING_FOR_TRISTAN
