@@ -2064,14 +2064,19 @@ class AnalyzerShellApp:
         self.ttk.Label(header, text=title, style="PageTitle.TLabel").pack(anchor="w")
         self.ttk.Label(header, text=subtitle, style="Muted.TLabel", wraplength=1100, justify="left").pack(anchor="w", pady=(3, 0))
 
-    def _reference_info_card(self, parent, *, title: str, text: str, accent: str = "#13A7E8") -> object:
+    def _reference_info_card(self, parent, *, title: str, text: str | None = None, textvariable: object | None = None, accent: str = "#13A7E8") -> object:
         card = RoundedHomeSurface(
             self.tk, self.ttk, parent, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
             padding=16, min_height=148, radius=10,
         )
         self._home_accent(card.body, accent)
         self.ttk.Label(card.body, text=title, style="HomePanel.TLabel", font=(self.display_font, 9, "bold")).pack(anchor="w", pady=(8, 0))
-        self.ttk.Label(card.body, text=text, style="HomePanelMuted.TLabel", wraplength=310, justify="left").pack(anchor="w", pady=(10, 0))
+        label_options: dict[str, object] = {"style": "HomePanelMuted.TLabel", "wraplength": 310, "justify": "left"}
+        if textvariable is not None:
+            label_options["textvariable"] = textvariable
+        else:
+            label_options["text"] = text or ""
+        self.ttk.Label(card.body, **label_options).pack(anchor="w", pady=(10, 0))
         return card
 
     def _build_my_improvement_page(self) -> None:
@@ -2104,20 +2109,39 @@ class AnalyzerShellApp:
         self._reference_page_header(page, "Demo Analyzer", "Lokale CS2-Demos auswählen, parsebar prüfen und anschließend im Improve Analyzer mit derselben Replay-Wahrheit analysieren.")
         layout = self.ttk.Frame(page, style="Content.TFrame")
         layout.pack(fill="both", expand=True)
-        library = self._reference_info_card(layout, title="DEMO BIBLIOTHEK", text="Keine lokale Demo ist automatisch ausgewählt. Wähle eine echte .dem oder .dem.zst bewusst aus.", accent="#A782E8")
+        self.demo_library_text = self.tk.StringVar(value="Keine lokale Demo ist automatisch ausgewählt. Wähle eine echte .dem oder .dem.zst bewusst aus.")
+        library = self._reference_info_card(layout, title="DEMO BIBLIOTHEK", textvariable=self.demo_library_text, accent="#A782E8")
         library.pack(side="left", fill="both", expand=True, padx=(0, 7))
         self.ttk.Button(library.body, text="Echte CS2-Demo auswählen", style="Primary.TButton", command=lambda: self._show_page("Analyzer / Review")).pack(fill="x", pady=(16, 0))
-        selected = self._reference_info_card(layout, title="AUSGEWÄHLTE DEMO", text="Noch keine bestätigte lokale Demodatei geladen. Import- und Analyse-Status bleiben bis dahin ausdrücklich offen.", accent="#13A7E8")
+        self.demo_selected_text = self.tk.StringVar(value="Noch keine bestätigte lokale Demodatei geladen. Import- und Analyse-Status bleiben bis dahin ausdrücklich offen.")
+        selected = self._reference_info_card(layout, title="AUSGEWÄHLTE DEMO", textvariable=self.demo_selected_text, accent="#13A7E8")
         selected.pack(side="left", fill="both", expand=True, padx=(7, 0))
         readiness = self.ttk.Frame(page, style="Content.TFrame")
         readiness.pack(fill="x", pady=(14, 0))
-        for index, (title, text, accent) in enumerate((
-            ("IMPORT-STATUS", "Keine Demo importiert.", "#687789"),
-            ("ANALYSE-STATUS", "Keine Analyse gestartet.", "#687789"),
-            ("BEREIT ZUR ANALYSE", "Erfordert eine erfolgreich geladene echte Demo.", "#58D69A"),
+        self.demo_import_text = self.tk.StringVar(value="Keine Demo importiert.")
+        self.demo_analysis_text = self.tk.StringVar(value="Keine Analyse gestartet.")
+        self.demo_ready_text = self.tk.StringVar(value="Erfordert eine erfolgreich geladene echte Demo.")
+        for index, (title, variable, accent) in enumerate((
+            ("IMPORT-STATUS", self.demo_import_text, "#687789"),
+            ("ANALYSE-STATUS", self.demo_analysis_text, "#687789"),
+            ("BEREIT ZUR ANALYSE", self.demo_ready_text, "#58D69A"),
         )):
             readiness.columnconfigure(index, weight=1, uniform="demo-ready")
-            self._reference_info_card(readiness, title=title, text=text, accent=accent).grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 5, 0 if index == 2 else 5))
+            self._reference_info_card(readiness, title=title, textvariable=variable, accent=accent).grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 5, 0 if index == 2 else 5))
+
+    def _render_demo_analyzer_page(self, result: ShellResult) -> None:
+        self.demo_library_text.set("Die aktuelle Auswahl stammt aus dem lokalen, fail-closed Workflow. Es werden keine Demos automatisch importiert oder kopiert.")
+        self.demo_selected_text.set(
+            f"{result.source_demo_name or 'Lokaler Workflow'}\n{result.map_id} · {result.round_count} Runden · {len(result.players)} Spieler\n"
+            f"SHA-256 {result.source_sha256[:12]}…"
+        )
+        self.demo_import_text.set(f"Import bestätigt · Parser {result.parser_status}")
+        if result.status == "READY_FOR_REVIEW":
+            self.demo_analysis_text.set(f"Analyse abgeschlossen · {result.scene_count} zusammengeführte Szenen")
+            self.demo_ready_text.set("Bereit für den lokalen Review; Tick-Sprung bleibt separat abgesichert.")
+        else:
+            self.demo_analysis_text.set("Auswahl bereit · Analyse wurde noch nicht ausdrücklich gestartet.")
+            self.demo_ready_text.set("Bereit für eine explizite Analyse im Improve Analyzer.")
 
     def _build_benchmark_page(self) -> None:
         page = self.pages["Benchmark"]
@@ -2723,6 +2747,7 @@ class AnalyzerShellApp:
             f"{result.source_demo_name or result.manifest_path.name}\n"
             f"SHA-256 {result.source_sha256[:12]}… · lokaler Workflow"
         )
+        self._render_demo_analyzer_page(result)
         ready = result.status == "READY_FOR_REVIEW"
         self.report_status.set(
             f"{result.scene_count} zusammengeführte Szenen · Quelle {result.source_sha256[:12]}…"
