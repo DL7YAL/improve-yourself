@@ -1445,4 +1445,4 @@ BUILD: Frisch erzeugt: `dist/experimental/Improve Yourself/Improve Yourself.exe`
 KNOWN LIMITS: Der manuelle NetCon-/CS2-Tick-Sprung war nicht Teil dieses erneuten Korrekturtests, weil er zuvor bereits praktisch bestätigt war und keine NetCon-/CS2-Logik verändert wurde. Die vorhandene 2D-Übergabe wurde erneut ausgeführt. Keine neue Funktion, keine Produktregel, kein Optimizer-Apply und keine Benchmark-Arbeit.
 NEXT: Tristan führt die erneute funktionale Kandidatenabnahme mit derselben echten Demo durch. Bei bestandenem manuellen CS2-Tick-Sprung kann dieser Build als External Test Candidate freigegeben werden; bei einem reproduzierbaren neuen Kernfehler den konkreten Schritt und die sichtbare Meldung zurückgeben. Bis dahin keine zusätzliche Produkt- oder Polish-Arbeit beginnen.
 COMPUTER_USE: yes — frische Portable-Instanzen, echter Demoimport, Analyse, Review, 2D-Übergabe und UI-Checks.
-COMMIT/PR: Dieser Handoff wird mit dem Codecheckpoint auf `dev/v1-foundation` committed und gepusht; HEAD folgt nach dem Commit.
+COMMIT/PR: `8309c12 fix: restore portable analyzer workflow`, gepusht nach `origin/dev/v1-foundation`.
