@@ -14,9 +14,9 @@ CHANGED SO FAR: Die bestehende Dashboard-/Analyzer-/Tactical-Shell bleibt erhalt
 
 VERIFIED SO FAR: `compileall` PASS; fokussierte Shell-Tests PASS; volle Suite **188 passed**; `git diff --check` PASS; frischer Portable-Build PASS. Runtime-Captures im frischen Portable: Dashboard und My Improvement. Dashboard folgt bereits dem sechsmoduligen Command-Center mit realen lokalen Statuswerten. My Improvement entspricht sichtbar dem Master-Raster (fünf Dimensionen plus drei Fokuspanels), zeigt aber bewusst nur fehlende lokale Vergleichsevidenz.
 
-CURRENT ASSESSMENT: Dashboard und My Improvement sind im Rahmen der verfügbaren realen Daten strukturell/visuell MASTER-nah. Der Analyzer ist funktional richtig, trägt aber noch sein technisches Import-/Auswahl-Layout und benötigt vor einem PASS den nächsten strukturellen Master-Abgleich. Demo Analyzer, Tactical Viewer und Benchmark sind als Reihenfolge nachfolgend und noch nicht final abgenommen.
+CURRENT ASSESSMENT: Dashboard und My Improvement sind im Rahmen der verfügbaren realen Daten strukturell/visuell MASTER-nah. Der Analyzer-Einstieg ist jetzt auf die Master-Hierarchie `Improve Analyzer → Filter/Datenquelle → Analyse-Regeln → erkannte Situationen/Review` ausgerichtet; vor einer geladenen echten Analyse bleiben Scores, Befunde, Situationen und Muster jedoch ehrlich leer. Er ist deshalb noch kein Ergebnis-Screen-PASS. Demo Analyzer, Tactical Viewer und Benchmark sind als Reihenfolge nachfolgend und noch nicht final abgenommen.
 
-NEXT: Ausschließlich `analyzer_MASTER.png` gegen die laufende Analyzer-/Review-Route ausrichten, danach erst `demo_analyzer_MASTER.png`.
+NEXT: Ausschließlich den Analyzer-Ergebniszustand mit einem echten vorhandenen Workflow gegen `analyzer_MASTER.png` prüfen; danach erst `demo_analyzer_MASTER.png`.
 
 MODEL_PROFILE: terra
 

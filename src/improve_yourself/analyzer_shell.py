@@ -1419,15 +1419,15 @@ class AnalyzerShellApp:
         frame = self.pages["Analyzer / Review"]
         analyzer_header = ttk.Frame(frame, style="Content.TFrame")
         analyzer_header.pack(fill="x", pady=(0, 12))
-        ttk.Label(analyzer_header, text="Analyzer / Review", style="PageTitle.TLabel").pack(side="left")
+        ttk.Label(analyzer_header, text="Improve Analyzer", style="PageTitle.TLabel").pack(side="left")
         ttk.Label(analyzer_header, textvariable=self.status, style="StatusBadge.TLabel").pack(side="right")
-        ttk.Label(frame, text="Demo → Parser → Auswahl → Profil → Regeln → Szenen → Review", foreground=_THEME["muted"]).pack(anchor="w", pady=(0, 12))
+        ttk.Label(frame, text="Detaillierte Match-Analyse auf Basis deiner belegten lokalen Demos, Profile und objektiven Regeln.", foreground=_THEME["muted"]).pack(anchor="w", pady=(0, 12))
 
         analyzer_top = ttk.Frame(frame, style="Content.TFrame")
         analyzer_top.pack(fill="x")
         source_card = ttk.Frame(analyzer_top, style="Card.TFrame", padding=16)
         source_card.pack(side="left", fill="both", expand=True, padx=(0, 6))
-        ttk.Label(source_card, text="DEMO & DATENQUELLE", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w")
+        ttk.Label(source_card, text="FILTER & DATENQUELLE", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w")
         source_actions = ttk.Frame(source_card, style="CardInner.TFrame")
         source_actions.pack(fill="x", pady=(8, 0))
         ttk.Button(source_actions, text="Demo auswählen", style="Primary.TButton", command=self._choose_demo).pack(fill="x")
@@ -1446,7 +1446,7 @@ class AnalyzerShellApp:
 
         selection_card = ttk.Frame(frame, style="Card.TFrame", padding=16)
         selection_card.pack(fill="x", pady=(12, 0))
-        ttk.Label(selection_card, text="SPIELERAUSWAHL & ANALYSEPROFIL", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w")
+        ttk.Label(selection_card, text="ANALYSE REGELN & SPIELERAUSWAHL", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w")
         controls = ttk.Frame(selection_card, style="CardInner.TFrame")
         controls.pack(fill="x", pady=(10, 4))
         self.workflow_widgets = []
@@ -1508,7 +1508,7 @@ class AnalyzerShellApp:
         review_strip.pack(fill="x", pady=(12, 0))
         actions = ttk.Frame(review_strip, style="Card.TFrame", padding=14)
         actions.pack(side="left", fill="both", expand=True, padx=(0, 6))
-        ttk.Label(actions, text="ANALYSE & REVIEW", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w", pady=(0, 8))
+        ttk.Label(actions, text="ERKANNTE SITUATIONEN & REVIEW", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w", pady=(0, 8))
         self.analyze_button = ttk.Button(actions, text="Analyse starten", command=self._analyze, state="disabled")
         self.analyze_button.pack(side="left")
         self.cs2_button = ttk.Button(actions, text="CS2 prüfen", command=self._preflight, state="disabled")
