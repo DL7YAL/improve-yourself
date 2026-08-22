@@ -104,6 +104,19 @@ def test_system_scan_home_view_projects_existing_read_only_evidence_without_fake
     assert view["attention"] == "Hinweise: Monitor"
 
 
+def test_system_scan_home_view_consumes_active_display_contract_without_legacy_projection() -> None:
+    payload = {
+        "schema": "iy.system_check/v1", "generated_at_utc": "2026-08-22T12:00:00+00:00",
+        "summary": {"OK": 1, "REVIEW": 0, "ACTION_REQUIRED": 0},
+        "checks": [
+            {"id": "display", "status": "OK", "summary": "Display", "evidence": {"active_displays": [{"name": "Active output", "refresh_hz": 240}]}},
+        ],
+    }
+    view = system_scan_home_view(payload)
+    assert view is not None
+    assert view["entries"]["display"] == ("Monitor", "240 Hz", "OK")
+
+
 def test_system_scan_home_view_rejects_untrusted_or_missing_payloads() -> None:
     assert system_scan_home_view({}) is None
     assert system_scan_home_view({"schema": "iy.system_check/v1", "checks": "not-a-list"}) is None

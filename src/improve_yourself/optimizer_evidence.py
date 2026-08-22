@@ -256,7 +256,28 @@ def profile_from_system_check(payload: dict[str, object], *, goal: GoalProfile =
     adapter = gpu[0] if isinstance(gpu, list) and gpu and isinstance(gpu[0], dict) else {}
     gpu_name = str(adapter.get("name") or "")
     vendor = "AMD" if "AMD" in gpu_name.upper() or "RADEON" in gpu_name.upper() else ("NVIDIA" if "NVIDIA" in gpu_name.upper() or "GEFORCE" in gpu_name.upper() else None)
-    refresh = ((checks.get("display") or {}).get("evidence") or {}).get("refresh_rates_hz") or []
+    display_evidence = (checks.get("display") or {}).get("evidence") or {}
+    active_displays = display_evidence.get("active_displays") or []
+    # `active_displays` is the 12-check contract.  Accept the earlier list only
+    # while reading already-saved v1 scans; neither shape is guessed from other facts.
+    refresh = [
+        display.get("refresh_hz")
+        for display in active_displays
+        if isinstance(display, dict) and isinstance(display.get("refresh_hz"), (int, float))
+    ]
+    if not refresh:
+        legacy_refresh = display_evidence.get("refresh_rates_hz") or []
+        refresh = [rate for rate in legacy_refresh if isinstance(rate, (int, float))]
+    monitor_evidence = (checks.get("monitor") or {}).get("evidence") or {}
+    monitors = monitor_evidence.get("monitors") or []
+    monitor_name = next(
+        (
+            monitor.get("name")
+            for monitor in monitors
+            if isinstance(monitor, dict) and isinstance(monitor.get("name"), str) and monitor.get("name")
+        ),
+        None,
+    )
     board = (checks.get("motherboard") or {}).get("evidence") or {}
     return {
         "system_id": "local-system-check", "profile_source": "READ_ONLY_SYSTEM_CHECK",
@@ -267,7 +288,7 @@ def profile_from_system_check(payload: dict[str, object], *, goal: GoalProfile =
         "motherboard": {"manufacturer": board.get("manufacturer"), "product": board.get("product"), "version": board.get("version")},
         "bios": {"version": board.get("bios_version"), "date": board.get("bios_date")},
         "windows": ((checks.get("windows") or {}).get("evidence") or {}),
-        "monitor": {"refresh_hz": max(refresh) if refresh else None},
+        "monitor": {"name": monitor_name, "refresh_hz": max(refresh) if refresh else None},
         "security": {"secure_boot": ((checks.get("secure_boot") or {}).get("evidence") or {}).get("enabled"), "tpm": ((checks.get("tpm") or {}).get("evidence") or {}).get("enabled")},
         # Gaming, driver-option and CS2 keys are deliberately absent until safe readers exist.
     }

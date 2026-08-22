@@ -52,6 +52,19 @@ def test_system_check_projection_does_not_invent_cs2_or_driver_option_state() ->
     assert "cs2.frame_pacing" in report["missing_input_data"]
 
 
+def test_system_check_projection_consumes_the_active_twelve_check_display_and_monitor_contract() -> None:
+    payload = {
+        "schema": "iy.system_check/v1",
+        "checks": [
+            {"id": "display", "evidence": {"active_displays": [{"name": "GPU output", "refresh_hz": 165}]}},
+            {"id": "monitor", "evidence": {"monitors": [{"name": "Verified monitor"}]}},
+        ],
+    }
+    profile = profile_from_system_check(payload)
+    assert profile is not None
+    assert profile["monitor"] == {"name": "Verified monitor", "refresh_hz": 165}
+
+
 def test_synthetic_matrix_has_exactly_150_non_measured_diverse_profiles() -> None:
     matrix = synthetic_system_matrix()
     systems = matrix["systems"]

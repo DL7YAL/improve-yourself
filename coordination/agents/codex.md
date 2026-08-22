@@ -786,6 +786,23 @@ MODEL_REASON: Eng begrenzter, bereits spezifizierter Desktop-Layout-Korrekturpas
 COMPUTER_USE: yes
 COMMIT/PR: Dieser Handoff ist Teil des gepushten `dev/v1-foundation`-Checkpoints; exakter HEAD steht im Abschlussbericht.
 
+# Handoff 2026-08-22 — Active System Check Contract Alignment Pass
+
+STATUS: DONE — WAITING_FOR_TRISTAN
+TASK: Den aktiven read-only System Check mit dem bereits versionierten zwölf-Check-Pack-01-Vertrag abgleichen, alle bestehenden Projektionen konsistent machen und den Real-System-Evidence-Pass wiederholen. Keine Regel-, Hardware-, Apply-/Write-, Registry-, BIOS-, Treiber-, Network- oder Benchmark-Erweiterung.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/system_check.py`, `tests/test_system_check.py`, `src/improve_yourself/optimizer_evidence.py`, `src/improve_yourself/analyzer_shell.py`, `tests/test_optimizer_evidence.py`, `tests/test_analyzer_shell.py`, `docs/ACTIVE_SYSTEM_CHECK_CONTRACT_ALIGNMENT.md`, `coordination/agents/codex.md`.
+CAUSE / FIX: Der aktive Branch enthielt eine ältere Acht-Check-Projektion. Ausschließlich die bereits versionierte read-only Collector-/Test-Implementierung aus `origin/main@2cd358c` wurde übernommen; keine unverbundenen Main-Änderungen wurden gemergt. Der aktive Output enthält jetzt 12/12 Pack-01-Basen: `windows`, `cpu`, `memory`, `motherboard`, `gpu`, `gpu_driver`, `chipset_driver`, `graphics_settings_profile`, `display`, `monitor`, `secure_boot`, `tpm`.
+PROJECTION: Home und Optimizer konsumieren die aktuelle Vertragsform `display.active_displays` und die separat erhobene `monitor.monitors`-Evidenz. Der frühere `refresh_rates_hz`-Pfad bleibt ausschließlich für bereits gespeicherte v1-Scans lesekompatibel. Es wird kein Monitor, Treiber-, CS2- oder Setting-Zustand erschlossen. Unknown, Conditional und Insufficient Evidence bleiben fail-closed.
+REAL EVIDENCE: Wiederholung auf dem einzigen derzeit lokal verfügbaren expliziten Tester, ohne Rohprofil- oder Pfadspeicherung. Gültiges `iy.system_check/v1`, policy `read_only: true`, `changes_applied: false`; 12 Check-Basen, Status 10 OK / 1 REVIEW / 1 ACTION_REQUIRED. Pack 01: 11 NO_CHANGE / 1 CONDITIONAL / 0 positive Recommendations, `apply_available: false`. Kein Registry-, BIOS-, Treiber-, Netzwerk- oder Benchmark-Write. Kein weiterer realer Tester war im aktuellen Arbeitsbereich verfügbar; er wurde nicht als getestet behauptet.
+VERIFIED: Vertrags-/System-Check-/Pack-/Shell-Teilmenge **42/42 PASS**; vollständiger `pytest` **182/182 PASS**; `compileall` PASS; `git diff --check` PASS. Vollständiger Portable-Build bis zum frischen Manifest PASS, einschließlich `pip check`, PyInstaller und Portable-ZIP. EXE SHA-256 `C26A29FB39E47D3E2A5D674C4108DB8EBECD8F6CEF5105AB4282A8F2E7721896` (19,845,032 Bytes); ZIP SHA-256 `619FF0B01CE737B177733318F22926739BC740AF933AA76C2856BCCA44D3D5CF` (168,833,907 Bytes); beide stimmen mit dem Manifest überein. Pack 01 ist im Portable-Laufzeitpfad vorhanden.
+EVIDENCE LIMITS: Die vorhandenen drei exakten Herstellerquellen bleiben absichtlich eng und live, nicht release-fixiert. Fehlende Monitor-/Security-/Treiber-/Chipset-Evidenz bleibt sachlich Unknown, Conditional oder Insufficient; ein lokaler Tester ist kein Hardware-Golden-Master und keine Performance-Aussage.
+NEXT: Genau ein zulässiger Folgeblock nach Freigabe: denselben read-only Evidence Pass auf weiteren explizit bereitgestellten Testsystemen wiederholen und Unknown/Conditional/Exclusion klassifizieren. Keine Hardware-Unterstützung oder Regel ohne neuen fachlichen Auftrag verbreitern.
+MODEL_PROFILE: terra
+MODEL_REASON: Enger Vertrag-/Evidenzabgleich mit fail-closed Sicherheitsgrenze und realer Read-only-Gegenprobe.
+COMPUTER_USE: no
+COMMIT/PR: Nach Commit und Push dieses Checkpoints ergänzen.
+
 # Handoff 2026-08-21 — Improve Yourself UI completion pass
 
 STATUS: WAITING_FOR_TRISTAN

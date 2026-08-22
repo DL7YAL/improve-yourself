@@ -96,14 +96,22 @@ def system_scan_home_view(payload: dict[str, object]) -> dict[str, object] | Non
     adapters = gpu_evidence.get("adapters")
     first_adapter = adapters[0] if isinstance(adapters, list) and adapters and isinstance(adapters[0], dict) else {}
     ram_gb = memory_evidence.get("total_gb")
-    refresh_rates = display_evidence.get("refresh_rates_hz")
+    active_displays = display_evidence.get("active_displays")
+    refresh_rates = [
+        display.get("refresh_hz")
+        for display in active_displays
+        if isinstance(display, dict) and isinstance(display.get("refresh_hz"), (int, float))
+    ] if isinstance(active_displays, list) else []
+    if not refresh_rates:
+        legacy_refresh = display_evidence.get("refresh_rates_hz")
+        refresh_rates = [rate for rate in legacy_refresh if isinstance(rate, (int, float))] if isinstance(legacy_refresh, list) else []
     entries = {
         "cpu": ("CPU", str(cpu_evidence.get("name") or cpu_fallback), cpu_status),
         "gpu": ("GPU", str(first_adapter.get("name") or gpu_fallback), gpu_status),
         "memory": ("RAM", f"{ram_gb:g} GB" if isinstance(ram_gb, (int, float)) else memory_fallback, memory_status),
         "windows": ("Windows", str(windows_evidence.get("caption") or windows_evidence.get("build") or windows_fallback), windows_status),
         "drivers": ("Treiber", str(first_adapter.get("driver_version") or gpu_fallback), gpu_status),
-        "display": ("Monitor", f"{max(refresh_rates):g} Hz" if isinstance(refresh_rates, list) and refresh_rates and all(isinstance(rate, (int, float)) for rate in refresh_rates) else display_fallback, display_status),
+        "display": ("Monitor", f"{max(refresh_rates):g} Hz" if refresh_rates else display_fallback, display_status),
     }
     summary = payload.get("summary")
     counts = summary if isinstance(summary, dict) else {}
