@@ -1469,7 +1469,7 @@ NEXT: Tristan verteilt oder prüft ausschließlich diesen einen ZIP-Candidate na
 MODEL_PROFILE: terra
 MODEL_REASON: Eng begrenzte Candidate-Recovery mit lokalem Runtime- und Packaging-Nachweis.
 COMPUTER_USE: yes — nur für den realen Portable-Demo-/Review-/Tactical-/Layout-Smoketest.
-COMMIT/PR: folgt nach diesem Handoff-Checkpoint.
+COMMIT/PR: `5d30047 feat: establish analyzer core foundation`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-22 — Demo Pipeline Consolidation & Performance V1
 
