@@ -2291,7 +2291,7 @@ class AnalyzerShellApp:
         self.ttk.Label(result_header, text="Kein Lauf", style="Muted.TLabel").pack(side="right")
         metrics = self.ttk.Frame(result.body, style="HomeInner.TFrame")
         metrics.pack(fill="x")
-        for index, title in enumerate(("DURCHSCHNITT FPS", "1% LOW", "FRAMETIME (Ø)")):
+        for index, title in enumerate(("Ø FPS", "1% LOW", "FRAMETIME (Ø)")):
             metrics.columnconfigure(index, weight=1, uniform="benchmark-metrics")
             metric = self.ttk.Frame(metrics, style="HomeInner.TFrame", padding=(10, 8))
             metric.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 4, 0 if index == 2 else 4))
@@ -2301,7 +2301,7 @@ class AnalyzerShellApp:
         chart = self.ttk.Frame(result.body, style="HomeInner.TFrame", padding=(10, 9))
         chart.pack(fill="x", pady=(12, 0))
         self.ttk.Label(chart, text="FPS-VERLAUF", style="PageKicker.TLabel").pack(anchor="w")
-        self.ttk.Label(chart, text="Kein gemessener Verlauf verfügbar – eine Darstellung ohne echten Lauf wäre nicht aussagekräftig.", style="HomePanelMuted.TLabel", wraplength=450, justify="left").pack(anchor="w", pady=(5, 0))
+        self.ttk.Label(chart, text="Kein gemessener Verlauf verfügbar.", style="HomePanelMuted.TLabel", wraplength=450, justify="left").pack(anchor="w", pady=(5, 0))
 
         map_card = RoundedHomeSurface(
             self.tk, self.ttk, top, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
@@ -2336,7 +2336,7 @@ class AnalyzerShellApp:
 
         explain = self.ttk.Frame(page, style="Content.TFrame")
         explain.pack(fill="x", pady=(14, 0))
-        explain.columnconfigure(0, weight=4)
+        explain.columnconfigure(0, weight=3)
         explain.columnconfigure(1, weight=1)
         why = self._reference_info_card(
             explain, title="WARUM IMPROVE BENCHMARK?",
