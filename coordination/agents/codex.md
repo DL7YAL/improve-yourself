@@ -1520,7 +1520,7 @@ NEXT: Tristan prüft den Core-Contract-Checkpoint. Ein möglicher nächster fach
 MODEL_PROFILE: terra
 MODEL_REASON: Versionierter, fail-closed Core-Schnitt und reale E2E-Validierung über einen bestehenden großen Demo-Pfad.
 COMPUTER_USE: no
-COMMIT/PR: folgt nach diesem Handoff-Checkpoint.
+COMMIT/PR: `5d30047 feat: establish analyzer core foundation`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-22 — Analyzer Core Foundation V1 Clarification Pass
 
@@ -1541,4 +1541,4 @@ NEXT: Tristan prüft den präzisierten Core-Vertrag. Eine spätere neue Consumer
 MODEL_PROFILE: terra
 MODEL_REASON: Enger Contract-/Fail-closed-Pass mit realem Demo-E2E-Nachweis und ohne Produktsemantik-Ausweitung.
 COMPUTER_USE: no
-COMMIT/PR: folgt nach diesem Handoff-Checkpoint.
+COMMIT/PR: `acb885b refactor: clarify analyzer core contracts`, gepusht nach `origin/dev/v1-foundation`.
