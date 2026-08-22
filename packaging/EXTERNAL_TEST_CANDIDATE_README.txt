@@ -40,9 +40,9 @@ Please report
 
 Integrity
 ---------
-The sibling file "experimental-build.json" records SHA-256 hashes for the EXE
-and the Portable ZIP produced by the build gate. Compare it before sharing a
-test result if archive integrity is in doubt.
+The adjacent build manifest records SHA-256 hashes for the EXE and Portable ZIP
+produced by the build gate. Compare it before sharing a test result if archive
+integrity is in doubt.
 
 Scope reminder
 --------------

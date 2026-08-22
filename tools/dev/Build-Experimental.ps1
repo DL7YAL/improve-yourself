@@ -4,6 +4,15 @@ param(
     [string]$OutputRoot = 'dist\experimental',
 
     [Parameter()]
+    [string]$ArchiveName = 'Improve-Yourself-Experimental-Portable.zip',
+
+    [Parameter()]
+    [string]$ManifestName = 'experimental-build.json',
+
+    [Parameter()]
+    [string]$Channel = 'experimental',
+
+    [Parameter()]
     [switch]$SkipTests
 )
 
@@ -66,22 +75,22 @@ try {
     if (-not (Test-Path -LiteralPath $testerReadmeTarget -PathType Leaf)) {
         throw "External tester readme was not staged: $testerReadmeTarget"
     }
-    $zip = Join-Path $output 'Improve-Yourself-Experimental-Portable.zip'
+    $zip = Join-Path $output $ArchiveName
     Compress-Archive -LiteralPath $portable -DestinationPath $zip -CompressionLevel Optimal -Force
     $executableHash = Get-PortableSha256 -LiteralPath $executable
     $zipHash = Get-PortableSha256 -LiteralPath $zip
     $manifest = [ordered]@{
         schema = 'iy.experimental_build/v1'
-        channel = 'experimental'
+        channel = $Channel
         distribution = 'portable'
         tests_skipped = [bool]$SkipTests
         executable = [ordered]@{ path = 'Improve Yourself\Improve Yourself.exe'; sha256 = $executableHash; bytes = (Get-Item -LiteralPath $executable).Length }
-        archive = [ordered]@{ path = 'Improve-Yourself-Experimental-Portable.zip'; sha256 = $zipHash; bytes = (Get-Item -LiteralPath $zip).Length }
+        archive = [ordered]@{ path = $ArchiveName; sha256 = $zipHash; bytes = (Get-Item -LiteralPath $zip).Length }
     }
-    $manifestPath = Join-Path $output 'experimental-build.json'
+    $manifestPath = Join-Path $output $ManifestName
     $manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $manifestPath -Encoding utf8
     [pscustomobject]@{ Path = $executable; SHA256 = $executableHash }, [pscustomobject]@{ Path = $zip; SHA256 = $zipHash }
-    Write-Host 'PASS: Experimental portable build is ready.' -ForegroundColor Green
+    Write-Host 'PASS: Portable build is ready.' -ForegroundColor Green
     Write-Host "Portable: $portable"
     Write-Host "Archive:  $zip"
     Write-Host "Manifest: $manifestPath"

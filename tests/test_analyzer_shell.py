@@ -105,7 +105,7 @@ def test_experimental_shell_exposes_binding_product_sections_from_canonical_desi
     assert "Rules" not in SIDEBAR_NAVIGATION
     assert SIDEBAR_NAVIGATION == (
         "Dashboard", "Analyzer", "Tactical Replay", "My Improvement",
-        "Reports", "System Check / Optimizer", "Settings", "Benchmark",
+        "System Check / Optimizer", "Benchmark", "Reports", "Settings",
     )
 
 

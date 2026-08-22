@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import threading
+import time
 import webbrowser
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -53,11 +54,17 @@ SIDEBAR_NAVIGATION = (
     "Analyzer",
     "Tactical Replay",
     "My Improvement",
-    "Reports",
     "System Check / Optimizer",
-    "Settings",
     "Benchmark",
+    "Reports",
+    "Settings",
 )
+
+# The visible wording is intentionally product-facing while the existing
+# internal page key remains stable.  This prevents a navigation-only release
+# task from changing the established read-only System Check/Optimizer route.
+_SIDEBAR_PRIMARY = SIDEBAR_NAVIGATION[:6]
+_SIDEBAR_SECONDARY = SIDEBAR_NAVIGATION[6:]
 
 _THEME = {
     # Final Home master calibration: near-black Navy surfaces lead. Blue is
@@ -1407,6 +1414,10 @@ class AnalyzerShellApp:
         self.tactical_syncing_selection = False
         self.tactical_ignore_selection_event = False
         self.analyzer_setup_expanded = False
+        self.current_page: str | None = None
+        self.page_history: list[str] = []
+        self._import_started_at: float | None = None
+        self._import_status_after: str | None = None
 
         shell = ttk.Frame(self.root, style="Content.TFrame")
         shell.pack(fill="both", expand=True)
@@ -1433,7 +1444,7 @@ class AnalyzerShellApp:
             "My Improvement": "↗   My Improvement",
             "Analyzer": "◎   Analyzer",
             "Reports": "▤   Reports",
-            "System Check / Optimizer": "◈   System Check / Optimizer",
+            "System Check / Optimizer": "◈   Optimizer",
             "Settings": "⚙   Settings",
             "Tactical Replay": "⌖   Tactical Replay",
             "Benchmark": "▱   Improve Benchmark",
@@ -1478,14 +1489,23 @@ class AnalyzerShellApp:
         # Hosts follow the canonical product-section map above.  Navigation,
         # however, must follow the explicit workflow order rather than the
         # implementation order of that map.
-        for name in SIDEBAR_NAVIGATION:
+        primary_navigation = ttk.Frame(sidebar, style="Sidebar.TFrame")
+        primary_navigation.pack(fill="x")
+        secondary_navigation = ttk.Frame(sidebar, style="Sidebar.TFrame")
+        secondary_navigation.pack(side="bottom", fill="x", padx=0, pady=(0, 4))
+        SidebarStatusPanel(tk, sidebar, ui_font=self.ui_font).pack(side="bottom", fill="x", padx=12, pady=(12, 10))
+        self.history_button = ttk.Button(
+            secondary_navigation, text="← Zurück", command=self._go_back, state="disabled",
+        )
+        self.history_button.pack(fill="x", padx=12, pady=(0, 8))
+        for name in _SIDEBAR_PRIMARY + _SIDEBAR_SECONDARY:
             button = SidebarNavItem(
-                tk, sidebar, text=nav_labels[name], ui_font=self.ui_font,
+                tk, primary_navigation if name in _SIDEBAR_PRIMARY else secondary_navigation,
+                text=nav_labels[name], ui_font=self.ui_font,
                 command=lambda value=name: self._show_page(value),
             )
             button.pack(fill="x", padx=11, pady=2)
             self.nav_buttons[name] = button
-        SidebarStatusPanel(tk, sidebar, ui_font=self.ui_font).pack(side="bottom", fill="x", padx=12, pady=16)
 
         frame = self.pages["Analyzer"]
         analyzer_header = ttk.Frame(frame, style="Content.TFrame")
@@ -1643,7 +1663,7 @@ class AnalyzerShellApp:
         self._select_profile()
         self._load_saved_system_scan()
         self._show_analyzer_tab("Übersicht")
-        self._show_page("Analyzer")
+        self._show_page("Analyzer", record_history=False)
         self.root.protocol("WM_DELETE_WINDOW", self._close)
 
     def _build_analyzer_result_projection(self, parent) -> None:
@@ -1879,7 +1899,12 @@ class AnalyzerShellApp:
             detail, text="HTML-Export im Browser (Fallback)", command=self._open_review_fallback
         ).pack(anchor="w", pady=(12, 0))
 
-    def _show_page(self, name: str) -> None:
+    def _show_page(self, name: str, *, record_history: bool = True) -> None:
+        if name not in self.page_hosts:
+            raise ValueError(f"unknown page: {name}")
+        if record_history and self.current_page and self.current_page != name:
+            self.page_history.append(self.current_page)
+        self.current_page = name
         self.page_hosts[name].tkraise()
         if name == "Dashboard":
             self.root.after_idle(lambda: self.dashboard_canvas.yview_moveto(0.0))
@@ -1889,6 +1914,14 @@ class AnalyzerShellApp:
             self._show_tactical_empty_state()
         for page_name, button in self.nav_buttons.items():
             button.set_active(page_name == name)
+        self.history_button.configure(state="normal" if self.page_history else "disabled")
+
+    def _go_back(self) -> None:
+        """Return across ordinary top-level pages without replacing special flows."""
+        if not self.page_history:
+            return
+        previous = self.page_history.pop()
+        self._show_page(previous, record_history=False)
 
     def _show_analyzer_overview(self) -> None:
         """Enter the one Analyzer workflow at its honest demo-preflight step."""
@@ -3027,6 +3060,8 @@ class AnalyzerShellApp:
 
     def _mark_demo_import_started(self, demo: Path) -> None:
         """Project an explicit, non-actionable parsing state into all tabs."""
+        self._stop_import_status_timer()
+        self._import_started_at = time.monotonic()
         self._set_analysis_controls_available(False)
         self.review_button.configure(state="disabled")
         self.demo_review_button.configure(state="disabled")
@@ -3037,12 +3072,29 @@ class AnalyzerShellApp:
         self.analysis_action_status.set("Parser läuft für die ausgewählte Demo. Analyse starten wird erst nach erfolgreichem Import freigegeben.")
         self.demo_library_text.set(f"Ausgewählte Datei: {demo.name}\nLokaler Import und Parse laufen. Keine vorherige Demo bleibt aktiv.")
         self.demo_selected_text.set(f"{demo.name}\nImport-/Parse-Status: läuft\nNoch keine bestätigten Match-Fakten verfügbar.")
-        self.demo_import_text.set("Import läuft · Parser prüft die explizit ausgewählte Demodatei.")
+        self.demo_import_text.set("Datei ausgewählt · Parser läuft · 0 Sekunden verstrichen.")
         self.demo_analysis_text.set("Analyse gesperrt · Import/Parse noch nicht bestätigt.")
         self.demo_ready_text.set("Noch nicht analysebereit · auf Parser-Ergebnis warten.")
         self.demo_overview_text.set("Die ausgewählte Demo wird lokal geprüft. Ergebnisse werden erst nach einem erfolgreichen Parse angezeigt.")
+        self._refresh_import_status_timer()
+
+    def _refresh_import_status_timer(self) -> None:
+        """Keep a long local parse observable without inventing progress values."""
+        if self._import_started_at is None:
+            return
+        elapsed = max(0, int(time.monotonic() - self._import_started_at))
+        self.status.set(f"Demo wird lokal geparst · {elapsed} Sekunden verstrichen")
+        self.demo_import_text.set(f"Datei ausgewählt · Parser läuft · {elapsed} Sekunden verstrichen.")
+        self._import_status_after = self.root.after(1000, self._refresh_import_status_timer)
+
+    def _stop_import_status_timer(self) -> None:
+        if self._import_status_after is not None:
+            self.root.after_cancel(self._import_status_after)
+            self._import_status_after = None
+        self._import_started_at = None
 
     def _mark_demo_import_failed(self, demo: Path, message: str) -> None:
+        self._stop_import_status_timer()
         self._set_analysis_controls_available(False)
         self.review_button.configure(state="disabled")
         self.demo_review_button.configure(state="disabled")
@@ -3110,6 +3162,7 @@ class AnalyzerShellApp:
         threading.Thread(target=worker, daemon=True).start()
 
     def _finish_background(self, result: ShellResult, recheck: bool) -> None:
+        self._stop_import_status_timer()
         self.analyzer_setup_expanded = False
         self._draw(result)
         if recheck:
@@ -3386,7 +3439,7 @@ class AnalyzerShellApp:
     def _return_to_embedded_review(self) -> None:
         if self.embedded_tactical and self.embedded_tactical.selected_scene_id:
             self._sync_review_scene(self.embedded_tactical.selected_scene_id)
-        self._show_page("Analyzer")
+        self._show_page("Analyzer", record_history=False)
         self._show_analyzer_tab("Review")
         self.embedded_review_frame.tkraise()
 
