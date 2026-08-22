@@ -2111,28 +2111,69 @@ class AnalyzerShellApp:
 
     def _build_my_improvement_page(self) -> None:
         page = self.pages["My Improvement"]
-        self._reference_page_header(page, "Meine Entwicklung", "Echte Analyseergebnisse werden hier erst dargestellt, wenn sie aus einer geladenen lokalen Demo abgeleitet wurden.")
+        header = self.ttk.Frame(page, style="Content.TFrame")
+        header.pack(fill="x", pady=(0, 10))
+        self.ttk.Label(header, text="Meine Entwicklung", style="PageTitle.TLabel").pack(side="left")
+        evidence_state = self.ttk.Frame(header, style="CardInner.TFrame", padding=(12, 7))
+        evidence_state.pack(side="right")
+        self.ttk.Label(evidence_state, text="VERGLEICHSEVIDENZ", style="PageKicker.TLabel").pack(anchor="w")
+        self.ttk.Label(evidence_state, text="Noch nicht verfügbar", style="Muted.TLabel").pack(anchor="w", pady=(2, 0))
+        self.ttk.Label(
+            page,
+            text="Echte Entwicklung wird erst aus mehreren lokalen Analysen abgeleitet. Bis dahin bleiben Trends, Scores und Fokusbereiche ausdrücklich unbekannt.",
+            style="Muted.TLabel", wraplength=1100, justify="left",
+        ).pack(anchor="w", pady=(0, 10))
+        period = self.ttk.Frame(page, style="Content.TFrame")
+        period.pack(fill="x", pady=(0, 12))
+        self.ttk.Label(period, text="ZEITRAUM", style="PageKicker.TLabel").pack(side="left", padx=(0, 10))
+        self.ttk.Label(period, text="Lokale Analysen erforderlich", style="StatusBadge.TLabel").pack(side="left")
         summary = self.ttk.Frame(page, style="Content.TFrame")
         summary.pack(fill="x")
         cards = (
-            ("AIM", "Noch keine vergleichbare lokale Verlaufsevidenz." , "#13A7E8"),
-            ("DUELS", "Noch keine vergleichbare lokale Verlaufsevidenz." , "#E25B5B"),
-            ("UTILITY", "Noch keine vergleichbare lokale Verlaufsevidenz." , "#A782E8"),
-            ("GAME SENSE", "Noch keine vergleichbare lokale Verlaufsevidenz." , "#2BDCB9"),
-            ("PERFORMANCE", "Noch keine vergleichbare lokale Verlaufsevidenz." , "#E5B854"),
+            ("AIM", "#13A7E8"),
+            ("DUELS", "#E25B5B"),
+            ("UTILITY", "#A782E8"),
+            ("POSITIONING / GAME SENSE", "#2BDCB9"),
+            ("PERFORMANCE", "#E5B854"),
         )
-        for index, (title, text, accent) in enumerate(cards):
+        for index, (title, accent) in enumerate(cards):
             summary.columnconfigure(index, weight=1, uniform="improvement")
-            self._reference_info_card(summary, title=title, text=text, accent=accent).grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 4, 0 if index == len(cards) - 1 else 4))
+            card = RoundedHomeSurface(
+                self.tk, self.ttk, summary, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
+                padding=14, min_height=230, radius=10,
+            )
+            card.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 4, 0 if index == len(cards) - 1 else 4))
+            self._home_accent(card.body, accent)
+            self.ttk.Label(card.body, text=title, style="HomePanel.TLabel", font=(self.display_font, 9, "bold"), wraplength=190, justify="left").pack(anchor="w", pady=(8, 7))
+            self.ttk.Label(card.body, text="Noch nicht bewertet", style="HomePanelMuted.TLabel").pack(anchor="w")
+            self.ttk.Label(
+                card.body, text="Verlauf erst mit vergleichbarer lokaler Evidenz.", style="HomePanelMuted.TLabel",
+                wraplength=190, justify="left",
+            ).pack(anchor="w", pady=(8, 14))
+            metric_row = self.ttk.Frame(card.body, style="HomeInner.TFrame")
+            metric_row.pack(fill="x", side="bottom")
+            for metric_title, metric_value in (("AKTUELL", "–"), ("VERGLEICH", "–")):
+                metric = self.ttk.Frame(metric_row, style="HomeInner.TFrame", padding=(7, 6))
+                metric.pack(side="left", fill="x", expand=True, padx=(0, 3) if metric_title == "AKTUELL" else (3, 0))
+                self.ttk.Label(metric, text=metric_title, style="PageKicker.TLabel").pack(anchor="w")
+                self.ttk.Label(metric, text=metric_value, style="HomePanel.TLabel", font=(self.display_font, 12, "bold")).pack(anchor="w", pady=(2, 0))
         lower = self.ttk.Frame(page, style="Content.TFrame")
-        lower.pack(fill="both", expand=True, pady=(14, 0))
+        lower.pack(fill="x", pady=(14, 0))
         for index, (title, text, accent) in enumerate((
             ("DEINE STÄRKEN", "Eine belastbare Stärkenbewertung benötigt mehrere echte lokale Analysen.", "#58D69A"),
             ("DEINE SCHWÄCHEN", "Keine Schwächen werden ohne nachvollziehbare lokale Analyse abgeleitet.", "#E25B5B"),
             ("NÄCHSTE FOKUS-BEREICHE", "Nach einer echten Analyse erscheinen hier nur belegte, nicht erfundene nächste Schritte.", "#13A7E8"),
         )):
             lower.columnconfigure(index, weight=1, uniform="improvement-lower")
-            self._reference_info_card(lower, title=title, text=text, accent=accent).grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 5, 0 if index == 2 else 5))
+            self._reference_info_card(lower, title=title, text=text, accent=accent, min_height=166).grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 5, 0 if index == 2 else 5))
+        influenced = self._reference_info_card(
+            page,
+            title="SZENEN, DIE DEINE BEWERTUNG BEEINFLUSSEN",
+            text="Noch keine bewertete Vergleichsbasis. Szenen werden erst gezeigt, wenn ihr Einfluss aus mehreren echten lokalen Analysen transparent abgeleitet werden kann.",
+            accent="#13A7E8",
+            min_height=132,
+        )
+        influenced.pack(fill="x", pady=(14, 0))
 
     def _build_demo_analyzer_page(self) -> None:
         page = self.pages["Demo Analyzer"]
@@ -2207,18 +2248,108 @@ class AnalyzerShellApp:
 
     def _build_benchmark_page(self) -> None:
         page = self.pages["Benchmark"]
-        self._reference_page_header(page, "Improve Benchmark", "Reproduzierbare Benchmark-Ergebnisse werden erst nach einer freigegebenen, real gebauten Map und einem tatsächlichen Lauf dargestellt.")
-        row = self.ttk.Frame(page, style="Content.TFrame")
-        row.pack(fill="x")
-        for index, (title, text, accent) in enumerate((
-            ("BENCHMARK STARTEN", "Der Benchmark-Lauf ist derzeit nicht freigegeben; keine Messung oder FPS-Aussage wird erzeugt.", "#13A7E8"),
-            ("AKTUELLES ERGEBNIS", "Kein belegter aktueller Lauf. FPS, 1% Low und Frametime bleiben unbekannt.", "#58D69A"),
-            ("BENCHMARK MAP", "Die bestehende Benchmark-Arbeit bleibt außerhalb dieses UI-Passes unverändert.", "#E5B854"),
-        )):
-            row.columnconfigure(index, weight=1, uniform="benchmark")
-            self._reference_info_card(row, title=title, text=text, accent=accent).grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 5, 0 if index == 2 else 5))
-        scenes = self._reference_info_card(page, title="BENCHMARK SZENEN – TESTABLAUF", text="Kein gebaute oder freigegebene Benchmark-Szenenablauf verfügbar. Dieser Status ist absichtlich kein Ersatz für eine Messung.", accent="#13A7E8")
-        scenes.pack(fill="x", pady=(14, 0))
+        self._reference_page_header(
+            page, "Improve Benchmark",
+            "Reproduzierbare, präzise und vergleichbare Performance-Tests erscheinen erst nach einer freigegebenen realen Map und einem tatsächlichen Lauf.",
+        )
+        top = self.ttk.Frame(page, style="Content.TFrame")
+        top.pack(fill="x")
+        top.columnconfigure(0, weight=3)
+        top.columnconfigure(1, weight=5)
+        top.columnconfigure(2, weight=4)
+
+        start = RoundedHomeSurface(
+            self.tk, self.ttk, top, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
+            padding=16, min_height=266, radius=10,
+        )
+        start.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
+        self._home_accent(start.body, "#13A7E8")
+        self.ttk.Label(start.body, text="BENCHMARK STARTEN", style="HomePanel.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w", pady=(8, 12))
+        self.ttk.Label(start.body, text="Kein freigegebener Lauf", style="HomePanelMuted.TLabel").pack(anchor="w")
+        self.ttk.Label(
+            start.body,
+            text="Der Test bleibt gesperrt, bis eine real gebaute Map und ein reproduzierbarer Ablauf bestätigt sind.",
+            style="HomePanelMuted.TLabel", wraplength=260, justify="left",
+        ).pack(anchor="w", pady=(8, 16))
+        locked_action = self.ttk.Frame(start.body, style="HomeInner.TFrame", padding=(10, 8))
+        locked_action.pack(fill="x", pady=(0, 10))
+        self.ttk.Label(locked_action, text="LAUF GESPERRT", style="Muted.TLabel", justify="center").pack(anchor="center")
+        profile = self.ttk.Frame(start.body, style="HomeInner.TFrame", padding=(10, 8))
+        profile.pack(fill="x")
+        self.ttk.Label(profile, text="TESTPROFIL", style="PageKicker.TLabel").pack(anchor="w")
+        self.ttk.Label(profile, text="Nicht verfügbar", style="HomePanel.TLabel").pack(anchor="w", pady=(3, 0))
+
+        result = RoundedHomeSurface(
+            self.tk, self.ttk, top, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
+            padding=16, min_height=266, radius=10,
+        )
+        result.grid(row=0, column=1, sticky="nsew", padx=6)
+        self._home_accent(result.body, "#13A7E8")
+        result_header = self.ttk.Frame(result.body, style="HomeInner.TFrame")
+        result_header.pack(fill="x", pady=(8, 12))
+        self.ttk.Label(result_header, text="AKTUELLES ERGEBNIS", style="HomePanel.TLabel", font=(self.display_font, 10, "bold")).pack(side="left")
+        self.ttk.Label(result_header, text="Kein Lauf", style="Muted.TLabel").pack(side="right")
+        metrics = self.ttk.Frame(result.body, style="HomeInner.TFrame")
+        metrics.pack(fill="x")
+        for index, title in enumerate(("DURCHSCHNITT FPS", "1% LOW", "FRAMETIME (Ø)")):
+            metrics.columnconfigure(index, weight=1, uniform="benchmark-metrics")
+            metric = self.ttk.Frame(metrics, style="HomeInner.TFrame", padding=(10, 8))
+            metric.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 4, 0 if index == 2 else 4))
+            self.ttk.Label(metric, text=title, style="PageKicker.TLabel").pack(anchor="w")
+            self.ttk.Label(metric, text="–", style="HomePanel.TLabel", font=(self.display_font, 18, "bold")).pack(anchor="w", pady=(7, 0))
+            self.ttk.Label(metric, text="Nicht gemessen", style="HomePanelMuted.TLabel").pack(anchor="w", pady=(2, 0))
+        chart = self.ttk.Frame(result.body, style="HomeInner.TFrame", padding=(10, 9))
+        chart.pack(fill="x", pady=(12, 0))
+        self.ttk.Label(chart, text="FPS-VERLAUF", style="PageKicker.TLabel").pack(anchor="w")
+        self.ttk.Label(chart, text="Kein gemessener Verlauf verfügbar – eine Darstellung ohne echten Lauf wäre nicht aussagekräftig.", style="HomePanelMuted.TLabel", wraplength=450, justify="left").pack(anchor="w", pady=(5, 0))
+
+        map_card = RoundedHomeSurface(
+            self.tk, self.ttk, top, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
+            padding=16, min_height=266, radius=10,
+        )
+        map_card.grid(row=0, column=2, sticky="nsew", padx=(6, 0))
+        self._home_accent(map_card.body, "#E5B854")
+        self.ttk.Label(map_card.body, text="BENCHMARK MAP", style="HomePanel.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w", pady=(8, 12))
+        map_placeholder = self.ttk.Frame(map_card.body, style="HomeInner.TFrame", padding=14)
+        map_placeholder.pack(fill="x")
+        self.ttk.Label(map_placeholder, text="Keine Kartenbasis", style="HomePanel.TLabel").pack(anchor="w")
+        self.ttk.Label(
+            map_placeholder,
+            text="Die bestehende Benchmark-Arbeit bleibt außerhalb dieses UI-Passes unverändert. Es wird kein Kartenbild oder Map-Status vorgetäuscht.",
+            style="HomePanelMuted.TLabel", wraplength=280, justify="left",
+        ).pack(anchor="w", pady=(8, 0))
+        self.ttk.Label(map_card.body, text="VERSION / DATUM / API: nicht bestätigt", style="Muted.TLabel", wraplength=280, justify="left").pack(anchor="w", pady=(12, 0))
+
+        middle = RoundedHomeSurface(
+            self.tk, self.ttk, page, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
+            padding=16, min_height=172, radius=10,
+        )
+        middle.pack(fill="x", pady=(14, 0))
+        self._home_accent(middle.body, "#13A7E8")
+        self.ttk.Label(middle.body, text="BENCHMARK SZENEN – TESTABLAUF", style="HomePanel.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w", pady=(8, 7))
+        self.ttk.Label(
+            middle.body,
+            text="Kein gebauter oder freigegebener Szenenablauf verfügbar. Reproduzierbare Schritte, Dauer und Resultate werden erst nach dem realen Build dargestellt.",
+            style="HomePanelMuted.TLabel", wraplength=1050, justify="left",
+        ).pack(anchor="w")
+        self.ttk.Label(middle.body, text="Gesamtdauer: nicht gemessen", style="Muted.TLabel").pack(anchor="w", pady=(13, 0))
+
+        explain = self.ttk.Frame(page, style="Content.TFrame")
+        explain.pack(fill="x", pady=(14, 0))
+        explain.columnconfigure(0, weight=4)
+        explain.columnconfigure(1, weight=1)
+        why = self._reference_info_card(
+            explain, title="WARUM IMPROVE BENCHMARK?",
+            text="Reproduzierbar, präzise und vergleichbar: Erst reale, identische Bedingungen können eine belastbare Messung und spätere Einordnung ermöglichen.",
+            accent="#13A7E8", min_height=130,
+        )
+        why.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
+        tip = self._reference_info_card(
+            explain, title="HINWEIS",
+            text="Keine Aktion wird ausgelöst.",
+            accent="#E5B854", min_height=130,
+        )
+        tip.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
 
     def _build_settings_page(self) -> None:
         page = self.pages["Settings"]
