@@ -26,7 +26,7 @@ MODEL_REASON: Eng begrenzte Runtime-Visualkalibrierung einer bestehenden native 
 
 COMPUTER_USE: yes
 
-COMMIT/PR: `b244f73 feat: refine optimizer visual fidelity`; final handoff checkpoint and push follow on `dev/v1-foundation`.
+COMMIT/PR: `b244f73 feat: refine optimizer visual fidelity`; `b5dea12 docs: record optimizer visual fidelity handoff`; both pushed to `origin/dev/v1-foundation`.
 
 ## 2026-08-22 — Optimizer Reference-Locked Rebuild
 
