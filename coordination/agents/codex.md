@@ -16,7 +16,9 @@ VERIFIED SO FAR: `compileall` PASS; fokussierte Shell-Tests PASS; volle Suite **
 
 CURRENT ASSESSMENT: Dashboard und My Improvement sind im Rahmen der verfügbaren realen Daten strukturell/visuell MASTER-nah. Der Analyzer-Einstieg ist jetzt auf die Master-Hierarchie `Improve Analyzer → Filter/Datenquelle → Analyse-Regeln → erkannte Situationen/Review` ausgerichtet; vor einer geladenen echten Analyse bleiben Scores, Befunde, Situationen und Muster jedoch ehrlich leer. Er ist deshalb noch kein Ergebnis-Screen-PASS. Demo Analyzer, Tactical Viewer und Benchmark sind als Reihenfolge nachfolgend und noch nicht final abgenommen.
 
-NEXT: Ausschließlich den Analyzer-Ergebniszustand mit einem echten vorhandenen Workflow gegen `analyzer_MASTER.png` prüfen; danach erst `demo_analyzer_MASTER.png`.
+REAL ANALYZER CHECK: Ein bestehender fail-closed lokaler Workflow wurde am 2026-08-22 erfolgreich in der Shell geöffnet (nur gelesen): Quelle `fut-vs-mouz-m2-ancient.dem`, `de_ancient`, 18 Runden, 10 benannte Spieler, 3.179 grundlegende Events und 20 Szenen, Status `Review bereit`. Der echte Datenpfad ist damit sichtbar korrekt. Gegen `analyzer_MASTER.png` bleibt jedoch eine tatsächliche sichtbare Abweichung: Die Runtime zeigt den technischen Import-/Preflight-/Auswahlfluss und noch nicht die Master-Ergebnisaufteilung Übersicht → Schlüsselbefunde → erkannte Situationen → Muster. Dieser Befund ist **ÄNDERN**, nicht PASS. Die Beispiel-Scores, Muster, Bilder und Verbesserungsaussagen des MASTER dürfen nicht als Ersatz für diese fehlenden produktiven Projektionen kopiert werden.
+
+NEXT: Ausschließlich die vorhandenen echten Workflow-/Szenen-/Review-Daten in eine Master-konforme Analyzer-Ergebnisprojektion bringen, ohne neue Analyse- oder Bewertungslogik; danach erst `demo_analyzer_MASTER.png`.
 
 MODEL_PROFILE: terra
 
