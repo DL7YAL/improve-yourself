@@ -1,5 +1,33 @@
 # Codex
 
+## 2026-08-22 — Optimizer Reference-Locked Rebuild
+
+STATUS: `WAITING_FOR_TRISTAN`
+
+TASK: Ausschließlich die sichtbare Optimizer-Oberfläche anhand der zwei verbindlichen Optimizer-Referenzen neu strukturieren. Backend-, Evidence-, Matrix-Pack-, Rule-Pack- und read-only-Sicherheitslogik bleiben unverändert; keine andere Seite und keine weitere Produktarbeit.
+
+BRANCH: `dev/v1-foundation`
+
+CHANGED: Die bisherige lineare native Optimizer-Darstellung wurde als Layout nicht weiterverwendet. Die bestehende Tk-Desktopbasis bleibt erhalten (in diesem Checkout existiert kein PyWebView-/WebView2-Host). Die Übersicht besitzt jetzt Sidebar, Titel plus echte System-Check-Hardwarechips, große Empfehlungen-/Statusfläche mit denselben read-only-Zahlen, vier echte Domain-Karten im 2x2-Raster und eine feste rechte `DETAILS & ERKLÄRUNG`-Spalte. Das System-Detail hat Rücknavigation, Kennzahlen, Suche, Statusfilter und eine vier-spaltige echte Ergebnisliste; die Auswahl füllt die rechte Erklärung. Evidence/Provenance/Pack-/Rule-ID-Rohdaten erscheinen ausschließlich über `Technische Details`. Die neuen Helfer filtern und kürzen nur die vorhandenen Resultatprojektionen; vollständige unveränderte Werte bleiben im Detail sichtbar. Keine Regel, Hardwareaussage, Empfehlung, Apply-/Restore-Funktion, Engine oder Datenquelle ergänzt.
+
+RUNTIME EVIDENCE: Nach dem finalen Packaging wurden exakt die zwei verlangten Runtime-Screens im frischen Portable geöffnet und erfasst: (1) Optimizer-Übersicht bei normaler Experimental-Auflösung mit Header-Chips, großer Statusfläche, 2x2-Kartenraster und fixer Detailspalte; (2) System Optimizer nach Öffnen der echten Karte mit Rücknavigation, Kennzahlen, Suche/Filter, Einstellung/Aktueller Zustand/Improve Empfehlung/Status und einer ausgewählten realen Zeile in der rechten Detailspalte. Der technische Detail-Button ist sichtbar, aber nicht standardmäßig geöffnet. Die frühere Developer-/Evidence-Wand ist in beiden Hauptansichten nicht sichtbar.
+
+CURRENT-vs-TARGET: **PASS für die verbindliche sichtbare Struktur beider Referenzscreens.** Die Laufzeitansicht ist auf den ersten Blick als deren Produktumsetzung erkennbar: nicht mehr als umsortierte lineare Developer-UI. Die Native-Tk-Umsetzung ist bewusst keine pixelgenaue Bitmapkopie; das verbindliche Seitenraster, die Flächenhierarchie, aktive Karten, Detailspalte und Detail-Disclosure sind vorhanden. Reale Daten ersetzen nur Mockupwerte; fehlende Network-Qualität bleibt `PREVIEW`, unbekannte bzw. nicht empfohlene Sachverhalte bleiben fail-closed.
+
+VERIFIED: `python -m compileall -q src` PASS; vollständige Suite **187 passed**; `git diff --check` PASS; finaler Portable-Build samt Manifest PASS. EXE SHA-256 `E48214C3F41D61A64E52EC1030733C9FEF4AC5532F3958FBF0AF272B14E7F7F4`; ZIP SHA-256 `CFEF0F406CDCF768A17ABCFCCBFEB88495937A7781CE3B5E0C341C805786A1BB`. Nach den beiden Screens keine weitere UI-Interaktion oder Produktänderung.
+
+OPEN: Ausschließlich menschlicher Sichtcheck der zwei bereitgestellten Referenzen gegen den aktuellen Portable. Keine bekannte funktionale oder sicherheitsrelevante Abweichung innerhalb dieses Slices.
+
+NEXT: Tristan prüft nur Optimizer-Übersicht und System Optimizer im neuen Portable gegen die Referenzbilder. Bis zu einer neuen, expliziten Freigabe: `WAITING_FOR_TRISTAN`.
+
+MODEL_PROFILE: terra
+
+MODEL_REASON: Bestehende native Desktopoberfläche mit eng begrenztem Strukturumbau, echten read-only Evidenzdaten und Runtime-Visualprüfung ohne Framework- oder Sicherheitswechsel.
+
+COMPUTER_USE: yes
+
+COMMIT/PR: `3d0004d feat: rebuild optimizer reference layout`; documentation checkpoint and push follow on `dev/v1-foundation`.
+
 ## 2026-08-22 — UI Visual Source-of-Truth final Portable inspection
 
 STATUS: `WAITING_FOR_TRISTAN`
