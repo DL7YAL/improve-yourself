@@ -71,6 +71,7 @@ def test_core_turns_one_request_into_versioned_match_data_and_hub_projections(tm
     assert prepared.normalized_metrics["schema"] == METRICS_V1_SCHEMA
     assert prepared.normalized_metrics["kills"][0]["attacker"] == "Alpha"
     assert prepared.validation_report.status == "PASS"
+    assert prepared.normalized_metrics["contract"]["replay_reference"]["schema"] == "iy.replay/v2"
 
     match_data = AnalyzerCore(adapter=adapter).finalize(prepared, _replay("a" * 64))
     assert match_data["schema"] == IMPROVE_MATCH_DATA_V1_SCHEMA
@@ -79,21 +80,47 @@ def test_core_turns_one_request_into_versioned_match_data_and_hub_projections(tm
     assert hub.overview()["match"]["map_id"] == "de_ancient"
     assert hub.events()["unavailable_channels"] == ["footsteps"]
     assert hub.replay_projection()["players"][0]["display_name"] == "Alpha"
+    assert hub.for_consumer("analyzer")["schema"] == "iy.analyzer_projection/v1"
+    assert hub.for_consumer("tactical")["schema"] == "iy.tactical_projection/v1"
+    assert hub.for_consumer("tactical")["replay_reference"]["schema"] == "iy.replay/v2"
+    assert hub.for_consumer("review")["schema"] == "iy.review_projection/v1"
+    assert hub.for_consumer("report")["schema"] == "iy.report_projection/v1"
+    isolated = hub.for_consumer("analyzer")
+    isolated["players"][0]["display_name"] = "Mutated consumer copy"
+    assert hub.for_consumer("analyzer")["players"][0]["display_name"] == "Alpha"
     with pytest.raises(ValueError, match="unknown Analyzer Data Hub"):
         hub.for_consumer("awpy")
 
 
-def test_core_fails_closed_when_event_round_or_tick_is_not_referencable(tmp_path: Path) -> None:
-    class InvalidAdapter(_Adapter):
+def test_missing_optional_kills_stays_a_valid_match_dataset(tmp_path: Path) -> None:
+    class NoKillAdapter(_Adapter):
         def adapt(self, _demo: _Demo):
-            return _Demo.header, [Kill(0, -1, "", "", "", False)], ["rounds", "kills"], DataQuality()
+            return _Demo.header, [], ["rounds"], DataQuality("limited", ["kills", "footsteps"])
 
-    with pytest.raises(ValueError, match="core validation failed"):
-        AnalyzerCore(adapter=InvalidAdapter()).prepare(
-            AnalysisRequestV1.create(tmp_path / "invalid.dem"),
-            parser_path=tmp_path / "invalid.dem",
+    prepared = AnalyzerCore(adapter=NoKillAdapter()).prepare(
+            AnalysisRequestV1.create(tmp_path / "no-kills.dem"),
+            parser_path=tmp_path / "no-kills.dem",
             source_sha256="b" * 64,
-            source_name="invalid.dem",
+            source_name="no-kills.dem",
+    )
+    assert prepared.validation_report.status == "PASS"
+    assert prepared.validation_report.capabilities["kills"] == "unavailable"
+    assert prepared.normalized_metrics["kills"] == []
+
+
+def test_core_fails_closed_for_structurally_unusable_round_data(tmp_path: Path) -> None:
+    class NoRoundsDemo(_Demo):
+        rounds = _Frame([])
+
+    class InvalidAdapter(_Adapter):
+        def parse_demo(self, path: str) -> NoRoundsDemo:
+            self.paths.append(path)
+            return NoRoundsDemo()
+
+    with pytest.raises(ValueError, match="no referencable rounds"):
+        AnalyzerCore(adapter=InvalidAdapter()).prepare(
+            AnalysisRequestV1.create(tmp_path / "invalid.dem"), parser_path=tmp_path / "invalid.dem",
+            source_sha256="c" * 64, source_name="invalid.dem",
         )
 
 
@@ -102,3 +129,12 @@ def test_data_hub_refuses_unvalidated_or_wrong_schema_data() -> None:
         AnalyzerDataHub({})
     with pytest.raises(ValueError, match="did not pass"):
         AnalyzerDataHub({"schema": IMPROVE_MATCH_DATA_V1_SCHEMA, "validation": {"status": "FAIL"}})
+
+
+def test_only_awpy_adapter_imports_awpy_in_product_source() -> None:
+    source_root = Path(__file__).parents[1] / "src" / "improve_yourself"
+    direct = [
+        path.name for path in source_root.glob("*.py")
+        if "from awpy " in path.read_text(encoding="utf-8") or "import awpy" in path.read_text(encoding="utf-8")
+    ]
+    assert direct == ["awpy_adapter.py"]

@@ -6,7 +6,7 @@ object, to the rest of the product.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -22,12 +22,22 @@ METRICS_V1_PROFILE = "METRICS_V1"
 
 # This is an explicit product contract, not a promise that every demo exposes
 # every channel.  Absent and unsupported information remains unavailable.
+# Metrics V1 is an availability contract.  It names the exact location of
+# every product datum rather than advertising parser possibilities as inline
+# fields.  Large tick/state data deliberately remains one canonical replay-v2
+# store and is referenced after replay validation.
 METRICS_V1_FIELDS = {
-    "match": ("source", "map", "tick_rate", "teams", "players", "rounds"),
-    "time_and_state": ("ticks", "time_in_round", "player_states", "positions", "view_angles"),
-    "events": ("kills", "deaths", "assists", "damage", "shots", "weapons", "utility", "grenades", "smokes", "infernos", "bomb", "footsteps"),
-    "economy": ("economy",),
+    "inline_match": {"schema": "iy.metrics.match/v1", "fields": ("source", "map_id", "tick_rate")},
+    "inline_rounds": {"schema": "iy.metrics.rounds/v1", "fields": ("round_number", "start_tick", "end_tick")},
+    "inline_events": {"schema": "iy.metrics.events/v1", "fields": ("kills", "channel_availability")},
+    "replay_reference": {
+        "schema": "iy.replay/v2",
+        "fields": ("players", "rounds", "ticks", "time_in_round", "player_states", "positions", "view_angles", "weapons", "utility", "smokes", "infernos", "bomb", "footsteps"),
+        "representation": "validated_reference",
+    },
 }
+OPTIONAL_CHANNELS_V1 = ("damages", "shots", "bomb", "smokes", "infernos", "grenades", "footsteps")
+REPLAY_METRIC_KEYS_V1 = ("players", "teams", "ticks", "time_in_round", "player_states", "positions", "view_angles", "weapons", "utility", "grenades", "smokes", "infernos", "bomb", "footsteps", "economy")
 
 
 @dataclass(frozen=True)
@@ -56,6 +66,7 @@ class ValidationReportV1:
     unknown_records: int = 0
     duplicates_dropped: int = 0
     critical_errors: tuple[str, ...] = ()
+    capabilities: dict[str, str] = field(default_factory=dict)
     schema: str = VALIDATION_REPORT_V1_SCHEMA
 
     @property
@@ -101,14 +112,35 @@ class ImproveMatchNormalizer:
         if request.requested_profile != METRICS_V1_PROFILE:
             raise ValueError(f"unsupported analysis profile: {request.requested_profile}")
         header, kills, available_channels, quality = adapter.adapt(parsed_demo)
-        rounds = _records(getattr(parsed_demo, "rounds", None))
+        parser_rounds = _records(getattr(parsed_demo, "rounds", None))
         critical: list[str] = []
         if not isinstance(header, dict):
             critical.append("parser header is unreadable")
-        if not rounds:
+        normalized_rounds: list[dict[str, int | None]] = []
+        unknown_round_records = 0
+        for index, row in enumerate(parser_rounds, start=1):
+            try:
+                number = int(row.get("round_num", index))
+            except (AttributeError, TypeError, ValueError):
+                unknown_round_records += 1
+                continue
+            if number <= 0:
+                unknown_round_records += 1
+                continue
+            start = row.get("start", row.get("start_tick"))
+            end = row.get("end", row.get("official_end", row.get("end_tick")))
+            try:
+                start_tick = int(start) if start is not None else None
+                end_tick = int(end) if end is not None else None
+            except (TypeError, ValueError):
+                unknown_round_records += 1
+                continue
+            if start_tick is not None and end_tick is not None and end_tick < start_tick:
+                critical.append(f"round {number} end tick precedes start tick")
+                continue
+            normalized_rounds.append({"round_number": number, "start_tick": start_tick, "end_tick": end_tick})
+        if not normalized_rounds:
             critical.append("no referencable rounds")
-        if not kills:
-            critical.append("no referencable kill events")
         tickrate = header.get("tick_rate", header.get("tickrate")) if isinstance(header, dict) else None
         try:
             tickrate = float(tickrate) if tickrate is not None else None
@@ -130,21 +162,32 @@ class ImproveMatchNormalizer:
         valid_kills = [kill for kill in unique_kills if kill.round_number > 0 and kill.tick >= 0]
         unknown_records = len(unique_kills) - len(valid_kills)
         # Awpy may surface warm-up or unassigned parser events.  They are not
-        # product-referencable and are dropped rather than guessed.  Only a
-        # complete lack of usable events blocks this Metrics V1 request.
+        # product-referencable and are dropped rather than guessed.  A match
+        # with no usable kills is still a technically valid match dataset.
         if unknown_records:
             quality.warnings.append("Nicht referenzierbare Ereignisse wurden ohne Interpretation verworfen.")
-        if not valid_kills:
-            critical.append("no referencable kill events after normalization")
+        available = set(available_channels)
+        unavailable = set(quality.missing_channels)
+        channel_availability = {
+            "kills": "available" if valid_kills else "unavailable",
+            **{name: "available" if name in available else "unavailable" if name in unavailable else "unknown" for name in OPTIONAL_CHANNELS_V1},
+        }
+        capabilities = {
+            "match": "available" if isinstance(header, dict) else "unavailable",
+            "rounds": "available" if normalized_rounds else "unavailable",
+            **channel_availability,
+            **{name: "via_replay_v2" for name in REPLAY_METRIC_KEYS_V1},
+        }
         report = ValidationReportV1(
             demo_valid=not critical,
             players_processed=0,
-            rounds_processed=len(rounds),
+            rounds_processed=len(normalized_rounds),
             events_processed=len(valid_kills),
             warnings=tuple(quality.warnings),
-            unknown_records=unknown_records,
+            unknown_records=unknown_records + unknown_round_records,
             duplicates_dropped=duplicates,
             critical_errors=tuple(critical),
+            capabilities=capabilities,
         )
         if not report.demo_valid:
             raise ValueError("core validation failed: " + "; ".join(report.critical_errors))
@@ -154,10 +197,11 @@ class ImproveMatchNormalizer:
             "contract": METRICS_V1_FIELDS,
             "source": {"name": source_name, "sha256": source_sha256},
             "match": {"map_id": str(header.get("map_name", "")), "tick_rate": tickrate},
-            "available_channels": sorted(available_channels),
-            "unavailable_channels": sorted(quality.missing_channels),
+            "channel_availability": channel_availability,
+            "available_channels": sorted(name for name, state in channel_availability.items() if state == "available"),
+            "unavailable_channels": sorted(name for name, state in channel_availability.items() if state == "unavailable"),
             "kills": [asdict(kill) for kill in valid_kills],
-            "rounds": [{"round_number": int(row.get("round_num", index)), "start_tick": row.get("start"), "end_tick": row.get("end", row.get("official_end"))} for index, row in enumerate(rounds, start=1)],
+            "rounds": normalized_rounds,
         }
         return CoreParseResult(request, parsed_demo, metrics, report, (header, valid_kills, available_channels, quality))
 
@@ -166,6 +210,13 @@ class ImproveMatchNormalizer:
         source = replay_manifest.get("source", {})
         if source.get("sha256") != prepared.normalized_metrics["source"]["sha256"]:
             raise ValueError("replay source differs from normalized core data")
+        capabilities = dict(prepared.validation_report.capabilities)
+        replay_capabilities = replay_manifest.get("capabilities", {})
+        for name in REPLAY_METRIC_KEYS_V1:
+            # The canonical replay describes available state precisely.  Do
+            # not turn an absent capability into a positive claim here.
+            value = replay_capabilities.get(name)
+            capabilities[name] = str(value) if value is not None else capabilities.get(name, "unknown")
         report = ValidationReportV1(
             demo_valid=True,
             players_processed=len(replay_manifest.get("players", [])),
@@ -174,11 +225,19 @@ class ImproveMatchNormalizer:
             warnings=prepared.validation_report.warnings,
             unknown_records=prepared.validation_report.unknown_records,
             duplicates_dropped=prepared.validation_report.duplicates_dropped,
+            capabilities=capabilities,
         )
+        metrics = {**prepared.normalized_metrics}
+        metrics["replay_reference"] = {
+            "schema": replay_manifest.get("schema"),
+            "source_sha256": source.get("sha256"),
+            "reference": "replay",
+            "capabilities": replay_capabilities,
+        }
         return {
             "schema": IMPROVE_MATCH_DATA_V1_SCHEMA,
             "request": prepared.request.to_dict(),
-            "metrics": prepared.normalized_metrics,
+            "metrics": metrics,
             "validation": report.to_dict(),
             "replay": {
                 "schema": replay_manifest.get("schema"),

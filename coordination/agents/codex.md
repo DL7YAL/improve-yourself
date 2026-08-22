@@ -1521,3 +1521,24 @@ MODEL_PROFILE: terra
 MODEL_REASON: Versionierter, fail-closed Core-Schnitt und reale E2E-Validierung über einen bestehenden großen Demo-Pfad.
 COMPUTER_USE: no
 COMMIT/PR: folgt nach diesem Handoff-Checkpoint.
+
+# Handoff 2026-08-22 — Analyzer Core Foundation V1 Clarification Pass
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Ausschließlich drei unscharfe Stellen des bestehenden Core-Vertrags präzisieren: tatsächliche Metrics-V1-Datenoberfläche, consumer-neutrale technische Validation und minimale versionierte Consumer-Projektionen. Kein neuer Parser, keine neue Analyse-/Replay-Semantik und keine neue Produktfunktion.
+BRANCH / BASE: `dev/v1-foundation`, Ausgangs-HEAD `e510c1d`.
+DECISION: Variante B ist jetzt explizit umgesetzt. Kleine, produktrelevante Facts liegen in `iy.metrics/v1` inline; große Tick-/State-/Positions-/Blickwinkel-/Utility-Daten bleiben genau einmal im bestehenden, hash-validierten `iy.replay/v2` und erscheinen in Metrics V1 nur als eindeutige versionierte `replay_reference`. Metrics V1 ist damit Datenort- und Availability-Vertrag, keine Wunschliste möglicher Awpy-Spalten.
+CHANGED:
+- `src/improve_yourself/analyzer_core.py`: `METRICS_V1_FIELDS` benennt jetzt konkrete Inline-Projektionen (`iy.metrics.match/v1`, `iy.metrics.rounds/v1`, `iy.metrics.events/v1`) und die kanonische `iy.replay/v2`-Referenz. `channel_availability` führt `available`, `unavailable` und `unknown` ehrlich; der Validation Report führt zusätzlich technische Capabilities.
+- `src/improve_yourself/analyzer_core.py`: Fehlende optionale Gameplay-Kanäle, einschließlich eines killfreien aber strukturell gültigen Matches, führen nicht mehr zu einem Core-FAIL. Referenzierbare Runden, lesbarer Header, nicht widersprüchliche Tickgrenzen, valide Quell-/Replay-Bindung und der Aufbau normalisierter Daten bleiben die fail-closed Core-Grenze. Warm-up/unzugeordnete Events bleiben `unknown_records` und werden ohne Deutung verworfen.
+- `src/improve_yourself/analyzer_data_hub.py`: zusätzlich zu den technischen Kompatibilitätsprojektionen `overview`/`analysis`/`replay` existieren minimale, versionierte Projektionen: `iy.analyzer_projection/v1`, `iy.tactical_projection/v1`, `iy.review_projection/v1`, `iy.report_projection/v1`. Tactical erhält Identität/Runden-Kontext plus die ausdrückliche Replay-V2-State-Referenz, nicht Raw-Awpy oder eine doppelte Tickkopie. Jede Abfrage liefert eine mutationsisolierte Kopie.
+- `docs/ANALYZER_CORE_FOUNDATION_V1.md`: Contracts, Datenorte, PASS/FAIL-Grenze, Consumer-Verteilung und Scope entsprechend präzisiert.
+- `tests/test_analyzer_core.py`: regressionssichert den tatsächlichen Metrics-Vertrag, `kills: unavailable` bei Core-PASS, strukturell unbrauchbare Runden als FAIL, alle vier Consumer-Schemas, Mutationsisolation, Hub fail-closed und den statischen Guard, dass nur `awpy_adapter.py` Awpy importiert.
+REAL E2E: Frischer Lauf mit `fut-vs-mouz-m2-ancient.dem` (SHA-256 `c183dd61fc6a619f7af435d45eab374cd6f0097a7bd0da779971b15ef6746f7f`) erreichte `READY_FOR_REVIEW`: `iy.improve_match_data/v1`/`iy.metrics/v1`/Validation PASS, `de_ancient`, 18 Runden, `kills: available`, `footsteps: available`, explizite `iy.replay/v2`-Referenz, 4 unbekannte Records ohne Interpretation und die unveränderten 54 realen Szenen. Dieselben Match Data erzeugten danach die vier versionierten Hub-Projektionen ohne erneuten Parserlauf.
+VERIFIED: gezielte Core/Workflow/Shell/Replay-Regression **47/47 PASS**; vollständige Suite **199/199 PASS**; `compileall` PASS; `git diff --check` PASS. Arbeitsbaum vor Handoff enthielt ausschließlich die vier oben genannten Clarification-Dateien.
+KNOWN LIMITS: Availability ist kein Gameplay-Urteil. `via_replay_v2` bedeutet ausschließliche Datenlage im bestehenden kanonischen Replay, nicht stillschweigend verfügbare State-Daten. Noch keine Consumer-UI, Tactical-/Review-/Report-Erweiterung, neue Regel, Parser-, NetCon-, Optimizer- oder Benchmark-Arbeit.
+NEXT: Tristan prüft den präzisierten Core-Vertrag. Eine spätere neue Consumer-Funktion muss ausschließlich eine der versionierten Hub-Projektionen verwenden oder vorab einen expliziten Projection-Contract erhalten; ohne Freigabe keine Folgearbeit.
+MODEL_PROFILE: terra
+MODEL_REASON: Enger Contract-/Fail-closed-Pass mit realem Demo-E2E-Nachweis und ohne Produktsemantik-Ausweitung.
+COMPUTER_USE: no
+COMMIT/PR: folgt nach diesem Handoff-Checkpoint.
