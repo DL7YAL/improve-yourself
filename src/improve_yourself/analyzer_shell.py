@@ -1618,10 +1618,22 @@ class AnalyzerShellApp:
         self.analyzer_result_section = section
         header = self.ttk.Frame(section, style="Content.TFrame")
         header.pack(fill="x", pady=(0, 8))
-        self.ttk.Label(header, text="ANALYSE-ÜBERSICHT", style="SectionTitle.TLabel").pack(side="left")
+        self.ttk.Label(header, text="ANALYSE", style="SectionTitle.TLabel").pack(side="left")
         self.analyzer_result_state = self.tk.StringVar(value="Demo und objektive Szenen noch nicht geladen")
         self.ttk.Label(header, textvariable=self.analyzer_result_state, style="StatusBadge.TLabel").pack(side="right")
+        self.ttk.Button(header, text="Review öffnen", command=self._open_review).pack(side="right", padx=(0, 8))
         self.ttk.Button(header, text="Analyse konfigurieren", command=self._show_analyzer_setup).pack(side="right", padx=(0, 8))
+
+        # This is deliberately a presentation-only flow rail.  It makes the
+        # already existing analysis -> embedded review transition visible in
+        # the result state without inventing a second Analyzer or any values.
+        flow_rail = self.ttk.Frame(section, style="Card.TFrame", padding=(14, 10))
+        flow_rail.pack(fill="x", pady=(0, 12))
+        self.ttk.Label(flow_rail, text="ANALYSE", style="StatusBadge.TLabel").pack(side="left")
+        self.ttk.Label(flow_rail, text="→", style="Muted.TLabel").pack(side="left", padx=8)
+        self.ttk.Label(flow_rail, text="REVIEW", style="Card.TLabel", font=(self.display_font, 9, "bold")).pack(side="left")
+        self.analyzer_flow_context = self.tk.StringVar(value="Demo und Analyseprofil noch nicht geladen")
+        self.ttk.Label(flow_rail, textvariable=self.analyzer_flow_context, style="Muted.TLabel", justify="right").pack(side="right")
 
         top = self.ttk.Frame(section, style="Content.TFrame")
         top.pack(fill="x")
@@ -1629,19 +1641,19 @@ class AnalyzerShellApp:
         overview.pack(side="left", fill="both", expand=True, padx=(0, 6))
         self.ttk.Label(overview, text="ÜBERSICHT", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
         self.analyzer_overview = self.tk.StringVar(value="Noch keine belastbare Demoanalyse verfügbar.")
-        self.ttk.Label(overview, textvariable=self.analyzer_overview, style="Muted.TLabel", justify="left", wraplength=330).pack(anchor="w", pady=(10, 0))
+        self.ttk.Label(overview, textvariable=self.analyzer_overview, style="Muted.TLabel", justify="left", wraplength=240).pack(anchor="w", pady=(10, 0))
 
         findings = self.ttk.Frame(top, style="Card.TFrame", padding=16)
         findings.pack(side="left", fill="both", expand=True, padx=6)
         self.ttk.Label(findings, text="SCHLÜSSELBEFUNDE", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
         self.analyzer_findings = self.tk.StringVar(value="Nur objektiv belegte Szenenanker werden hier aufgeführt.")
-        self.ttk.Label(findings, textvariable=self.analyzer_findings, style="Muted.TLabel", justify="left", wraplength=330).pack(anchor="w", pady=(10, 0))
+        self.ttk.Label(findings, textvariable=self.analyzer_findings, style="Muted.TLabel", justify="left", wraplength=240).pack(anchor="w", pady=(10, 0))
 
         patterns = self.ttk.Frame(top, style="Card.TFrame", padding=16)
         patterns.pack(side="left", fill="both", expand=True, padx=(6, 0))
         self.ttk.Label(patterns, text="WIEDERKEHRENDE MUSTER", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
         self.analyzer_patterns = self.tk.StringVar(value="Keine Musterbewertung, solange keine dafür definierte Regel vorliegt.")
-        self.ttk.Label(patterns, textvariable=self.analyzer_patterns, style="Muted.TLabel", justify="left", wraplength=330).pack(anchor="w", pady=(10, 0))
+        self.ttk.Label(patterns, textvariable=self.analyzer_patterns, style="Muted.TLabel", justify="left", wraplength=240).pack(anchor="w", pady=(10, 0))
 
         middle = self.ttk.Frame(section, style="Content.TFrame")
         middle.pack(fill="x", pady=(12, 0))
@@ -1649,14 +1661,14 @@ class AnalyzerShellApp:
         situations.pack(side="left", fill="both", expand=True, padx=(0, 6))
         self.ttk.Label(situations, text="ERKANNTE SITUATIONEN", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
         self.analyzer_situations = self.tk.StringVar(value="Nach der Analyse stehen hier die ersten zusammengeführten Szenen.")
-        self.ttk.Label(situations, textvariable=self.analyzer_situations, style="Muted.TLabel", justify="left", wraplength=525).pack(anchor="w", pady=(10, 0))
+        self.ttk.Label(situations, textvariable=self.analyzer_situations, style="Muted.TLabel", justify="left", wraplength=340).pack(anchor="w", pady=(10, 0))
         self.ttk.Button(situations, text="Szenen im Review öffnen", command=self._open_review).pack(anchor="w", pady=(12, 0))
 
         next_steps = self.ttk.Frame(middle, style="Card.TFrame", padding=16)
         next_steps.pack(side="left", fill="both", expand=True, padx=(6, 0))
         self.ttk.Label(next_steps, text="NÄCHSTE SCHRITTE", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
         self.analyzer_next_steps = self.tk.StringVar(value="Review öffnen, eine Szene auswählen und den belegten Tick lokal prüfen.")
-        self.ttk.Label(next_steps, textvariable=self.analyzer_next_steps, style="Muted.TLabel", justify="left", wraplength=525).pack(anchor="w", pady=(10, 0))
+        self.ttk.Label(next_steps, textvariable=self.analyzer_next_steps, style="Muted.TLabel", justify="left", wraplength=340).pack(anchor="w", pady=(10, 0))
 
         lower = self.ttk.Frame(section, style="Content.TFrame")
         lower.pack(fill="x", pady=(12, 0))
@@ -1664,17 +1676,17 @@ class AnalyzerShellApp:
         strengths.pack(side="left", fill="both", expand=True, padx=(0, 4))
         self.ttk.Label(strengths, text="STÄRKEN", style="Card.TLabel", font=(self.display_font, 9, "bold")).pack(anchor="w")
         self.analyzer_strengths = self.tk.StringVar(value="Nicht automatisch abgeleitet")
-        self.ttk.Label(strengths, textvariable=self.analyzer_strengths, style="Muted.TLabel", wraplength=235).pack(anchor="w", pady=(8, 0))
+        self.ttk.Label(strengths, textvariable=self.analyzer_strengths, style="Muted.TLabel", wraplength=210).pack(anchor="w", pady=(8, 0))
         weaknesses = self.ttk.Frame(lower, style="Card.TFrame", padding=14)
         weaknesses.pack(side="left", fill="both", expand=True, padx=4)
         self.ttk.Label(weaknesses, text="SCHWÄCHEN", style="Card.TLabel", font=(self.display_font, 9, "bold")).pack(anchor="w")
         self.analyzer_weaknesses = self.tk.StringVar(value="Nicht automatisch abgeleitet")
-        self.ttk.Label(weaknesses, textvariable=self.analyzer_weaknesses, style="Muted.TLabel", wraplength=235).pack(anchor="w", pady=(8, 0))
+        self.ttk.Label(weaknesses, textvariable=self.analyzer_weaknesses, style="Muted.TLabel", wraplength=210).pack(anchor="w", pady=(8, 0))
         ruleset = self.ttk.Frame(lower, style="Card.TFrame", padding=14)
         ruleset.pack(side="left", fill="both", expand=True, padx=(4, 0))
         self.ttk.Label(ruleset, text="REGELSET & KONTEXT", style="Card.TLabel", font=(self.display_font, 9, "bold")).pack(anchor="w")
         self.analyzer_ruleset = self.tk.StringVar(value="Objektive V1-Regeln · Profil wird nach dem Laden angezeigt")
-        self.ttk.Label(ruleset, textvariable=self.analyzer_ruleset, style="Muted.TLabel", wraplength=300).pack(anchor="w", pady=(8, 0))
+        self.ttk.Label(ruleset, textvariable=self.analyzer_ruleset, style="Muted.TLabel", wraplength=240).pack(anchor="w", pady=(8, 0))
 
     def _show_analyzer_setup(self) -> None:
         """Expose the existing source and selection controls without a new flow."""
@@ -1701,6 +1713,7 @@ class AnalyzerShellApp:
     def _render_analyzer_result_projection(self, result: ShellResult) -> None:
         if result.status != "READY_FOR_REVIEW":
             self.analyzer_result_state.set("Auswahl bereit · Szenen entstehen erst nach Analyse")
+            self.analyzer_flow_context.set("Demo laden → Auswahl → objektive Analyse → eingebettetes Review")
             self.analyzer_overview.set("Demo ist eingelesen. Nach der expliziten Analyse werden hier nur belegte Daten gezeigt.")
             self.analyzer_findings.set("Noch keine zusammengeführten Szenen vorhanden.")
             self.analyzer_situations.set("Keine analysierten Szenen vorhanden.")
@@ -1712,11 +1725,16 @@ class AnalyzerShellApp:
             projection = analyzer_result_projection(result, json.loads(flow_path.read_text(encoding="utf-8")))
         except (KeyError, OSError, ValueError, json.JSONDecodeError) as error:
             self.analyzer_result_state.set("Ergebnisdaten nicht verfügbar")
+            self.analyzer_flow_context.set("Analyse bleibt lokal · Ergebnisdaten nicht darstellbar")
             self.analyzer_overview.set(f"Die Analyse bleibt unverändert; Ergebnisprojektion konnte nicht geladen werden: {error}")
             self.analyzer_findings.set("Keine nicht verifizierten Ersatzwerte angezeigt.")
             self.analyzer_situations.set("Keine Szenenprojektion verfügbar.")
             return
         self.analyzer_result_state.set(f"{projection['scene_count']} Szenen · lokal verifiziert")
+        self.analyzer_flow_context.set(
+            f"{projection['map_id']} · {projection['round_count']} Runden · "
+            f"Profil {projection['profile_id']} · {projection['scene_count']} Szenen"
+        )
         self.analyzer_overview.set(
             f"{projection['map_id']}\n{projection['round_count']} Runden · {projection['player_count']} Spieler\n"
             f"{projection['event_count']} grundlegende Events · keine Gesamtscore-Bewertung"
@@ -1772,9 +1790,9 @@ class AnalyzerShellApp:
         detail = self.ttk.Frame(body, style="Card.TFrame", padding=20)
         detail.pack(side="left", fill="both", expand=True)
         self.ttk.Label(detail, textvariable=self.embedded_scene_title, style="Card.TLabel", font=(self.display_font, 14, "bold")).pack(anchor="w")
-        self.ttk.Label(detail, textvariable=self.embedded_scene_context, style="Muted.TLabel", wraplength=720, justify="left").pack(anchor="w", pady=(8, 0))
-        self.ttk.Label(detail, textvariable=self.embedded_scene_players, style="Card.TLabel", wraplength=720, justify="left").pack(anchor="w", pady=(14, 0))
-        self.ttk.Label(detail, textvariable=self.embedded_scene_rules, style="Muted.TLabel", wraplength=720, justify="left").pack(anchor="w", pady=(6, 16))
+        self.ttk.Label(detail, textvariable=self.embedded_scene_context, style="Muted.TLabel", wraplength=440, justify="left").pack(anchor="w", pady=(8, 0))
+        self.ttk.Label(detail, textvariable=self.embedded_scene_players, style="Card.TLabel", wraplength=440, justify="left").pack(anchor="w", pady=(14, 0))
+        self.ttk.Label(detail, textvariable=self.embedded_scene_rules, style="Muted.TLabel", wraplength=440, justify="left").pack(anchor="w", pady=(6, 16))
 
         state_row = self.ttk.Frame(detail, style="CardInner.TFrame")
         state_row.pack(fill="x")
@@ -1794,13 +1812,15 @@ class AnalyzerShellApp:
         self.embedded_note.pack(fill="x")
         buttons = self.ttk.Frame(detail, style="CardInner.TFrame")
         buttons.pack(fill="x", pady=(14, 0))
-        self.ttk.Button(buttons, text="Status & Notiz speichern", command=self._save_embedded_review).pack(side="left")
-        self.ttk.Button(buttons, text="In CS2 ansehen", style="Primary.TButton", command=self._open_embedded_in_cs2).pack(side="left", padx=8)
-        self.ttk.Button(buttons, text="Tactical Replay", command=self._open_tactical_from_review).pack(side="left")
-        self.ttk.Button(buttons, text="Vorherige", command=lambda: self._step_embedded_scene(-1)).pack(side="left", padx=(16, 4))
-        self.ttk.Button(buttons, text="Nächste", command=lambda: self._step_embedded_scene(1)).pack(side="left")
+        for column in range(3):
+            buttons.columnconfigure(column, weight=1)
+        self.ttk.Button(buttons, text="Status & Notiz speichern", command=self._save_embedded_review).grid(row=0, column=0, sticky="ew", padx=(0, 4))
+        self.ttk.Button(buttons, text="In CS2 ansehen", style="Primary.TButton", command=self._open_embedded_in_cs2).grid(row=0, column=1, sticky="ew", padx=4)
+        self.ttk.Button(buttons, text="Tactical Replay", command=self._open_tactical_from_review).grid(row=0, column=2, sticky="ew", padx=(4, 0))
+        self.ttk.Button(buttons, text="← Vorherige", command=lambda: self._step_embedded_scene(-1)).grid(row=1, column=0, sticky="w", pady=(8, 0))
+        self.ttk.Button(buttons, text="Nächste →", command=lambda: self._step_embedded_scene(1)).grid(row=1, column=2, sticky="e", pady=(8, 0))
         self.ttk.Label(
-            detail, textvariable=self.embedded_cs2_status, style="Muted.TLabel", wraplength=720, justify="left"
+            detail, textvariable=self.embedded_cs2_status, style="Muted.TLabel", wraplength=440, justify="left"
         ).pack(anchor="w", pady=(18, 0))
         self.ttk.Button(
             detail, text="HTML-Export im Browser (Fallback)", command=self._open_review_fallback
@@ -3063,9 +3083,10 @@ class AnalyzerShellApp:
             )
             self.embedded_scene_list.delete(0, self.tk.END)
             for scene in self.embedded_review.scenes:
-                anchors = ", ".join(scene.anchor_types) or "Kontext"
+                marker_count = len(scene.anchor_types)
                 self.embedded_scene_list.insert(
-                    self.tk.END, f"Runde {scene.round_number:02d} · {scene.timecode} · {anchors}"
+                    self.tk.END,
+                    f"Runde {scene.round_number:02d} · Tick {scene.review_tick} · {marker_count} Marker",
                 )
             self.embedded_review_frame.place(relx=0, rely=0, relwidth=1, relheight=1)
             self.embedded_review_frame.tkraise()

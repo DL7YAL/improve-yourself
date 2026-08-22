@@ -32,6 +32,16 @@ COMPUTER_USE: yes
 
 COMMIT/PR: Finaler Wide-/Compact-Review-Checkpoint wird nach Arbeitsbaum-/Diff-Check auf `dev/v1-foundation` gesichert und gepusht.
 
+FOLLOW-UP — ANALYZER / REVIEW + 1080×720 (2026-08-22): Die zuvor offene Abnahme wurde gezielt nachgearbeitet, ohne Parser-, Rule-, Szenen-, Replay-, CS2- oder Produktlogik anzufassen. Der geladene Ergebniszustand besitzt nun eine sichtbare, reine Präsentationsleiste **ANALYSE → REVIEW**, echte Kontextangaben (Map, Runden, Profil, Szenenzahl) sowie die vorhandenen Aktionen `Analyse konfigurieren` und `Review öffnen`. Die Ergebnisansicht nutzt für die Mindestbreite kompakte Wrapbreiten; damit passen Übersicht, Schlüsselbefunde und wiederkehrende Muster als drei vollständige Cards sowie Situationen, nächste Schritte und die unteren Faktenkarten ohne horizontalen Anschnitt. Keine Score-, Stärke-/Schwäche- oder Musterwerte wurden erfunden.
+
+EMBEDDED REVIEW: Die echte `de_ancient`-Analyse mit **54** Szenen wurde im frischen Portable geöffnet. Die linke Liste verwendet nun nur echte kompakte Angaben `Runde NN · Tick NNNN · N Marker`; vollständiger Kontext, Spieler, Regeln und Notiz bleiben im rechten Detailbereich. Die Actionfläche ist bei Mindestbreite als responsives 3+2-Raster umgesetzt: `Status & Notiz speichern`, `In CS2 ansehen`, `Tactical Replay`, `← Vorherige`, `Nächste →`. Somit sind Tick-Sprungpfad, Tactical-Übergang und Szenennavigation sichtbar erreichbar, ohne sie in diesem UI-Pass auszuführen oder ihre abgesicherten Grenzen zu verändern.
+
+RUNTIME / VIEWPORT: Frischer Portable-Build praktisch geöffnet und per nativer Fenstergröße auf **1080×720 Client** gesetzt (Capture **1082×752** einschließlich Fensterrahmen). Lokal erzeugte, nicht versionierte Runtime-Captures wurden für (a) Analyzer-Setup, (b) reale Ergebnisansicht und (c) eingebetteten Review gesichtet. Ergebnis: keine horizontale Überlagerung/kein Kartenanschnitt; die rechte Detailfläche, Szenenliste, Statusauswahl, Notizbereich, fünf Review-Aktionen, Sidebar und Header bleiben sichtbar. Vertikales Scrollen bleibt ausschließlich für echten Inhaltsüberlauf verfügbar. Keine Browser-/Fallback-Aktion und kein CS2-Tick-Sprung wurden durch diesen Sichtcheck ausgelöst.
+
+VERIFIED FOLLOW-UP: fokussierte Shell-Tests **29 passed**; erneuter vollständiger Portable-Build-Gate **189 passed**; `pip check`, `compileall` und `git diff --check` PASS. Der neue Portable samt Manifest/ZIP wurde nach den letzten Responsive-Korrekturen erzeugt.
+
+STATUS / NEXT: `DONE — WAITING_FOR_TRISTAN`. Der nächste zulässige Schritt ist ausschließlich Tristans visuelle Abnahme des frischen Portable, besonders Analyse-Ergebnis und Embedded Review bei 1080×720. Keine weitere UI-, Produkt-, Analyzer-, Replay-, Optimizer-, Benchmark- oder Infrastrukturarbeit ohne neuen Auftrag.
+
 ## 2026-08-22 — UI Reference Pack verified / Optimizer + Shell alignment
 
 STATUS: `WAITING_FOR_TRISTAN`
