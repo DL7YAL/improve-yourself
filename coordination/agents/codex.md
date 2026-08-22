@@ -1496,4 +1496,4 @@ NEXT: Tristan prüft diesen gepushten Konsolidierungs-Checkpoint anhand des neue
 MODEL_PROFILE: terra
 MODEL_REASON: Bestehenden Datenvertrag und fail-closed Integritätsgrenzen konsolidieren, real messen und ohne semantische Änderung regressionsprüfen.
 COMPUTER_USE: yes — ausschließlich für den lokalen echten Analyzer→Review→Tactical→Review-Runtime-Nachweis.
-COMMIT/PR: folgt nach finalem Checkpoint und Push.
+COMMIT/PR: `a9b833a perf: consolidate demo pipeline`, gepusht nach `origin/dev/v1-foundation`.
