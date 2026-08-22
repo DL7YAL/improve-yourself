@@ -11,6 +11,7 @@ from improve_yourself.analyzer_shell import (
     AnalyzerShellController,
     ShellPlayer,
     ShellResult,
+    SIDEBAR_NAVIGATION,
     UI_REFERENCE_STATUS,
     analyzer_result_projection,
     analysis_profile_criteria_view,
@@ -102,6 +103,8 @@ def test_experimental_shell_exposes_binding_product_sections_from_canonical_desi
     assert UI_REFERENCE_STATUS["Demo Analyzer"] == "IMPLEMENTED"
     assert UI_REFERENCE_STATUS["My Improvement"] == "IMPLEMENTED"
     assert UI_REFERENCE_STATUS["Benchmark"] == "IMPLEMENTED"
+    assert "Demo Analyzer" not in SIDEBAR_NAVIGATION
+    assert SIDEBAR_NAVIGATION[2] == "Analyzer / Review"
 
 
 def test_profile_criteria_view_is_semantic_and_reports_the_actual_profile_count() -> None:

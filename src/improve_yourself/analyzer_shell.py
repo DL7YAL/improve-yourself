@@ -47,6 +47,22 @@ UI_REFERENCE_STATUS = {
     "Benchmark": "IMPLEMENTED",
 }
 
+# The Demo Analyzer master is an internal Analyzer workflow view, not a second
+# top-level product area.  It deliberately stays in ``UI_REFERENCE_STATUS`` so
+# its independently reference-locked surface is built and testable, while this
+# tuple is the single source of truth for visible sidebar navigation.
+SIDEBAR_NAVIGATION = (
+    "Dashboard",
+    "My Improvement",
+    "Analyzer / Review",
+    "Rules",
+    "Reports",
+    "System Check / Optimizer",
+    "Settings",
+    "Tactical Replay",
+    "Benchmark",
+)
+
 _THEME = {
     # Final Home master calibration: near-black Navy surfaces lead. Blue is
     # reserved for wayfinding and intentional state, never the card ground.
@@ -1409,7 +1425,6 @@ class AnalyzerShellApp:
             "Dashboard": "⌂   Dashboard",
             "My Improvement": "↗   My Improvement",
             "Analyzer / Review": "◎   Analyzer / Review",
-            "Demo Analyzer": "▣   Demo Analyzer",
             "Rules": "◇   Rules",
             "Reports": "▤   Reports",
             "System Check / Optimizer": "◈   System Check / Optimizer",
@@ -1454,12 +1469,13 @@ class AnalyzerShellApp:
                 page = ttk.Frame(host, style="Content.TFrame")
                 page.pack(fill="both", expand=True)
             self.pages[name] = page
-            button = SidebarNavItem(
-                tk, sidebar, text=nav_labels[name], ui_font=self.ui_font,
-                command=lambda value=name: self._show_page(value),
-            )
-            button.pack(fill="x", padx=11, pady=2)
-            self.nav_buttons[name] = button
+            if name in SIDEBAR_NAVIGATION:
+                button = SidebarNavItem(
+                    tk, sidebar, text=nav_labels[name], ui_font=self.ui_font,
+                    command=lambda value=name: self._show_page(value),
+                )
+                button.pack(fill="x", padx=11, pady=2)
+                self.nav_buttons[name] = button
         SidebarStatusPanel(tk, sidebar, ui_font=self.ui_font).pack(side="bottom", fill="x", padx=12, pady=16)
 
         frame = self.pages["Analyzer / Review"]
@@ -1479,6 +1495,11 @@ class AnalyzerShellApp:
         source_actions.pack(fill="x", pady=(8, 0))
         ttk.Button(source_actions, text="Demo auswählen", style="Primary.TButton", command=self._choose_demo).pack(fill="x")
         ttk.Button(source_actions, text="Vorhandene Analyse öffnen", command=self._open_existing).pack(fill="x", pady=5)
+        ttk.Button(
+            source_actions,
+            text="Demo-Übersicht öffnen",
+            command=lambda: self._show_page("Demo Analyzer"),
+        ).pack(fill="x", pady=(0, 5))
         self.link_button = ttk.Button(source_actions, text="Quelldemo zuordnen", command=self._link_source, state="disabled")
         self.link_button.pack(fill="x")
         ttk.Label(source_card, textvariable=self.identity, style="Muted.TLabel", wraplength=470, justify="left").pack(anchor="w", pady=(10, 0))
@@ -2064,10 +2085,19 @@ class AnalyzerShellApp:
         self.ttk.Label(header, text=title, style="PageTitle.TLabel").pack(anchor="w")
         self.ttk.Label(header, text=subtitle, style="Muted.TLabel", wraplength=1100, justify="left").pack(anchor="w", pady=(3, 0))
 
-    def _reference_info_card(self, parent, *, title: str, text: str | None = None, textvariable: object | None = None, accent: str = "#13A7E8") -> object:
+    def _reference_info_card(
+        self,
+        parent,
+        *,
+        title: str,
+        text: str | None = None,
+        textvariable: object | None = None,
+        accent: str = "#13A7E8",
+        min_height: int = 148,
+    ) -> object:
         card = RoundedHomeSurface(
             self.tk, self.ttk, parent, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
-            padding=16, min_height=148, radius=10,
+            padding=16, min_height=min_height, radius=10,
         )
         self._home_accent(card.body, accent)
         self.ttk.Label(card.body, text=title, style="HomePanel.TLabel", font=(self.display_font, 9, "bold")).pack(anchor="w", pady=(8, 0))
@@ -2110,7 +2140,13 @@ class AnalyzerShellApp:
         layout = self.ttk.Frame(page, style="Content.TFrame")
         layout.pack(fill="both", expand=True)
         self.demo_library_text = self.tk.StringVar(value="Keine lokale Demo ist automatisch ausgewählt. Wähle eine echte .dem oder .dem.zst bewusst aus.")
-        library = self._reference_info_card(layout, title="DEMO BIBLIOTHEK", textvariable=self.demo_library_text, accent="#A782E8")
+        library = self._reference_info_card(
+            layout,
+            title="DEMO BIBLIOTHEK",
+            textvariable=self.demo_library_text,
+            accent="#A782E8",
+            min_height=204,
+        )
         library.pack(side="left", fill="both", expand=True, padx=(0, 7))
         self.ttk.Button(library.body, text="Echte CS2-Demo auswählen", style="Primary.TButton", command=lambda: self._show_page("Analyzer / Review")).pack(fill="x", pady=(16, 0))
         self.demo_selected_text = self.tk.StringVar(value="Noch keine bestätigte lokale Demodatei geladen. Import- und Analyse-Status bleiben bis dahin ausdrücklich offen.")
@@ -2129,7 +2165,13 @@ class AnalyzerShellApp:
             readiness.columnconfigure(index, weight=1, uniform="demo-ready")
             self._reference_info_card(readiness, title=title, textvariable=variable, accent=accent).grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 5, 0 if index == 2 else 5))
         self.demo_overview_text = self.tk.StringVar(value="Nach dem bestätigten Import erscheinen hier ausschließlich aus dem Workflow belegte Demo-Fakten.")
-        overview = self._reference_info_card(page, title="DEMO-ÜBERSICHT", textvariable=self.demo_overview_text, accent="#13A7E8")
+        overview = self._reference_info_card(
+            page,
+            title="DEMO-ÜBERSICHT",
+            textvariable=self.demo_overview_text,
+            accent="#13A7E8",
+            min_height=248,
+        )
         overview.pack(fill="x", pady=(14, 0))
         demo_actions = self.ttk.Frame(overview.body, style="HomeInner.TFrame")
         demo_actions.pack(fill="x", pady=(14, 0))
