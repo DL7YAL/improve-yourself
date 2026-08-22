@@ -2621,7 +2621,7 @@ class AnalyzerShellApp:
         header.pack(fill="x")
         self.tactical_back_button = self.ttk.Button(header, text="← Zurück zum Review", command=self._return_to_embedded_review, state="disabled")
         self.tactical_back_button.pack(side="left")
-        self.ttk.Label(header, text="Tactical Replay", style="PageTitle.TLabel").pack(side="left", padx=16)
+        self.ttk.Label(header, text="2D Tactical", style="PageTitle.TLabel").pack(side="left", padx=16)
         self.ttk.Label(header, text="GEMEINSAME REPLAY-WAHRHEIT", style="StatusBadge.TLabel").pack(side="right")
         context_bar = self.ttk.Frame(page, style="Card.TFrame", padding=(14, 10))
         context_bar.pack(fill="x", pady=(10, 10))
@@ -2650,11 +2650,37 @@ class AnalyzerShellApp:
         self.tactical_scene_list.pack(fill="both", expand=True, pady=(8, 0))
         self.tactical_scene_list.bind("<<ListboxSelect>>", self._select_tactical_scene)
 
+        # The MASTER's right-hand information rail is retained without
+        # inventing a synthetic event timeline.  It projects only the selected
+        # review scene, its confirmed frame/tick and the locally stored note.
+        detail_panel = self.ttk.Frame(body, style="Card.TFrame", padding=14, width=280)
+        detail_panel.pack(side="right", fill="y", padx=(8, 0))
+        detail_panel.pack_propagate(False)
+        self.ttk.Label(detail_panel, text="SZENENDETAILS", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
+        self.tactical_detail_title = self.ttk.Label(
+            detail_panel, textvariable=self.tactical_scene_title, style="Card.TLabel", wraplength=240, justify="left"
+        )
+        self.tactical_detail_title.pack(anchor="w", pady=(12, 5))
+        self.tactical_detail_context = self.ttk.Label(
+            detail_panel, textvariable=self.tactical_scene_context, style="Muted.TLabel", wraplength=240, justify="left"
+        )
+        self.tactical_detail_context.pack(anchor="w", pady=(0, 12))
+        self.ttk.Label(detail_panel, text="FRAME / TICK", style="PageKicker.TLabel").pack(anchor="w")
+        self.ttk.Label(detail_panel, textvariable=self.tactical_frame_status, style="Card.TLabel", wraplength=240, justify="left").pack(anchor="w", pady=(4, 12))
+        self.ttk.Label(detail_panel, text="REVIEW-NOTIZ", style="PageKicker.TLabel").pack(anchor="w")
+        self.ttk.Label(detail_panel, textvariable=self.tactical_scene_note, style="Muted.TLabel", wraplength=240, justify="left").pack(anchor="w", pady=(4, 12))
+        self.ttk.Label(
+            detail_panel,
+            text="Ereignis-Timeline und Kartenbasis werden nur gezeigt, wenn sie in der gemeinsamen Replay-Wahrheit belegt sind.",
+            style="Muted.TLabel", wraplength=240, justify="left",
+        ).pack(anchor="w", pady=(8, 0))
+
         map_panel = self.ttk.Frame(body, style="Card.TFrame", padding=8)
         map_panel.pack(side="left", fill="both", expand=True)
         frame_row = self.ttk.Frame(map_panel, style="CardInner.TFrame")
         frame_row.pack(fill="x", pady=(0, 8))
-        self.ttk.Label(frame_row, text="SZENENFRAME", style="Card.TLabel").pack(side="left")
+        self.ttk.Label(frame_row, text="POSITIONSFRAME", style="Card.TLabel").pack(side="left")
+        self.ttk.Label(frame_row, text="Kartenbasis: nur bei belegtem Asset", style="Muted.TLabel").pack(side="left", padx=(10, 0))
         self.tactical_frame = self.ttk.Scale(frame_row, from_=0, to=0, command=self._set_tactical_frame)
         self.tactical_frame.pack(side="left", fill="x", expand=True, padx=10)
         self.ttk.Label(frame_row, textvariable=self.tactical_frame_status, style="Muted.TLabel").pack(side="right")
