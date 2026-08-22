@@ -820,7 +820,7 @@ NEXT: Tristan prüft den frischen Portable-Build gegen die dokumentierte Zielstr
 MODEL_PROFILE: terra
 MODEL_REASON: Zusammenhängender UI-/Informationsarchitektur-Pass mit funktionaler Regression und sichtbarer Desktop-Prüfung.
 COMPUTER_USE: yes
-COMMIT/PR: Nach Portable-Build, Commit und Push ergänzen.
+COMMIT/PR: `5d13891 feat: align experimental UI to target structure`; finaler Branch-HEAD wird im Abschlussbericht nach dem Push bestätigt.
 
 # Handoff 2026-08-21 — Improve Yourself UI completion pass
 
