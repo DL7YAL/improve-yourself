@@ -10,13 +10,17 @@ import pytest
 from improve_yourself.analyzer_shell import (
     AnalyzerShellController,
     UI_REFERENCE_STATUS,
+    analysis_profile_criteria_view,
     dashboard_layout_metrics,
     default_output_root,
+    optimizer_domain_overview,
     optimizer_evidence_view,
     optimizer_product_view,
+    status_presentation,
     system_check_result_view,
     system_scan_home_view,
 )
+from improve_yourself.local_profiles import built_in_profiles
 
 
 def test_optimizer_product_view_is_domain_driven_read_only_and_accepts_synthetic_profile() -> None:
@@ -67,6 +71,31 @@ def test_experimental_shell_exposes_binding_product_sections_from_canonical_desi
     assert UI_REFERENCE_STATUS["Tactical Replay"] == "IMPLEMENTED"
     assert "NEEDS_UI_REFERENCE" not in UI_REFERENCE_STATUS.values()
     assert UI_REFERENCE_STATUS["System Check / Optimizer"] == "IMPLEMENTED"
+
+
+def test_profile_criteria_view_is_semantic_and_reports_the_actual_profile_count() -> None:
+    profiles = {profile.profile_id: profile for profile in built_in_profiles()}
+    review = analysis_profile_criteria_view(profiles["review_v1"])
+    highlight = analysis_profile_criteria_view(profiles["highlight_v1"])
+    assert review == {"profile_id": "review_v1", "active": 7, "available": 7, "text": "Aktive Kriterien: 7 / 7"}
+    assert highlight == {"profile_id": "highlight_v1", "active": 5, "available": 7, "text": "Aktive Kriterien: 5 / 7"}
+
+
+def test_status_presentation_keeps_ready_conditional_unknown_and_warning_distinct() -> None:
+    assert status_presentation("OK") == ("READY / OK", "ready")
+    assert status_presentation("CONDITIONAL") == ("CONDITIONAL", "conditional")
+    assert status_presentation("INSUFFICIENT_EVIDENCE") == ("UNKNOWN / NOT AVAILABLE", "unknown")
+    assert status_presentation("ACTION_REQUIRED") == ("WARNING / ACTION REQUIRED", "warning")
+    assert status_presentation("unrecognized") == ("UNKNOWN / NOT AVAILABLE", "unknown")
+
+
+def test_optimizer_overview_keeps_four_areas_visible_and_does_not_claim_preview_capability() -> None:
+    cards = optimizer_domain_overview()
+    assert [card["title"] for card in cards] == [
+        "System Optimizer", "Graphics Optimizer", "Network Optimizer", "BIOS Optimizer",
+    ]
+    assert all(card["state"].startswith("PREVIEW") for card in cards)
+    assert "kein Apply" in cards[-1]["description"]
 
 
 def test_dashboard_layout_keeps_cards_readable_without_global_scaling() -> None:

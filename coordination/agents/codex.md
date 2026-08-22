@@ -803,6 +803,25 @@ MODEL_REASON: Enger Vertrag-/Evidenzabgleich mit fail-closed Sicherheitsgrenze u
 COMPUTER_USE: no
 COMMIT/PR: `19bb881 fix: align active system check contract` plus `e0eeceb docs: record active contract alignment handoff`; gepusht nach `origin/dev/v1-foundation`.
 
+# Handoff 2026-08-22 — UI Target Alignment & Consolidation Pass V1.1
+
+STATUS: DONE — WAITING_FOR_TRISTAN
+TASK: Die funktionale Experimental-Shell anhand der verbindlichen UI-Zielentscheidungen konsolidieren; CURRENT → TARGET → GAP → IMPLEMENTATION dokumentieren und ausschließlich bestehende Funktionen/Evidenzgrenzen erhalten.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/analyzer_shell.py`, `tests/test_analyzer_shell.py`, `docs/UI_TARGET_ALIGNMENT_V1_1.md`, `coordination/agents/codex.md`.
+CURRENT VS TARGET: Der vollständige kompakte Abgleich für Dashboard, Sidebar, Analyzer, Embedded Review, Optimizer-Hauptseite, vier Optimizer-Domains, System Optimizer, Statussemantik, Tactical Replay und gemeinsame Shell steht in `docs/UI_TARGET_ALIGNMENT_V1_1.md`. Der aktuelle Branch bleibt funktionale Wahrheit; PDF/UI_SPEC/BRANDING/MOCKUP_INDEX bleiben visuelle Wahrheit. Keine Mockup-Beispielwerte/Funktionen wurden übernommen.
+IMPLEMENTATION: Optimizer ist wieder als erkennbare Hauptübersicht sichtbar: System, Graphics, Network und BIOS Optimizer. System Check ist korrekt als `1 · SYSTEM CHECK — LOKALE FAKTEN` innerhalb des System Optimizer abgegrenzt; `2 · OPTIMIZER ASSESSMENT — EINORDNUNG` folgt erst nach Fakten. Ohne vorhandene Domain-Fakten bleiben Graphics/Network/BIOS ehrlich Preview. Das System-Check-/Optimizer-Page ist bei kleinerer Höhe scrollbar, ohne die Datenlogik umzubauen.
+ANALYZER FIX: `analysis_profile_criteria_view()` ist der stabile semantische Hook für den Profilblock; keine positionsabhängige Zuordnung. Es zeigt den tatsächlichen bestehenden Regelumfang (`review_v1` 7/7; `highlight_v1` 5/7), statt für eine geforderte Optik Regeln zu erfinden oder zu reduzieren. Die Badge wird beim Start, beim Profilwechsel und bei Custom-Änderungen aktualisiert.
+STATUS / REPLAY: Bestehende Status werden nur lesbar übersetzt (`READY / OK`, `EVIDENCE / NO CHANGE`, `CONDITIONAL`, `UNKNOWN / NOT AVAILABLE`, `WARNING / ACTION REQUIRED`); die Bewertung selbst bleibt unverändert und fail-closed. Tactical Replay startet mit einem echten dreistufigen Empty State (Analyse → Review-Szene → Tactical), zeigt Runtime-Controls erst nach Übergabe einer validierten Szene und baut keine zweite Replay-Wahrheit.
+VISUAL REVIEW: Live in der laufenden Shell geprüft: Dashboard, Analyzer, Optimizer und Tactical Replay. Sichtbar bestätigt: persistente dunkle Sidebar mit Variant-3-Branding, keine weiße Fremdfläche, Page-03-Dashboardstruktur erhalten, Kriterienbadge im Profilblock, vier Optimizer-Kacheln, Fakten-vor-Bewertung-Hierarchie, klarer No-Apply-Hinweis und Tactical-Empty-State. Home wurde ausdrücklich nicht neu umgebaut; sein globaler Final-Polish bleibt getrennt/deferred.
+VERIFIED: Gezielte Shell-/System-Check-/Pack-Tests **37/37 PASS**; vollständiger `pytest` **185/185 PASS**; `compileall` PASS; `git diff --check` PASS. Vollständiger Portable-Build bis zum frischen Manifest PASS, einschließlich `pip check`, PyInstaller und Portable-ZIP. EXE SHA-256 `8BBC007E92AD3957FBDC453593B97A9875479903151A9B08FD7A3952F2AA4153`; ZIP SHA-256 `8FE78AE16C3215D03C874B5DB7F692B9C3592617411AFABEC97DA14180A2E0E3`; beide stimmen mit dem Manifest überein. Matrix Pack 01 ist im Portable-Laufzeitpfad enthalten.
+BOUNDARIES: Keine neuen Optimizer-Regeln/Hardware-Mappings, keine Apply-/Write-/Registry-/BIOS-/Treiber-/Netzwerkänderung, keine Benchmark-Arbeit, kein Framework-Wechsel, keine neue Review-Engine. Graphics/Network/BIOS werden nicht als funktionsfähig vorgetäuscht; die dargestellten Fakten kommen nur aus der bestehenden read-only Pipeline.
+NEXT: Tristan prüft den frischen Portable-Build gegen die dokumentierte Zielstruktur, besonders Optimizer-Übersicht, Analyzer-Kriterienbadge, Statusverständlichkeit und Tactical-Empty-State. Keine weitere UI- oder Produktarbeit ohne neuen Auftrag.
+MODEL_PROFILE: terra
+MODEL_REASON: Zusammenhängender UI-/Informationsarchitektur-Pass mit funktionaler Regression und sichtbarer Desktop-Prüfung.
+COMPUTER_USE: yes
+COMMIT/PR: Nach Portable-Build, Commit und Push ergänzen.
+
 # Handoff 2026-08-21 — Improve Yourself UI completion pass
 
 STATUS: WAITING_FOR_TRISTAN

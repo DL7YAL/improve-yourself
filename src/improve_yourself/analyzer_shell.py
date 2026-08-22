@@ -61,11 +61,66 @@ _PRIVATE_FONT_FLAG = 0x10
 _SYSTEM_SCAN_HOME_FIELDS = ("cpu", "gpu", "memory", "windows", "drivers", "display")
 _MATRIX_PACK_01_RELATIVE_PATH = Path("config") / "rule-packs" / "improve-matrix-pack-01.json"
 
+_STATUS_PRESENTATION = {
+    "OK": ("READY / OK", "ready"),
+    "NO_CHANGE": ("EVIDENCE / NO CHANGE", "evidence"),
+    "ALREADY_RECOMMENDED": ("READY / ALREADY MATCHED", "ready"),
+    "RECOMMENDED": ("READY / REVIEW", "ready"),
+    "REVIEW": ("CONDITIONAL / CHECK", "conditional"),
+    "CONDITIONAL": ("CONDITIONAL", "conditional"),
+    "ACTION_REQUIRED": ("WARNING / ACTION REQUIRED", "warning"),
+    "INSUFFICIENT_EVIDENCE": ("UNKNOWN / NOT AVAILABLE", "unknown"),
+    "UNKNOWN": ("UNKNOWN / NOT AVAILABLE", "unknown"),
+    "EXCLUSION": ("UNSUPPORTED / EXCLUDED", "unknown"),
+}
+
 
 def matrix_pack_01_rules() -> tuple[OptimizationRule, ...]:
     """Load the bundled, fail-closed Pack 01 without adding a second rule path."""
     resource_root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parents[2]))
     return import_rule_pack(load_rule_pack_document(resource_root / _MATRIX_PACK_01_RELATIVE_PATH))
+
+
+def status_presentation(status: object) -> tuple[str, str]:
+    """Return one stable label and semantic class for an existing status.
+
+    Presentation never changes a finding. In particular, an absent or unknown
+    state stays unknown instead of being styled like a ready result.
+    """
+    return _STATUS_PRESENTATION.get(str(status), _STATUS_PRESENTATION["UNKNOWN"])
+
+
+def analysis_profile_criteria_view(profile: AnalysisProfile) -> dict[str, object]:
+    """Expose the selected profile's real criterion count through one semantic hook."""
+    enabled = tuple(profile.enabled_rule_ids or OBJECTIVE_RULES)
+    return {
+        "profile_id": profile.profile_id,
+        "active": len(enabled),
+        "available": len(OBJECTIVE_RULES),
+        "text": f"Aktive Kriterien: {len(enabled)} / {len(OBJECTIVE_RULES)}",
+    }
+
+
+def optimizer_domain_overview(view: dict[str, object] | None = None) -> tuple[dict[str, str], ...]:
+    """Return the four fixed Optimizer areas without manufacturing capabilities."""
+    definitions = (
+        ("SYSTEM_OPTIMIZER", "System Optimizer", "System Check und read-only Bewertung"),
+        ("GRAPHICS_OPTIMIZER", "Graphics Optimizer", "Darstellungs- und Treiberfakten einordnen"),
+        ("NETWORK_OPTIMIZER", "Network Optimizer", "Beobachtete Qualität von Konfiguration trennen"),
+        ("BIOS_OPTIMIZER", "BIOS Optimizer", "Nur manuelle Guidance; kein Apply"),
+    )
+    domains = view.get("domains", {}) if isinstance(view, dict) else {}
+    result = []
+    for domain, title, description in definitions:
+        models = domains.get(domain, []) if isinstance(domains, dict) else []
+        if not isinstance(models, list) or not models:
+            state = "PREVIEW · noch keine bestätigte lokale Bewertung"
+        else:
+            statuses = [str(model.get("status")) for model in models if isinstance(model, dict)]
+            conditional = sum(status in {"CONDITIONAL", "INSUFFICIENT_EVIDENCE", "UNKNOWN"} for status in statuses)
+            state = f"{len(statuses)} Prüfpunkte · {conditional} bedingt oder unbekannt"
+        result.append({"domain": domain, "title": title, "description": description, "state": state})
+    return tuple(result)
 
 
 def system_scan_home_view(payload: dict[str, object]) -> dict[str, object] | None:
@@ -1011,7 +1066,7 @@ class AnalyzerShellApp:
             host = ttk.Frame(content, style="Content.TFrame")
             host.place(relx=0, rely=0, relwidth=1, relheight=1)
             self.page_hosts[name] = host
-            if name in {"Analyzer / Review", "Dashboard"}:
+            if name in {"Analyzer / Review", "Dashboard", "System Check / Optimizer"}:
                 canvas = tk.Canvas(
                     host, background=_THEME["night"], borderwidth=0, highlightthickness=0,
                 )
@@ -1035,9 +1090,11 @@ class AnalyzerShellApp:
                 )
                 if name == "Analyzer / Review":
                     self.analyzer_canvas = canvas
-                else:
+                elif name == "Dashboard":
                     self.dashboard_canvas = canvas
                     self.dashboard_scrollbar = scrollbar
+                else:
+                    self.system_canvas = canvas
             else:
                 page = ttk.Frame(host, style="Content.TFrame")
                 page.pack(fill="both", expand=True)
@@ -1107,6 +1164,8 @@ class AnalyzerShellApp:
         self.workflow_widgets.append(self.profile)
         self.rules = ttk.Label(profile_row, text="Objektive V1-Regeln · Details per Profil")
         self.rules.pack(side="left", padx=8)
+        self.profile_criteria = ttk.Label(profile_row, style="StatusBadge.TLabel")
+        self.profile_criteria.pack(side="right")
         rules_frame = ttk.LabelFrame(self.pages["Rules"], text="Objektive Szenenanker V1", padding=18)
         ttk.Label(self.pages["Rules"], text="Rules", style="PageTitle.TLabel").pack(anchor="w")
         ttk.Label(self.pages["Rules"], text="Profile kombinieren belegte Marker; einzelne schwache Hinweise erzeugen keine Standard-Szene.", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
@@ -1158,6 +1217,7 @@ class AnalyzerShellApp:
         self._build_settings_page()
         self._build_system_page()
         self._build_tactical_page()
+        self._select_profile()
         self._load_saved_system_scan()
         self._show_page("Analyzer / Review")
         self.root.protocol("WM_DELETE_WINDOW", self._close)
@@ -1231,6 +1291,10 @@ class AnalyzerShellApp:
         self.page_hosts[name].tkraise()
         if name == "Dashboard":
             self.root.after_idle(lambda: self.dashboard_canvas.yview_moveto(0.0))
+        elif name == "System Check / Optimizer":
+            self.root.after_idle(lambda: self.system_canvas.yview_moveto(0.0))
+        elif name == "Tactical Replay" and self.embedded_tactical is None:
+            self._show_tactical_empty_state()
         for page_name, button in self.nav_buttons.items():
             button.set_active(page_name == name)
 
@@ -1499,13 +1563,26 @@ class AnalyzerShellApp:
 
     def _build_system_page(self) -> None:
         page = self.pages["System Check / Optimizer"]
-        self.ttk.Label(page, text="System Check / Optimizer", style="PageTitle.TLabel").pack(anchor="w")
-        self.ttk.Label(page, text="Read-only Evidenz · keine automatische Firmware-, Treiber-, Registry- oder Windows-Änderung", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
+        self.ttk.Label(page, text="Improve Optimizer", style="PageTitle.TLabel").pack(anchor="w")
+        self.ttk.Label(page, text="READ-ONLY · Fakten erfassen, Bewertung erklären, keine automatische Änderung", style="PageKicker.TLabel").pack(anchor="w", pady=(2, 14))
+        self.ttk.Label(page, text="System Check ist ein Teil des System Optimizer — nicht die gesamte Optimizer-Oberfläche.", foreground=_THEME["muted"]).pack(anchor="w", pady=(0, 12))
+
+        self.optimizer_overview_card = self.ttk.Frame(page, style="Card.TFrame", padding=18)
+        self.optimizer_overview_card.pack(fill="x")
+        self.ttk.Label(self.optimizer_overview_card, text="OPTIMIZER BEREICHE", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
+        self.ttk.Label(self.optimizer_overview_card, text="Vier getrennte Bereiche, eine gemeinsame read-only Evidenzbasis. Preview bedeutet: kein Funktionsumfang wird vorgetäuscht.", style="Muted.TLabel", wraplength=940, justify="left").pack(anchor="w", pady=(6, 12))
+        self.optimizer_domain_grid = self.ttk.Frame(self.optimizer_overview_card, style="CardInner.TFrame")
+        self.optimizer_domain_grid.pack(fill="x")
+        for column in range(4):
+            self.optimizer_domain_grid.columnconfigure(column, weight=1, uniform="optimizer-domains")
+        self._render_optimizer_overview()
+
+        self.ttk.Label(page, text="SYSTEM OPTIMIZER", style="PageKicker.TLabel").pack(anchor="w", pady=(18, 4))
         card = self.ttk.Frame(page, style="Card.TFrame", padding=24)
         card.pack(fill="x")
-        self.ttk.Label(card, text="SYSTEM CHECK", style="Card.TLabel", font=(self.display_font, 11, "bold")).pack(anchor="w")
-        self.ttk.Label(card, text="Erkannte Systemwerte, Bewertung und Hinweise bleiben getrennt. Nicht sicher belegbare Werte werden als zu prüfen angezeigt.", style="Muted.TLabel", wraplength=780, justify="left").pack(anchor="w", pady=(8, 0))
-        self.ttk.Label(card, text="Evidenzbasierte Kandidaten bleiben read-only: keine Änderung ohne späteren Snapshot-, Verify- und Restore-Ablauf.", style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(8, 12))
+        self.ttk.Label(card, text="1 · SYSTEM CHECK — LOKALE FAKTEN", style="Card.TLabel", font=(self.display_font, 11, "bold")).pack(anchor="w")
+        self.ttk.Label(card, text="Erkannte Systemwerte, Evidenz, Bewertung und Hinweise bleiben getrennt. Nicht sicher belegbare Werte werden sichtbar als Conditional oder Unknown behandelt.", style="Muted.TLabel", wraplength=860, justify="left").pack(anchor="w", pady=(8, 0))
+        self.ttk.Label(card, text="Keine automatische Firmware-, Treiber-, Registry- oder Windows-Änderung. Es gibt in diesem Produktstand kein Apply und kein Restore.", style="Muted.TLabel", wraplength=860, justify="left").pack(anchor="w", pady=(8, 12))
         self.ttk.Button(card, text="System Check ausführen", style="Primary.TButton", command=self._run_system_check).pack(anchor="w")
         self.ttk.Label(card, textvariable=self.system_status, style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(10, 0))
 
@@ -1526,7 +1603,7 @@ class AnalyzerShellApp:
         self.optimizer_evidence_rows.pack(fill="x")
 
         self.optimizer_product_card = self.ttk.Frame(page, style="Card.TFrame", padding=18)
-        self.ttk.Label(self.optimizer_product_card, text="IMPROVE EMPFEHLUNGEN", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
+        self.ttk.Label(self.optimizer_product_card, text="2 · OPTIMIZER ASSESSMENT — EINORDNUNG", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
         self.optimizer_product_meta = self.ttk.Label(self.optimizer_product_card, text="", style="Muted.TLabel", wraplength=940, justify="left")
         self.optimizer_product_meta.pack(anchor="w", pady=(6, 10))
         self.optimizer_domain_actions = self.ttk.Frame(self.optimizer_product_card, style="CardInner.TFrame")
@@ -1538,6 +1615,16 @@ class AnalyzerShellApp:
         self.optimizer_detail_title.pack(anchor="w")
         self.optimizer_detail_text = self.ttk.Label(self.optimizer_detail_card, text="Wähle eine geprüfte Einstellung, um Evidenz und Grenzen nachzuvollziehen.", style="Muted.TLabel", wraplength=940, justify="left")
         self.optimizer_detail_text.pack(anchor="w", pady=(7, 0))
+
+    def _render_optimizer_overview(self, view: dict[str, object] | None = None) -> None:
+        for child in self.optimizer_domain_grid.winfo_children():
+            child.destroy()
+        for column, item in enumerate(optimizer_domain_overview(view)):
+            card = self.ttk.Frame(self.optimizer_domain_grid, style="Card.TFrame", padding=(12, 10))
+            card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 4, 0 if column == 3 else 4))
+            self.ttk.Label(card, text=item["title"], style="Card.TLabel", font=(self.ui_font, 9, "bold")).pack(anchor="w")
+            self.ttk.Label(card, text=item["description"], style="Muted.TLabel", wraplength=190, justify="left").pack(anchor="w", pady=(5, 7))
+            self.ttk.Label(card, text=item["state"], style="Card.TLabel", foreground=_THEME["cyan"], wraplength=190, justify="left", font=(self.ui_font, 8, "bold")).pack(anchor="w")
 
     def _build_tactical_page(self) -> None:
         page = self.pages["Tactical Replay"]
@@ -1553,8 +1640,15 @@ class AnalyzerShellApp:
         self.ttk.Label(context_bar, textvariable=self.tactical_scene_context, style="Muted.TLabel").pack(side="right")
         self.ttk.Label(page, textvariable=self.tactical_scene_note, foreground=_THEME["muted"]).pack(anchor="w", pady=(0, 8))
 
+        self.tactical_empty_state = self.ttk.Frame(page, style="Card.TFrame", padding=24)
+        self.ttk.Label(self.tactical_empty_state, text="REPLAY BEREITMACHEN", style="Card.TLabel", font=(self.display_font, 11, "bold")).pack(anchor="w")
+        self.ttk.Label(self.tactical_empty_state, text="Tactical Replay verwendet keine eigene Demo-Interpretation. Öffne zuerst eine echte Analyse und übergib anschließend eine ausgewählte Review-Szene.", style="Muted.TLabel", wraplength=820, justify="left").pack(anchor="w", pady=(8, 14))
+        for step in ("1 · Demo im Analyzer analysieren", "2 · Szene im Match Review auswählen", "3 · Tactical Replay aus dem Review öffnen"):
+            self.ttk.Label(self.tactical_empty_state, text=step, style="Card.TLabel", foreground=_THEME["ice"], font=(self.ui_font, 9, "bold")).pack(anchor="w", pady=3)
+        self.ttk.Label(self.tactical_empty_state, text="Erst dann stehen bestätigte Szene, Tick und Replay-Frames zur Verfügung.", style="Muted.TLabel", wraplength=820, justify="left").pack(anchor="w", pady=(12, 0))
+        self.tactical_empty_state.pack(fill="x", pady=(12, 0))
         body = self.ttk.Frame(page, style="Content.TFrame")
-        body.pack(fill="both", expand=True)
+        self.tactical_runtime_body = body
         scene_panel = self.ttk.Frame(body, style="Card.TFrame", padding=12)
         scene_panel.pack(side="left", fill="y", padx=(0, 8))
         self.ttk.Label(scene_panel, text="SZENEN", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
@@ -1587,7 +1681,7 @@ class AnalyzerShellApp:
         self.tactical_canvas.bind("<B1-Motion>", self._drag_tactical_pan)
 
         controls = self.ttk.Frame(page, style="Card.TFrame", padding=(12, 10))
-        controls.pack(fill="x", pady=(10, 0))
+        self.tactical_controls = controls
         self.tactical_prev_button = self.ttk.Button(controls, text="Vorherige Szene", command=lambda: self._step_tactical_scene(-1), state="disabled")
         self.tactical_prev_button.pack(side="left")
         self.tactical_next_button = self.ttk.Button(controls, text="Nächste Szene", command=lambda: self._step_tactical_scene(1), state="disabled")
@@ -1597,12 +1691,29 @@ class AnalyzerShellApp:
         self.ttk.Button(controls, text="+", command=lambda: self._zoom_tactical(1.18)).pack(side="left")
         self.ttk.Button(controls, text="Ansicht zurücksetzen", command=self._reset_tactical_view).pack(side="left", padx=6)
         secondary = self.ttk.Frame(page, style="Content.TFrame")
-        secondary.pack(fill="x", pady=(5, 0))
+        self.tactical_secondary = secondary
         self.tactical_button = self.ttk.Button(
             secondary, text="HTML-Export im Browser (Fallback)", command=lambda: self._open_artifact("tactical_replay"), state="disabled"
         )
         self.tactical_button.pack(side="right")
         self.ttk.Label(secondary, textvariable=self.tactical_action_status, foreground=_THEME["muted"]).pack(side="left")
+
+    def _show_tactical_empty_state(self) -> None:
+        if self.embedded_tactical is not None:
+            return
+        for widget in (self.tactical_runtime_body, self.tactical_controls, self.tactical_secondary):
+            widget.pack_forget()
+        if not self.tactical_empty_state.winfo_manager():
+            self.tactical_empty_state.pack(fill="x", pady=(12, 0))
+
+    def _show_tactical_runtime(self) -> None:
+        self.tactical_empty_state.pack_forget()
+        if not self.tactical_runtime_body.winfo_manager():
+            self.tactical_runtime_body.pack(fill="both", expand=True)
+        if not self.tactical_controls.winfo_manager():
+            self.tactical_controls.pack(fill="x", pady=(10, 0))
+        if not self.tactical_secondary.winfo_manager():
+            self.tactical_secondary.pack(fill="x", pady=(5, 0))
 
     def run(self) -> None:
         self.root.mainloop()
@@ -1728,6 +1839,7 @@ class AnalyzerShellApp:
         profile = self.controller.profiles[self.controller.profile_id]
         rules = profile.enabled_rule_ids if profile.enabled_rule_ids is not None else ("alle objektiven V1-Regeln",)
         self.rules.configure(text=f"{profile.purpose.title()} · " + ", ".join(rules))
+        self.profile_criteria.configure(text=analysis_profile_criteria_view(profile)["text"])
         enabled = set(OBJECTIVE_RULES if profile.enabled_rule_ids is None else profile.enabled_rule_ids)
         for rule_id, variable in self.rule_vars.items():
             variable.set(rule_id in enabled)
@@ -1738,6 +1850,7 @@ class AnalyzerShellApp:
         enabled = tuple(rule_id for rule_id, variable in self.rule_vars.items() if variable.get())
         path = self.controller.update_custom_rules(enabled)
         self.rules.configure(text=f"Custom · lokal gespeichert: {path.name}")
+        self.profile_criteria.configure(text=analysis_profile_criteria_view(self.controller.profiles[self.controller.profile_id])["text"])
 
     def _show_rule_details(self, rule_id: str) -> None:
         dialog = self.tk.Toplevel(self.root)
@@ -1914,6 +2027,7 @@ class AnalyzerShellApp:
             self.tactical_prev_button.configure(state="normal")
             self.tactical_next_button.configure(state="normal")
             self.tactical_action_status.set("Szene aus dem Analyzer Review übernommen; keine neue Analyse ausgeführt.")
+            self._show_tactical_runtime()
             self._show_page("Tactical Replay")
             self._draw_tactical_scene()
         except Exception as error:
@@ -2193,7 +2307,8 @@ class AnalyzerShellApp:
             header = self.ttk.Frame(item, style="CardInner.TFrame")
             header.pack(fill="x")
             self.ttk.Label(header, text=row["label"], style="Card.TLabel", font=(self.ui_font, 9, "bold")).pack(side="left")
-            self.ttk.Label(header, text=row["status"], style="Card.TLabel", foreground=status_colors[row["status"]], font=(self.ui_font, 8, "bold")).pack(side="right")
+            status_label, _semantic = status_presentation(row["status"])
+            self.ttk.Label(header, text=status_label, style="Card.TLabel", foreground=status_colors[row["status"]], font=(self.ui_font, 8, "bold")).pack(side="right")
             self.ttk.Label(item, text=row["summary"], style="Muted.TLabel", wraplength=225, justify="left").pack(anchor="w", pady=(7, 3))
             self.ttk.Label(item, text=f"Evidenz: {row['evidence']}", style="Card.TLabel", wraplength=225, justify="left", font=(self.ui_font, 8)).pack(anchor="w")
         self.system_result_card.pack(fill="x", pady=(14, 0))
@@ -2228,6 +2343,7 @@ class AnalyzerShellApp:
             for child in frame.winfo_children():
                 child.destroy()
         counts = view["counts"]
+        self._render_optimizer_overview(view)
         label = "Fixture-Einstellungen" if view["fixture_only"] else "Read-only Pack-01-Prüfpunkte"
         notice = "Read-only: Fixtures sind keine realen Improve-Empfehlungen." if view["fixture_only"] else "Read-only: Pack 01 zeigt Fakten, Bedingungen und Unknowns; keine automatische Improve-Empfehlung."
         self.optimizer_product_meta.configure(text=(f"{counts['checked']} geprüfte {label} · {counts['recommended']} technische Treffer · "
@@ -2243,7 +2359,9 @@ class AnalyzerShellApp:
             for model in models:
                 item = self.ttk.Frame(self.optimizer_product_rows, style="Card.TFrame", padding=(12, 9))
                 item.pack(fill="x", pady=(0, 6))
-                self.ttk.Label(item, text=f"{model['title']} · {model['status']}", style="Card.TLabel", font=(self.ui_font, 9, "bold")).pack(anchor="w")
+                status_label, semantic = status_presentation(model["status"])
+                semantic_color = {"ready": _THEME["success"], "evidence": _THEME["cyan"], "conditional": _THEME["cyan"], "warning": "#ffcc54", "unknown": _THEME["muted"]}[semantic]
+                self.ttk.Label(item, text=f"{model['title']} · {status_label}", style="Card.TLabel", foreground=semantic_color, font=(self.ui_font, 9, "bold")).pack(anchor="w")
                 self.ttk.Label(item, text=f"Aktueller Zustand: {model['current_state']} · {model['improve_recommendation']}\n{model['why_for_this_system']}\nEvidenz: {model['evidence_validity']}", style="Muted.TLabel", wraplength=880, justify="left").pack(anchor="w", pady=(4, 0))
                 self.ttk.Button(item, text="Details anzeigen", command=lambda value=model: self._show_optimizer_detail(value)).pack(anchor="w", pady=(6, 0))
                 if model["guidance"]["manual_action_required"]:
