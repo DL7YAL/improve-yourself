@@ -10,6 +10,7 @@ from typing import Any
 
 from awpy import Demo
 
+from .awpy_adapter import REPLAY_PLAYER_PROPS
 from .importer import materialize_demo
 from .replay_contract import (
     REPLAY_V2_SCHEMA,
@@ -297,15 +298,40 @@ def _write_gzip_json(path: Path, payload: dict[str, Any]) -> None:
         json.dump(payload, stream, ensure_ascii=False, separators=(",", ":"))
 
 
-def export_replay_v2(source: Path, analysis_path: Path, output: Path) -> Path:
+def export_replay_v2(
+    source: Path,
+    analysis_path: Path,
+    output: Path,
+    *,
+    source_sha256: str | None = None,
+    parsed_demo: Any | None = None,
+) -> Path:
+    """Build the canonical replay artifact.
+
+    The optional canonical values are used by ``preflight_demo_workflow`` so a
+    new import does not hash or parse the same source again. Standalone callers
+    retain the self-contained source validation and parse path.
+    """
     source = source.resolve()
     analysis = json.loads(analysis_path.read_text(encoding="utf-8"))
     analysis_errors = validate_analysis_payload(analysis)
     if analysis_errors:
         raise ValueError("invalid analysis payload: " + "; ".join(analysis_errors))
-    digest = _sha256(source)
+    digest = source_sha256 or _sha256(source)
     if digest != analysis.get("source_sha256"):
         raise ValueError("demo and analysis source hashes differ")
+
+    if parsed_demo is None:
+        with materialize_demo(source, max_bytes=2_000_000_000) as demo_path:
+            demo = Demo(str(demo_path), verbose=False)
+            demo.parse(player_props=list(REPLAY_PLAYER_PROPS))
+            return _export_replay_v2_from_parsed(source, analysis, output, digest, demo)
+    return _export_replay_v2_from_parsed(source, analysis, output, digest, parsed_demo)
+
+
+def _export_replay_v2_from_parsed(
+    source: Path, analysis: dict[str, Any], output: Path, digest: str, demo: Any
+) -> Path:
 
     output = output.resolve() / digest[:12]
     chunks_directory = output / "rounds"
@@ -313,81 +339,78 @@ def export_replay_v2(source: Path, analysis_path: Path, output: Path) -> Path:
     registry = IdentityRegistry(digest)
     accumulator = CapabilityAccumulator()
 
-    with materialize_demo(source, max_bytes=2_000_000_000) as demo_path:
-        demo = Demo(str(demo_path), verbose=False)
-        demo.parse(player_props=["health", "armor_value", "pitch", "yaw", "active_weapon_name", "velocity_X", "velocity_Y", "velocity_Z"])
-        header = getattr(demo, "header", {}) or {}
-        if str(header.get("map_name", "")) != analysis.get("map_name"):
-            raise ValueError("demo header map differs from analysis")
-        round_rows = _records(getattr(demo, "rounds", None))
-        round_metadata = {int(row["round_num"]): row for row in round_rows}
+    header = getattr(demo, "header", {}) or {}
+    if str(header.get("map_name", "")) != analysis.get("map_name"):
+        raise ValueError("demo header map differs from analysis")
+    round_rows = _records(getattr(demo, "rounds", None))
+    round_metadata = {int(row["round_num"]): row for row in round_rows}
 
-        event_channels = {name: _records(getattr(demo, name, None)) for name in ("kills", "damages", "shots", "bomb")}
-        utility_channels = {name: _records(getattr(demo, name, None)) for name in ("smokes", "infernos")}
-        events_by_round: dict[int, dict[int, list[ReplayEvent]]] = defaultdict(lambda: defaultdict(list))
-        for channel, rows in event_channels.items():
-            per_tick = normalize_events(channel, rows, registry)
-            rows_by_tick = {int(row["tick"]): int(row.get("round_num", 0) or 0) for row in rows if row.get("tick") is not None}
-            for tick, events in per_tick.items():
-                events_by_round[rows_by_tick.get(tick, 0)][tick].extend(events)
-        utilities_by_round: dict[int, list[UtilityState]] = defaultdict(list)
-        for channel, rows in utility_channels.items():
-            normalized = normalize_utilities(channel, rows, registry)
-            round_by_start = {int(row["start_tick"]): int(row.get("round_num", 0) or 0) for row in rows if row.get("start_tick") is not None}
-            for utility in normalized:
-                utilities_by_round[round_by_start.get(utility.start_tick, 0)].append(utility)
+    event_channels = {name: _records(getattr(demo, name, None)) for name in ("kills", "damages", "shots", "bomb")}
+    utility_channels = {name: _records(getattr(demo, name, None)) for name in ("smokes", "infernos")}
+    events_by_round: dict[int, dict[int, list[ReplayEvent]]] = defaultdict(lambda: defaultdict(list))
+    for channel, rows in event_channels.items():
+        per_tick = normalize_events(channel, rows, registry)
+        rows_by_tick = {int(row["tick"]): int(row.get("round_num", 0) or 0) for row in rows if row.get("tick") is not None}
+        for tick, events in per_tick.items():
+            events_by_round[rows_by_tick.get(tick, 0)][tick].extend(events)
+    utilities_by_round: dict[int, list[UtilityState]] = defaultdict(list)
+    for channel, rows in utility_channels.items():
+        normalized = normalize_utilities(channel, rows, registry)
+        round_by_start = {int(row["start_tick"]): int(row.get("round_num", 0) or 0) for row in rows if row.get("start_tick") is not None}
+        for utility in normalized:
+            utilities_by_round[round_by_start.get(utility.start_tick, 0)].append(utility)
 
-        round_descriptors = []
-        current_round: int | None = None
-        current_rows: list[dict[str, Any]] = []
+    round_descriptors = []
+    current_round: int | None = None
+    current_rows: list[dict[str, Any]] = []
 
-        def flush_round(number: int, rows: list[dict[str, Any]]) -> None:
-            metadata = round_metadata.get(number, {})
-            chunk = build_round_chunk(
-                number,
-                rows,
-                round_start_tick=_int(metadata.get("start")),
-                tick_rate=analysis.get("tickrate"),
-                events_by_tick=events_by_round.get(number, {}),
-                utilities=utilities_by_round.get(number, []),
-                registry=registry,
-                capabilities=accumulator,
-            )
-            chunk_errors = validate_round_chunk(chunk)
-            if chunk_errors:
-                raise ValueError(f"round {number} is invalid: " + "; ".join(chunk_errors))
-            chunk_name = f"round-{number:03d}.json.gz"
-            chunk_path = chunks_directory / chunk_name
-            _write_gzip_json(chunk_path, chunk)
-            frames = chunk["frames"]
-            round_descriptors.append({
-                "round_number": number,
-                "first_tick": frames[0]["tick"],
-                "last_tick": frames[-1]["tick"],
-                "frame_count": len(frames),
-                "chunk": f"rounds/{chunk_name}",
-                "sha256": _sha256(chunk_path),
-            })
+    def flush_round(number: int, rows: list[dict[str, Any]]) -> None:
+        metadata = round_metadata.get(number, {})
+        chunk = build_round_chunk(
+            number,
+            rows,
+            round_start_tick=_int(metadata.get("start")),
+            tick_rate=analysis.get("tickrate"),
+            events_by_tick=events_by_round.get(number, {}),
+            utilities=utilities_by_round.get(number, []),
+            registry=registry,
+            capabilities=accumulator,
+        )
+        chunk_errors = validate_round_chunk(chunk)
+        if chunk_errors:
+            raise ValueError(f"round {number} is invalid: " + "; ".join(chunk_errors))
+        chunk_name = f"round-{number:03d}.json.gz"
+        chunk_path = chunks_directory / chunk_name
+        _write_gzip_json(chunk_path, chunk)
+        frames = chunk["frames"]
+        round_descriptors.append({
+            "round_number": number,
+            "first_tick": frames[0]["tick"],
+            "last_tick": frames[-1]["tick"],
+            "frame_count": len(frames),
+            "chunk": f"rounds/{chunk_name}",
+            "sha256": _sha256(chunk_path),
+        })
 
-        for row in demo.ticks.iter_rows(named=True):
-            number = int(row.get("round_num", 0) or 0)
-            if number <= 0:
-                continue
-            if current_round is None:
-                current_round = number
-            if number != current_round:
-                flush_round(current_round, current_rows)
-                current_round, current_rows = number, []
-            current_rows.append(row)
-        if current_round is not None and current_rows:
+    for row in demo.ticks.iter_rows(named=True):
+        number = int(row.get("round_num", 0) or 0)
+        if number <= 0:
+            continue
+        if current_round is None:
+            current_round = number
+        if number != current_round:
             flush_round(current_round, current_rows)
+            current_round, current_rows = number, []
+        current_rows.append(row)
+    if current_round is not None and current_rows:
+        flush_round(current_round, current_rows)
 
-        grenade_frame = getattr(demo, "grenades", None)
-        has_trajectories = grenade_frame is not None and getattr(grenade_frame, "height", 0) > 0
-        try:
-            footsteps = getattr(demo, "footsteps", None)
-        except (KeyError, AttributeError, TypeError, ValueError):
-            footsteps = None
+    grenade_frame = getattr(demo, "grenades", None)
+    has_trajectories = grenade_frame is not None and getattr(grenade_frame, "height", 0) > 0
+    try:
+        footsteps = getattr(demo, "footsteps", None)
+    except (KeyError, AttributeError, TypeError, ValueError):
+        footsteps = None
 
     def level(name: str) -> str:
         return accumulator.level(name)

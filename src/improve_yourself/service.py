@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from typing import Any
 
 from .awpy_adapter import AwpyAdapter
 from .domain import round_multikills
@@ -18,11 +19,22 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def analyze(source: Path, output_directory: Path, max_bytes: int = 2_000_000_000) -> Path:
+def analyze(
+    source: Path,
+    output_directory: Path,
+    max_bytes: int = 2_000_000_000,
+    *,
+    source_sha256: str | None = None,
+    parsed_demo: Any | None = None,
+) -> Path:
+    """Write the existing iy.analysis/v1 artifact from a canonical source."""
     source = source.resolve()
-    checksum = _sha256(source)
-    with materialize_demo(source, max_bytes=max_bytes) as demo_path:
-        header, kills, channels, quality = AwpyAdapter().parse(str(demo_path))
+    checksum = source_sha256 or _sha256(source)
+    if parsed_demo is None:
+        with materialize_demo(source, max_bytes=max_bytes) as demo_path:
+            header, kills, channels, quality = AwpyAdapter().parse(str(demo_path))
+    else:
+        header, kills, channels, quality = AwpyAdapter().adapt(parsed_demo)
     tickrate_value = header.get("tick_rate", header.get("tickrate"))
     result = AnalysisResult(
         source_name=source.name,

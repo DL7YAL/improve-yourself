@@ -18,7 +18,7 @@ from typing import Any, Callable
 
 from .analysis_flow import AnalysisProfile
 from .cs2_review_coordinator import Cs2ReviewCoordinator, ReviewCoordinatorServer, ReviewPreflight
-from .demo_workflow import preflight_demo_workflow, rerender_demo_workflow
+from .demo_workflow import ensure_tactical_replay_export, preflight_demo_workflow, rerender_demo_workflow
 from .embedded_review import EmbeddedReviewSession
 from .embedded_tactical import EmbeddedTacticalSession
 from .local_profiles import OBJECTIVE_RULES, LocalProfileStore
@@ -3622,6 +3622,12 @@ class AnalyzerShellApp:
             manifest_path = self.controller.validate_current_workflow()
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             relative = manifest.get("artifacts", {}).get(name)
+            if name in {"review", "tactical_replay"} and (
+                name == "review" or not isinstance(relative, str)
+            ):
+                ensure_tactical_replay_export(manifest_path)
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                relative = manifest.get("artifacts", {}).get(name)
             if not isinstance(relative, str):
                 raise ValueError(f"Artefakt ist nicht verfügbar: {name}")
             artifact = (manifest_path.parent / relative).resolve()

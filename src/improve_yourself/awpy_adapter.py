@@ -8,6 +8,16 @@ from awpy import Demo
 from .model import DataQuality, Kill
 
 OPTIONAL_CHANNELS = ("damages", "shots", "bomb", "smokes", "infernos", "grenades", "footsteps")
+REPLAY_PLAYER_PROPS = (
+    "health",
+    "armor_value",
+    "pitch",
+    "yaw",
+    "active_weapon_name",
+    "velocity_X",
+    "velocity_Y",
+    "velocity_Z",
+)
 
 
 def _records(frame: Any) -> list[dict[str, Any]]:
@@ -45,9 +55,16 @@ def _read_optional_channel(demo: Any, channel: str) -> tuple[Any, str | None]:
 
 
 class AwpyAdapter:
-    def parse(self, path: str) -> tuple[dict[str, Any], list[Kill], list[str], DataQuality]:
+    """Adapt one parsed Awpy demo without giving consumers a second parser truth."""
+
+    def parse_demo(self, path: str) -> Any:
         demo = Demo(path, verbose=False)
-        demo.parse()
+        # The replay builder needs these fields. Parsing them here lets the
+        # workflow derive the compact analysis and replay-v2 from one Awpy run.
+        demo.parse(player_props=list(REPLAY_PLAYER_PROPS))
+        return demo
+
+    def adapt(self, demo: Any) -> tuple[dict[str, Any], list[Kill], list[str], DataQuality]:
         header = getattr(demo, "header", {}) or {}
         rounds = _records(getattr(demo, "rounds", None))
         kill_rows = _records(getattr(demo, "kills", None))
@@ -86,3 +103,7 @@ class AwpyAdapter:
             status = "not_assessable"
             warnings.append("Zentrale Runden- oder Killdaten fehlen.")
         return header, kills, available, DataQuality(status, missing, warnings)
+
+    def parse(self, path: str) -> tuple[dict[str, Any], list[Kill], list[str], DataQuality]:
+        """Compatibility entry point for independent analysis callers."""
+        return self.adapt(self.parse_demo(path))

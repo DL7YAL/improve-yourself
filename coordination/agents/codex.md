@@ -1470,3 +1470,30 @@ MODEL_PROFILE: terra
 MODEL_REASON: Eng begrenzte Candidate-Recovery mit lokalem Runtime- und Packaging-Nachweis.
 COMPUTER_USE: yes — nur für den realen Portable-Demo-/Review-/Tactical-/Layout-Smoketest.
 COMMIT/PR: folgt nach diesem Handoff-Checkpoint.
+
+# Handoff 2026-08-22 — Demo Pipeline Consolidation & Performance V1
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Den vorhandenen lokalen Demo-Datenpfad auf eine kanonische, hashgebundene Verarbeitung konsolidieren: **Demo → einmal SHA-256 → einmal vollständiger Awpy-Parse → iy.analysis/v1 + iy.replay/v2 → Analyzer / Review / Tactical / Reports**. Keine neue Datenbank, keine zweite Engine und keine Änderung an Analyse-, Szenen- oder Replay-Semantik.
+BRANCH / BASE: `dev/v1-foundation`, Ausgangs-HEAD `58fb133e01c52e3baedf161f7acc6ed2a98b1f2c`, Arbeitsbaum vor der Änderung sauber.
+REFERENCE DEMO: `fut-vs-mouz-m2-ancient.dem`, 270.062.278 Bytes, vollständiger SHA-256 `c183dd61fc6a619f7af435d45eab374cd6f0097a7bd0da779971b15ef6746f7f`. Dieselbe lokale Referenzdemo wurde für IST-, NACHHER- und Runtime-Prüfung verwendet; sie wird nicht versioniert.
+CHANGED:
+- `src/improve_yourself/awpy_adapter.py`: `AwpyAdapter.parse_demo()` führt den vollständigen, Replay-kompatiblen Awpy-Parse einmal aus. `adapt()` leitet die bisherige Basisanalyse daraus ab; `parse()` bleibt als selbstständiger Kompatibilitätseinstieg erhalten.
+- `src/improve_yourself/service.py` und `src/improve_yourself/replay_builder.py`: akzeptieren optional den bereits gestreamten Quellhash und denselben bereits geparsten Awpy-Context. Eigenständige CLI-/Service-Aufrufe behalten den bisherigen vollständigen lokalen Hash-/Parsepfad.
+- `src/improve_yourself/demo_workflow.py`: Quellhash ist gestreamt (kein `read_bytes()` der großen Demo mehr). Der Erstimport validiert Typ/Größe, hasht exakt einmal und leitet `iy.analysis/v1` sowie `iy.replay/v2` aus exakt einem Awpy-Parse ab. Reale monotone Messpunkte `T0…T7` liegen transparent im lokalen Workflow-Manifest (`iy.demo_timing/v1`); keine Prozentwerte, Restzeitschätzungen oder Telemetrie.
+- `src/improve_yourself/demo_workflow.py`: Hashgebundener Reuse akzeptiert ausschließlich ein vollständig local-validiertes `iy.demo_workflow/v1` mit gleichem vollständigem Quellhash, passender Awpy-/Replay-/Workflow-Version, gültiger Analyse, erforderlichen Artefakten und sämtlichen Replay-Chunk-Hashes. Jede Abweichung fällt fail-closed auf den normalen Neuimport zurück.
+- `src/improve_yourself/demo_workflow.py` und `src/improve_yourself/analyzer_shell.py`: Der native Tactical-Pfad bleibt direkt `analysis-flow.json + iy.replay/v2`. `tactical-replay.html` wird nicht mehr synchron bei jeder Analyse erzeugt; der bestehende Browser-Fallback erzeugt ihn erst bei einem expliziten Review-/Tactical-HTML-Export aus demselben kanonischen Datensatz.
+- `tests/test_demo_workflow.py`: deckt einmaligen Quellhash/Parse, die realen Timing-Phasen, validierten Reuse-fall und fail-closed Invalid-/Missing-Manifest sowie Lazy-Tactical-Export ab.
+REAL MEASUREMENT (T0 → T6, identische Demo):
+- IST vor der Konsolidierung: **56,024982 s**. Quellhash statisch dreifach im Workflowpfad (Workflow, Basisanalyse, Replay) und Awpy-Parse zweimal (Basisanalyse + Replay).
+- NACHHER final: **52,698433 s**, genau **1** vollständiger Quellhash und genau **1** Awpy-Parse. Die gespeicherten realen Phasen: T1 0,000162 s, T2 0,161776 s, T3 0,162488 s, T4 2,970903 s, T5 51,899651 s, T6 51,899652 s.
+- Explizite Analyse T6 → T7: **6,612436 s**; Ergebnis `READY_FOR_REVIEW`, **54** reale zusammengeführte Szenen. Bewusster HTML-Tactical-Export (nur Fallback): **6,596054 s**. Derselbe validierte Workflow wurde danach in **5,816716 s** wiederverwendet, ohne erneuten Parse.
+- Aussagegrenze: Die moderate T0→T6-Verbesserung wird nicht als pauschale Performancebehauptung ausgegeben. Der messbare Rest liegt in sicherer Erzeugung, Komprimierung und Validierung der 18 Replay-Chunks; diese Integritätsarbeit wurde bewusst nicht abgeschaltet.
+DATA / E2E PROOF: Der finale lokale Neuimport ergab unverändert `de_ancient`, 18 Runden, 10 Spieler, 3.179 grundlegende Events und anschließend 54 Szenen. In der praktisch geöffneten lokalen Shell: Auswahl → sichtbarer Importstatus `Datei ausgewählt · Parser läuft · <verstrichene Sekunden>` → Parser-PASS/Analysebereitschaft → Full Demo / `review_v1` → Analyse → eingebetteter Review → reale erste Szene **Runde 1 · Tick 3654 · 3 Marker** (`entry`, `headshot`, `kill`) → 2D Tactical derselben Szene / desselben Ticks → `← Zurück zum Review`. Der Browser war nicht Hauptworkflow. Keine CS2-/NetCon-Logik wurde verändert oder in diesem Pass erneut ausgelöst.
+VERIFIED: neue gezielte Pipeline-/Shell-/Replay-/Embedded-Tests **64/64 PASS**; vollständige Suite **194/194 PASS**; `compileall` PASS; `git diff --check` PASS. Lokale Runtime-Prüfung mit Computer Use nur für Import/Analyse/Review/Tactical; keine System- oder Netzwerkautorität.
+FAIL-CLOSED / LIMITS: Manipulierte bzw. unvollständige Reuse-Artefakte werden nicht geöffnet, sondern normal neu verarbeitet; fehlende/unklare Hardware oder Analyzerdaten werden nicht ergänzt. Komprimierte `.dem.zst`/`.dem.bz2` verwenden im neuen Erstimport ebenfalls nur eine Materialisierung, weil Parse/Analyse/Replay denselben Context teilen; die vorhandene Fixture-/Importer-Regression bleibt grün. Kein neuer Rule-/Score-/Coaching-/Replay-/Map-/Optimizer-/Benchmark-Slice, keine Datenbank und keine Telemetrie.
+NEXT: Tristan prüft diesen gepushten Konsolidierungs-Checkpoint anhand des neuen Handoffs. Als **einziger** zulässiger Folgepunkt ohne neue Produktsemantik bleibt bei Bedarf ein gezielter, gemessener Replay-Chunk-I/O-Optimierungsauftrag; keine weitere automatische Optimierung.
+MODEL_PROFILE: terra
+MODEL_REASON: Bestehenden Datenvertrag und fail-closed Integritätsgrenzen konsolidieren, real messen und ohne semantische Änderung regressionsprüfen.
+COMPUTER_USE: yes — ausschließlich für den lokalen echten Analyzer→Review→Tactical→Review-Runtime-Nachweis.
+COMMIT/PR: folgt nach finalem Checkpoint und Push.
