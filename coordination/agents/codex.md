@@ -515,6 +515,21 @@ OPEN: Production renderer/UI choice and distributable art remain undecided by de
 NEXT: Implement only the verified visibility-mesh query boundary and the fixed Third-Person camera-to-anchor obstruction adjustment, including `camera_adjusted=true` plus clear/blocked/unknown tests. Do not add overlays, smoke interpretation, models, free camera, packaging or another replay truth.
 COMPUTER_USE: Local native window was launched for a timed visual proof; no authentication, external transmission or persistent app/system setting change.
 
+## 2026-08-22 — Module Integration Foundation V1
+
+STATUS: done
+TASK: Add the minimal, explicit integration boundary for future Analyzer-facing modules without adding Tactical, Review, Report or My Improvement feature logic.
+BRANCH: `dev/v1-foundation`
+CHANGED: Added `module_integration.py` with `ModuleDefinitionV1`, `ModuleRegistry`, `ModuleController`, `ModuleAdapterV1`, `ModuleStatus`, `ModuleContextV1`, and a versioned, deep-copying `AnalyzerDataHubV1`; added focused regression tests and `docs/MODULE_INTEGRATION_FOUNDATION_V1.md`. Analyzer Core, awpy adapter, parser, existing Analyzer/Review/Replay contracts and UI are unchanged.
+VERIFIED: `tests/test_module_integration.py`: 7 passed; whole suite reached 30 passed before 10 environment failures when pytest could not create its pre-created scratch base directory. Source-only syntax compilation without bytecode writes passed; `git diff --check` passed. The normal setup script could not create a `.venv` in this worktree, and `compileall` could not create `__pycache__`; neither result is a product-test failure, so no full-suite/compileall PASS is claimed.
+DECISIONS: Integration accepts only explicitly registered modules and exact `iy.module_adapter/v1`/projection identifiers. Missing or unregistered inputs are `UNAVAILABLE`; disabled modules are not prepared; adapter faults are `ERROR` and isolated. Hub and context data are defensively copied, and no module path imports awpy, initiates parsing, accesses raw parser data, or mutates shared hub data. `My Improvement` remains an independent future consumer, never Tactical-owned.
+OPEN: No feature expansion follows from this foundation. Re-run the complete repository gate in a worktree where Python may create its isolated venv, pytest base temp directory and compile caches.
+NEXT: WAITING_FOR_TRISTAN
+COMMIT/PR: Pending final commit and push for this handoff.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Narrow architecture and contract-boundary implementation with regression coverage.
+COMPUTER_USE: no
+
 ## 2026-08-17 — Final `dev/v1-foundation` review toward `main`
 
 STATUS: ready_for_review
