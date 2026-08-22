@@ -515,6 +515,21 @@ OPEN: Production renderer/UI choice and distributable art remain undecided by de
 NEXT: Implement only the verified visibility-mesh query boundary and the fixed Third-Person camera-to-anchor obstruction adjustment, including `camera_adjusted=true` plus clear/blocked/unknown tests. Do not add overlays, smoke interpretation, models, free camera, packaging or another replay truth.
 COMPUTER_USE: Local native window was launched for a timed visual proof; no authentication, external transmission or persistent app/system setting change.
 
+## 2026-08-22 — Tactical Integration Skeleton V1
+
+STATUS: done
+TASK: Connect Tactical for the first time through the Module Integration Foundation, prepare static map-resource ownership, and avoid Tactical feature/UI/renderer expansion.
+BRANCH: `dev/v1-foundation`
+CHANGED: Added `tactical_module.py`, `map_registry.py`, static `resources/maps/de_ancient/map.json`, focused Tactical tests and Tactical integration documentation. `register_tactical_module()` explicitly registers only Tactical through a lazy `TacticalModuleAdapterV1`; it accepts only `iy.tactical_projection/v1` from the existing Analyzer Data Hub provider. `TacticalContextV1` contains source/map identity, players, rounds and canonical replay-v2 reference only. `MapRegistryV1` owns static metadata and returns `UNKNOWN` for unknown maps. No Analyzer Core/Data Hub/parser/awpy/UI/2D/3D/POV/My Improvement change occurred.
+VERIFIED: Focused Foundation + Tactical suite: 14 passed. It proves Tactical READY, DISABLED, missing-projection UNAVAILABLE, adapter ERROR isolation, known/unknown map lookup, defensive context isolation, explicit position-to-map-transform boundary, and no awpy/parse call in Tactical/MapRegistry source. Source-only syntax compilation without bytecode writes and `git diff --check` pass.
+DECISIONS: `de_ancient` is a static registry proof of concept, not a shipped renderer asset. Its transform is deliberately `UNVERIFIED`; canonical CS2-world positions are preserved at the transform boundary and produce UNAVAILABLE rather than invented radar/render coordinates. The context exposes only the existing hash-bound replay-v2 reference for actual position series, preserving the one-replay-truth rule.
+OPEN: Full suite/real `compileall` remain blocked by the known worktree permission policy: pytest cannot clean its scratch marker and Python cannot atomically write `.pyc`, even with existing cache directories. Do not claim a full gate PASS. No further Tactical feature work follows.
+NEXT: WAITING_FOR_TRISTAN
+COMMIT/PR: Pending commit and push.
+MODEL_PROFILE: gpt-5.6-terra
+MODEL_REASON: Contract-bound Tactical/Map integration without changing frozen Core ownership.
+COMPUTER_USE: no
+
 ## 2026-08-22 — Module Integration Foundation V1 follow-up
 
 STATUS: done

@@ -1,0 +1,9 @@
+{
+  "schema": "iy.map_resource/v1",
+  "map_id": "de_ancient",
+  "transform": {
+    "input_coordinate_space": "cs2_world",
+    "status": "UNVERIFIED",
+    "reason": "No validated radar or render-space transform is shipped by the Tactical V1 skeleton."
+  }
+}
