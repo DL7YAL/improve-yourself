@@ -9,9 +9,12 @@ the overview and the System Optimizer detail screen.  Existing navigation,
 System Check adapters, Matrix Pack, evidence, recommendation contracts,
 read-only policy and other application pages are unchanged.
 
-The visual source of truth is the approved Optimizer reference set, including
-the checked-in concept master page 07 and the supplied System Optimizer detail
-reference.  Real locally loaded values replace illustrative mockup values.
+The visual source of truth is `docs/design/ui-reference/`: exclusively
+`optimizer_overview_MASTER.png` and `system_optimizer_detail_MASTER.png`.
+The manifest was verified against the extracted PNG hashes. The legacy
+PDF-derived Optimizer image is `SUPERSEDED` and excluded. Real locally loaded
+values replace illustrative mockup values; Variant 3 only governs the shared
+shell, branding, header transition and navigation continuity.
 
 ## Central Optimizer visual system
 
@@ -54,14 +57,14 @@ last package was created.
 
 ## Validation and final portable
 
-- full build gate: **187 passed**;
+- full build gate: **188 passed**;
 - `python -m compileall -q src`: PASS;
 - `git diff --check`: PASS before checkpoint;
 - final Portable manifest: `dist/experimental/experimental-build.json`;
 - final EXE SHA-256:
-  `A721203F811CA56736132716F242552DF3B1D7B195B6903D17E3860B6FEF4D80`;
+  `35844F7CD19A8581B04F27F80E10108905B164484968ADAC73295D4598906BF8`;
 - final ZIP SHA-256:
-  `78661DB219DEDE2B6EC08CC6899F32AF2D8C942B2FDCC50387337F52BB2B3D62`.
+  `056F1FB031FE0772DB51E15DF76F533A89B352FCE0355CAF3242CB3ECDED4BF5`.
 
 ## Boundary
 

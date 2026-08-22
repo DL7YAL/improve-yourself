@@ -210,6 +210,50 @@ def optimizer_table_cell(value: object, *, maximum: int = 27) -> str:
     return text if len(text) <= maximum else text[: maximum - 1].rstrip() + "…"
 
 
+def optimizer_user_detail_sections(model: dict[str, object] | None) -> dict[str, str]:
+    """Translate an existing result into the reference detail-panel language.
+
+    This is intentionally a presentation adapter: it never derives a setting,
+    fills a gap, or changes a recommendation.  Raw provenance remains behind
+    the existing technical-details control.
+    """
+    if model is None:
+        return {
+            "state": "Keine Einstellung ausgewählt",
+            "what": "Wähle eine Zeile, um vorhandene lokale Fakten, die Bewertung und ihre Grenzen zu sehen.",
+            "why": "Für den gewählten Filter liegt keine bestätigte Einstellung vor.",
+            "effect": "Keine Wirkung wird behauptet.",
+            "evidence": "Nicht verfügbar.",
+            "change": "Read-only · es wird keine Änderung ausgeführt.",
+        }
+    status = str(model.get("status") or "UNKNOWN")
+    state = optimizer_table_cell(model.get("current_state"), maximum=56)
+    if status == "INSUFFICIENT_EVIDENCE":
+        why = "Die vorhandene Evidenz reicht für eine sichere Improve-Empfehlung nicht aus. Fehlende Werte bleiben unbekannt."
+    elif status in {"CONDITIONAL", "UNKNOWN", "EXCLUSION"}:
+        why = "Die vorhandenen Fakten erlauben nur eine bedingte oder ausgeschlossene Einordnung; daraus entsteht keine positive Empfehlung."
+    elif status == "ALREADY_RECOMMENDED":
+        why = "Der bestätigte aktuelle Zustand entspricht der vorhandenen Improve-Empfehlung."
+    elif status == "RECOMMENDED":
+        why = "Die vorhandenen lokalen Fakten erfüllen die Datenbedingungen dieser read-only Bewertung."
+    else:
+        why = "Für diese Einstellung liegt keine automatische Improve-Empfehlung vor."
+    validity = model.get("evidence_validity")
+    evidence = (
+        "Vorhandene Evidenzdaten · technische Details verfügbar."
+        if isinstance(validity, (dict, list, tuple))
+        else optimizer_table_cell(validity, maximum=76)
+    )
+    return {
+        "state": state,
+        "what": "Diese Ansicht ordnet die vorhandene lokale System-Check-Evidenz ein. Sie ändert keine Einstellungen.",
+        "why": why,
+        "effect": str(model.get("what_can_change") or "Keine Wirkung wird behauptet."),
+        "evidence": evidence,
+        "change": "Read-only · keine Änderung angewendet; Wiederherstellung ist nicht erforderlich.",
+    }
+
+
 def system_scan_home_view(payload: dict[str, object]) -> dict[str, object] | None:
     """Project an existing read-only system scan into six honest Home cells.
 
@@ -1294,7 +1338,9 @@ class AnalyzerShellApp:
 
         shell = ttk.Frame(self.root, style="Content.TFrame")
         shell.pack(fill="both", expand=True)
-        sidebar = ttk.Frame(shell, style="Sidebar.TFrame", width=258)
+        # Variant 3 uses a compact fixed shell: content begins close to the
+        # 243 px MASTER boundary while navigation remains comfortably readable.
+        sidebar = ttk.Frame(shell, style="Sidebar.TFrame", width=243)
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
         tk.Frame(sidebar, width=1, background=_THEME["line_soft"]).pack(side="right", fill="y")
@@ -1865,7 +1911,7 @@ class AnalyzerShellApp:
 
     def _build_optimizer_overview_view(self) -> None:
         self.optimizer_header_chip_hosts: list[object] = []
-        self._optimizer_header(self.optimizer_overview_view, title="Improve Optimizer")
+        self._optimizer_header(self.optimizer_overview_view, title="Optimizer")
         self.ttk.Label(
             self.optimizer_overview_view,
             text="READ-ONLY · Lokale Fakten einordnen, Unsicherheit sichtbar lassen, keine automatische Änderung",
@@ -1886,22 +1932,32 @@ class AnalyzerShellApp:
 
         hero_surface = RoundedOptimizerSurface(
             self.tk, self.ttk, left, style="OptimizerHero.TFrame", fill=_OPTIMIZER_THEME["surface_hero"],
-            padding=22, min_height=210,
+            padding=22, min_height=266,
         )
         hero_surface.pack(fill="x")
         self.optimizer_overview_hero = hero_surface.body
         hero_header = self.ttk.Frame(self.optimizer_overview_hero, style="OptimizerHero.TFrame")
         hero_header.pack(fill="x")
-        self.ttk.Label(hero_header, text="EMPFEHLUNGEN & STATUS", style="OptimizerHero.TLabel", font=(self.display_font, 12, "bold")).pack(side="left")
+        self.ttk.Label(hero_header, text="IMPROVE EMPFEHLUNGEN", style="OptimizerHero.TLabel", font=(self.display_font, 12, "bold")).pack(side="left")
         self.optimizer_overview_badge = self.ttk.Label(hero_header, text="READ-ONLY", style="StatusBadge.TLabel")
         self.optimizer_overview_badge.pack(side="right")
-        self.optimizer_overview_summary = self.ttk.Label(
-            self.optimizer_overview_hero,
-            text="Ein System Check liefert lokale Fakten. Fehlende oder nicht sichere Werte bleiben sichtbar als unbekannt oder bedingt.",
-            style="OptimizerHeroMuted.TLabel", wraplength=690, justify="left",
+        hero_body = self.ttk.Frame(self.optimizer_overview_hero, style="OptimizerHero.TFrame")
+        hero_body.pack(fill="x", pady=(9, 0))
+        self.optimizer_overview_ring = self.tk.Canvas(
+            hero_body, width=150, height=150, background=_OPTIMIZER_THEME["surface_hero"],
+            highlightthickness=0, borderwidth=0, bd=0,
         )
-        self.optimizer_overview_summary.pack(anchor="w", pady=(9, 14))
-        metrics = self.ttk.Frame(self.optimizer_overview_hero, style="OptimizerHero.TFrame")
+        self.optimizer_overview_ring.pack(side="left", padx=(0, 20))
+        self.optimizer_overview_ring.bind("<Configure>", self._draw_optimizer_overview_ring)
+        hero_copy = self.ttk.Frame(hero_body, style="OptimizerHero.TFrame")
+        hero_copy.pack(side="left", fill="both", expand=True)
+        self.optimizer_overview_summary = self.ttk.Label(
+            hero_copy,
+            text="Ein System Check liefert lokale Fakten. Fehlende oder nicht sichere Werte bleiben sichtbar als unbekannt oder bedingt.",
+            style="OptimizerHeroMuted.TLabel", wraplength=520, justify="left",
+        )
+        self.optimizer_overview_summary.pack(anchor="w", pady=(0, 11))
+        metrics = self.ttk.Frame(hero_copy, style="OptimizerHero.TFrame")
         metrics.pack(fill="x")
         self.optimizer_overview_metric_values: dict[str, object] = {}
         for index, (key, label) in enumerate((("checked", "GEPRÜFT"), ("already", "BEREITS PASSEND"), ("conditional", "ZU PRÜFEN"))):
@@ -1918,12 +1974,12 @@ class AnalyzerShellApp:
             value.pack(anchor="w", pady=(3, 0))
             self.optimizer_overview_metric_values[key] = value
         self.optimizer_overview_run_action = RoundedOptimizerAction(
-            self.tk, self.optimizer_overview_hero, text="System Check ausführen", command=self._run_system_check,
+            self.tk, hero_copy, text="System Check ausführen", command=self._run_system_check,
             primary=True, font=(self.ui_font, 9, "bold"),
         )
         self.optimizer_overview_run_action.canvas.configure(background=_OPTIMIZER_THEME["surface_hero"])
-        self.optimizer_overview_run_action.pack(anchor="w", pady=(15, 0))
-        self.ttk.Label(self.optimizer_overview_hero, textvariable=self.system_status, style="OptimizerHeroMuted.TLabel", wraplength=690, justify="left").pack(anchor="w", pady=(8, 0))
+        self.optimizer_overview_run_action.pack(anchor="w", pady=(12, 0))
+        self.ttk.Label(hero_copy, textvariable=self.system_status, style="OptimizerHeroMuted.TLabel", wraplength=520, justify="left").pack(anchor="w", pady=(7, 0))
 
         self.ttk.Label(left, text="OPTIMIZER BEREICHE", style="PageKicker.TLabel").pack(anchor="w", pady=(18, 7))
         self.optimizer_domain_grid = self.ttk.Frame(left, style="Content.TFrame")
@@ -1944,32 +2000,35 @@ class AnalyzerShellApp:
         )
         self.optimizer_overview_detail_text.pack(anchor="w", pady=(0, 14))
         self.optimizer_overview_detail_status = self.ttk.Label(panel, text="Keine Bewertung geladen", style="OptimizerDetail.TLabel", foreground=_THEME["cyan"], wraplength=285, justify="left")
-        self.optimizer_overview_detail_status.pack(anchor="w", pady=(0, 18))
+        self.optimizer_overview_detail_status.pack(anchor="w", pady=(0, 12))
+        self.ttk.Label(panel, text="WAS IST DAS?", style="OptimizerDetailMuted.TLabel", foreground=_OPTIMIZER_THEME["accent"], font=(self.ui_font, 7, "bold")).pack(anchor="w", pady=(8, 3))
+        self.ttk.Label(panel, text="Die Übersicht zeigt nur vorhandene lokale Fakten und die vier festen read-only Bereiche. Eine fehlende Bewertung ist keine Empfehlung.", style="OptimizerDetailMuted.TLabel", wraplength=285, justify="left").pack(anchor="w")
         self.optimizer_overview_open_action = RoundedOptimizerAction(
             self.tk, panel, text="System Optimizer öffnen", primary=True,
             command=lambda: self._show_optimizer_detail_screen(self.optimizer_active_domain), font=(self.ui_font, 9, "bold"),
         )
         self.optimizer_overview_open_action.canvas.configure(background=_OPTIMIZER_THEME["surface_detail"])
         self.optimizer_overview_open_action.pack(fill="x")
-        self.ttk.Label(panel, text="Technische Evidenz, Provenance und Pack-Daten erscheinen nur nach Auswahl einer Einstellung in der Detailansicht.", style="OptimizerDetailMuted.TLabel", wraplength=285, justify="left").pack(anchor="w", pady=(18, 0))
+        self.ttk.Label(panel, text="Technische Evidenz und Provenance bleiben erst in den Detailinformationen einer Einstellung sichtbar.", style="OptimizerDetailMuted.TLabel", wraplength=285, justify="left").pack(anchor="w", pady=(18, 0))
 
     def _build_optimizer_detail_view(self) -> None:
-        self._optimizer_header(self.optimizer_detail_view, title="System Optimizer", back_command=self._show_optimizer_overview)
-        self.optimizer_detail_screen_title = self.ttk.Label(self.optimizer_detail_view, text="SYSTEM OPTIMIZER", style="PageKicker.TLabel")
-        self.optimizer_detail_screen_title.pack(anchor="w", pady=(0, 12))
+        self._optimizer_header(self.optimizer_detail_view, title="Optimizer", back_command=self._show_optimizer_overview)
+        self.optimizer_detail_screen_title = self.ttk.Label(self.optimizer_detail_view, text="System Optimizer", style="PageTitle.TLabel")
+        self.optimizer_detail_screen_title.pack(anchor="w")
+        self.ttk.Label(self.optimizer_detail_view, text="Windows & System · read-only Evidenz", style="PageKicker.TLabel").pack(anchor="w", pady=(2, 12))
         metrics = self.ttk.Frame(self.optimizer_detail_view, style="Content.TFrame")
         metrics.pack(fill="x")
         self.optimizer_detail_metric_values: dict[str, object] = {}
-        for index, (key, label) in enumerate((("checked", "GEPRÜFTE EINSTELLUNGEN"), ("already", "BEREITS PASSEND"), ("conditional", "BEDINGT / UNKNOWN"))):
+        for index, (key, label) in enumerate((("checked", "EINSTELLUNGEN GEPRÜFT"), ("already", "BEREITS PASSEND"), ("recommended", "ÄNDERUNG EMPFOHLEN"), ("conditional", "ZU PRÜFEN"))):
             metrics.columnconfigure(index, weight=1, uniform="optimizer-detail-metrics")
             metric_surface = RoundedOptimizerSurface(
                 self.tk, self.ttk, metrics, style="OptimizerMetric.TFrame", fill=_OPTIMIZER_THEME["surface_raised"],
                 padding=(14, 11), min_height=84, radius=9,
             )
-            metric_surface.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 4, 0 if index == 2 else 4))
+            metric_surface.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 4, 0 if index == 3 else 4))
             metric = metric_surface.body
             self.ttk.Label(metric, text=label, style="OptimizerMetricMuted.TLabel", font=(self.ui_font, 7, "bold")).pack(anchor="w")
-            metric_color = (_OPTIMIZER_THEME["accent"], _OPTIMIZER_THEME["success"], _OPTIMIZER_THEME["warning"])[index]
+            metric_color = (_OPTIMIZER_THEME["accent"], _OPTIMIZER_THEME["success"], _OPTIMIZER_THEME["warning"], _OPTIMIZER_THEME["unknown"])[index]
             value = self.ttk.Label(metric, text="—", style="OptimizerMetric.TLabel", foreground=metric_color, font=(self.display_font, 16, "bold"))
             value.pack(anchor="w", pady=(4, 0))
             self.optimizer_detail_metric_values[key] = value
@@ -2000,26 +2059,37 @@ class AnalyzerShellApp:
         detail_surface.canvas.pack_propagate(False)
         detail = detail_surface.body
         self.optimizer_detail_card = detail_surface
-        self.optimizer_detail_tree = self.ttk.Treeview(table_card, style="Optimizer.Treeview", columns=("current", "recommendation", "status"), show="tree headings", selectmode="browse")
+        self.optimizer_detail_tree = self.ttk.Treeview(table_card, style="Optimizer.Treeview", columns=("current", "recommendation", "status", "open"), show="tree headings", selectmode="browse")
         self.optimizer_detail_tree.heading("#0", text="EINSTELLUNG")
         self.optimizer_detail_tree.heading("current", text="AKTUELLER ZUSTAND")
         self.optimizer_detail_tree.heading("recommendation", text="IMPROVE EMPFEHLUNG")
         self.optimizer_detail_tree.heading("status", text="STATUS")
-        self.optimizer_detail_tree.column("#0", width=142, minwidth=120, anchor="w")
-        self.optimizer_detail_tree.column("current", width=152, minwidth=120, anchor="w")
-        self.optimizer_detail_tree.column("recommendation", width=165, minwidth=130, anchor="w")
-        self.optimizer_detail_tree.column("status", width=112, minwidth=95, anchor="w")
+        self.optimizer_detail_tree.heading("open", text="")
+        self.optimizer_detail_tree.column("#0", width=158, minwidth=130, anchor="w")
+        self.optimizer_detail_tree.column("current", width=142, minwidth=112, anchor="w")
+        self.optimizer_detail_tree.column("recommendation", width=150, minwidth=120, anchor="w")
+        self.optimizer_detail_tree.column("status", width=98, minwidth=88, anchor="w")
+        self.optimizer_detail_tree.column("open", width=28, minwidth=24, anchor="center", stretch=False)
         self.optimizer_detail_tree.tag_configure("ready", foreground=_OPTIMIZER_THEME["success"])
         self.optimizer_detail_tree.tag_configure("evidence", foreground=_OPTIMIZER_THEME["accent"])
         self.optimizer_detail_tree.tag_configure("conditional", foreground=_OPTIMIZER_THEME["warning"])
         self.optimizer_detail_tree.tag_configure("unknown", foreground=_OPTIMIZER_THEME["unknown"])
+        self.optimizer_detail_tree.tag_configure("section", foreground=_OPTIMIZER_THEME["accent"], font=(self.ui_font, 8, "bold"))
         self.optimizer_detail_tree.pack(fill="both", expand=True)
         self.optimizer_detail_tree.bind("<<TreeviewSelect>>", self._select_optimizer_setting)
         self.ttk.Label(detail, text="DETAILS & ERKLÄRUNG", style="OptimizerDetail.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
         self.optimizer_detail_title = self.ttk.Label(detail, text="Keine Einstellung ausgewählt", style="OptimizerDetail.TLabel", font=(self.ui_font, 12, "bold"), wraplength=310, justify="left")
         self.optimizer_detail_title.pack(anchor="w", pady=(16, 5))
-        self.optimizer_detail_text = self.ttk.Label(detail, text="Wähle eine Zeile, um aktuellen Zustand, Empfehlung, Begründung und Grenzen anzuzeigen.", style="OptimizerDetailMuted.TLabel", wraplength=310, justify="left")
-        self.optimizer_detail_text.pack(anchor="w")
+        self.optimizer_detail_state = self.ttk.Label(detail, text="Aktueller Zustand: —", style="OptimizerDetailMuted.TLabel", wraplength=310, justify="left")
+        self.optimizer_detail_state.pack(anchor="w")
+        self.optimizer_detail_status = self.ttk.Label(detail, text="Status: —", style="OptimizerDetail.TLabel", foreground=_OPTIMIZER_THEME["accent"], wraplength=310, justify="left")
+        self.optimizer_detail_status.pack(anchor="w", pady=(4, 12))
+        self.optimizer_detail_sections: dict[str, object] = {}
+        for key, heading in (("what", "WAS IST DAS?"), ("why", "WARUM FÜR DIESES SYSTEM?"), ("effect", "MÖGLICHER EFFEKT"), ("evidence", "EVIDENZ & GÜLTIGKEIT"), ("change", "ÄNDERUNG & WIEDERHERSTELLUNG")):
+            self.ttk.Label(detail, text=heading, style="OptimizerDetailMuted.TLabel", foreground=_OPTIMIZER_THEME["accent"], font=(self.ui_font, 7, "bold")).pack(anchor="w", pady=(8, 2))
+            value = self.ttk.Label(detail, text="—", style="OptimizerDetailMuted.TLabel", wraplength=310, justify="left")
+            value.pack(anchor="w")
+            self.optimizer_detail_sections[key] = value
         self.optimizer_detail_technical_action = RoundedOptimizerAction(
             self.tk, detail, text="Technische Details", command=self._toggle_optimizer_technical_detail,
             font=(self.ui_font, 9, "bold"),
@@ -2035,6 +2105,19 @@ class AnalyzerShellApp:
                 child.destroy()
             for label, value in self.optimizer_hardware_values.items():
                 OptimizerHardwareChip(self.tk, host, label=label, value=value, ui_font=self.ui_font).pack(side="left", padx=(5, 0))
+
+    def _draw_optimizer_overview_ring(self, _event=None) -> None:
+        """Draw the MASTER-style status ring without implying a result we lack."""
+        canvas = self.optimizer_overview_ring
+        width, height = max(canvas.winfo_width(), 1), max(canvas.winfo_height(), 1)
+        inset = 11
+        canvas.delete("all")
+        canvas.create_oval(inset, inset, width - inset, height - inset, outline=_OPTIMIZER_THEME["border"], width=8)
+        canvas.create_arc(inset, inset, width - inset, height - inset, start=62, extent=252, style="arc", outline=_OPTIMIZER_THEME["accent"], width=7)
+        canvas.create_arc(inset + 11, inset + 11, width - inset - 11, height - inset - 11, start=160, extent=120, style="arc", outline=_OPTIMIZER_THEME["success"], width=2)
+        canvas.create_text(width // 2, height // 2 - 13, text="4", fill=_OPTIMIZER_THEME["text"], font=(self.display_font, 24, "bold"))
+        canvas.create_text(width // 2, height // 2 + 12, text="BEREICHE", fill=_OPTIMIZER_THEME["secondary"], font=(self.ui_font, 7, "bold"))
+        canvas.create_text(width // 2, height // 2 + 26, text="VERFÜGBAR", fill=_OPTIMIZER_THEME["secondary"], font=(self.ui_font, 7, "bold"))
 
     def _show_optimizer_overview(self) -> None:
         self.optimizer_detail_view.pack_forget()
@@ -2064,6 +2147,7 @@ class AnalyzerShellApp:
         ))
         for key, widget in self.optimizer_overview_metric_values.items():
             widget.configure(text=str(counts.get(key, "—")))
+        self._draw_optimizer_overview_ring()
         self.optimizer_overview_detail_title.configure(text=str(selected["title"]))
         self.optimizer_overview_detail_text.configure(text=str(selected["description"]))
         self.optimizer_overview_detail_status.configure(text=str(selected["state"]))
@@ -2082,11 +2166,13 @@ class AnalyzerShellApp:
             card = card_surface.body
             label_style = "OptimizerAreaActive.TLabel" if active else "OptimizerArea.TLabel"
             muted_style = "OptimizerAreaActiveMuted.TLabel" if active else "OptimizerAreaMuted.TLabel"
-            self.ttk.Label(card, text="AKTIV" if active else "OPTIMIZER BEREICH", style=muted_style, foreground=_OPTIMIZER_THEME["accent"] if active else _OPTIMIZER_THEME["muted"], font=(self.ui_font, 7, "bold")).pack(anchor="w")
+            accent = {"SYSTEM_OPTIMIZER": _OPTIMIZER_THEME["accent"], "GRAPHICS_OPTIMIZER": "#61B987", "NETWORK_OPTIMIZER": "#A782E8", "BIOS_OPTIMIZER": "#D59A55"}[str(item["domain"])]
+            self.ttk.Label(card, text="●", style=label_style, foreground=accent, font=(self.display_font, 17, "bold")).pack(anchor="w")
+            self.ttk.Label(card, text="AKTIV" if active else "OPTIMIZER BEREICH", style=muted_style, foreground=accent, font=(self.ui_font, 7, "bold")).pack(anchor="w", pady=(2, 0))
             self.ttk.Label(card, text=item["title"], style=label_style, font=(self.display_font, 10, "bold")).pack(anchor="w", pady=(6, 3))
             self.ttk.Label(card, text=item["description"], style=muted_style, wraplength=270, justify="left").pack(anchor="w")
-            self.ttk.Label(card, text=item["state"], style=label_style, foreground=_OPTIMIZER_THEME["accent"], wraplength=270, justify="left", font=(self.ui_font, 8, "bold")).pack(anchor="w", pady=(12, 12))
-            action = RoundedOptimizerAction(self.tk, card, text="Öffnen", primary=active, command=lambda value=item["domain"]: self._show_optimizer_detail_screen(value), font=(self.ui_font, 9, "bold"))
+            self.ttk.Label(card, text=item["state"], style=label_style, foreground=accent, wraplength=270, justify="left", font=(self.ui_font, 8, "bold")).pack(anchor="w", pady=(12, 12))
+            action = RoundedOptimizerAction(self.tk, card, text="Details ansehen", primary=active, command=lambda value=item["domain"]: self._show_optimizer_detail_screen(value), font=(self.ui_font, 9, "bold"))
             action.canvas.configure(background=_OPTIMIZER_THEME["surface_raised"] if active else _OPTIMIZER_THEME["surface"])
             action.pack(fill="x")
 
@@ -2101,16 +2187,19 @@ class AnalyzerShellApp:
         counts = self.optimizer_view_data.get("counts", {}) if isinstance(self.optimizer_view_data, dict) else {}
         for key, widget in self.optimizer_detail_metric_values.items():
             widget.configure(text=str(counts.get(key, "—")))
+        if visible:
+            self.optimizer_detail_tree.insert("", "end", iid="section-system", text="SYSTEM CHECK & READ-ONLY-EVIDENZ", values=("", "", "", ""), tags=("section",), open=True)
         for index, model in enumerate(visible):
             iid = f"setting-{index}"
             self.optimizer_detail_models[iid] = model
             status_label, semantic = status_presentation(model.get("status"))
             self.optimizer_detail_tree.insert(
-                "", "end", iid=iid, text=str(model.get("title") or "Unbenannte Einstellung"),
+                "section-system", "end", iid=iid, text="◉  " + str(model.get("title") or "Unbenannte Einstellung"),
                 values=(
                     optimizer_table_cell(model.get("current_state")),
                     optimizer_table_cell(model.get("improve_recommendation")),
                     optimizer_table_cell(status_label, maximum=20),
+                    "›",
                 ),
                 tags=(semantic,),
             )
@@ -2131,20 +2220,20 @@ class AnalyzerShellApp:
         self.optimizer_detail_technical_action.text = "Technische Details"
         self.optimizer_detail_technical_action.enabled = model is not None
         self.optimizer_detail_technical_action._draw()
+        sections = optimizer_user_detail_sections(model)
         if model is None:
             self.optimizer_detail_title.configure(text="Keine passende Einstellung")
-            self.optimizer_detail_text.configure(text="Für diesen Bereich liegen unter dem gewählten Filter keine bestätigten lokalen Prüfpunkte vor. Das ist keine negative oder positive Empfehlung.")
+            self.optimizer_detail_state.configure(text=sections["state"])
+            self.optimizer_detail_status.configure(text="Status: keine Bewertung")
+            for key, widget in self.optimizer_detail_sections.items():
+                widget.configure(text=sections[key])
             return
         self.optimizer_detail_title.configure(text=str(model.get("title") or "Unbenannte Einstellung"))
         status_label, _semantic = status_presentation(model.get("status"))
-        self.optimizer_detail_text.configure(text=(
-            f"Aktueller Zustand: {optimizer_table_cell(model.get('current_state'), maximum=56)}\n"
-            f"Improve Empfehlung: {optimizer_table_cell(model.get('improve_recommendation'), maximum=56)}\n"
-            f"Status: {optimizer_table_cell(status_label, maximum=56)}\n\n"
-            f"Warum für dieses System? {model.get('why_for_this_system') or 'Nicht sicher belegt.'}\n\n"
-            f"Effekt: {model.get('what_can_change') or 'Keine Wirkung behauptet.'}\n"
-            f"Risiko: {model.get('risk_notes') or 'Nicht verfügbar.'} · Read-only."
-        ))
+        self.optimizer_detail_state.configure(text=f"Aktueller Zustand: {sections['state']}")
+        self.optimizer_detail_status.configure(text=f"Status: {optimizer_table_cell(status_label, maximum=56)}")
+        for key, widget in self.optimizer_detail_sections.items():
+            widget.configure(text=sections[key])
         guidance = model.get("guidance") if isinstance(model.get("guidance"), dict) else {}
         explainability = model.get("explainability") if isinstance(model.get("explainability"), dict) else {}
         self.optimizer_detail_technical_text.configure(text=(

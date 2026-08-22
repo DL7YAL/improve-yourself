@@ -17,6 +17,7 @@ from improve_yourself.analyzer_shell import (
     optimizer_evidence_view,
     optimizer_product_view,
     optimizer_table_cell,
+    optimizer_user_detail_sections,
     optimizer_visible_models,
     status_presentation,
     system_check_result_view,
@@ -119,6 +120,21 @@ def test_optimizer_visible_models_filters_one_domain_without_reinterpreting_resu
 def test_optimizer_table_cell_preserves_short_values_and_marks_visual_truncation() -> None:
     assert optimizer_table_cell("KNOWN_STATE") == "KNOWN STATE"
     assert optimizer_table_cell("x" * 40, maximum=12) == "xxxxxxxxxxx…"
+
+
+def test_optimizer_detail_sections_keep_unknowns_read_only_and_do_not_invent_an_action() -> None:
+    insufficient = optimizer_user_detail_sections({
+        "status": "INSUFFICIENT_EVIDENCE",
+        "current_state": "UNKNOWN / NOT AVAILABLE",
+        "what_can_change": "No measured effect.",
+        "evidence_validity": {"record": "MISSING INPUT"},
+    })
+    assert "reicht" in insufficient["why"]
+    assert insufficient["state"] == "Unbekannt"
+    assert insufficient["evidence"] == "Vorhandene Evidenzdaten · technische Details verfügbar."
+    assert "keine Änderung" in insufficient["change"]
+    empty = optimizer_user_detail_sections(None)
+    assert "keine Änderung" in empty["change"]
 
 
 def test_dashboard_layout_keeps_cards_readable_without_global_scaling() -> None:

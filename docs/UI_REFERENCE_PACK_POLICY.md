@@ -1,6 +1,6 @@
 # UI Reference Pack Policy
 
-Status: **binding reference hierarchy — waiting for pack access**
+Status: **binding reference hierarchy — Pack v1.0.0 verified locally**
 
 ## Authority order
 
@@ -38,7 +38,19 @@ the accessible reference source.
 
 ## Current workspace condition — 2026-08-22
 
-The provided path `/mnt/data/Improve_Yourself_UI_Reference_Pack_v1.0.0.zip`
-was not available in this Windows workspace at the corresponding checked
-locations. No new visual implementation may therefore be based on the Pack
-until it is mounted or attached here.
+The complete Reference Pack is now present at `docs/design/ui-reference/`.
+`README_UI_REFERENCE.md` and the machine-readable
+`UI_REFERENCE_MANIFEST.json` were read before the Optimizer/Shell pass. The
+manifest was supplied inside the archived pack and is checked in alongside the
+extracted references so the folder is complete at its documented location.
+
+The three Optimizer image hashes match the manifest exactly:
+
+- `optimizer_overview_MASTER.png` — `e2e91fdc…a4d6a004` — **MASTER**;
+- `system_optimizer_detail_MASTER.png` — `4b0b5d5e…7b8bdb51` — **MASTER**;
+- `optimizer_legacy_from_concept_pdf_SUPERSEDED.png` —
+  `c6a47fd8…5973a3af3` — **SUPERSEDED**, excluded from implementation.
+
+The PDF is not a fallback. The two MASTER PNGs are the only Optimizer screen
+targets; Variant 3 remains binding only for the shared shell, branding, header
+transition and navigation continuity.

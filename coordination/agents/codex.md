@@ -1,5 +1,35 @@
 # Codex
 
+## 2026-08-22 — UI Reference Pack verified / Optimizer + Shell alignment
+
+STATUS: `WAITING_FOR_TRISTAN`
+
+TASK: Die entpackte UI-Reference-Pack-Quelle zuerst verifizieren und danach ausschließlich den bereits freigegebenen Optimizer-/Shell-Abgleich fortsetzen. Keine weitere Produktseite, Regel, Evidence-/Sicherheitslogik oder Produktfunktion.
+
+BRANCH: `dev/v1-foundation`
+
+REFERENCE AUTHORITY: `docs/design/ui-reference/README_UI_REFERENCE.md` und `UI_REFERENCE_MANIFEST.json` wurden gelesen. Die manifestierten SHA-256-Werte der zwei Optimizer-`MASTER`-PNGs stimmen mit den lokalen Dateien überein. `optimizer_overview_MASTER.png` und `system_optimizer_detail_MASTER.png` sind die einzigen Screen-Ziele. `optimizer_legacy_from_concept_pdf_SUPERSEDED.png` bleibt ausgeschlossen; die PDF ist keine Ersatzreferenz. Variant 3 wurde nur für Shell, Branding, Header-/Chip-Übergang und Navigation verwendet. Das Manifest ist zusätzlich direkt im entpackten Ordner versioniert, weil es dort zunächst nur innerhalb der mitgelieferten ZIP lag.
+
+CHANGED: Nur `src/improve_yourself/analyzer_shell.py`, `tests/test_analyzer_shell.py` und UI-Referenz-/Handoff-Dokumentation. Die Optimizer-Übersicht erhält eine MASTER-nahe Empfehlungen-/Statushierarchie mit wahrheitsgemäßem Vier-Bereiche-Ring, echten read-only Kennzahlen, 2×2-Domain-Karten und stabiler Detailsäule. Das Systemdetail erhält einen globalen Optimizer-Header, echte Rücknavigation, vier reale Kennzahlen, Suche/Statusfilter, eine gruppierte Ergebnisliste mit ausgewählter Zeile und eine lesbare rechte Erklärung. Rohwerte, Provenance und Evidence-Strukturen bleiben hinter dem vorhandenen bewussten `Technische Details`-Disclosure. Eine Rohstruktur im sichtbaren Evidenzabschnitt wurde abschließend durch den korrekten Status `Vorhandene Evidenzdaten · technische Details verfügbar.` ersetzt. Der globale Shell-Abgleich verkleinert die fixe Sidebar auf die MASTER-nahe Breite; Variant-3-Branding und der aktive, dunkle Cyan-State bleiben erhalten. Keine Regel, Entscheidung, Datenquelle, Hardwareerkennung, Apply-/Restore-Funktion oder andere Seite geändert.
+
+RUNTIME EVIDENCE: Frischer Portable wurde geöffnet und beide verbindlichen Ansichten praktisch geprüft. Übersicht: dunkle Variant-3-Shell, aktueller Nav-State, Header-Hardwarechips, sichtbare System-Check-Aktion, Statusring, vier echte Bereichskarten und feste `DETAILS & ERKLÄRUNG`-Spalte. Systemdetail: Rücknavigation, Titel/Subtitel, vier Kennzahlen, Suche/Filter, dunkle gruppierte Tabelle, aktuelle Auswahl und Detailspalte. Keine helle/native Fremdfläche. Die letzte textliche Evidenzdarstellung ist nach dieser Prüfung erneut vollständig gebaut und getestet; die dargestellten Werte bleiben real/read-only.
+
+CURRENT-vs-TARGET: **PASS im freigegebenen Optimizer-/Shell-Abgleich.** Die Runtime ist als Umsetzung der zwei MASTER-Screens erkennbar: Master-Hierarchie, Flächenaufteilung, Kartenraster, Detailspalte, Headerchips und aktive Navigation sind vorhanden. Keine pixelgenaue Bitmapkopie wird behauptet; reale Daten ersetzen die Mockupwerte. Der verbleibende Unterschied ist nur die unvermeidbare native Fensterchrome/Tk-Textmetriken und damit Final Polish, nicht mehr die frühere Developer-/Evidence-Wand.
+
+VERIFIED: `python -m compileall -q src` PASS; vollständige Suite **188 passed**; `git diff --check` PASS. Frischer Portable-Build samt Manifest PASS. EXE SHA-256 `35844F7CD19A8581B04F27F80E10108905B164484968ADAC73295D4598906BF8`; ZIP SHA-256 `056F1FB031FE0772DB51E15DF76F533A89B352FCE0355CAF3242CB3ECDED4BF5`.
+
+OPEN: Nur Tristans visueller Vergleich der zwei aktuellen Portable-Screens gegen die zwei MASTER-PNGs. Keine weitere UI-/Produktarbeit ohne neuen Auftrag.
+
+NEXT: `WAITING_FOR_TRISTAN`.
+
+MODEL_PROFILE: terra
+
+MODEL_REASON: Begrenzter visueller Master-Abgleich mit realen read-only Daten, Native-Desktop-Shell und vollständiger Runtime-/Build-Prüfung ohne Architektur- oder Sicherheitsänderung.
+
+COMPUTER_USE: yes
+
+COMMIT/PR: pending current checkpoint on `dev/v1-foundation`.
+
 ## 2026-08-22 — UI Reference Pack authority update
 
 STATUS: `WAITING_FOR_TRISTAN`
