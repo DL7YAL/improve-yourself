@@ -28,7 +28,7 @@ MODEL_REASON: Bestehende native Windows-Oberfläche, echter Build-Runtime-Abglei
 
 COMPUTER_USE: yes
 
-COMMIT/PR: pending checkpoint commit and push on `dev/v1-foundation`.
+COMMIT/PR: `9bc525c feat: align shell structure to visual targets`; documentation checkpoint and push follow this line on `dev/v1-foundation`.
 
 ## 2026-08-21 — Embedded Analyzer Review product slice
 
