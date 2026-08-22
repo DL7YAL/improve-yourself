@@ -12,6 +12,8 @@ from improve_yourself.tactical_module import (
     register_tactical_module,
 )
 
+ANCIENT_SOURCE_SHA256 = "c183dd61fc6a619f7af435d45eab374cd6f0097a7bd0da779971b15ef6746f7f"
+
 
 class TacticalProjectionProvider:
     def __init__(self, projection: dict | None) -> None:
@@ -28,10 +30,10 @@ def resources() -> Path:
 def projection() -> dict:
     return {
         "schema": TACTICAL_PROJECTION_V1,
-        "source": {"sha256": "c183dd61" + "0" * 56, "map_id": "de_ancient"},
+        "source": {"sha256": ANCIENT_SOURCE_SHA256, "map_id": "de_ancient"},
         "players": [{"player_id": "steam:76561198009555616", "display_name": "Ancient player"}],
         "rounds": [{"round_number": 1, "start_tick": 1, "end_tick": 3654}],
-        "replay_reference": {"schema": "iy.replay/v2", "source_sha256": "c183dd61" + "0" * 56, "reference": "replay"},
+        "replay_reference": {"schema": "iy.replay/v2", "source_sha256": ANCIENT_SOURCE_SHA256, "reference": "replay"},
     }
 
 
@@ -66,7 +68,7 @@ def test_map_registry_loads_ancient_and_keeps_unknown_maps_unknown() -> None:
     assert registry.get("de_unknown").status is MapResourceStatus.UNKNOWN
 
 
-def test_ancient_position_reaches_the_unverified_map_transform_boundary_without_mutating_context() -> None:
+def test_hash_bound_ancient_position_fixture_reaches_the_unverified_map_transform_boundary_without_mutating_context() -> None:
     result = tactical_controller().resolve("tactical")
     context = result.context.projection
     sample = TacticalPositionSampleV1(context.source["sha256"], "de_ancient", "steam:76561198009555616", 3654, (-1234.5, 567.25, 89.0))

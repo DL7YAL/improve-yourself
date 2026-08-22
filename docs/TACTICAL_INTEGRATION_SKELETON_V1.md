@@ -18,6 +18,12 @@ replay consumer may provide an explicit `TacticalPositionSampleV1`; the current
 map-transform boundary preserves that CS2-world position and returns
 `UNAVAILABLE` until a verified static transform exists.
 
+The local worktree for this slice does not contain the canonical hash-bound
+Ancient replay chunk holding real frame positions. The automated boundary test
+therefore uses a hash-bound fixture to prove the plumbing only; it does not
+claim a real Ancient coordinate. Extracting one position from that existing
+canonical artifact remains an evidence-only step.
+
 `resources/maps/de_ancient/map.json` is a static MapRegistry proof of concept.
 It deliberately declares its transform `UNVERIFIED`: no radar/render transform
 numbers are invented or hardcoded in a Tactical renderer. Dynamic match data
