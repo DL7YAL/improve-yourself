@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import ctypes
 import hashlib
 import json
@@ -969,6 +970,50 @@ class ShellResult:
     profile_id: str
 
 
+def analyzer_result_projection(result: ShellResult, flow: dict[str, object]) -> dict[str, object]:
+    """Project the canonical analysis flow into factual Analyzer UI content.
+
+    This is intentionally a presentation adapter, not an additional analyzer:
+    it only repeats verified workflow facts and objective scene anchors.  In
+    particular it does not turn marker frequency into a skill score, strength,
+    weakness, or coaching conclusion.
+    """
+    source = flow.get("source") if isinstance(flow.get("source"), dict) else {}
+    if str(source.get("sha256") or "") != result.source_sha256:
+        raise ValueError("analyzer result source differs from workflow")
+    raw_scenes = flow.get("scenes")
+    if not isinstance(raw_scenes, list):
+        raise ValueError("analysis flow scenes must be a list")
+    anchors: Counter[str] = Counter()
+    situations: list[dict[str, str]] = []
+    for item in raw_scenes:
+        if not isinstance(item, dict):
+            continue
+        anchor_types = tuple(str(value) for value in item.get("anchor_types", ()) if str(value))
+        anchors.update(anchor_types)
+        round_number = item.get("round_number")
+        review = item.get("review") if isinstance(item.get("review"), dict) else {}
+        tick = review.get("tick")
+        situations.append({
+            "title": f"Runde {round_number if isinstance(round_number, int) else '—'} · Tick {tick if isinstance(tick, int) else '—'}",
+            "detail": ", ".join(anchor_types) if anchor_types else "Objektive Szene ohne benannten Ankertyp",
+        })
+    anchor_summary = tuple(
+        {"anchor": anchor, "count": count}
+        for anchor, count in sorted(anchors.items(), key=lambda item: (-item[1], item[0]))
+    )
+    return {
+        "map_id": result.map_id,
+        "round_count": result.round_count,
+        "player_count": len(result.players),
+        "event_count": result.basic_event_count,
+        "scene_count": len(raw_scenes),
+        "profile_id": result.profile_id or "nicht belegt",
+        "situations": tuple(situations[:4]),
+        "anchor_summary": anchor_summary[:4],
+    }
+
+
 class AnalyzerShellController:
     def __init__(
         self,
@@ -1338,6 +1383,7 @@ class AnalyzerShellApp:
         self.tactical_drag_origin: tuple[int, int] | None = None
         self.tactical_syncing_selection = False
         self.tactical_ignore_selection_event = False
+        self.analyzer_setup_expanded = False
 
         shell = ttk.Frame(self.root, style="Content.TFrame")
         shell.pack(fill="both", expand=True)
@@ -1425,6 +1471,7 @@ class AnalyzerShellApp:
 
         analyzer_top = ttk.Frame(frame, style="Content.TFrame")
         analyzer_top.pack(fill="x")
+        self.analyzer_top = analyzer_top
         source_card = ttk.Frame(analyzer_top, style="Card.TFrame", padding=16)
         source_card.pack(side="left", fill="both", expand=True, padx=(0, 6))
         ttk.Label(source_card, text="FILTER & DATENQUELLE", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w")
@@ -1446,6 +1493,7 @@ class AnalyzerShellApp:
 
         selection_card = ttk.Frame(frame, style="Card.TFrame", padding=16)
         selection_card.pack(fill="x", pady=(12, 0))
+        self.analyzer_selection_card = selection_card
         ttk.Label(selection_card, text="ANALYSE REGELN & SPIELERAUSWAHL", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w")
         controls = ttk.Frame(selection_card, style="CardInner.TFrame")
         controls.pack(fill="x", pady=(10, 4))
@@ -1506,6 +1554,7 @@ class AnalyzerShellApp:
         self.chosen.pack(anchor="w", pady=(4, 0))
         review_strip = ttk.Frame(frame, style="Content.TFrame")
         review_strip.pack(fill="x", pady=(12, 0))
+        self.analyzer_review_strip = review_strip
         actions = ttk.Frame(review_strip, style="Card.TFrame", padding=14)
         actions.pack(side="left", fill="both", expand=True, padx=(0, 6))
         ttk.Label(actions, text="ERKANNTE SITUATIONEN & REVIEW", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w", pady=(0, 8))
@@ -1520,6 +1569,7 @@ class AnalyzerShellApp:
         preflight.pack(side="left", fill="both", expand=True, padx=(6, 0))
         for variable in (self.netcon_status, self.demo_status, self.filename_status, self.preflight_message):
             ttk.Label(preflight, textvariable=variable).pack(anchor="w")
+        self._build_analyzer_result_projection(frame)
         self._build_embedded_review(frame)
         self._build_dashboard_page()
         self._build_my_improvement_page()
@@ -1533,6 +1583,142 @@ class AnalyzerShellApp:
         self._load_saved_system_scan()
         self._show_page("Analyzer / Review")
         self.root.protocol("WM_DELETE_WINDOW", self._close)
+
+    def _build_analyzer_result_projection(self, parent) -> None:
+        """Build the reference-locked Analyzer result hierarchy.
+
+        The widgets remain deliberately neutral until a validated workflow is
+        loaded.  They are then filled from ``analysis-flow.json`` by
+        ``_render_analyzer_result_projection``; no score or coaching result is
+        invented merely to resemble the visual master.
+        """
+        section = self.ttk.Frame(parent, style="Content.TFrame")
+        section.pack(fill="x", pady=(18, 0))
+        self.analyzer_result_section = section
+        header = self.ttk.Frame(section, style="Content.TFrame")
+        header.pack(fill="x", pady=(0, 8))
+        self.ttk.Label(header, text="ANALYSE-ÜBERSICHT", style="SectionTitle.TLabel").pack(side="left")
+        self.analyzer_result_state = self.tk.StringVar(value="Demo und objektive Szenen noch nicht geladen")
+        self.ttk.Label(header, textvariable=self.analyzer_result_state, style="StatusBadge.TLabel").pack(side="right")
+        self.ttk.Button(header, text="Analyse konfigurieren", command=self._show_analyzer_setup).pack(side="right", padx=(0, 8))
+
+        top = self.ttk.Frame(section, style="Content.TFrame")
+        top.pack(fill="x")
+        overview = self.ttk.Frame(top, style="Card.TFrame", padding=16)
+        overview.pack(side="left", fill="both", expand=True, padx=(0, 6))
+        self.ttk.Label(overview, text="ÜBERSICHT", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
+        self.analyzer_overview = self.tk.StringVar(value="Noch keine belastbare Demoanalyse verfügbar.")
+        self.ttk.Label(overview, textvariable=self.analyzer_overview, style="Muted.TLabel", justify="left", wraplength=330).pack(anchor="w", pady=(10, 0))
+
+        findings = self.ttk.Frame(top, style="Card.TFrame", padding=16)
+        findings.pack(side="left", fill="both", expand=True, padx=6)
+        self.ttk.Label(findings, text="SCHLÜSSELBEFUNDE", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
+        self.analyzer_findings = self.tk.StringVar(value="Nur objektiv belegte Szenenanker werden hier aufgeführt.")
+        self.ttk.Label(findings, textvariable=self.analyzer_findings, style="Muted.TLabel", justify="left", wraplength=330).pack(anchor="w", pady=(10, 0))
+
+        patterns = self.ttk.Frame(top, style="Card.TFrame", padding=16)
+        patterns.pack(side="left", fill="both", expand=True, padx=(6, 0))
+        self.ttk.Label(patterns, text="WIEDERKEHRENDE MUSTER", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
+        self.analyzer_patterns = self.tk.StringVar(value="Keine Musterbewertung, solange keine dafür definierte Regel vorliegt.")
+        self.ttk.Label(patterns, textvariable=self.analyzer_patterns, style="Muted.TLabel", justify="left", wraplength=330).pack(anchor="w", pady=(10, 0))
+
+        middle = self.ttk.Frame(section, style="Content.TFrame")
+        middle.pack(fill="x", pady=(12, 0))
+        situations = self.ttk.Frame(middle, style="Card.TFrame", padding=16)
+        situations.pack(side="left", fill="both", expand=True, padx=(0, 6))
+        self.ttk.Label(situations, text="ERKANNTE SITUATIONEN", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
+        self.analyzer_situations = self.tk.StringVar(value="Nach der Analyse stehen hier die ersten zusammengeführten Szenen.")
+        self.ttk.Label(situations, textvariable=self.analyzer_situations, style="Muted.TLabel", justify="left", wraplength=525).pack(anchor="w", pady=(10, 0))
+        self.ttk.Button(situations, text="Szenen im Review öffnen", command=self._open_review).pack(anchor="w", pady=(12, 0))
+
+        next_steps = self.ttk.Frame(middle, style="Card.TFrame", padding=16)
+        next_steps.pack(side="left", fill="both", expand=True, padx=(6, 0))
+        self.ttk.Label(next_steps, text="NÄCHSTE SCHRITTE", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
+        self.analyzer_next_steps = self.tk.StringVar(value="Review öffnen, eine Szene auswählen und den belegten Tick lokal prüfen.")
+        self.ttk.Label(next_steps, textvariable=self.analyzer_next_steps, style="Muted.TLabel", justify="left", wraplength=525).pack(anchor="w", pady=(10, 0))
+
+        lower = self.ttk.Frame(section, style="Content.TFrame")
+        lower.pack(fill="x", pady=(12, 0))
+        strengths = self.ttk.Frame(lower, style="Card.TFrame", padding=14)
+        strengths.pack(side="left", fill="both", expand=True, padx=(0, 4))
+        self.ttk.Label(strengths, text="STÄRKEN", style="Card.TLabel", font=(self.display_font, 9, "bold")).pack(anchor="w")
+        self.analyzer_strengths = self.tk.StringVar(value="Nicht automatisch abgeleitet")
+        self.ttk.Label(strengths, textvariable=self.analyzer_strengths, style="Muted.TLabel", wraplength=235).pack(anchor="w", pady=(8, 0))
+        weaknesses = self.ttk.Frame(lower, style="Card.TFrame", padding=14)
+        weaknesses.pack(side="left", fill="both", expand=True, padx=4)
+        self.ttk.Label(weaknesses, text="SCHWÄCHEN", style="Card.TLabel", font=(self.display_font, 9, "bold")).pack(anchor="w")
+        self.analyzer_weaknesses = self.tk.StringVar(value="Nicht automatisch abgeleitet")
+        self.ttk.Label(weaknesses, textvariable=self.analyzer_weaknesses, style="Muted.TLabel", wraplength=235).pack(anchor="w", pady=(8, 0))
+        ruleset = self.ttk.Frame(lower, style="Card.TFrame", padding=14)
+        ruleset.pack(side="left", fill="both", expand=True, padx=(4, 0))
+        self.ttk.Label(ruleset, text="REGELSET & KONTEXT", style="Card.TLabel", font=(self.display_font, 9, "bold")).pack(anchor="w")
+        self.analyzer_ruleset = self.tk.StringVar(value="Objektive V1-Regeln · Profil wird nach dem Laden angezeigt")
+        self.ttk.Label(ruleset, textvariable=self.analyzer_ruleset, style="Muted.TLabel", wraplength=300).pack(anchor="w", pady=(8, 0))
+
+    def _show_analyzer_setup(self) -> None:
+        """Expose the existing source and selection controls without a new flow."""
+        self.analyzer_setup_expanded = True
+        self.analyzer_top.pack(fill="x", before=self.analyzer_result_section)
+        self.analyzer_selection_card.pack(fill="x", pady=(12, 0), before=self.analyzer_result_section)
+        self.analyzer_review_strip.pack(fill="x", pady=(12, 0), before=self.analyzer_result_section)
+        self.analyzer_result_section.pack(fill="x", pady=(18, 0))
+        self.analyzer_canvas.yview_moveto(0)
+
+    def _set_analyzer_result_mode(self, result: ShellResult) -> None:
+        """Keep setup available, but let a ready result lead the Master screen."""
+        show_setup = result.status != "READY_FOR_REVIEW" or self.analyzer_setup_expanded
+        if show_setup:
+            self.analyzer_top.pack(fill="x", before=self.analyzer_result_section)
+            self.analyzer_selection_card.pack(fill="x", pady=(12, 0), before=self.analyzer_result_section)
+            self.analyzer_review_strip.pack(fill="x", pady=(12, 0), before=self.analyzer_result_section)
+        else:
+            self.analyzer_top.pack_forget()
+            self.analyzer_selection_card.pack_forget()
+            self.analyzer_review_strip.pack_forget()
+        self.analyzer_result_section.pack(fill="x", pady=(18, 0))
+
+    def _render_analyzer_result_projection(self, result: ShellResult) -> None:
+        if result.status != "READY_FOR_REVIEW":
+            self.analyzer_result_state.set("Auswahl bereit · Szenen entstehen erst nach Analyse")
+            self.analyzer_overview.set("Demo ist eingelesen. Nach der expliziten Analyse werden hier nur belegte Daten gezeigt.")
+            self.analyzer_findings.set("Noch keine zusammengeführten Szenen vorhanden.")
+            self.analyzer_situations.set("Keine analysierten Szenen vorhanden.")
+            self.analyzer_patterns.set("Keine Musterbewertung ohne definierte Regel und belastbare Evidenz.")
+            return
+        try:
+            manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+            flow_path = result.manifest_path.parent / str(manifest["artifacts"]["analysis_flow"])
+            projection = analyzer_result_projection(result, json.loads(flow_path.read_text(encoding="utf-8")))
+        except (KeyError, OSError, ValueError, json.JSONDecodeError) as error:
+            self.analyzer_result_state.set("Ergebnisdaten nicht verfügbar")
+            self.analyzer_overview.set(f"Die Analyse bleibt unverändert; Ergebnisprojektion konnte nicht geladen werden: {error}")
+            self.analyzer_findings.set("Keine nicht verifizierten Ersatzwerte angezeigt.")
+            self.analyzer_situations.set("Keine Szenenprojektion verfügbar.")
+            return
+        self.analyzer_result_state.set(f"{projection['scene_count']} Szenen · lokal verifiziert")
+        self.analyzer_overview.set(
+            f"{projection['map_id']}\n{projection['round_count']} Runden · {projection['player_count']} Spieler\n"
+            f"{projection['event_count']} grundlegende Events · keine Gesamtscore-Bewertung"
+        )
+        anchors = projection["anchor_summary"]
+        self.analyzer_findings.set(
+            f"{projection['scene_count']} zusammengeführte Szenen\n" +
+            (" · ".join(f"{item['anchor']}: {item['count']}" for item in anchors) if anchors else "Keine benannten Szenenanker")
+        )
+        situations = projection["situations"]
+        self.analyzer_situations.set(
+            "\n".join(f"{item['title']} · {item['detail']}" for item in situations)
+            if situations else "Die Auswahl erzeugte keine Szene."
+        )
+        self.analyzer_patterns.set(
+            "V1 fasst objektive Marker zu Szenen zusammen. Wiederkehrende Muster, Stärken und Schwächen werden nicht ohne eigene Regel abgeleitet."
+        )
+        self.analyzer_strengths.set("Nicht automatisch abgeleitet · keine Coachingbewertung im aktiven Profil")
+        self.analyzer_weaknesses.set("Nicht automatisch abgeleitet · keine negative Bewertung aus einzelnen Markern")
+        self.analyzer_ruleset.set(
+            f"Profil {projection['profile_id']} · {analysis_profile_criteria_view(self.controller.profiles[self.controller.profile_id])['text']}\n"
+            "Objektive Regeln · lokale Datenquelle"
+        )
 
     def _build_embedded_review(self, parent) -> None:
         review = self.ttk.Frame(parent, style="Content.TFrame", padding=(0, 0, 0, 0))
@@ -2488,6 +2674,7 @@ class AnalyzerShellApp:
         threading.Thread(target=worker, daemon=True).start()
 
     def _finish_background(self, result: ShellResult, recheck: bool) -> None:
+        self.analyzer_setup_expanded = False
         self._draw(result)
         if recheck:
             self._preflight()
@@ -2545,6 +2732,8 @@ class AnalyzerShellApp:
             button.configure(state="normal" if ready else "disabled")
         self.cs2_button.configure(state="normal" if result.status == "READY_FOR_REVIEW" else "disabled")
         self.review_button.configure(state="normal" if ready else "disabled")
+        self._render_analyzer_result_projection(result)
+        self._set_analyzer_result_mode(result)
         self._close_embedded_review()
         self.embedded_review = None
         self.embedded_scene_id = None

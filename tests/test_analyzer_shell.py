@@ -9,7 +9,10 @@ import pytest
 
 from improve_yourself.analyzer_shell import (
     AnalyzerShellController,
+    ShellPlayer,
+    ShellResult,
     UI_REFERENCE_STATUS,
+    analyzer_result_projection,
     analysis_profile_criteria_view,
     dashboard_layout_metrics,
     default_output_root,
@@ -23,6 +26,28 @@ from improve_yourself.analyzer_shell import (
     system_check_result_view,
     system_scan_home_view,
 )
+
+
+def test_analyzer_result_projection_repeats_only_workflow_facts_and_objective_anchors(tmp_path: Path) -> None:
+    result = ShellResult(
+        manifest_path=tmp_path / "demo-workflow.json", review_path=tmp_path / "review.html",
+        players=(ShellPlayer("ct1", "CT One", "CT"), ShellPlayer("t1", "T One", "T")),
+        selected_ids=(), selection_mode="full_demo", scene_count=2, map_id="de_ancient",
+        source_demo_name="real.dem", source_sha256="a" * 64, status="READY_FOR_REVIEW",
+        round_count=18, basic_event_count=3179, parser_status="PASS", profile_id="review_v1",
+    )
+    projection = analyzer_result_projection(result, {
+        "source": {"sha256": "a" * 64},
+        "scenes": [
+            {"round_number": 2, "review": {"tick": 1200}, "anchor_types": ["KILL", "HEADSHOT"]},
+            {"round_number": 4, "review": {"tick": 2400}, "anchor_types": ["KILL"]},
+        ],
+    })
+    assert projection["scene_count"] == 2
+    assert projection["anchor_summary"] == ({"anchor": "KILL", "count": 2}, {"anchor": "HEADSHOT", "count": 1})
+    assert projection["situations"][0] == {"title": "Runde 2 · Tick 1200", "detail": "KILL, HEADSHOT"}
+    with pytest.raises(ValueError, match="source differs"):
+        analyzer_result_projection(result, {"source": {"sha256": "b" * 64}, "scenes": []})
 from improve_yourself.local_profiles import built_in_profiles
 
 
