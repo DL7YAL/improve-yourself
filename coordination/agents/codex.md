@@ -6,7 +6,7 @@ STATUS: `DONE — WAITING_FOR_TRISTAN`
 
 TASK: UI Reference Pack v1.1.0 anwenden und den Analyzer als einziges Top-Level-Modul mit exakt den internen Bereichen `Übersicht | Analyse | Review` abschließen. Keine Parser-, Szenen-, Rule-, NetCon-, CS2-, Optimizer-, Benchmark- oder Replay-Logik ändern.
 
-BRANCH / HEAD: `dev/v1-foundation` / `5d9d0e7 feat: unify analyzer workflow tabs` (pushed to `origin/dev/v1-foundation`).
+BRANCH / HEAD: `dev/v1-foundation` / `a20b72a feat: unify analyzer workflow tabs` (pushed to `origin/dev/v1-foundation`).
 
 REFERENCE AUTHORITY: Die vom Nutzer bereitgestellten v1.1.0-Dateien `D:\downloads\Improve Yourself\Demos\README_UI_REFERENCE.md` und `UI_REFERENCE_MANIFEST.json` wurden vor der Umsetzung gelesen. `analyzer_unified_MASTER.png` (SHA-256 im Manifest: `e17a646d…`) ist der alleinige Analyzer-`MASTER`; `analyzer_legacy_SUPERSEDED.png` und `demo_analyzer_legacy_SUPERSEDED.png` sind ausschließlich historisch und wurden nicht als Ziel verwendet. Der Checkout enthielt zu Beginn noch den v1.0.0-Referenzordner; für diesen Slice war daher die bereitgestellte v1.1.0-Quelle maßgeblich. Das Master-PNG selbst wurde nicht als neue Produktdatei kopiert oder verändert.
 
