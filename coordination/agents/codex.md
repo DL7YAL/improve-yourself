@@ -1073,7 +1073,7 @@ NEXT: Tristan prüft den gepushten Pack-01-Checkpoint und entscheidet über die 
 MODEL_PROFILE: terra
 MODEL_REASON: Sicherheitskritische, bestehende Read-only-Semantik in ein versioniertes Pack integriert und bis UI-Vertrag/150-Profil-Regression nachgewiesen.
 COMPUTER_USE: no
-COMMIT/PR: `776b28c feat: integrate improve matrix pack 01`, gepusht nach `origin/dev/v1-foundation`.
+COMMIT/PR: `776b28c feat: integrate improve matrix pack 01`, `7fd1df7 docs: finalize matrix pack 01 handoff` und `830f13f docs: record matrix pack packaging caveat`, gepusht nach `origin/dev/v1-foundation`.
 
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
