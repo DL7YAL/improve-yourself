@@ -6,7 +6,7 @@ This is an Experimental portable build. No installation, administrator rights,
 system configuration change, network share or account is required.
 
 1. Extract the complete ZIP into a writable local folder.
-2. Start "Improve Yourself Experimental.exe" from the extracted folder.
+2. Start "Improve Yourself.exe" from the extracted folder.
 3. Do not start the executable directly from the ZIP preview.
 
 Local data boundary

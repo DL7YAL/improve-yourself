@@ -52,8 +52,8 @@ try {
     & $python -m PyInstaller --noconfirm --clean --distpath $output --workpath $work $spec
     if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed with exit code $LASTEXITCODE." }
 
-    $portable = Join-Path $output 'Improve Yourself Experimental'
-    $executable = Join-Path $portable 'Improve Yourself Experimental.exe'
+    $portable = Join-Path $output 'Improve Yourself'
+    $executable = Join-Path $portable 'Improve Yourself.exe'
     $testerReadme = Join-Path $repositoryRoot 'packaging\EXTERNAL_TEST_CANDIDATE_README.txt'
     $testerReadmeTarget = Join-Path $portable 'EXTERNAL_TEST_CANDIDATE_README.txt'
     if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
@@ -75,7 +75,7 @@ try {
         channel = 'experimental'
         distribution = 'portable'
         tests_skipped = [bool]$SkipTests
-        executable = [ordered]@{ path = 'Improve Yourself Experimental\Improve Yourself Experimental.exe'; sha256 = $executableHash; bytes = (Get-Item -LiteralPath $executable).Length }
+        executable = [ordered]@{ path = 'Improve Yourself\Improve Yourself.exe'; sha256 = $executableHash; bytes = (Get-Item -LiteralPath $executable).Length }
         archive = [ordered]@{ path = 'Improve-Yourself-Experimental-Portable.zip'; sha256 = $zipHash; bytes = (Get-Item -LiteralPath $zip).Length }
     }
     $manifestPath = Join-Path $output 'experimental-build.json'

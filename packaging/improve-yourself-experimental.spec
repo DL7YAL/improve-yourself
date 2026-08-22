@@ -6,6 +6,7 @@ from PyInstaller.utils.hooks import collect_submodules
 root = Path(SPEC).resolve().parent.parent
 assets = root / "src" / "improve_yourself" / "assets"
 matrix_pack = root / "config" / "rule-packs" / "improve-matrix-pack-01.json"
+version_info = root / "packaging" / "windows-version-info.txt"
 hiddenimports = collect_submodules("awpy")
 
 a = Analysis(
@@ -31,13 +32,14 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="Improve Yourself Experimental",
+    name="Improve Yourself",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     console=False,
     icon=str(assets / "improve-yourself-icon-v3.ico"),
+    version=str(version_info),
 )
 coll = COLLECT(
     exe,
@@ -45,5 +47,5 @@ coll = COLLECT(
     a.datas,
     strip=False,
     upx=True,
-    name="Improve Yourself Experimental",
+    name="Improve Yourself",
 )
