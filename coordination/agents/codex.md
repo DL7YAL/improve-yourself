@@ -1075,6 +1075,24 @@ MODEL_REASON: Sicherheitskritische, bestehende Read-only-Semantik in ein version
 COMPUTER_USE: no
 COMMIT/PR: `776b28c feat: integrate improve matrix pack 01`, `7fd1df7 docs: finalize matrix pack 01 handoff` und `830f13f docs: record matrix pack packaging caveat`, gepusht nach `origin/dev/v1-foundation`.
 
+# Handoff 2026-08-22 — Real-System Evidence Pass 01
+
+STATUS: DONE — WAITING_FOR_TRISTAN
+TASK: Pack 01 gegen das lokal verfügbare reale, read-only System-Check-Ergebnis prüfen, Unknown/Conditional/Exclusion/Insufficient-Evidence klassifizieren, die reale UI-Projektion kontrollieren und den vollständigen Portable-Build bis Manifest nachweisen.
+BRANCH: `dev/v1-foundation`
+CHANGED: `src/improve_yourself/optimizer_evidence.py`, `tests/test_optimizer_evidence.py`, `tools/dev/Build-Experimental.ps1`, `docs/REAL_SYSTEM_EVIDENCE_PASS_01.md`, `coordination/agents/codex.md`.
+REAL EVIDENCE: Ein verfügbarer lokaler Tester, ohne Speicherung von Rohprofil oder absolutem Pfad. `iy.system_check/v1` war gültig und policy-bestätigt read-only (`changes_applied: false`, `elevation_requested: false`); 8 aktuelle Checks, Summary 6 OK / 2 REVIEW / 0 ACTION_REQUIRED. Kein Apply, Registry-, BIOS-, Treiber-, Network- oder Benchmark-Write.
+PACK RESULT: 12 Pack-Karten, 8 NO_CHANGE, 1 CONDITIONAL (`Grafiktreiber-Aktualität`), 3 INSUFFICIENT_EVIDENCE (`Monitorerkennung`, `Secure Boot`, `TPM 2.0`), 0 RECOMMENDED, 0 ALREADY_RECOMMENDED, 0 Exclusions. Jeder ViewModel-Eintrag `apply_available: false`; `fixture_only: false`. Conditional und Unknown werden über die gemeinsame UI als `CONDITIONAL / NOT CONFIRMED` bzw. `UNKNOWN / NOT AVAILABLE` erklärt, mit Missing-Evidence-Pfaden.
+FIX: Die vorhandene Mainboard-/BIOS-Evidenz des System Check wurde in `profile_from_system_check()` bisher nicht in das gemeinsame Optimizerprofil projiziert. Die verlustfreie Read-only-Projektion von Hersteller/Produkt/Version und BIOS-Version/-Datum ist ergänzt und im zweiten Realpass bestätigt. Keine Erkennung, Regel oder Bewertung wurde erweitert.
+SYNTHETIC VS REAL: Die 150-System-Matrix bleibt Logikcoverage, nicht reale Erwartungsverteilung und nicht Performanceevidenz. Sie deckt explizite Exclusions und Fixture-Conflict-Logik ab; im einen realen Tester trat keine Exclusion/kein Conflict auf. Real bestätigt die Safety-Grenze: fehlende/unpassende Daten werden weder geraten noch positiv empfohlen.
+KNOWN LIMIT: Aktiver `dev/v1-foundation`-System Check liefert derzeit acht statt der zwölf Pack-01-Basen. Daher bleiben Driver-/Chipset-Currentness, Graphics-Profile und Monitor-Identity auf diesem Tester conditional oder insufficient, soweit sie nicht aus tatsächlich gelieferter Evidenz bestätigt werden. Das ist dokumentierte fehlende Evidenz, kein negativer Hardwarebefund.
+BUILD: Vollständiger etablierter Portable-Build PASS, einschließlich frischem Manifest. Build-Gate: `pytest` 175/175 PASS, `pip check` PASS, PyInstaller PASS, Portable-ZIP PASS. Die eingebundene Pack-Datei ist im Portable-Laufzeitpfad bestätigt. EXE SHA-256 `1A1075DCBB4230DC41412C199D944E0FFE610696DAEDDCFAD02E77AC2D638558` (19.834.027 Bytes), Portable-ZIP SHA-256 `AF12377B612B785536C2CE2618EA1A10C4228B0EE8B568C5F17C29BFBD2B8AB4` (168.822.622 Bytes); beide Werte stimmen exakt mit `dist/experimental/experimental-build.json` überein. Der Build-Skript-Hashpfad verwendet nun .NET-SHA-256 statt des im Hintergrundlauf nicht verfügbaren Cmdlets `Get-FileHash`.
+NEXT: Tristan entscheidet ausschließlich über den vorgeschlagenen nächsten fachlichen Slice: read-only Abgleich des aktiven 8-Check-System-Check-Vertrags mit dem bereits versionierten 12-Check-Vertrag, danach weitere ausdrücklich bereitgestellte reale Tester. Keine Apply-/Write-/Rule-Research-/Benchmark-Arbeit ohne Auftrag.
+MODEL_PROFILE: terra
+MODEL_REASON: Realer, privacy-bewusster read-only Evidence-Abgleich mit gezielter Datenpfadkorrektur und Release-Gate.
+COMPUTER_USE: no
+COMMIT/PR: Wird nach erfolgreichem vollständigem Build-Gate ergänzt.
+
 # Handoff 2026-08-21 — Home final color / surface conformance pass
 
 STATUS: WAITING_FOR_TRISTAN

@@ -257,12 +257,15 @@ def profile_from_system_check(payload: dict[str, object], *, goal: GoalProfile =
     gpu_name = str(adapter.get("name") or "")
     vendor = "AMD" if "AMD" in gpu_name.upper() or "RADEON" in gpu_name.upper() else ("NVIDIA" if "NVIDIA" in gpu_name.upper() or "GEFORCE" in gpu_name.upper() else None)
     refresh = ((checks.get("display") or {}).get("evidence") or {}).get("refresh_rates_hz") or []
+    board = (checks.get("motherboard") or {}).get("evidence") or {}
     return {
         "system_id": "local-system-check", "profile_source": "READ_ONLY_SYSTEM_CHECK",
         "performance_evidence": "NOT_MEASURED", "goal": goal.value,
         "cpu": {"name": ((checks.get("cpu") or {}).get("evidence") or {}).get("name")},
         "gpu": {"name": gpu_name or None, "vendor": vendor, "driver_version": adapter.get("driver_version")},
         "ram": {"capacity_gb": ((checks.get("memory") or {}).get("evidence") or {}).get("total_gb")},
+        "motherboard": {"manufacturer": board.get("manufacturer"), "product": board.get("product"), "version": board.get("version")},
+        "bios": {"version": board.get("bios_version"), "date": board.get("bios_date")},
         "windows": ((checks.get("windows") or {}).get("evidence") or {}),
         "monitor": {"refresh_hz": max(refresh) if refresh else None},
         "security": {"secure_boot": ((checks.get("secure_boot") or {}).get("evidence") or {}).get("enabled"), "tpm": ((checks.get("tpm") or {}).get("evidence") or {}).get("enabled")},

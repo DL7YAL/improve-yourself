@@ -10,6 +10,24 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+function Get-PortableSha256 {
+    param([Parameter(Mandatory = $true)][string]$LiteralPath)
+
+    $stream = [System.IO.File]::OpenRead($LiteralPath)
+    try {
+        $hasher = [System.Security.Cryptography.SHA256]::Create()
+        try {
+            return ([System.BitConverter]::ToString($hasher.ComputeHash($stream))).Replace('-', '')
+        }
+        finally {
+            $hasher.Dispose()
+        }
+    }
+    finally {
+        $stream.Dispose()
+    }
+}
+
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $python = Join-Path $repositoryRoot '.venv\Scripts\python.exe'
 $spec = Join-Path $repositoryRoot 'packaging\improve-yourself-experimental.spec'
@@ -41,8 +59,8 @@ try {
     }
     $zip = Join-Path $output 'Improve-Yourself-Experimental-Portable.zip'
     Compress-Archive -LiteralPath $portable -DestinationPath $zip -CompressionLevel Optimal -Force
-    $executableHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $executable).Hash
-    $zipHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash
+    $executableHash = Get-PortableSha256 -LiteralPath $executable
+    $zipHash = Get-PortableSha256 -LiteralPath $zip
     $manifest = [ordered]@{
         schema = 'iy.experimental_build/v1'
         channel = 'experimental'
@@ -53,7 +71,7 @@ try {
     }
     $manifestPath = Join-Path $output 'experimental-build.json'
     $manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $manifestPath -Encoding utf8
-    Get-FileHash -Algorithm SHA256 -LiteralPath $executable, $zip
+    [pscustomobject]@{ Path = $executable; SHA256 = $executableHash }, [pscustomobject]@{ Path = $zip; SHA256 = $zipHash }
     Write-Host 'PASS: Experimental portable build is ready.' -ForegroundColor Green
     Write-Host "Portable: $portable"
     Write-Host "Archive:  $zip"

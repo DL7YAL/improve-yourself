@@ -35,6 +35,7 @@ def test_system_check_projection_does_not_invent_cs2_or_driver_option_state() ->
             {"id": "cpu", "evidence": {"name": "AMD Ryzen 7 7800X3D"}},
             {"id": "gpu", "evidence": {"adapters": [{"name": "AMD Radeon RX 7900 XTX", "driver_version": "24.10.1"}]}},
             {"id": "memory", "evidence": {"total_gb": 32}},
+            {"id": "motherboard", "evidence": {"manufacturer": "Board Vendor", "product": "Board", "bios_version": "B1", "bios_date": "2026-01-01"}},
             {"id": "display", "evidence": {"refresh_rates_hz": [240]}},
             {"id": "windows", "evidence": {"build": 26100}},
         ],
@@ -43,6 +44,8 @@ def test_system_check_projection_does_not_invent_cs2_or_driver_option_state() ->
     assert profile is not None
     assert profile["profile_source"] == "READ_ONLY_SYSTEM_CHECK"
     assert profile["performance_evidence"] == "NOT_MEASURED"
+    assert profile["motherboard"]["product"] == "Board"
+    assert profile["bios"]["version"] == "B1"
     assert "cs2" not in profile and "gpu_options" not in profile
     report = evaluate_profile(profile)
     assert "cs2.refresh_hz" in report["missing_input_data"]
