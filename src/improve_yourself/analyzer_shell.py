@@ -336,7 +336,7 @@ class SidebarNavItem:
         self.active = False
         self.hovered = False
         self.canvas = tk.Canvas(
-            parent, height=50, background=_THEME["sidebar"], highlightthickness=0,
+            parent, height=54, background=_THEME["sidebar"], highlightthickness=0,
             borderwidth=0, bd=0, takefocus=True,
         )
         self.canvas.bind("<Configure>", self._draw)
@@ -391,18 +391,21 @@ class SidebarNavItem:
         height = max(canvas.winfo_height(), 1)
         canvas.delete("all")
         if self.active:
-            # The outer layer is a restrained simulated glow, not a hard focus box.
-            self._rounded_rect(2, 3, width - 2, height - 3, 11, fill="#041522")
-            self._rounded_rect(4, 5, width - 4, height - 5, 9, fill=_THEME["panel_hover"], outline=_THEME["border_active"])
-            icon_color, label_color = "#9bdcff", _THEME["ice"]
+            # A filled navigation surface plus a short leading accent is the
+            # approved active state.  It deliberately replaces the earlier
+            # technical cyan outline: the page stays recognisable at a glance
+            # without looking like a focused developer control.
+            self._rounded_rect(7, 6, width - 7, height - 6, 9, fill="#0A2638")
+            self._rounded_rect(8, 14, 12, height - 14, 2, fill=_THEME["cyan"])
+            icon_color, label_color = "#c4ecff", _THEME["ice"]
         elif self.hovered:
-            self._rounded_rect(4, 5, width - 4, height - 5, 9, fill=_THEME["panel_hover"], outline=_THEME["border"])
+            self._rounded_rect(7, 6, width - 7, height - 6, 9, fill="#081E2D")
             icon_color, label_color = "#79c9ed", "#d7e1ea"
         else:
             icon_color, label_color = "#5f8eaa", _THEME["muted"]
         icon, label = self.text[:1], self.text[1:].strip()
-        canvas.create_text(23, height // 2, text=icon, fill=icon_color, anchor="center", font=(self.ui_font, 13, "bold"))
-        canvas.create_text(43, height // 2, text=label, fill=label_color, anchor="w", font=(self.ui_font, 10, "bold" if self.active else "normal"))
+        canvas.create_text(30, height // 2, text=icon, fill=icon_color, anchor="center", font=(self.ui_font, 13, "bold"))
+        canvas.create_text(54, height // 2, text=label, fill=label_color, anchor="w", font=(self.ui_font, 10, "bold" if self.active else "normal"))
 
 
 class SidebarStatusPanel:
@@ -515,6 +518,9 @@ class RoundedHomeAction:
 
     def grid(self, **kwargs) -> None:
         self.canvas.grid(**kwargs)
+
+    def pack(self, **kwargs) -> None:
+        self.canvas.pack(**kwargs)
 
     def _enter(self, _event=None) -> None:
         if self.enabled:
@@ -897,6 +903,15 @@ class AnalyzerShellApp:
         # border is a depth cue, not a permanently lit frame.
         style.configure("Card.TFrame", background=_THEME["card"], relief="flat", borderwidth=1, bordercolor=_THEME["border_soft"])
         style.configure("CardInner.TFrame", background=_THEME["card"], relief="flat", borderwidth=0)
+        # Optimizer area selection is deliberately a quiet card family, not a
+        # technical canvas treatment.  These styles are shared by all four
+        # domains so the active state is unambiguous without a glowing frame.
+        style.configure("OptimizerArea.TFrame", background=_THEME["panel"], relief="flat", borderwidth=1, bordercolor=_THEME["border_soft"])
+        style.configure("OptimizerAreaActive.TFrame", background=_THEME["panel_high"], relief="flat", borderwidth=1, bordercolor=_THEME["border_active"])
+        style.configure("OptimizerArea.TLabel", background=_THEME["panel"], foreground=_THEME["ink"])
+        style.configure("OptimizerAreaMuted.TLabel", background=_THEME["panel"], foreground=_THEME["muted"])
+        style.configure("OptimizerAreaActive.TLabel", background=_THEME["panel_high"], foreground=_THEME["ink"])
+        style.configure("OptimizerAreaActiveMuted.TLabel", background=_THEME["panel_high"], foreground=_THEME["secondary"])
         style.configure("PageTitle.TLabel", background=_THEME["night"], foreground=_THEME["ink"], font=(self.display_font, 22, "bold"))
         style.configure("PageKicker.TLabel", background=_THEME["night"], foreground=_THEME["cyan"], font=(self.display_font, 8))
         style.configure("StatusBadge.TLabel", background=_THEME["panel_high"], foreground=_THEME["secondary"], padding=(9, 5), font=(self.ui_font, 8, "bold"))
@@ -948,6 +963,18 @@ class AnalyzerShellApp:
             bordercolor=_THEME["cyan"], font=(self.ui_font, 9, "bold"), padding=(16, 9),
         )
         style.map("Primary.TButton", background=[("active", _THEME["cyan"]), ("pressed", "#085A95"), ("disabled", _THEME["panel"])])
+        # The native Windows scrollbar trough was the final bright foreign
+        # surface in the Optimizer canvas.  Keep its platform behaviour, but
+        # render it as a quiet part of the Midnight shell.
+        style.configure(
+            "Vertical.TScrollbar", background=_THEME["panel_high"], troughcolor=_THEME["night"],
+            bordercolor=_THEME["border_soft"], arrowcolor=_THEME["secondary"],
+            lightcolor=_THEME["panel_high"], darkcolor=_THEME["panel_high"],
+        )
+        style.map(
+            "Vertical.TScrollbar",
+            background=[("active", _THEME["panel_hover"]), ("pressed", _THEME["accent"])],
+        )
         style.configure(
             "TCombobox", background=_THEME["deep"], fieldbackground=_THEME["deep"],
             foreground=_THEME["ink"], arrowcolor=_THEME["ice"], bordercolor=_THEME["border"],
@@ -1410,7 +1437,14 @@ class AnalyzerShellApp:
             self.ttk.Label(cell, text=label, style="HomeMetricLabel.TLabel", font=(self.ui_font, 7, "bold")).pack(anchor="w")
             self.ttk.Label(cell, textvariable=variable, style="HomeMetricValue.TLabel", font=(self.ui_font, 7)).pack(anchor="w")
             dimension_grid.columnconfigure(column, weight=1, uniform="progress-dimensions")
-        self.ttk.Button(progress.body, text="Zum Analyzer", style="HomeTeal.TButton", command=lambda: self._show_page("Analyzer / Review")).pack(fill="x")
+        # Keep the progress action in the same clearly selected, outlined
+        # action language as the six primary module cards.
+        self.dashboard_progress_action = RoundedHomeAction(
+            self.tk, progress.body, text="Zum Analyzer", accent="#2bdcbb",
+            command=lambda: self._show_page("Analyzer / Review"), enabled=True,
+            font=(self.ui_font, 9, "bold"),
+        )
+        self.dashboard_progress_action.pack(fill="x")
 
         recent = RoundedHomeSurface(
             self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=15, min_height=184,
@@ -1564,30 +1598,48 @@ class AnalyzerShellApp:
     def _build_system_page(self) -> None:
         page = self.pages["System Check / Optimizer"]
         self.ttk.Label(page, text="Improve Optimizer", style="PageTitle.TLabel").pack(anchor="w")
-        self.ttk.Label(page, text="READ-ONLY · Fakten erfassen, Bewertung erklären, keine automatische Änderung", style="PageKicker.TLabel").pack(anchor="w", pady=(2, 14))
-        self.ttk.Label(page, text="System Check ist ein Teil des System Optimizer — nicht die gesamte Optimizer-Oberfläche.", foreground=_THEME["muted"]).pack(anchor="w", pady=(0, 12))
+        self.ttk.Label(page, text="READ-ONLY · Fakten erfassen, Bewertung erklären, keine automatische Änderung", style="PageKicker.TLabel").pack(anchor="w", pady=(2, 12))
+
+        # The selected System Optimizer is deliberately the first thing a
+        # person sees.  The other domains remain available directly below;
+        # they are not presented as a technical row of implementation text.
+        self.optimizer_active_domain = "SYSTEM_OPTIMIZER"
+        self.optimizer_current_card = self.ttk.Frame(page, style="Card.TFrame", padding=20)
+        self.optimizer_current_card.pack(fill="x")
+        current_header = self.ttk.Frame(self.optimizer_current_card, style="CardInner.TFrame")
+        current_header.pack(fill="x")
+        self.optimizer_current_title = self.ttk.Label(current_header, text="SYSTEM OPTIMIZER", style="Card.TLabel", font=(self.display_font, 13, "bold"))
+        self.optimizer_current_title.pack(side="left")
+        self.optimizer_current_badge = self.ttk.Label(current_header, text="AKTUELLE ANSICHT", style="StatusBadge.TLabel")
+        self.optimizer_current_badge.pack(side="right")
+        self.optimizer_current_description = self.ttk.Label(
+            self.optimizer_current_card,
+            text="Lokale Systemfakten zuerst prüfen, anschließend sicher einordnen. Unbekannte Werte bleiben unbekannt; es gibt keinen Apply- oder Write-Pfad.",
+            style="Muted.TLabel", wraplength=940, justify="left",
+        )
+        self.optimizer_current_description.pack(anchor="w", pady=(9, 0))
 
         self.optimizer_overview_card = self.ttk.Frame(page, style="Card.TFrame", padding=18)
-        self.optimizer_overview_card.pack(fill="x")
+        self.optimizer_overview_card.pack(fill="x", pady=(12, 0))
         self.ttk.Label(self.optimizer_overview_card, text="OPTIMIZER BEREICHE", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
-        self.ttk.Label(self.optimizer_overview_card, text="Vier getrennte Bereiche, eine gemeinsame read-only Evidenzbasis. Preview bedeutet: kein Funktionsumfang wird vorgetäuscht.", style="Muted.TLabel", wraplength=940, justify="left").pack(anchor="w", pady=(6, 12))
+        self.ttk.Label(self.optimizer_overview_card, text="Bereich auswählen. Jede Ansicht verwendet dieselbe read-only Evidenzbasis; Preview bedeutet ausdrücklich keine bestätigte lokale Bewertung.", style="Muted.TLabel", wraplength=940, justify="left").pack(anchor="w", pady=(6, 12))
         self.optimizer_domain_grid = self.ttk.Frame(self.optimizer_overview_card, style="CardInner.TFrame")
         self.optimizer_domain_grid.pack(fill="x")
         for column in range(4):
             self.optimizer_domain_grid.columnconfigure(column, weight=1, uniform="optimizer-domains")
         self._render_optimizer_overview()
 
-        self.ttk.Label(page, text="SYSTEM OPTIMIZER", style="PageKicker.TLabel").pack(anchor="w", pady=(18, 4))
+        self.ttk.Label(page, text="SYSTEM OPTIMIZER · LOKALE FAKTEN", style="PageKicker.TLabel").pack(anchor="w", pady=(18, 4))
         card = self.ttk.Frame(page, style="Card.TFrame", padding=24)
         card.pack(fill="x")
-        self.ttk.Label(card, text="1 · SYSTEM CHECK — LOKALE FAKTEN", style="Card.TLabel", font=(self.display_font, 11, "bold")).pack(anchor="w")
-        self.ttk.Label(card, text="Erkannte Systemwerte, Evidenz, Bewertung und Hinweise bleiben getrennt. Nicht sicher belegbare Werte werden sichtbar als Conditional oder Unknown behandelt.", style="Muted.TLabel", wraplength=860, justify="left").pack(anchor="w", pady=(8, 0))
-        self.ttk.Label(card, text="Keine automatische Firmware-, Treiber-, Registry- oder Windows-Änderung. Es gibt in diesem Produktstand kein Apply und kein Restore.", style="Muted.TLabel", wraplength=860, justify="left").pack(anchor="w", pady=(8, 12))
+        self.ttk.Label(card, text="SYSTEM CHECK", style="Card.TLabel", font=(self.display_font, 11, "bold")).pack(anchor="w")
+        self.ttk.Label(card, text="Erkannte Systemwerte und ihre Bewertung bleiben getrennt. Nicht sicher belegbare Werte werden als Conditional oder Unknown gezeigt — nie geraten.", style="Muted.TLabel", wraplength=860, justify="left").pack(anchor="w", pady=(8, 0))
+        self.ttk.Label(card, text="Keine automatische Firmware-, Treiber-, Registry- oder Windows-Änderung. Dieser Produktstand ist ausschließlich erklärend und read-only.", style="Muted.TLabel", wraplength=860, justify="left").pack(anchor="w", pady=(8, 12))
         self.ttk.Button(card, text="System Check ausführen", style="Primary.TButton", command=self._run_system_check).pack(anchor="w")
         self.ttk.Label(card, textvariable=self.system_status, style="Muted.TLabel", wraplength=800, justify="left").pack(anchor="w", pady=(10, 0))
 
         self.system_result_card = self.ttk.Frame(page, style="Card.TFrame", padding=18)
-        self.ttk.Label(self.system_result_card, text="ERFASSTE ERGEBNISSE", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
+        self.ttk.Label(self.system_result_card, text="DEIN SYSTEM IM ÜBERBLICK", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
         self.system_result_meta = self.ttk.Label(self.system_result_card, text="", style="Muted.TLabel", wraplength=940, justify="left")
         self.system_result_meta.pack(anchor="w", pady=(6, 12))
         self.system_result_grid = self.ttk.Frame(self.system_result_card, style="CardInner.TFrame")
@@ -1595,6 +1647,19 @@ class AnalyzerShellApp:
         for column in range(4):
             self.system_result_grid.columnconfigure(column, weight=1, uniform="system-results")
 
+        self.optimizer_product_card = self.ttk.Frame(page, style="Card.TFrame", padding=18)
+        self.ttk.Label(self.optimizer_product_card, text="EINORDNUNG FÜR DIESEN BEREICH", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
+        self.optimizer_product_meta = self.ttk.Label(self.optimizer_product_card, text="Nach einem lokalen System Check erscheinen hier verständliche Zustände, Unsicherheiten und Hinweise.", style="Muted.TLabel", wraplength=940, justify="left")
+        self.optimizer_product_meta.pack(anchor="w", pady=(6, 10))
+        self.optimizer_product_rows = self.ttk.Frame(self.optimizer_product_card, style="CardInner.TFrame")
+        self.optimizer_product_rows.pack(fill="x", pady=(2, 0))
+
+        # Matrix and provenance stay intact, but are intentionally not a
+        # default landing surface.  They are reachable from a named detail
+        # action once a user wants to inspect the evidence.
+        self.optimizer_technical_button = self.ttk.Button(page, text="Technische Evidenz & Pack-Details anzeigen", command=self._toggle_optimizer_evidence)
+        self.optimizer_technical_button.pack(anchor="w", pady=(14, 0))
+        self.optimizer_evidence_visible = False
         self.optimizer_evidence_card = self.ttk.Frame(page, style="Card.TFrame", padding=18)
         self.ttk.Label(self.optimizer_evidence_card, text="OPTIMIZER EVIDENCE MATRIX", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
         self.optimizer_evidence_meta = self.ttk.Label(self.optimizer_evidence_card, text="", style="Muted.TLabel", wraplength=940, justify="left")
@@ -1602,14 +1667,6 @@ class AnalyzerShellApp:
         self.optimizer_evidence_rows = self.ttk.Frame(self.optimizer_evidence_card, style="CardInner.TFrame")
         self.optimizer_evidence_rows.pack(fill="x")
 
-        self.optimizer_product_card = self.ttk.Frame(page, style="Card.TFrame", padding=18)
-        self.ttk.Label(self.optimizer_product_card, text="2 · OPTIMIZER ASSESSMENT — EINORDNUNG", style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
-        self.optimizer_product_meta = self.ttk.Label(self.optimizer_product_card, text="", style="Muted.TLabel", wraplength=940, justify="left")
-        self.optimizer_product_meta.pack(anchor="w", pady=(6, 10))
-        self.optimizer_domain_actions = self.ttk.Frame(self.optimizer_product_card, style="CardInner.TFrame")
-        self.optimizer_domain_actions.pack(fill="x")
-        self.optimizer_product_rows = self.ttk.Frame(self.optimizer_product_card, style="CardInner.TFrame")
-        self.optimizer_product_rows.pack(fill="x", pady=(10, 0))
         self.optimizer_detail_card = self.ttk.Frame(page, style="Card.TFrame", padding=18)
         self.optimizer_detail_title = self.ttk.Label(self.optimizer_detail_card, text="SETTING-DETAILS", style="Card.TLabel", font=(self.display_font, 10, "bold"))
         self.optimizer_detail_title.pack(anchor="w")
@@ -1620,11 +1677,46 @@ class AnalyzerShellApp:
         for child in self.optimizer_domain_grid.winfo_children():
             child.destroy()
         for column, item in enumerate(optimizer_domain_overview(view)):
-            card = self.ttk.Frame(self.optimizer_domain_grid, style="Card.TFrame", padding=(12, 10))
+            selected = item["domain"] == self.optimizer_active_domain
+            area_style = "OptimizerAreaActive.TFrame" if selected else "OptimizerArea.TFrame"
+            label_style = "OptimizerAreaActive.TLabel" if selected else "OptimizerArea.TLabel"
+            muted_style = "OptimizerAreaActiveMuted.TLabel" if selected else "OptimizerAreaMuted.TLabel"
+            card = self.ttk.Frame(self.optimizer_domain_grid, style=area_style, padding=(14, 12))
             card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 4, 0 if column == 3 else 4))
-            self.ttk.Label(card, text=item["title"], style="Card.TLabel", font=(self.ui_font, 9, "bold")).pack(anchor="w")
-            self.ttk.Label(card, text=item["description"], style="Muted.TLabel", wraplength=190, justify="left").pack(anchor="w", pady=(5, 7))
-            self.ttk.Label(card, text=item["state"], style="Card.TLabel", foreground=_THEME["cyan"], wraplength=190, justify="left", font=(self.ui_font, 8, "bold")).pack(anchor="w")
+            card.grid_propagate(False)
+            card.configure(height=178)
+            # A short leading accent identifies the selection without turning
+            # the entire surface into a permanent bright blue state.
+            if selected:
+                self.tk.Frame(card, background=_THEME["cyan"], height=3, borderwidth=0, highlightthickness=0).pack(fill="x", pady=(0, 9))
+            self.ttk.Label(card, text="AKTUELLE ANSICHT" if selected else "OPTIMIZER BEREICH", style=muted_style, foreground=_THEME["cyan"] if selected else _THEME["muted"], font=(self.ui_font, 7, "bold")).pack(anchor="w")
+            self.ttk.Label(card, text=item["title"], style=label_style, font=(self.ui_font, 10, "bold")).pack(anchor="w", pady=(5, 0))
+            self.ttk.Label(card, text=item["description"], style=muted_style, wraplength=185, justify="left").pack(anchor="w", pady=(5, 5))
+            self.ttk.Label(card, text=item["state"], style=label_style, foreground=_THEME["cyan"], wraplength=185, justify="left", font=(self.ui_font, 8, "bold")).pack(anchor="w", pady=(0, 8))
+            self.ttk.Button(
+                card, text="Aktiv" if selected else "Bereich öffnen",
+                style="Primary.TButton" if selected else "TButton",
+                command=lambda value=item["domain"], source=view: self._select_optimizer_domain(source, value),
+            ).pack(fill="x")
+
+    def _select_optimizer_domain(self, view: dict[str, object] | None, domain: str) -> None:
+        """Change the visible Optimizer area without changing any evidence."""
+        self.optimizer_active_domain = domain
+        selected = next(item for item in optimizer_domain_overview(view) if item["domain"] == domain)
+        self.optimizer_current_title.configure(text=str(selected["title"]).upper())
+        self.optimizer_current_description.configure(text=str(selected["description"]) + ". " + str(selected["state"]))
+        self._render_optimizer_overview(view)
+        if isinstance(view, dict):
+            self._render_optimizer_product(view, domain)
+
+    def _toggle_optimizer_evidence(self) -> None:
+        self.optimizer_evidence_visible = not self.optimizer_evidence_visible
+        if self.optimizer_evidence_visible:
+            self.optimizer_evidence_card.pack(fill="x", pady=(10, 0))
+            self.optimizer_technical_button.configure(text="Technische Evidenz & Pack-Details ausblenden")
+        else:
+            self.optimizer_evidence_card.pack_forget()
+            self.optimizer_technical_button.configure(text="Technische Evidenz & Pack-Details anzeigen")
 
     def _build_tactical_page(self) -> None:
         page = self.pages["Tactical Replay"]
@@ -2336,25 +2428,26 @@ class AnalyzerShellApp:
                 self.ttk.Label(item, text=f"[{row['evidence_class']}]  {row['name']}", style="Card.TLabel", font=(self.ui_font, 9, "bold")).pack(anchor="w")
                 self.ttk.Label(item, text=f"Erwartete Wirkung: {row['effect']}", style="Muted.TLabel", wraplength=880, justify="left").pack(anchor="w", pady=(4, 0))
                 self.ttk.Label(item, text=f"Risiko: {row['risk']}\nRücknahme: {row['restore']}", style="Muted.TLabel", wraplength=880, justify="left").pack(anchor="w", pady=(3, 0))
-        self.optimizer_evidence_card.pack(fill="x", pady=(14, 0))
+        # Keep raw evidence, provenance and matrix records behind the explicit
+        # technical-details disclosure.  The main view stays on user-facing
+        # state, assessment and uncertainty.
+        if self.optimizer_evidence_visible:
+            self.optimizer_evidence_card.pack(fill="x", pady=(10, 0))
 
     def _render_optimizer_product(self, view: dict[str, object], domain_filter: str | None = None) -> None:
-        for frame in (self.optimizer_domain_actions, self.optimizer_product_rows):
-            for child in frame.winfo_children():
-                child.destroy()
+        for child in self.optimizer_product_rows.winfo_children():
+            child.destroy()
         counts = view["counts"]
         self._render_optimizer_overview(view)
-        label = "Fixture-Einstellungen" if view["fixture_only"] else "Read-only Pack-01-Prüfpunkte"
-        notice = "Read-only: Fixtures sind keine realen Improve-Empfehlungen." if view["fixture_only"] else "Read-only: Pack 01 zeigt Fakten, Bedingungen und Unknowns; keine automatische Improve-Empfehlung."
-        self.optimizer_product_meta.configure(text=(f"{counts['checked']} geprüfte {label} · {counts['recommended']} technische Treffer · "
-            f"{counts['already']} bereits passend · {counts['conditional']} conditional · {counts['insufficient']} unzureichende Evidenz. "
-            + notice))
+        label = "Fixture-Prüfpunkte" if view["fixture_only"] else "lokale Prüfpunkte"
+        notice = "Fixturedaten sind keine realen Improve-Empfehlungen." if view["fixture_only"] else "Read-only: Diese Ansicht erklärt Zustand, Bewertung und Unsicherheit; sie wendet nichts an."
+        self.optimizer_product_meta.configure(text=(
+            f"{counts['checked']} geprüfte {label} · {counts['already']} bereits passend · "
+            f"{counts['conditional']} bitte prüfen · {counts['insufficient']} noch nicht sicher belegt. {notice}"
+        ))
         domains = view["domains"]
-        labels = {"SYSTEM_OPTIMIZER": "System Optimizer", "GRAPHICS_OPTIMIZER": "Graphics Optimizer", "NETWORK_OPTIMIZER": "Network Optimizer", "BIOS_OPTIMIZER": "BIOS Optimizer"}
-        for domain, label in labels.items():
-            self.ttk.Button(self.optimizer_domain_actions, text=label, command=lambda value=domain: self._render_optimizer_product(view, value)).pack(side="left", padx=(0, 7))
-        self.ttk.Button(self.optimizer_domain_actions, text="Alle", command=lambda: self._render_optimizer_product(view)).pack(side="left")
-        selected = {domain_filter: domains.get(domain_filter, [])} if domain_filter else domains
+        selected_domain = domain_filter or self.optimizer_active_domain
+        selected = {selected_domain: domains.get(selected_domain, [])}
         for _domain, models in selected.items():
             for model in models:
                 item = self.ttk.Frame(self.optimizer_product_rows, style="Card.TFrame", padding=(12, 9))
@@ -2362,16 +2455,15 @@ class AnalyzerShellApp:
                 status_label, semantic = status_presentation(model["status"])
                 semantic_color = {"ready": _THEME["success"], "evidence": _THEME["cyan"], "conditional": _THEME["cyan"], "warning": "#ffcc54", "unknown": _THEME["muted"]}[semantic]
                 self.ttk.Label(item, text=f"{model['title']} · {status_label}", style="Card.TLabel", foreground=semantic_color, font=(self.ui_font, 9, "bold")).pack(anchor="w")
-                self.ttk.Label(item, text=f"Aktueller Zustand: {model['current_state']} · {model['improve_recommendation']}\n{model['why_for_this_system']}\nEvidenz: {model['evidence_validity']}", style="Muted.TLabel", wraplength=880, justify="left").pack(anchor="w", pady=(4, 0))
+                self.ttk.Label(item, text=f"Aktueller Zustand: {model['current_state']} · {model['improve_recommendation']}\n{model['why_for_this_system']}", style="Muted.TLabel", wraplength=880, justify="left").pack(anchor="w", pady=(4, 0))
                 self.ttk.Button(item, text="Details anzeigen", command=lambda value=model: self._show_optimizer_detail(value)).pack(anchor="w", pady=(6, 0))
                 if model["guidance"]["manual_action_required"]:
                     self.ttk.Label(item, text="Manuelle Aktion / BIOS Guidance vorbereitet · kein Apply", style="Muted.TLabel").pack(anchor="w", pady=(3, 0))
         self.optimizer_product_card.pack(fill="x", pady=(14, 0))
 
     def _clear_optimizer_product(self) -> None:
-        for frame in (self.optimizer_domain_actions, self.optimizer_product_rows):
-            for child in frame.winfo_children():
-                child.destroy()
+        for child in self.optimizer_product_rows.winfo_children():
+            child.destroy()
         self.optimizer_product_meta.configure(text="Matrix Pack 01 ist nicht gültig. Aus Sicherheitsgründen wird keine Optimizerbewertung angezeigt.")
         self.optimizer_product_card.pack(fill="x", pady=(14, 0))
 

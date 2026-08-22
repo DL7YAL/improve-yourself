@@ -1,5 +1,35 @@
 # Codex
 
+## 2026-08-22 — UI Visual Source-of-Truth final Portable inspection
+
+STATUS: `WAITING_FOR_TRISTAN`
+
+TASK: Ausschließlich den vorhandenen finalen Portable-Build gegen die verbindlichen sichtbaren Masterseiten prüfen; fünf Runtime-Screens erfassen, den aktuellen Abgleich abschließen und keinen Produkt-, Optimizer-, Benchmark- oder Infrastruktur-Slice beginnen.
+
+BRANCH: `dev/v1-foundation`
+
+CHANGED: Vor der freigegebenen Sichtprüfung bereits im bestehenden UI-Source-of-Truth-Pass umgesetzt: Sidebar-Active-State als dunkle integrierte Fläche mit kurzer Cyan-Führung statt technischem Cut-out; Dashboard-`Zum Analyzer` über dieselbe bewusste Action-Komponente wie die Top-Module; System Optimizer als sichtbare Hauptansicht; vier gleich große echte Bereichskarten mit sichtbaren Aktionen; Evidence-Matrix/Pack-Details standardmäßig verborgen. Im finalen Prüfschritt nur Dokumentation/Handoff ergänzt, keine fachliche Logik geändert.
+
+RUNTIME EVIDENCE: Frischer finaler Portable wurde direkt gestartet. Captures: (1) Dashboard/Home, (2) Analyzer / no-demo preflight, (3) Optimizer-Hauptübersicht, (4) System-Optimizer-Sicht, (5) Tactical-Replay-Empty-State. Dashboard und Analyzer zeigen die dunkle Shell sowie den gefüllten Sidebar-Active-State. Optimizer zeigt `SYSTEM OPTIMIZER` zuerst, danach vier klare selektierbare Karten und erst darunter den read-only System Check; technische Details sind nur hinter `Technische Evidenz & Pack-Details anzeigen`. Tactical Replay zeigt wahrheitsgemäß keine Szene und die drei echten Vorbereitungsschritte, ohne Replay-Daten zu erfinden.
+
+CURRENT-vs-TARGET: Dashboard/Analyzer sind **FINAL POLISH**, nicht pixelgleich: Card-/Button-Material wirkt noch technischer als die Master-Flächentiefe; vor einem Demoimport bleiben CT/T-Flächen ehrlich leer. Optimizer-Hierarchie ist **PASS**: Hauptansicht → vier Karten → System Check, keine rohen Matrixdetails als Hauptoberfläche. System Optimizer insgesamt ist **ÄNDERN**, nicht global akzeptiert: Der Runtime-Viewport zeigte den obenliegenden Status/System-Check, aber trotz bereits geladenem Scan keinen separat sichtbaren `Dein System im Überblick`/per-setting Ergebnisbereich; der verwendete Scroll-Versuch bewegte die Ansicht nicht. Dieser Befund wird nicht durch einen behaupteten PASS verdeckt und ist für einen späteren explizit freigegebenen UI-Pass zu diagnostizieren. Tactical-Replay-Empty-State ist **PASS** für Wahrheit und Hierarchie; seine zusätzliche Leere ist bei fehlender Scene erwartbar.
+
+VERIFIED: `compileall` PASS; vollständige Suite `185 passed`; `git diff --check` PASS. Frischer finaler Portable Build PASS: EXE SHA-256 `257110984B264B6A0C25F591893D8D324B9B3BEDC2AE2CBEE9354731AFCDE19F`, ZIP SHA-256 `D4A1F4E1CADCCB48F3446661F5A5D711B34F4C854CE8953872A68608B4B1FA14`; Manifest `dist/experimental/experimental-build.json`; kein Setup, da keine akzeptierte Installer-Toolchain vorhanden ist. Ein erster Packaging-Lauf enthielt einen lokalen `RoundedHomeAction.pack`-Runtimefehler; er wurde vor diesem finalen Artefakt korrigiert. Der finale Portable startete anschließend ohne Ausnahme.
+
+DECISIONS: Keine neue Rule, keine Evidence-/Recommendation- oder Apply-/Write-Änderung. Unknown/Conditional/Insufficient-Evidence bleiben unverändert fail-closed. Die Details bleiben erreichbar, nur nicht als Standardoberfläche.
+
+OPEN: Nur die spätere, explizit zu beauftragende Diagnose des System-Optimizer-Ergebnisviewport/Scrollpfads und die optischen Final-Polish-Punkte. Keine weitere Arbeit in diesem Handoff.
+
+NEXT: Tristan prüft den gepushten finalen Portable gegen die hier festgehaltenen Screens und entscheidet, ob der sichtbare System-Optimizer-Ergebnisbereich als eigener UI-Korrekturpass beauftragt wird. Bis dahin: `WAITING_FOR_TRISTAN`.
+
+MODEL_PROFILE: terra
+
+MODEL_REASON: Bestehende native Windows-Oberfläche, echter Build-Runtime-Abgleich und fail-closed Produktgrenzen ohne Architekturwechsel.
+
+COMPUTER_USE: yes
+
+COMMIT/PR: pending checkpoint commit and push on `dev/v1-foundation`.
+
 ## 2026-08-21 — Embedded Analyzer Review product slice
 
 STATUS: review
