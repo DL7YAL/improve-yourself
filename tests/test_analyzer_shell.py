@@ -92,19 +92,18 @@ def test_packaged_windows_default_output_is_stable_and_user_writable(monkeypatch
 
 def test_experimental_shell_exposes_binding_product_sections_from_canonical_design_spec() -> None:
     assert tuple(UI_REFERENCE_STATUS) == (
-        "Dashboard", "My Improvement", "Analyzer / Review", "Demo Analyzer", "Rules", "Reports",
+        "Dashboard", "My Improvement", "Analyzer", "Reports",
         "System Check / Optimizer", "Settings", "Tactical Replay", "Benchmark",
     )
-    assert UI_REFERENCE_STATUS["Analyzer / Review"] == "IMPLEMENTED"
-    assert UI_REFERENCE_STATUS["Rules"] == "IMPLEMENTED"
+    assert UI_REFERENCE_STATUS["Analyzer"] == "IMPLEMENTED"
     assert UI_REFERENCE_STATUS["Tactical Replay"] == "IMPLEMENTED"
     assert "NEEDS_UI_REFERENCE" not in UI_REFERENCE_STATUS.values()
     assert UI_REFERENCE_STATUS["System Check / Optimizer"] == "IMPLEMENTED"
-    assert UI_REFERENCE_STATUS["Demo Analyzer"] == "IMPLEMENTED"
     assert UI_REFERENCE_STATUS["My Improvement"] == "IMPLEMENTED"
     assert UI_REFERENCE_STATUS["Benchmark"] == "IMPLEMENTED"
     assert "Demo Analyzer" not in SIDEBAR_NAVIGATION
-    assert SIDEBAR_NAVIGATION[2] == "Analyzer / Review"
+    assert "Rules" not in SIDEBAR_NAVIGATION
+    assert SIDEBAR_NAVIGATION[2] == "Analyzer"
 
 
 def test_profile_criteria_view_is_semantic_and_reports_the_actual_profile_count() -> None:

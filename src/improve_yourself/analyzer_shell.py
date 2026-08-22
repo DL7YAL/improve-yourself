@@ -37,9 +37,7 @@ _REVIEW_ARTIFACTS = (
 UI_REFERENCE_STATUS = {
     "Dashboard": "IMPLEMENTED",
     "My Improvement": "IMPLEMENTED",
-    "Analyzer / Review": "IMPLEMENTED",
-    "Demo Analyzer": "IMPLEMENTED",
-    "Rules": "IMPLEMENTED",
+    "Analyzer": "IMPLEMENTED",
     "Reports": "IMPLEMENTED",
     "System Check / Optimizer": "IMPLEMENTED",
     "Settings": "IMPLEMENTED",
@@ -47,15 +45,13 @@ UI_REFERENCE_STATUS = {
     "Benchmark": "IMPLEMENTED",
 }
 
-# The Demo Analyzer master is an internal Analyzer workflow view, not a second
-# top-level product area.  It deliberately stays in ``UI_REFERENCE_STATUS`` so
-# its independently reference-locked surface is built and testable, while this
-# tuple is the single source of truth for visible sidebar navigation.
+# The unified Analyzer is the only top-level analysis product area.  Demo
+# selection, rules and review are internal tabs so they share one local replay
+# truth instead of presenting separate product modules.
 SIDEBAR_NAVIGATION = (
     "Dashboard",
     "My Improvement",
-    "Analyzer / Review",
-    "Rules",
+    "Analyzer",
     "Reports",
     "System Check / Optimizer",
     "Settings",
@@ -1424,8 +1420,7 @@ class AnalyzerShellApp:
         nav_labels = {
             "Dashboard": "⌂   Dashboard",
             "My Improvement": "↗   My Improvement",
-            "Analyzer / Review": "◎   Analyzer / Review",
-            "Rules": "◇   Rules",
+            "Analyzer": "◎   Analyzer",
             "Reports": "▤   Reports",
             "System Check / Optimizer": "◈   System Check / Optimizer",
             "Settings": "⚙   Settings",
@@ -1436,7 +1431,7 @@ class AnalyzerShellApp:
             host = ttk.Frame(content, style="Content.TFrame")
             host.place(relx=0, rely=0, relwidth=1, relheight=1)
             self.page_hosts[name] = host
-            if name in {"Analyzer / Review", "Dashboard", "System Check / Optimizer", "My Improvement", "Demo Analyzer", "Benchmark"}:
+            if name in {"Analyzer", "Dashboard", "System Check / Optimizer", "My Improvement", "Benchmark"}:
                 canvas = tk.Canvas(
                     host, background=_THEME["night"], borderwidth=0, highlightthickness=0,
                 )
@@ -1458,7 +1453,7 @@ class AnalyzerShellApp:
                     "<MouseWheel>",
                     lambda event, target=canvas: target.yview_scroll(int(-event.delta / 120), "units"),
                 )
-                if name == "Analyzer / Review":
+                if name == "Analyzer":
                     self.analyzer_canvas = canvas
                 elif name == "Dashboard":
                     self.dashboard_canvas = canvas
@@ -1478,14 +1473,34 @@ class AnalyzerShellApp:
                 self.nav_buttons[name] = button
         SidebarStatusPanel(tk, sidebar, ui_font=self.ui_font).pack(side="bottom", fill="x", padx=12, pady=16)
 
-        frame = self.pages["Analyzer / Review"]
+        frame = self.pages["Analyzer"]
         analyzer_header = ttk.Frame(frame, style="Content.TFrame")
         analyzer_header.pack(fill="x", pady=(0, 12))
         ttk.Label(analyzer_header, text="Improve Analyzer", style="PageTitle.TLabel").pack(side="left")
         ttk.Label(analyzer_header, textvariable=self.status, style="StatusBadge.TLabel").pack(side="right")
         ttk.Label(frame, text="Detaillierte Match-Analyse auf Basis deiner belegten lokalen Demos, Profile und objektiven Regeln.", foreground=_THEME["muted"]).pack(anchor="w", pady=(0, 12))
 
-        analyzer_top = ttk.Frame(frame, style="Content.TFrame")
+        # The v1.1 master defines one Analyzer with three workflow tabs.  The
+        # tabs only arrange existing local controls; no parser or review path
+        # is duplicated here.
+        tab_bar = ttk.Frame(frame, style="Content.TFrame")
+        tab_bar.pack(fill="x", pady=(0, 12))
+        tab_body = ttk.Frame(frame, style="Content.TFrame")
+        tab_body.pack(fill="both", expand=True)
+        self.analyzer_tabs: dict[str, ttk.Frame] = {}
+        self.analyzer_tab_buttons: dict[str, ttk.Button] = {}
+        for label in ("Übersicht", "Analyse", "Review"):
+            tab = ttk.Frame(tab_body, style="Content.TFrame")
+            self.analyzer_tabs[label] = tab
+            button = ttk.Button(tab_bar, text=label, command=lambda value=label: self._show_analyzer_tab(value))
+            button.pack(side="left", padx=(0, 6))
+            self.analyzer_tab_buttons[label] = button
+        overview_tab = self.analyzer_tabs["Übersicht"]
+        analysis_tab = self.analyzer_tabs["Analyse"]
+        review_tab = self.analyzer_tabs["Review"]
+        self.analyzer_active_tab = "Übersicht"
+
+        analyzer_top = ttk.Frame(analysis_tab, style="Content.TFrame")
         analyzer_top.pack(fill="x")
         self.analyzer_top = analyzer_top
         source_card = ttk.Frame(analyzer_top, style="Card.TFrame", padding=16)
@@ -1498,7 +1513,7 @@ class AnalyzerShellApp:
         ttk.Button(
             source_actions,
             text="Demo-Übersicht öffnen",
-            command=lambda: self._show_page("Demo Analyzer"),
+            command=lambda: self._show_analyzer_tab("Übersicht"),
         ).pack(fill="x", pady=(0, 5))
         self.link_button = ttk.Button(source_actions, text="Quelldemo zuordnen", command=self._link_source, state="disabled")
         self.link_button.pack(fill="x")
@@ -1512,7 +1527,7 @@ class AnalyzerShellApp:
         self.t = ttk.LabelFrame(teams, text="T LINE-UP", padding=10)
         self.t.pack(side="left", fill="both", expand=True, padx=(4, 0))
 
-        selection_card = ttk.Frame(frame, style="Card.TFrame", padding=16)
+        selection_card = ttk.Frame(analysis_tab, style="Card.TFrame", padding=16)
         selection_card.pack(fill="x", pady=(12, 0))
         self.analyzer_selection_card = selection_card
         ttk.Label(selection_card, text="ANALYSE REGELN & SPIELERAUSWAHL", style="Card.TLabel", font=("Segoe UI Semibold", 11)).pack(anchor="w")
@@ -1544,9 +1559,9 @@ class AnalyzerShellApp:
         self.rules.pack(side="left", padx=8)
         self.profile_criteria = ttk.Label(profile_row, style="StatusBadge.TLabel")
         self.profile_criteria.pack(side="right")
-        rules_frame = ttk.LabelFrame(self.pages["Rules"], text="Objektive Szenenanker V1", padding=18)
-        ttk.Label(self.pages["Rules"], text="Rules", style="PageTitle.TLabel").pack(anchor="w")
-        ttk.Label(self.pages["Rules"], text="Profile kombinieren belegte Marker; einzelne schwache Hinweise erzeugen keine Standard-Szene.", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
+        rules_frame = ttk.LabelFrame(analysis_tab, text="Objektive Szenenanker V1", padding=18)
+        ttk.Label(analysis_tab, text="REGELSET", style="SectionTitle.TLabel").pack(anchor="w", pady=(16, 0))
+        ttk.Label(analysis_tab, text="Profile kombinieren belegte Marker; einzelne schwache Hinweise erzeugen keine Standard-Szene.", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
         rules_frame.pack(fill="x", pady=5)
         rules_frame.columnconfigure(0, weight=1, uniform="rules")
         rules_frame.columnconfigure(1, weight=1, uniform="rules")
@@ -1565,15 +1580,15 @@ class AnalyzerShellApp:
             self.rule_vars[rule_id] = variable
             self.rule_checks.append(check)
         self.workflow_widgets.extend(self.rule_checks)
-        architecture = ttk.Frame(self.pages["Rules"], style="Card.TFrame", padding=16)
+        architecture = ttk.Frame(analysis_tab, style="Card.TFrame", padding=16)
         architecture.pack(fill="x", pady=(12, 0))
         ttk.Label(architecture, text="INDIKATOREN  →  REGELKOMBINATIONEN  →  ANALYSEPROFIL  →  SZENEN", style="Card.TLabel", font=("Segoe UI Semibold", 10)).pack(anchor="w")
         ttk.Label(architecture, text="Standardprofile erzeugen Szenen nur aus vollständig definierten objektiven Kombinationen.", style="Muted.TLabel").pack(anchor="w", pady=(6, 0))
-        ttk.Label(self.pages["Rules"], text=f"Lokale Profile: {controller.profile_store.root}", foreground=_THEME["muted"]).pack(anchor="w", pady=(10, 5))
+        ttk.Label(analysis_tab, text=f"Lokale Profile: {controller.profile_store.root}", foreground=_THEME["muted"]).pack(anchor="w", pady=(10, 5))
 
         self.chosen = ttk.Label(selection_card, text="Full Demo", style="Muted.TLabel")
         self.chosen.pack(anchor="w", pady=(4, 0))
-        review_strip = ttk.Frame(frame, style="Content.TFrame")
+        review_strip = ttk.Frame(analysis_tab, style="Content.TFrame")
         review_strip.pack(fill="x", pady=(12, 0))
         self.analyzer_review_strip = review_strip
         actions = ttk.Frame(review_strip, style="Card.TFrame", padding=14)
@@ -1590,11 +1605,11 @@ class AnalyzerShellApp:
         preflight.pack(side="left", fill="both", expand=True, padx=(6, 0))
         for variable in (self.netcon_status, self.demo_status, self.filename_status, self.preflight_message):
             ttk.Label(preflight, textvariable=variable).pack(anchor="w")
-        self._build_analyzer_result_projection(frame)
-        self._build_embedded_review(frame)
+        self._build_analyzer_result_projection(review_tab)
+        self._build_embedded_review(review_tab)
         self._build_dashboard_page()
         self._build_my_improvement_page()
-        self._build_demo_analyzer_page()
+        self._build_demo_analyzer_page(overview_tab)
         self._build_reports_page()
         self._build_settings_page()
         self._build_system_page()
@@ -1602,7 +1617,8 @@ class AnalyzerShellApp:
         self._build_benchmark_page()
         self._select_profile()
         self._load_saved_system_scan()
-        self._show_page("Analyzer / Review")
+        self._show_analyzer_tab("Übersicht")
+        self._show_page("Analyzer")
         self.root.protocol("WM_DELETE_WINDOW", self._close)
 
     def _build_analyzer_result_projection(self, parent) -> None:
@@ -1689,26 +1705,29 @@ class AnalyzerShellApp:
         self.ttk.Label(ruleset, textvariable=self.analyzer_ruleset, style="Muted.TLabel", wraplength=240).pack(anchor="w", pady=(8, 0))
 
     def _show_analyzer_setup(self) -> None:
-        """Expose the existing source and selection controls without a new flow."""
+        """Open the existing configuration controls in the unified Analyse tab."""
         self.analyzer_setup_expanded = True
-        self.analyzer_top.pack(fill="x", before=self.analyzer_result_section)
-        self.analyzer_selection_card.pack(fill="x", pady=(12, 0), before=self.analyzer_result_section)
-        self.analyzer_review_strip.pack(fill="x", pady=(12, 0), before=self.analyzer_result_section)
-        self.analyzer_result_section.pack(fill="x", pady=(18, 0))
+        self._show_analyzer_tab("Analyse")
         self.analyzer_canvas.yview_moveto(0)
 
     def _set_analyzer_result_mode(self, result: ShellResult) -> None:
-        """Keep setup available, but let a ready result lead the Master screen."""
-        show_setup = result.status != "READY_FOR_REVIEW" or self.analyzer_setup_expanded
-        if show_setup:
-            self.analyzer_top.pack(fill="x", before=self.analyzer_result_section)
-            self.analyzer_selection_card.pack(fill="x", pady=(12, 0), before=self.analyzer_result_section)
-            self.analyzer_review_strip.pack(fill="x", pady=(12, 0), before=self.analyzer_result_section)
-        else:
-            self.analyzer_top.pack_forget()
-            self.analyzer_selection_card.pack_forget()
-            self.analyzer_review_strip.pack_forget()
-        self.analyzer_result_section.pack(fill="x", pady=(18, 0))
+        """Preserve the user's chosen Analyzer tab after a local result update."""
+        del result
+
+    def _show_analyzer_tab(self, tab_name: str) -> None:
+        """Switch the unified Analyzer without creating a second workflow."""
+        if tab_name not in self.analyzer_tabs:
+            raise ValueError(f"unknown analyzer tab: {tab_name}")
+        for name, tab in self.analyzer_tabs.items():
+            if name == tab_name:
+                tab.pack(fill="both", expand=True)
+            else:
+                tab.pack_forget()
+        self.analyzer_active_tab = tab_name
+        for name, button in self.analyzer_tab_buttons.items():
+            button.configure(style="Primary.TButton" if name == tab_name else "TButton")
+        if hasattr(self, "analyzer_canvas"):
+            self.root.after_idle(lambda: self.analyzer_canvas.yview_moveto(0.0))
 
     def _render_analyzer_result_projection(self, result: ShellResult) -> None:
         if result.status != "READY_FOR_REVIEW":
@@ -1871,8 +1890,8 @@ class AnalyzerShellApp:
         self.dashboard_module_grid = modules
         self.dashboard_module_cards = []
         module_specs = (
-            ("◎", "IMPROVE\nANALYZER", "Szenen und Evidenz aus einer echten Demo prüfen.", "Review öffnen", "Analyzer / Review", True, "#2bdcbb", "HomeTeal.TButton"),
-            ("♙", "DEMO\nANALYZER", "Demo laden, Parserstatus und Line-ups kontrollieren.", "Demo laden", "Analyzer / Review", True, "#a687ff", "HomeViolet.TButton"),
+            ("◎", "IMPROVE\nANALYZER", "Demos, Szenen und Evidenz aus einer gemeinsamen lokalen Replay-Wahrheit prüfen.", "Analyzer öffnen", "Analyzer", True, "#2bdcbb", "HomeTeal.TButton"),
+            ("♙", "DEMO\nWORKFLOW", "Demo laden, Parserstatus und Line-ups innerhalb des Analyzer prüfen.", "Demo laden", "Analyzer", True, "#a687ff", "HomeViolet.TButton"),
             ("⚔", "2D\nTACTICAL", "Rundenpositionen aus derselben Replay-Wahrheit ansehen.", "Replay öffnen", "Tactical Replay", True, "#2db8ff", "HomePrimary.TButton"),
             ("◉", "IMPROVE\nOPTIMIZER", "Systemfakten sicher und read-only erfassen.", "System prüfen", "System Check / Optimizer", True, "#ffcc54", "HomeGold.TButton"),
             ("▥", "IMPROVE\nBENCHMARK", "Separater, derzeit geparkter Arbeitsstrang.", "Nicht in diesem Slice", "", False, "#6587a0", "HomePrimary.TButton"),
@@ -1953,7 +1972,7 @@ class AnalyzerShellApp:
         # action language as the six primary module cards.
         self.dashboard_progress_action = RoundedHomeAction(
             self.tk, progress.body, text="Zum Analyzer", accent="#2bdcbb",
-            command=lambda: self._show_page("Analyzer / Review"), enabled=True,
+            command=lambda: self._show_page("Analyzer"), enabled=True,
             font=(self.ui_font, 9, "bold"),
         )
         self.dashboard_progress_action.pack(fill="x")
@@ -2195,9 +2214,16 @@ class AnalyzerShellApp:
         )
         influenced.pack(fill="x", pady=(14, 0))
 
-    def _build_demo_analyzer_page(self) -> None:
-        page = self.pages["Demo Analyzer"]
-        self._reference_page_header(page, "Demo Analyzer", "Lokale CS2-Demos auswählen, parsebar prüfen und anschließend im Improve Analyzer mit derselben Replay-Wahrheit analysieren.")
+    def _build_demo_analyzer_page(self, page) -> None:
+        """Build the Overview tab of the unified Analyzer.
+
+        The established demo-library controls stay local and fail closed; only
+        their placement changes from a separate route to the documented
+        Overview → Analyse → Review workflow.
+        """
+        self.ttk.Label(page, text="DEMO → ANALYSE → REVIEW", style="PageKicker.TLabel").pack(anchor="w", pady=(0, 4))
+        self.ttk.Label(page, text="Demo-Bibliothek & ausgewählte Demo", style="SectionTitle.TLabel").pack(anchor="w")
+        self.ttk.Label(page, text="Lokale CS2-Demos bewusst auswählen, belegte Fakten prüfen und danach mit demselben Replay analysieren.", style="Muted.TLabel").pack(anchor="w", pady=(4, 14))
         layout = self.ttk.Frame(page, style="Content.TFrame")
         layout.pack(fill="both", expand=True)
         self.demo_library_text = self.tk.StringVar(value="Keine lokale Demo ist automatisch ausgewählt. Wähle eine echte .dem oder .dem.zst bewusst aus.")
@@ -2209,7 +2235,7 @@ class AnalyzerShellApp:
             min_height=204,
         )
         library.pack(side="left", fill="both", expand=True, padx=(0, 7))
-        self.ttk.Button(library.body, text="Echte CS2-Demo auswählen", style="Primary.TButton", command=lambda: self._show_page("Analyzer / Review")).pack(fill="x", pady=(16, 0))
+        self.ttk.Button(library.body, text="Echte CS2-Demo auswählen", style="Primary.TButton", command=self._choose_demo).pack(fill="x", pady=(16, 0))
         self.demo_selected_text = self.tk.StringVar(value="Noch keine bestätigte lokale Demodatei geladen. Import- und Analyse-Status bleiben bis dahin ausdrücklich offen.")
         selected = self._reference_info_card(layout, title="AUSGEWÄHLTE DEMO", textvariable=self.demo_selected_text, accent="#13A7E8")
         selected.pack(side="left", fill="both", expand=True, padx=(7, 0))
@@ -2236,7 +2262,7 @@ class AnalyzerShellApp:
         overview.pack(fill="x", pady=(14, 0))
         demo_actions = self.ttk.Frame(overview.body, style="HomeInner.TFrame")
         demo_actions.pack(fill="x", pady=(14, 0))
-        self.ttk.Button(demo_actions, text="Im Improve Analyzer öffnen", command=lambda: self._show_page("Analyzer / Review")).pack(side="left")
+        self.ttk.Button(demo_actions, text="Analyse konfigurieren", command=self._show_analyzer_setup).pack(side="left")
         self.demo_review_button = self.ttk.Button(demo_actions, text="Szenen im Review", command=self._open_review, state="disabled")
         self.demo_review_button.pack(side="left", padx=8)
 
@@ -3088,6 +3114,7 @@ class AnalyzerShellApp:
                     self.tk.END,
                     f"Runde {scene.round_number:02d} · Tick {scene.review_tick} · {marker_count} Marker",
                 )
+            self._show_analyzer_tab("Review")
             self.embedded_review_frame.place(relx=0, rely=0, relwidth=1, relheight=1)
             self.embedded_review_frame.tkraise()
             if self.embedded_review.scenes:
@@ -3207,7 +3234,8 @@ class AnalyzerShellApp:
     def _return_to_embedded_review(self) -> None:
         if self.embedded_tactical and self.embedded_tactical.selected_scene_id:
             self._sync_review_scene(self.embedded_tactical.selected_scene_id)
-        self._show_page("Analyzer / Review")
+        self._show_page("Analyzer")
+        self._show_analyzer_tab("Review")
         self.embedded_review_frame.tkraise()
 
     def _sync_review_scene(self, scene_id: str) -> None:

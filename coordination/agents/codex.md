@@ -1,5 +1,27 @@
 # Codex
 
+## 2026-08-22 — Unified Analyzer Final Integration
+
+STATUS: `DONE — WAITING_FOR_TRISTAN`
+
+TASK: UI Reference Pack v1.1.0 anwenden und den Analyzer als einziges Top-Level-Modul mit exakt den internen Bereichen `Übersicht | Analyse | Review` abschließen. Keine Parser-, Szenen-, Rule-, NetCon-, CS2-, Optimizer-, Benchmark- oder Replay-Logik ändern.
+
+BRANCH / HEAD: `dev/v1-foundation` / `5d9d0e7 feat: unify analyzer workflow tabs` (pushed to `origin/dev/v1-foundation`).
+
+REFERENCE AUTHORITY: Die vom Nutzer bereitgestellten v1.1.0-Dateien `D:\downloads\Improve Yourself\Demos\README_UI_REFERENCE.md` und `UI_REFERENCE_MANIFEST.json` wurden vor der Umsetzung gelesen. `analyzer_unified_MASTER.png` (SHA-256 im Manifest: `e17a646d…`) ist der alleinige Analyzer-`MASTER`; `analyzer_legacy_SUPERSEDED.png` und `demo_analyzer_legacy_SUPERSEDED.png` sind ausschließlich historisch und wurden nicht als Ziel verwendet. Der Checkout enthielt zu Beginn noch den v1.0.0-Referenzordner; für diesen Slice war daher die bereitgestellte v1.1.0-Quelle maßgeblich. Das Master-PNG selbst wurde nicht als neue Produktdatei kopiert oder verändert.
+
+CHANGED: `src/improve_yourself/analyzer_shell.py` und `tests/test_analyzer_shell.py`. Die Sidebar enthält nun genau einen Analyzer-Einstieg `Analyzer`; weder `Demo Analyzer` noch `Rules` sind Top-Level-Navigation. Die vorhandene, lokale UI wird in drei sichtbaren internen Tabs gehalten: **Übersicht** bündelt Bibliothek/Import, ausgewählte Demo, Import-/Analyse-Status und reale Matchfakten; **Analyse** enthält unverändert Datenquelle, CT/T/Full-Demo/Player-Select, Profil, Objektiv-Regelset, Start und CS2-Readiness; **Review** enthält die vorhandene Ergebnisprojektion sowie den eingebetteten Szenenreview. Review-Ticks werden unverändert an den bestehenden Tactical-Viewer übergeben. Keine zweite Review-/Replay-Engine, keine Mockupwerte und keine neue Analyseentscheidung wurden ergänzt.
+
+RUNTIME EVIDENCE: Frischer Portable praktisch mit echter `fut-vs-mouz-m2-ancient.dem` geprüft. Übersicht nach Parserabschluss: `de_ancient`, **18 Runden**, **10 Spieler**, **3.179** grundlegende Events, SHA-Präfix und Parser `PASS`; danach wurde der vorhandene lokale `demo-workflow.json` desselben Evidenzlaufs geladen: **54** zusammengeführte Szenen, Status `Review bereit`. Analyse-Tab zeigt bestehende Auswahl, Profil `review_v1`, sieben objektive Kriterien und Regelset. Review-Tab zeigt reale Situationen/Ticks; der eingebettete Review listet reale Szenen wie `Runde 01 · Tick 3654 · 3 Marker`, mit Spieler-, Regel-, Kontext-, Status- und Notizdaten. Die ausgewählte Szene wurde über den bestehenden Pfad erfolgreich in den eigenständigen `Tactical Replay` übernommen: Runde 1, Tick 3654, Frame 1/256, ohne neue Analyse. Kein CS2-Tick-Sprung wurde in diesem reinen UI-Slice ausgelöst.
+
+VIEWPORT / VISUAL: Wide-Runtime-Captures zeigen die verbindliche Unified-Hierarchie auf einen Blick: Variant-3-Shell, nur aktiver Analyzer-Navigationseintrag, Tabs, Demo-Bibliothek, ausgewählte Demo, Statusflächen und Workflow. Der native Portable wurde manuell auf **1084×752 Capture** (entspricht der geforderten 1080×720-Client-Mindestgröße plus Fensterrahmen) gesetzt und geprüft: Unified-Review, Szenenliste, Details, Statuswahl, Notiz und Tactical-Handoff bleiben erreichbar; echter vertikaler Inhaltsüberlauf bleibt scrollbar. Tactical bleibt eigenständiger Tab und zeigt die übernommene reale Szene. Keine helle/native Fremdfläche, keine doppelte Analyzer-/Rules-/Demo-Navigation.
+
+TESTS / BUILD: Fokussierter Shell-Gate **29 passed**; `compileall` PASS; `git diff --check` PASS. Der vollständige finale Packaging-Gate lief nach geschlossenem Testfenster mit **189 passed**, `pip check` PASS, PyInstaller-COLLECT PASS sowie frischem Portable-, ZIP- und Manifest-Schritt PASS. Ein vorheriger ZIP-Dateilock wurde durch den sauberen Wiederholungslauf behoben; der aktuelle Archivstand ist `Improve-Yourself-Experimental-Portable.zip` mit 168.869.016 Bytes (22.08.2026 07:43).
+
+KNOWN LIMITS: Der neue v1.1.0-Reference-Pack-Ordner ist im Repository noch nicht synchron vorhanden; die explizit bereitgestellte Demos-Quelle ist im Handoff belegt. Die MASTER-Beispielbild-/Score-/Matchdaten wurden nicht in Produktdaten umgedeutet. Kartenbasis/Zeit bleiben im Tactical weiterhin ehrlich nur angezeigt, wenn die gemeinsame Replay-Wahrheit sie belegt.
+
+NEXT: Checkpoint-Commit und Push. Danach `WAITING_FOR_TRISTAN`; keine weitere UI- oder Produktarbeit.
+
 ## 2026-08-22 — UI Master Alignment Sequence (laufend)
 
 STATUS: `DONE — WAITING_FOR_TRISTAN`
