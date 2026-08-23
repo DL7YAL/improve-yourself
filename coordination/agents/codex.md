@@ -1,5 +1,21 @@
 # Codex
 
+## 2026-08-23 — Optimizer Finalization Pass
+
+STATUS: `READY_FOR_TRISTAN_REVIEW — FULL GATE BLOCKED BY WINDOWS/PYTHON TEMP PERMISSIONS`
+
+TASK: Den bestehenden Improve Optimizer ausschließlich gegen die verbindlichen Optimizer-MASTERs finalisieren. Keine neue Funktion, Architektur, Optimizer-Evidence, Empfehlung, Backup/Restore-, Settings- oder Systemdatenlogik und kein Release-Paket.
+
+REFERENCE / DECISION: `docs/design/ui-reference/optimizer_overview_MASTER.png` bleibt die Overview-Struktur mit 2×2-Bereichsraster und dauerhaft sichtbarer rechter Erklärung. `system_optimizer_detail_MASTER.png` bleibt die Midnight-Farbreferenz und Detailstruktur. Die vorhandene Variant-3-Wortmarke bleibt unverändert; nur der seltene Text-Fallback ist nun ebenfalls zweizeilig `IMPROVE` / `YOURSELF`.
+
+CHANGED: `src/improve_yourself/analyzer_shell.py` und `tests/test_analyzer_shell.py`. Passive Optimizer-Rahmen sind nun subtiler und nahezu schwarz; der vorhandene Midnight-Grundton bleibt erhalten. Die vier Bereichskarten verwenden außerhalb der aktiven Auswahl ein neutrales Sekundärblau statt dekorativem Grün/Violett/Orange; Grün/Gelb/Rot bleiben damit ausschließlich echten semantischen Zuständen vorbehalten. Die Overview behält ihr vorhandenes 2×2-Raster und die rechte Erklärung. Der Optimizer erhält keinen globalen Seiten-Scrollbar mehr; ausschließlich die bestehende Detailfläche besitzt eine lokale Scroll-Surface. Keine Daten- oder Aktionslogik verändert.
+
+PRACTICAL UI SMOKE: Native Tk-Shell mit vorhandener interner Testmatrix geöffnet und kontrolliert geschlossen: `overview=1`, `cards=4`, `explanation=1`, `no_global_scroll=True`, `detail=1`, `local_detail_scroll=True`. Der Lauf war rein lesend; er hat keine Optimizer- oder Systemeinstellung angewendet.
+
+VALIDATION: Optimizer-Regressionssuite `16 passed`; neuer statischer UI-Vertragstest `1 passed`; `git diff --check` PASS. Vollständige Suite und `compileall` wurden je zweimal mit isoliertem Temp-/Pycache-Ordner versucht, auch erhöht: pytest scheitert vor Testausführung beim erneuten Anlegen von `optimizer-finalization-temp\\pytest` (`FileNotFoundError`); `compileall` scheitert vor einer Moduldiagnose beim Anlegen von Unterpfaden in `optimizer-finalization-temp\\pycache` (`FileNotFoundError`). Der Standardpfad bestätigt zudem `PermissionError` auf `C:\\Users\\tleik\\AppData\\Local\\Temp\\pytest-of-Brix`. Das ist die bekannte Windows-/Python-Dateisystemberechtigung, kein behaupteter Produkt-PASS und kein dokumentierter Optimizer-Testfehler.
+
+NEXT: Checkpoint auf `dev/v1-foundation` erstellen und pushen. Danach ausschließlich gemeinsame visuelle Abnahme mit Tristan; kein Release-Paket und keine Folgearbeit ohne neuen Auftrag.
+
 ## 2026-08-22 — Portable Candidate Executable Metadata Correction
 
 STATUS: `DONE — WAITING_FOR_TRISTAN`

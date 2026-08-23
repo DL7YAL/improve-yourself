@@ -91,8 +91,8 @@ _OPTIMIZER_THEME = {
     "surface_detail": "#061521",
     "surface_input": "#04111C",
     "surface_hover": "#0B2639",
-    "border": "#123852",
-    "border_soft": "#0B263A",
+    "border": "#0A2538",
+    "border_soft": "#061722",
     "border_bright": "#127EC0",
     "accent": "#159BE1",
     "accent_soft": "#0B4D73",
@@ -1461,7 +1461,7 @@ class AnalyzerShellApp:
             self.brand_image = tk.PhotoImage(file=str(brand_path)).subsample(3, 3)
             tk.Label(sidebar, image=self.brand_image, background=_THEME["sidebar"]).pack(anchor="w", padx=20, pady=(24, 7))
         except tk.TclError:
-            ttk.Label(sidebar, text="IMPROVE YOURSELF", style="Card.TLabel", font=("Segoe UI", 17, "bold")).pack(anchor="w", padx=20, pady=(26, 7))
+            ttk.Label(sidebar, text="IMPROVE\nYOURSELF", style="Card.TLabel", font=("Segoe UI", 17, "bold"), justify="left").pack(anchor="w", padx=20, pady=(26, 7))
         tk.Label(sidebar, text="EXPERIMENTAL BUILD", background=_THEME["sidebar"], foreground="#73bddf", font=(self.ui_font, 8, "bold")).pack(anchor="w", padx=21, pady=(0, 22))
         content = ttk.Frame(shell, style="Content.TFrame", padding=(24, 18, 24, 24))
         content.pack(side="left", fill="both", expand=True)
@@ -1482,7 +1482,7 @@ class AnalyzerShellApp:
             host = ttk.Frame(content, style="Content.TFrame")
             host.place(relx=0, rely=0, relwidth=1, relheight=1)
             self.page_hosts[name] = host
-            if name in {"Analyzer", "Dashboard", "System Check / Optimizer", "My Improvement", "Benchmark"}:
+            if name in {"Analyzer", "Dashboard", "My Improvement", "Benchmark"}:
                 canvas = tk.Canvas(
                     host, background=_THEME["night"], borderwidth=0, highlightthickness=0,
                 )
@@ -1509,8 +1509,13 @@ class AnalyzerShellApp:
                 elif name == "Dashboard":
                     self.dashboard_canvas = canvas
                     self.dashboard_scrollbar = scrollbar
-                elif name == "System Check / Optimizer":
-                    self.system_canvas = canvas
+            elif name == "System Check / Optimizer":
+                # The Optimizer must not inherit a page-wide scrollbar. Its
+                # overview is compact and its only potentially long content,
+                # "Details & Erklärung", owns a local scroll surface.
+                page = ttk.Frame(host, style="Content.TFrame")
+                page.pack(fill="both", expand=True)
+                self.system_canvas = None
             else:
                 page = ttk.Frame(host, style="Content.TFrame")
                 page.pack(fill="both", expand=True)
@@ -1937,7 +1942,7 @@ class AnalyzerShellApp:
         self.page_hosts[name].tkraise()
         if name == "Dashboard":
             self.root.after_idle(lambda: self.dashboard_canvas.yview_moveto(0.0))
-        elif name == "System Check / Optimizer":
+        elif name == "System Check / Optimizer" and self.system_canvas is not None:
             self.root.after_idle(lambda: self.system_canvas.yview_moveto(0.0))
         elif name == "Tactical Replay" and self.embedded_tactical is None:
             self._show_tactical_empty_state()
@@ -2810,7 +2815,8 @@ class AnalyzerShellApp:
         self.optimizer_detail_view.pack_forget()
         self.optimizer_overview_view.pack(fill="both", expand=True)
         self._render_optimizer_overview(self.optimizer_view_data)
-        self.root.after_idle(lambda: self.system_canvas.yview_moveto(0.0))
+        if self.system_canvas is not None:
+            self.root.after_idle(lambda: self.system_canvas.yview_moveto(0.0))
 
     def _show_optimizer_detail_screen(self, domain: str) -> None:
         self.optimizer_active_domain = domain
@@ -2819,7 +2825,8 @@ class AnalyzerShellApp:
         selected = next(item for item in optimizer_domain_overview(self.optimizer_view_data) if item["domain"] == domain)
         self.optimizer_detail_screen_title.configure(text=str(selected["title"]).upper())
         self._render_optimizer_detail_table()
-        self.root.after_idle(lambda: self.system_canvas.yview_moveto(0.0))
+        if self.system_canvas is not None:
+            self.root.after_idle(lambda: self.system_canvas.yview_moveto(0.0))
 
     def _render_optimizer_overview(self, view: dict[str, object] | None = None) -> None:
         for child in self.optimizer_domain_grid.winfo_children():
@@ -2853,7 +2860,9 @@ class AnalyzerShellApp:
             card = card_surface.body
             label_style = "OptimizerAreaActive.TLabel" if active else "OptimizerArea.TLabel"
             muted_style = "OptimizerAreaActiveMuted.TLabel" if active else "OptimizerAreaMuted.TLabel"
-            accent = {"SYSTEM_OPTIMIZER": _OPTIMIZER_THEME["accent"], "GRAPHICS_OPTIMIZER": "#61B987", "NETWORK_OPTIMIZER": "#A782E8", "BIOS_OPTIMIZER": "#D59A55"}[str(item["domain"])]
+            # Area identity is neutral. Blue marks the active/focused route;
+            # green/yellow/red remain reserved for actual recommendation state.
+            accent = _OPTIMIZER_THEME["accent"] if active else _OPTIMIZER_THEME["secondary"]
             self.ttk.Label(card, text="●", style=label_style, foreground=accent, font=(self.display_font, 17, "bold")).pack(anchor="w")
             self.ttk.Label(card, text="AKTIV" if active else "OPTIMIZER BEREICH", style=muted_style, foreground=accent, font=(self.ui_font, 7, "bold")).pack(anchor="w", pady=(2, 0))
             self.ttk.Label(card, text=item["title"], style=label_style, font=(self.display_font, 10, "bold")).pack(anchor="w", pady=(6, 3))
