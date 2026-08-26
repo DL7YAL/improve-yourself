@@ -50,14 +50,13 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
     supportsHttpsTrafficOnly: true
     minimumTlsVersion: 'TLS1_2'
     allowBlobPublicAccess: false
-    // Use network ACLs to simulate PNPA off without assuming version-specific publicNetworkAccess property
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: enablePublicNetworkStorage ? 'Allow' : 'Deny'
-      ipRules: []
-      virtualNetworkRules: []
-    }
+    publicNetworkAccess: enablePublicNetworkStorage ? 'Enabled' : 'Disabled'
   }
+}
+
+// Blob service child (for diagnostics scope)
+resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01' = {
+  name: '${storageAccount.name}/default'
 }
 
 // Key Vault (baseline + PNPA control)
@@ -145,10 +144,10 @@ resource appInsights 'Microsoft.Insights/components@2022-06-15' = {
 }
 
 // Diagnostics — route platform logs/metrics to Log Analytics (toggle)
-@description('Diagnostic settings for Storage Account -> LAW')
-resource diag_storage 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (enableDiagnostics) {
-  name: 'to-law-storage'
-  scope: storageAccount
+@description('Diagnostic settings for Blob Service -> LAW')
+resource diag_storage_blob 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (enableDiagnostics) {
+  name: 'to-law-blob'
+  scope: blobService
   properties: {
     workspaceId: logAnalytics.id
     logs: [
