@@ -1,4 +1,4 @@
-# Azure Pipelines CI/CD Configuration (Phase 1 — validation only, no apply)
+# Azure Pipelines CI/CD Configuration (Phase 2 — validation and what-if only, no apply)
 
 trigger:
   - main
@@ -15,6 +15,7 @@ variables:
   pythonVersion: '3.10'
   azureResourceGroup: 'improve-yourself-rg'
   azureLocation: 'westeurope'
+  phase2ParametersFile: 'azure/parameters/dev.phase2.json'
 
 stages:
   - stage: Build
@@ -49,9 +50,16 @@ stages:
               summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
             displayName: 'Publish code coverage'
 
-          # Validate Bicep syntax early (runs in pipeline)
+          - script: |
+              set -euo pipefail
+              python azure/validate_phase2_config.py \
+                --parameters "$(phase2ParametersFile)" \
+                --bicep azure/deployment.bicep
+            displayName: 'Validate Phase 2 parameters and Bicep contracts'
+
+          # Bicep build runs in CI only; it does not deploy resources.
           - task: AzureCLI@2
-            displayName: 'Validate Bicep syntax'
+            displayName: 'Build and validate Bicep syntax'
             inputs:
               azureSubscription: 'improve-yourself-subscription'
               scriptType: 'bash'
@@ -62,12 +70,12 @@ stages:
                 az bicep build --file azure/deployment.bicep --stdout >/dev/null
 
   - stage: IaC_Validate
-    displayName: 'IaC Validation (what-if when secret provided)'
+    displayName: 'Phase 2 IaC what-if (no apply)'
     dependsOn: Build
     condition: succeeded()
     jobs:
       - job: WhatIf
-        displayName: 'Bicep what-if (no apply)'
+        displayName: 'Bicep what-if using dev.phase2 parameters'
         steps:
           - task: AzureCLI@2
             displayName: 'What-if (skips if SQL_ADMIN_PASSWORD not set)'
@@ -77,22 +85,21 @@ stages:
               scriptLocation: 'inlineScript'
               inlineScript: |
                 set -euo pipefail
+                set +x
+                PARAMETER_FILE="$(Build.SourcesDirectory)/$(phase2ParametersFile)"
+                python azure/validate_phase2_config.py \
+                  --parameters "$PARAMETER_FILE" \
+                  --bicep azure/deployment.bicep
                 if [ -z "${SQL_ADMIN_PASSWORD:-}" ]; then
-                  echo "No SQL_ADMIN_PASSWORD provided. Skipping what-if to avoid exposing/guessing secret values."
+                  echo "No SQL_ADMIN_PASSWORD provided. Parameters were validated; skipping Azure what-if."
                   exit 0
                 fi
                 DEPLOY_NAME="dryrun-$(Build.BuildNumber)"
-                PARAMS=(
-                  -p environment=dev
-                  -p appName=improve-yourself
-                  -p sqlAdminUser=app_sql_admin
-                  -p sqlAdminPassword="$SQL_ADMIN_PASSWORD"
-                )
                 az deployment group what-if \
-                  -g "$(azureResourceGroup)" \
-                  -n "$DEPLOY_NAME" \
-                  -f "$(Build.SourcesDirectory)/azure/deployment.bicep" \
-                  "${PARAMS[@]}" \
+                  --resource-group "$(azureResourceGroup)" \
+                  --name "$DEPLOY_NAME" \
+                  --template-file "$(Build.SourcesDirectory)/azure/deployment.bicep" \
+                  --parameters "@$PARAMETER_FILE" "sqlAdminPassword=$SQL_ADMIN_PASSWORD" \
                   --no-pretty-print
             env:
               SQL_ADMIN_PASSWORD: $(SQL_ADMIN_PASSWORD)
