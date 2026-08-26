@@ -1,0 +1,36 @@
+{
+  "package": "Improve Yourself Optimizer MASTER Package",
+  "version": "1.0.0",
+  "visual_authority": "FIGMA UI MASTER = ALLEINIGE VISUELLE QUELLE.",
+  "source_exports": [
+    {
+      "file": "optimizer_overview_MASTER.png",
+      "screen_id": "optimizer_overview",
+      "status": "MASTER",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "e2e91fdc4e69e11f567f1fe4a921883200dcf365f8fd68cee052a1aea4d6a004",
+      "screen_spec": "OVERVIEW_SCREEN_SPEC.md"
+    },
+    {
+      "file": "system_optimizer_detail_MASTER.png",
+      "screen_id": "system_optimizer_detail",
+      "status": "MASTER",
+      "width": 1536,
+      "height": 1024,
+      "sha256": "4b0b5d5e4cb632159935d4b51aaf4f5f1b104d1e89cd1e15fbfdec217b8bdb51",
+      "screen_spec": "SYSTEM_DETAIL_SCREEN_SPEC.md"
+    }
+  ],
+  "required_documents": [
+    "VISUAL_SOURCE_PRECEDENCE.md",
+    "BEAST_ACCEPTANCE_CONTRACT.md",
+    "IMPLEMENTATION_HANDOFF.md"
+  ],
+  "prohibited_visual_sources": [
+    "PDFs",
+    "old runtime screenshots",
+    "SUPERSEDED material",
+    "unapproved replacement references"
+  ]
+}

@@ -235,8 +235,20 @@ def system_profile_from_facts(facts: dict[str, Any]) -> dict[str, object]:
     gpus = facts.get("gpus") if isinstance(facts.get("gpus"), list) else []
     displays = facts.get("displays") if isinstance(facts.get("displays"), list) else []
     memory = dict(facts.get("memory") or {})
+    motherboard = dict(facts.get("motherboard") or {})
+    bios = dict(facts.get("bios") or {})
+    # The read-only Windows collector publishes firmware facts with the
+    # motherboard record. Keep an explicit bios record authoritative, but
+    # project those known facts when no separate bios object is provided.
+    if not bios:
+        bios = {
+            "version": motherboard.get("bios_version"),
+            "date": motherboard.get("bios_date"),
+            "manufacturer": motherboard.get("manufacturer"),
+        }
+        bios = {key: value for key, value in bios.items() if value is not None}
     memory.setdefault("capacity_gb", memory.get("total_gb"))
-    return {"schema": SYSTEM_PROFILE_SCHEMA, "profile_id": "local-read-only-system", "profile_source": "READ_ONLY_COLLECTOR", "policy": {"read_only": True, "changes_applied": False}, "cpu": facts.get("cpu") or {}, "gpu": gpus[0] if gpus else {"name": None, "vendor": None, "driver_version": None}, "ram": memory, "motherboard": facts.get("motherboard") or {}, "bios": facts.get("bios") or {}, "windows": facts.get("windows") or {}, "display": displays, "network": {"adapters": facts.get("network_adapters") or []}, "applications": {"cs2": facts.get("cs2") if isinstance(facts.get("cs2"), dict) else {"status": "NOT_AVAILABLE"}}, "field_observation": {"cpu": "DETECTED", "gpu": "DETECTED" if gpus else "NOT_AVAILABLE", "ram_speed": "NOT_RELIABLY_DETECTABLE" if memory.get("speed_mt_s") is None else "DETECTED", "network_mtu": "DETECTED" if any(item.get("mtu") is not None for item in facts.get("network_adapters") or [] if isinstance(item, dict)) else "NOT_AVAILABLE", "cs2.configuration": "NOT_AVAILABLE", "gpu.driver_options": "NOT_RELIABLY_DETECTABLE", "current_cpu_gpu_limitation": "NOT_RELIABLY_DETECTABLE"}, "unknown_fields": ("cs2.configuration", "gpu.driver_options", "current_cpu_gpu_limitation")}
+    return {"schema": SYSTEM_PROFILE_SCHEMA, "profile_id": "local-read-only-system", "profile_source": "READ_ONLY_COLLECTOR", "policy": {"read_only": True, "changes_applied": False}, "cpu": facts.get("cpu") or {}, "gpu": gpus[0] if gpus else {"name": None, "vendor": None, "driver_version": None}, "ram": memory, "motherboard": motherboard, "bios": bios, "windows": facts.get("windows") or {}, "display": displays, "network": {"adapters": facts.get("network_adapters") or []}, "applications": {"cs2": facts.get("cs2") if isinstance(facts.get("cs2"), dict) else {"status": "NOT_AVAILABLE"}}, "field_observation": {"cpu": "DETECTED", "gpu": "DETECTED" if gpus else "NOT_AVAILABLE", "ram_speed": "NOT_RELIABLY_DETECTABLE" if memory.get("speed_mt_s") is None else "DETECTED", "network_mtu": "DETECTED" if any(item.get("mtu") is not None for item in facts.get("network_adapters") or [] if isinstance(item, dict)) else "NOT_AVAILABLE", "cs2.configuration": "NOT_AVAILABLE", "gpu.driver_options": "NOT_RELIABLY_DETECTABLE", "current_cpu_gpu_limitation": "NOT_RELIABLY_DETECTABLE"}, "unknown_fields": ("cs2.configuration", "gpu.driver_options", "current_cpu_gpu_limitation")}
 
 
 def collect_system_profile() -> dict[str, object]:

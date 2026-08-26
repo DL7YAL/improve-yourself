@@ -104,6 +104,16 @@ _OPTIMIZER_THEME = {
     "unknown": "#9AAAB6",
 }
 
+# The two approved Optimizer MASTER exports distinguish the four fixed product
+# areas with these compact icon/status accents. They are presentation-only;
+# recommendation state remains sourced from the existing evidence model.
+_OPTIMIZER_DOMAIN_ACCENTS = {
+    "SYSTEM_OPTIMIZER": "#159BE1",
+    "GRAPHICS_OPTIMIZER": "#22C55E",
+    "NETWORK_OPTIMIZER": "#B36CFF",
+    "BIOS_OPTIMIZER": "#F59E0B",
+}
+
 _UI_FONT = "Inter"
 _DISPLAY_FONT = "Orbitron"
 _PRIVATE_FONT_FLAG = 0x10
@@ -1240,7 +1250,10 @@ class AnalyzerShellApp:
         self.controller = controller
         self.root = tk.Tk()
         self.root.title("Improve Yourself – Experimental")
-        self.root.geometry("1360x860")
+        # The approved Optimizer MASTER exports use a 1536×1024 viewport.
+        # Start at that comparable desktop geometry; the existing minimum-size
+        # contract remains responsible for compact windows.
+        self.root.geometry("1536x1024")
         self.root.minsize(1080, 720)
         self.root.configure(background=_THEME["night"])
         _enable_dark_titlebar(self.root)
@@ -1450,6 +1463,7 @@ class AnalyzerShellApp:
 
         shell = ttk.Frame(self.root, style="Content.TFrame")
         shell.pack(fill="both", expand=True)
+        self.shell = shell
         # Variant 3 uses a compact fixed shell: content begins close to the
         # 243 px MASTER boundary while navigation remains comfortably readable.
         sidebar = ttk.Frame(shell, style="Sidebar.TFrame", width=243)
@@ -1940,6 +1954,11 @@ class AnalyzerShellApp:
             self.page_history.append(self.current_page)
         self.current_page = name
         self.page_hosts[name].tkraise()
+        if hasattr(self, "optimizer_master_canvas"):
+            if name == "System Check / Optimizer":
+                self._show_optimizer_master_overlay()
+            else:
+                self.optimizer_master_canvas.place_forget()
         if name == "Dashboard":
             self.root.after_idle(lambda: self.dashboard_canvas.yview_moveto(0.0))
         elif name == "System Check / Optimizer" and self.system_canvas is not None:
@@ -2540,7 +2559,8 @@ class AnalyzerShellApp:
         self.optimizer_selected_model: dict[str, object] | None = None
         self.optimizer_detail_models: dict[str, dict[str, object]] = {}
         self.optimizer_hardware_values = {
-            "CPU": "Nicht verfügbar", "GPU": "Nicht verfügbar", "RAM": "Nicht verfügbar", "DISPLAY": "Nicht verfügbar",
+            "OS": "Nicht verfügbar", "CPU": "Nicht verfügbar",
+            "RAM": "Nicht verfügbar", "GPU": "Nicht verfügbar",
         }
         self.optimizer_search_var = self.tk.StringVar()
         self.optimizer_filter_var = self.tk.StringVar(value="Alle Status")
@@ -2556,6 +2576,204 @@ class AnalyzerShellApp:
         self._build_optimizer_overview_view()
         self._build_optimizer_detail_view()
         self._show_optimizer_overview()
+        self._create_optimizer_master_overlay()
+
+    def _create_optimizer_master_overlay(self) -> None:
+        """Render the approved Optimizer MASTER separately from legacy shell chrome.
+
+        The canvas owns only the visual composition. Existing data adapters,
+        actions and read-only safety behaviour remain behind this presentation
+        layer and are called through the small interaction map below.
+        """
+        self.optimizer_master_mode = "overview"
+        self.optimizer_master_canvas = self.tk.Canvas(
+            self.root, background="#02070d", highlightthickness=0, borderwidth=0, bd=0,
+        )
+        self.optimizer_master_canvas.bind("<Button-1>", self._activate_optimizer_master)
+        self.optimizer_master_canvas.bind("<Configure>", self._draw_optimizer_master)
+
+    def _show_optimizer_master_overlay(self) -> None:
+        self.optimizer_master_canvas.place(x=0, y=0, relwidth=1, relheight=1)
+        self.optimizer_master_canvas.lift()
+        self._draw_optimizer_master()
+
+    def _master_rect(self, x1, y1, x2, y2, *, fill, outline="#152b3d", width=1, radius=10, tag="master") -> None:
+        canvas = self.optimizer_master_canvas
+        canvas.create_rectangle(x1 + radius, y1, x2 - radius, y2, fill=fill, outline="", tags=tag)
+        canvas.create_rectangle(x1, y1 + radius, x2, y2 - radius, fill=fill, outline="", tags=tag)
+        for box, start in (((x1, y1, x1 + 2 * radius, y1 + 2 * radius), 90), ((x1, y2 - 2 * radius, x1 + 2 * radius, y2), 180), ((x2 - 2 * radius, y2 - 2 * radius, x2, y2), 270), ((x2 - 2 * radius, y1, x2, y1 + 2 * radius), 0)):
+            canvas.create_arc(*box, start=start, extent=90, fill=fill, outline=outline, width=width, tags=tag)
+        canvas.create_line(x1 + radius, y1, x2 - radius, y1, fill=outline, width=width, tags=tag)
+        canvas.create_line(x1 + radius, y2, x2 - radius, y2, fill=outline, width=width, tags=tag)
+        canvas.create_line(x1, y1 + radius, x1, y2 - radius, fill=outline, width=width, tags=tag)
+        canvas.create_line(x2, y1 + radius, x2, y2 - radius, fill=outline, width=width, tags=tag)
+
+    def _master_text(self, x, y, text, *, size=12, color="#E7EEF5", anchor="w", bold=False, width=0, tag="master") -> None:
+        self.optimizer_master_canvas.create_text(
+            x, y, text=text, fill=color, anchor=anchor, width=width or 0,
+            font=(self.ui_font, size, "bold" if bold else "normal"), tags=tag,
+        )
+
+    def _draw_optimizer_master_shell(self) -> tuple[float, float]:
+        canvas = self.optimizer_master_canvas
+        canvas.delete("master")
+        width, height = max(canvas.winfo_width(), 1), max(canvas.winfo_height(), 1)
+        scale = min(width / 1536, height / 1024)
+        ox, oy = (width - 1536 * scale) / 2, (height - 1024 * scale) / 2
+        canvas.create_rectangle(0, 0, width, height, fill="#02070d", outline="", tags="master")
+        canvas.create_rectangle(ox, oy, ox + 243 * scale, oy + 1024 * scale, fill="#06121f", outline="", tags="master")
+        canvas.create_line(ox + 243 * scale, oy, ox + 243 * scale, oy + 1024 * scale, fill="#13293a", tags="master")
+        self._master_text(ox + 38 * scale, oy + 48 * scale, "IMPROVE", size=max(12, int(29 * scale)), color="#F4F8FC", bold=True)
+        self._master_text(ox + 39 * scale, oy + 80 * scale, "YOURSELF", size=max(10, int(20 * scale)), color="#EAF4FD", bold=False)
+        self._master_text(ox + 210 * scale, oy + 111 * scale, "v1.0.0", size=max(7, int(11 * scale)), color="#95A6B7", anchor="e")
+        nav = (("⌂", "Dashboard"), ("⚙", "Optimizer"), ("▣", "Analyzer"), ("◌", "Tactical Viewer"), ("▧", "System Info"), ("♧", "Benchmark"), ("▤", "Monitor"), ("☑", "Tools"), ("♙", "Profiles"))
+        for index, (icon, label) in enumerate(nav):
+            y = 169 + index * 54
+            if label == "Optimizer":
+                self._master_rect(ox + 4 * scale, oy + (y - 26) * scale, ox + 218 * scale, oy + (y + 26) * scale, fill="#0A2135", outline="#1676C1", radius=max(5, int(8 * scale)))
+            self._master_text(ox + 28 * scale, oy + y * scale, icon, size=max(9, int(18 * scale)), color="#36A8FF" if label == "Optimizer" else "#A5B8CA")
+            self._master_text(ox + 60 * scale, oy + y * scale, label, size=max(8, int(15 * scale)), color="#D8E7F2" if label == "Optimizer" else "#B2C1CF", bold=label == "Optimizer")
+        self._master_text(ox + 28 * scale, oy + 873 * scale, "⚙", size=max(9, int(18 * scale)), color="#A5B8CA")
+        self._master_text(ox + 60 * scale, oy + 873 * scale, "Settings", size=max(8, int(15 * scale)), color="#B2C1CF")
+        self._master_text(ox + 28 * scale, oy + 920 * scale, "ⓘ", size=max(9, int(18 * scale)), color="#A5B8CA")
+        self._master_text(ox + 60 * scale, oy + 920 * scale, "About Improve", size=max(8, int(15 * scale)), color="#B2C1CF")
+        self._master_rect(ox + 18 * scale, oy + 950 * scale, ox + 210 * scale, oy + 1012 * scale, fill="#071725", outline="#183044", radius=max(5, int(8 * scale)))
+        self._master_text(ox + 34 * scale, oy + 973 * scale, "✓", size=max(9, int(18 * scale)), color="#21D07A")
+        self._master_text(ox + 57 * scale, oy + 971 * scale, "System bereit", size=max(8, int(14 * scale)), color="#2BE07E", bold=True)
+        self._master_text(ox + 57 * scale, oy + 994 * scale, "Alle Dienste aktiv", size=max(7, int(12 * scale)), color="#AAB9C5")
+        self._master_text(ox + 272 * scale, oy + 40 * scale, "Optimizer", size=max(13, int(25 * scale)), color="#F3F7FB", bold=True)
+        for index, label in enumerate(("Windows", "CPU", "RAM", "GPU")):
+            x = 764 + index * 160
+            self._master_rect(ox + x * scale, oy + 22 * scale, ox + (x + 150) * scale, oy + 58 * scale, fill="#061321", outline="#17334A", radius=max(4, int(7 * scale)))
+            value = list(self.optimizer_hardware_values.values())[index]
+            self._master_text(ox + (x + 12) * scale, oy + 33 * scale, label, size=max(6, int(8 * scale)), color="#8297A9")
+            self._master_text(ox + (x + 12) * scale, oy + 47 * scale, value, size=max(7, int(10 * scale)), color="#D7E2EA", width=122 * scale)
+        self._master_rect(ox + 1423 * scale, oy + 22 * scale, ox + 1459 * scale, oy + 58 * scale, fill="#061321", outline="#17334A", radius=max(4, int(7 * scale)))
+        self._master_text(ox + 1441 * scale, oy + 40 * scale, "•••", size=max(8, int(13 * scale)), color="#D9E6EF", anchor="center")
+        self._master_text(ox + 1497 * scale, oy + 40 * scale, "×", size=max(13, int(26 * scale)), color="#D9E6EF", anchor="center")
+        return ox, oy
+
+    def _draw_optimizer_master(self, _event=None) -> None:
+        ox, oy = self._draw_optimizer_master_shell()
+        canvas = self.optimizer_master_canvas
+        width, height = max(canvas.winfo_width(), 1), max(canvas.winfo_height(), 1)
+        scale = min(width / 1536, height / 1024)
+        S = lambda value: value * scale
+        if self.optimizer_master_mode == "detail":
+            self._draw_optimizer_master_detail(ox, oy, S)
+            return
+        self._master_rect(ox + S(258), oy + S(82), ox + S(1016), oy + S(368), fill="#071827", outline="#1A4663", radius=max(7, int(S(12))))
+        self._master_text(ox + S(284), oy + S(113), "IMPROVE EMPFEHLUNGEN", size=max(10, int(S(18))), color="#43B4FF", bold=True)
+        self._master_text(ox + S(284), oy + S(145), "Auf Basis deines Systems und unserer geprüften Optimierungsregeln", size=max(8, int(S(14))), color="#B7C6D4")
+        self._master_text(ox + S(372), oy + S(239), "ALLE\n4 BEREICHE\nANALYSIERT\n✓", size=max(9, int(S(15))), color="#E8F0F5", anchor="center", bold=True)
+        canvas.create_oval(ox + S(290), oy + S(176), ox + S(456), oy + S(343), outline="#10D678", width=max(2, int(S(11))), tags="master")
+        canvas.create_arc(ox + S(290), oy + S(176), ox + S(456), oy + S(343), start=30, extent=125, style="arc", outline="#22A7FF", width=max(2, int(S(11))), tags="master")
+        counts = self.optimizer_view_data.get("counts", {}) if isinstance(self.optimizer_view_data, dict) else {}
+        metric_data = (("♜", str(counts.get("recommended", "—")), "EMPFEHLUNGEN\ngesamt", "#2A9DF4"), ("✓", str(counts.get("already", "—")), "Automatisch\numsetzbar", "#20D77A"), ("✋", str(counts.get("manual_bios", "—")), "BIOS-Empfehlungen\nerfordern deine Mithilfe", "#EE941B"))
+        for index, (icon, value, text, color) in enumerate(metric_data):
+            x = 495 + index * 157
+            self._master_text(ox + S(x), oy + S(220), icon, size=max(12, int(S(27))), color=color, anchor="center")
+            self._master_text(ox + S(x + 34), oy + S(208), value, size=max(12, int(S(25))), color="#F0F5FA", bold=True)
+            self._master_text(ox + S(x + 34), oy + S(245), text, size=max(7, int(S(11))), color="#B8C7D5", width=S(110))
+        self._master_rect(ox + S(484), oy + S(296), ox + S(990), oy + S(345), fill="#0B2034", outline="#197FC2", radius=max(5, int(S(7))))
+        self._master_text(ox + S(737), oy + S(320), "Empfehlungen prüfen", size=max(10, int(S(18))), color="#F1F6FA", anchor="center", bold=True)
+        self._master_text(ox + S(967), oy + S(320), "›", size=max(14, int(S(28))), color="#5FC0FF", anchor="center")
+        cards = optimizer_domain_overview(self.optimizer_view_data)
+        positions = ((258, 380), (641, 380), (258, 619), (641, 619))
+        for item, (x, y) in zip(cards, positions):
+            accent = _OPTIMIZER_DOMAIN_ACCENTS[str(item["domain"])]
+            self._master_rect(ox + S(x), oy + S(y), ox + S(x + 375), oy + S(y + 227), fill="#071725", outline="#19364A", radius=max(7, int(S(10))))
+            self._master_rect(ox + S(x + 19), oy + S(y + 45), ox + S(x + 88), oy + S(y + 114), fill="#092337", outline=accent, radius=max(6, int(S(10))))
+            self._master_text(ox + S(x + 54), oy + S(y + 80), "◉", size=max(12, int(S(30))), color=accent, anchor="center")
+            self._master_text(ox + S(x + 105), oy + S(y + 32), str(item["title"]).upper(), size=max(9, int(S(16))), color="#EEF4F8", bold=True)
+            self._master_text(ox + S(x + 105), oy + S(y + 60), str(item["description"]), size=max(7, int(S(13))), color="#B4C2D0", width=S(230))
+            self._master_text(ox + S(x + 105), oy + S(y + 119), str(item["state"]), size=max(7, int(S(12))), color=accent, width=S(235))
+            self._master_rect(ox + S(x + 14), oy + S(y + 175), ox + S(x + 360), oy + S(y + 212), fill="#071B2C", outline="#195E91", radius=max(4, int(S(7))))
+            self._master_text(ox + S(x + 187), oy + S(y + 194), "Details ansehen", size=max(8, int(S(14))), color="#67C6FF", anchor="center")
+        self._master_rect(ox + S(258), oy + S(858), ox + S(1016), oy + S(1012), fill="#071725", outline="#19364A", radius=max(7, int(S(10))))
+        self._master_text(ox + S(280), oy + S(894), "LETZTER OPTIMIERUNGSLAUF", size=max(9, int(S(16))), color="#33A9FF", bold=True)
+        self._master_text(ox + S(280), oy + S(940), "Kein abgeschlossener lokaler Optimierungslauf vorhanden.", size=max(8, int(S(14))), color="#C0CDD8")
+        self._master_text(ox + S(280), oy + S(966), "Read-only: Ergebnisse und Wiederherstellung werden erst nach belegten lokalen Vorgängen angezeigt.", size=max(7, int(S(12))), color="#8FA4B5")
+        self._draw_optimizer_master_right(ox, oy, S)
+
+    def _draw_optimizer_master_right(self, ox, oy, S) -> None:
+        selected = next(item for item in optimizer_domain_overview(self.optimizer_view_data) if item["domain"] == self.optimizer_active_domain)
+        self._master_rect(ox + S(1030), oy + S(82), ox + S(1520), oy + S(1012), fill="#061522", outline="#18364B", radius=max(7, int(S(12))))
+        self._master_text(ox + S(1054), oy + S(114), "DETAILS & ERKLÄRUNG", size=max(10, int(S(17))), color="#37ADFF", bold=True)
+        self._master_text(ox + S(1488), oy + S(114), "×", size=max(12, int(S(24))), color="#B9C9D7", anchor="center")
+        self._master_text(ox + S(1085), oy + S(165), str(selected["title"]), size=max(10, int(S(18))), color="#F0F5F9", bold=True)
+        self._master_text(ox + S(1085), oy + S(194), str(selected["description"]), size=max(8, int(S(13))), color="#B9C7D4")
+        self._master_text(ox + S(1055), oy + S(232), "Aktuell: Nicht verfügbar", size=max(8, int(S(12))), color="#C6D3DD")
+        self._master_text(ox + S(1200), oy + S(232), "Empfohlen: —", size=max(8, int(S(12))), color="#53C98B")
+        self._master_text(ox + S(1360), oy + S(232), "Keine Änderung", size=max(8, int(S(12))), color="#E6A33B")
+        headings = (("WAS IST DAS?", "Die Übersicht zeigt nur vorhandene lokale Fakten. Fehlende Bewertungen bleiben sichtbar unbekannt."), ("WARUM EMPFIEHLT IMPROVE DAS?", "Eine Empfehlung wird erst bei vorhandener lokaler Evidenz angezeigt."), ("EVIDENZ & GÜLTIGKEIT", "Nicht verfügbar."), ("ÄNDERUNG & WIEDERHERSTELLUNG", "Read-only · es wird keine Änderung ausgeführt."), ("NÄCHSTER SCHRITT", "Starte die vorhandene Prüfung nur bewusst über „Empfehlungen prüfen“ ."))
+        y = 286
+        for heading, value in headings:
+            self._master_text(ox + S(1055), oy + S(y), heading, size=max(8, int(S(13))), color="#37ADFF", bold=True)
+            self._master_text(ox + S(1055), oy + S(y + 31), value, size=max(7, int(S(12))), color="#BAC8D4", width=S(408))
+            y += 126
+
+    def _draw_optimizer_master_detail(self, ox, oy, S) -> None:
+        self._master_rect(ox + S(242), oy + S(76), ox + S(1075), oy + S(252), fill="#071725", outline="#18364B", radius=max(7, int(S(10))))
+        self._master_text(ox + S(272), oy + S(107), "←", size=max(14, int(S(28))), color="#BFD0DD")
+        self._master_text(ox + S(319), oy + S(108), "System Optimizer", size=max(13, int(S(25))), color="#F4F8FB", bold=True)
+        self._master_text(ox + S(319), oy + S(137), "Windows & System", size=max(8, int(S(14))), color="#C0CDD8")
+        self._master_rect(ox + S(900), oy + S(96), ox + S(1061), oy + S(130), fill="#092034", outline="#1769A2", radius=max(4, int(S(7))))
+        self._master_text(ox + S(980), oy + S(113), "Zurück zur Übersicht", size=max(7, int(S(12))), color="#DAEAF4", anchor="center")
+        counts = self.optimizer_view_data.get("counts", {}) if isinstance(self.optimizer_view_data, dict) else {}
+        metrics = (("⚙", "Einstellungen geprüft", counts.get("checked", "—"), "#199CFF"), ("✓", "Bereits optimal", counts.get("already", "—"), "#1FD47A"), ("●", "Änderungen empfohlen", counts.get("recommended", "—"), "#F18C1B"), ("◌", "Nicht relevant", counts.get("conditional", "—"), "#9BAABA"))
+        for index, (icon, label, value, color) in enumerate(metrics):
+            x = 259 + index * 212
+            self._master_rect(ox + S(x), oy + S(162), ox + S(x + 208), oy + S(235), fill="#071725", outline="#19364A", radius=max(5, int(S(8))))
+            self._master_text(ox + S(x + 28), oy + S(198), icon, size=max(11, int(S(25))), color=color, anchor="center")
+            self._master_text(ox + S(x + 68), oy + S(187), str(value), size=max(11, int(S(23))), color="#F1F6FA", bold=True)
+            self._master_text(ox + S(x + 68), oy + S(211), label, size=max(7, int(S(11))), color="#C0CDD8")
+        self._master_rect(ox + S(242), oy + S(253), ox + S(1075), oy + S(1010), fill="#061522", outline="#18364B", radius=max(7, int(S(10))))
+        self._master_rect(ox + S(259), oy + S(264), ox + S(487), oy + S(298), fill="#04111C", outline="#19364A", radius=max(4, int(S(6))))
+        self._master_text(ox + S(274), oy + S(281), "⌕  Einstellung suchen...", size=max(7, int(S(12))), color="#AAB9C5")
+        self._master_rect(ox + S(498), oy + S(264), ox + S(615), oy + S(298), fill="#071B2C", outline="#19364A", radius=max(4, int(S(6))))
+        self._master_text(ox + S(556), oy + S(281), "Alle Status⌄", size=max(7, int(S(12))), color="#D5E1EA", anchor="center")
+        headers = (("Einstellung", 275), ("Aktuell", 640), ("Empfehlung", 742), ("Status", 872))
+        for text, x in headers:
+            self._master_text(ox + S(x), oy + S(324), text, size=max(7, int(S(12))), color="#D2DEE7")
+        visible = optimizer_visible_models(self.optimizer_view_data, self.optimizer_active_domain, query=self.optimizer_search_var.get(), status_filter=self.optimizer_filter_var.get())
+        if visible:
+            y = 365
+            for model in visible[:12]:
+                self._master_rect(ox + S(258), oy + S(y - 21), ox + S(1061), oy + S(y + 15), fill="#071725", outline="#173044", radius=max(2, int(S(3))))
+                label, semantic = status_presentation(model.get("status"))
+                color = {"ready": "#24D47B", "conditional": "#F1A21E", "unknown": "#99A9B8", "evidence": "#2FA8FF"}[semantic]
+                self._master_text(ox + S(275), oy + S(y - 3), str(model.get("title") or "Unbenannte Einstellung"), size=max(7, int(S(12))), color="#E7EEF5")
+                self._master_text(ox + S(640), oy + S(y - 3), optimizer_table_cell(model.get("current_state"), maximum=18), size=max(7, int(S(11))), color="#CBD7E0")
+                self._master_text(ox + S(742), oy + S(y - 3), optimizer_table_cell(model.get("improve_recommendation"), maximum=18), size=max(7, int(S(11))), color=color)
+                self._master_text(ox + S(872), oy + S(y - 3), optimizer_table_cell(label, maximum=16), size=max(7, int(S(11))), color=color)
+                y += 38
+        else:
+            self._master_text(ox + S(660), oy + S(500), "Keine bestätigten lokalen Einstellungen verfügbar.", size=max(8, int(S(14))), color="#8FA4B5", anchor="center")
+        self._draw_optimizer_master_right(ox, oy, S)
+
+    def _activate_optimizer_master(self, event) -> None:
+        width, height = max(self.optimizer_master_canvas.winfo_width(), 1), max(self.optimizer_master_canvas.winfo_height(), 1)
+        scale = min(width / 1536, height / 1024)
+        x, y = event.x / scale, event.y / scale
+        if self.optimizer_master_mode == "detail":
+            if 242 <= x <= 1075 and 76 <= y <= 145:
+                self.optimizer_master_mode = "overview"
+                self._show_optimizer_overview()
+                self.optimizer_master_canvas.lift()
+                self._draw_optimizer_master()
+            return
+        if 258 <= x <= 1016 and 380 <= y <= 846:
+            column = 0 if x < 641 else 1
+            row = 0 if y < 619 else 1
+            domain = (("SYSTEM_OPTIMIZER", "GRAPHICS_OPTIMIZER"), ("NETWORK_OPTIMIZER", "BIOS_OPTIMIZER"))[row][column]
+            self.optimizer_master_mode = "detail"
+            self._show_optimizer_detail_screen(domain)
+            self.optimizer_master_canvas.lift()
+            self._draw_optimizer_master()
+        elif 484 <= x <= 990 and 296 <= y <= 345:
+            self._run_system_check()
+
 
     def _optimizer_header(self, parent, *, title: str, back_command: Callable[[], None] | None = None):
         header = self.ttk.Frame(parent, style="Content.TFrame")
@@ -2572,18 +2790,13 @@ class AnalyzerShellApp:
     def _build_optimizer_overview_view(self) -> None:
         self.optimizer_header_chip_hosts: list[object] = []
         self._optimizer_header(self.optimizer_overview_view, title="Optimizer")
-        self.ttk.Label(
-            self.optimizer_overview_view,
-            text="READ-ONLY · Lokale Fakten einordnen, Unsicherheit sichtbar lassen, keine automatische Änderung",
-            style="PageKicker.TLabel",
-        ).pack(anchor="w", pady=(0, 12))
         content = self.ttk.Frame(self.optimizer_overview_view, style="Content.TFrame")
         content.pack(fill="both", expand=True)
         left = self.ttk.Frame(content, style="Content.TFrame")
         left.pack(side="left", fill="both", expand=True, padx=(0, 12))
         right_surface = RoundedOptimizerSurface(
             self.tk, self.ttk, content, style="OptimizerDetail.TFrame", fill=_OPTIMIZER_THEME["surface_detail"],
-            padding=18, min_height=560, min_width=330,
+            padding=22, min_height=760, min_width=430,
         )
         right_surface.pack(side="right", fill="y")
         right_surface.canvas.pack_propagate(False)
@@ -2592,7 +2805,7 @@ class AnalyzerShellApp:
 
         hero_surface = RoundedOptimizerSurface(
             self.tk, self.ttk, left, style="OptimizerHero.TFrame", fill=_OPTIMIZER_THEME["surface_hero"],
-            padding=22, min_height=266,
+            padding=26, min_height=286,
         )
         hero_surface.pack(fill="x")
         self.optimizer_overview_hero = hero_surface.body
@@ -2607,14 +2820,14 @@ class AnalyzerShellApp:
             hero_body, width=150, height=150, background=_OPTIMIZER_THEME["surface_hero"],
             highlightthickness=0, borderwidth=0, bd=0,
         )
-        self.optimizer_overview_ring.pack(side="left", padx=(0, 20))
+        self.optimizer_overview_ring.pack(side="left", padx=(0, 26))
         self.optimizer_overview_ring.bind("<Configure>", self._draw_optimizer_overview_ring)
         hero_copy = self.ttk.Frame(hero_body, style="OptimizerHero.TFrame")
         hero_copy.pack(side="left", fill="both", expand=True)
         self.optimizer_overview_summary = self.ttk.Label(
             hero_copy,
             text="Ein System Check liefert lokale Fakten. Fehlende oder nicht sichere Werte bleiben sichtbar als unbekannt oder bedingt.",
-            style="OptimizerHeroMuted.TLabel", wraplength=520, justify="left",
+            style="OptimizerHeroMuted.TLabel", wraplength=560, justify="left",
         )
         self.optimizer_overview_summary.pack(anchor="w", pady=(0, 11))
         metrics = self.ttk.Frame(hero_copy, style="OptimizerHero.TFrame")
@@ -2624,7 +2837,7 @@ class AnalyzerShellApp:
             metrics.columnconfigure(index, weight=1, uniform="optimizer-summary")
             metric_surface = RoundedOptimizerSurface(
                 self.tk, self.ttk, metrics, style="OptimizerMetric.TFrame", fill=_OPTIMIZER_THEME["surface_raised"],
-                padding=(11, 8), min_height=76, radius=9,
+                padding=(12, 10), min_height=82, radius=9,
             )
             metric_surface.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 4, 0 if index == 2 else 4))
             metric = metric_surface.body
@@ -2639,13 +2852,24 @@ class AnalyzerShellApp:
         )
         self.optimizer_overview_run_action.canvas.configure(background=_OPTIMIZER_THEME["surface_hero"])
         self.optimizer_overview_run_action.pack(anchor="w", pady=(12, 0))
-        self.ttk.Label(hero_copy, textvariable=self.system_status, style="OptimizerHeroMuted.TLabel", wraplength=520, justify="left").pack(anchor="w", pady=(7, 0))
+        self.ttk.Label(hero_copy, textvariable=self.system_status, style="OptimizerHeroMuted.TLabel", wraplength=560, justify="left").pack(anchor="w", pady=(7, 0))
 
         self.ttk.Label(left, text="OPTIMIZER BEREICHE", style="PageKicker.TLabel").pack(anchor="w", pady=(18, 7))
         self.optimizer_domain_grid = self.ttk.Frame(left, style="Content.TFrame")
         self.optimizer_domain_grid.pack(fill="x")
         for index in range(2):
             self.optimizer_domain_grid.columnconfigure(index, weight=1, uniform="optimizer-domains")
+        # The final row is part of the approved Overview hierarchy. It stays
+        # explicitly empty until an actual local optimization run exists.
+        last_run_surface = RoundedOptimizerSurface(
+            self.tk, self.ttk, left, style="OptimizerArea.TFrame", fill=_OPTIMIZER_THEME["surface"],
+            padding=(20, 16), min_height=126, radius=12,
+        )
+        last_run_surface.pack(fill="x", pady=(14, 0))
+        last_run = last_run_surface.body
+        self.ttk.Label(last_run, text="LETZTER OPTIMIERUNGSLAUF", style="OptimizerArea.TLabel", foreground=_OPTIMIZER_THEME["accent"], font=(self.display_font, 9, "bold")).pack(anchor="w")
+        self.ttk.Label(last_run, text="Kein abgeschlossener lokaler Optimierungslauf vorhanden.", style="OptimizerAreaMuted.TLabel", wraplength=620, justify="left").pack(anchor="w", pady=(8, 0))
+        self.ttk.Label(last_run, text="Read-only: Ergebnisse und Wiederherstellung werden erst nach belegten lokalen Vorgängen angezeigt.", style="OptimizerAreaMuted.TLabel", wraplength=620, justify="left").pack(anchor="w", pady=(4, 0))
         self._build_optimizer_explanation_panel(right)
         self._render_optimizer_overview()
 
@@ -2656,20 +2880,20 @@ class AnalyzerShellApp:
         self.optimizer_overview_detail_text = self.ttk.Label(
             panel,
             text="Wähle einen Optimizer-Bereich. Die Detailansicht zeigt ausschließlich vorhandene lokale Fakten, Bewertungen und Unsicherheiten.",
-            style="OptimizerDetailMuted.TLabel", wraplength=285, justify="left",
+            style="OptimizerDetailMuted.TLabel", wraplength=380, justify="left",
         )
         self.optimizer_overview_detail_text.pack(anchor="w", pady=(0, 14))
-        self.optimizer_overview_detail_status = self.ttk.Label(panel, text="Keine Bewertung geladen", style="OptimizerDetail.TLabel", foreground=_THEME["cyan"], wraplength=285, justify="left")
+        self.optimizer_overview_detail_status = self.ttk.Label(panel, text="Keine Bewertung geladen", style="OptimizerDetail.TLabel", foreground=_THEME["cyan"], wraplength=380, justify="left")
         self.optimizer_overview_detail_status.pack(anchor="w", pady=(0, 12))
         self.ttk.Label(panel, text="WAS IST DAS?", style="OptimizerDetailMuted.TLabel", foreground=_OPTIMIZER_THEME["accent"], font=(self.ui_font, 7, "bold")).pack(anchor="w", pady=(8, 3))
-        self.ttk.Label(panel, text="Die Übersicht zeigt nur vorhandene lokale Fakten und die vier festen read-only Bereiche. Eine fehlende Bewertung ist keine Empfehlung.", style="OptimizerDetailMuted.TLabel", wraplength=285, justify="left").pack(anchor="w")
+        self.ttk.Label(panel, text="Die Übersicht zeigt nur vorhandene lokale Fakten und die vier festen read-only Bereiche. Eine fehlende Bewertung ist keine Empfehlung.", style="OptimizerDetailMuted.TLabel", wraplength=380, justify="left").pack(anchor="w")
         self.optimizer_overview_open_action = RoundedOptimizerAction(
             self.tk, panel, text="System Optimizer öffnen", primary=True,
             command=lambda: self._show_optimizer_detail_screen(self.optimizer_active_domain), font=(self.ui_font, 9, "bold"),
         )
         self.optimizer_overview_open_action.canvas.configure(background=_OPTIMIZER_THEME["surface_detail"])
         self.optimizer_overview_open_action.pack(fill="x")
-        self.ttk.Label(panel, text="Technische Evidenz und Provenance bleiben erst in den Detailinformationen einer Einstellung sichtbar.", style="OptimizerDetailMuted.TLabel", wraplength=285, justify="left").pack(anchor="w", pady=(18, 0))
+        self.ttk.Label(panel, text="Technische Evidenz und Provenance bleiben erst in den Detailinformationen einer Einstellung sichtbar.", style="OptimizerDetailMuted.TLabel", wraplength=380, justify="left").pack(anchor="w", pady=(18, 0))
 
     def _build_optimizer_detail_view(self) -> None:
         self._optimizer_header(self.optimizer_detail_view, title="Optimizer", back_command=self._show_optimizer_overview)
@@ -2713,7 +2937,7 @@ class AnalyzerShellApp:
         table_card = table_surface.body
         detail_surface = RoundedOptimizerSurface(
             self.tk, self.ttk, content, style="OptimizerDetail.TFrame", fill=_OPTIMIZER_THEME["surface_detail"],
-            padding=18, min_height=420, min_width=350,
+            padding=22, min_height=620, min_width=435,
         )
         detail_surface.pack(side="right", fill="y")
         detail_surface.canvas.pack_propagate(False)
@@ -2770,16 +2994,16 @@ class AnalyzerShellApp:
         self.optimizer_detail_tree.pack(fill="both", expand=True)
         self.optimizer_detail_tree.bind("<<TreeviewSelect>>", self._select_optimizer_setting)
         self.ttk.Label(detail, text="DETAILS & ERKLÄRUNG", style="OptimizerDetail.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
-        self.optimizer_detail_title = self.ttk.Label(detail, text="Keine Einstellung ausgewählt", style="OptimizerDetail.TLabel", font=(self.ui_font, 12, "bold"), wraplength=310, justify="left")
+        self.optimizer_detail_title = self.ttk.Label(detail, text="Keine Einstellung ausgewählt", style="OptimizerDetail.TLabel", font=(self.ui_font, 12, "bold"), wraplength=380, justify="left")
         self.optimizer_detail_title.pack(anchor="w", pady=(16, 5))
-        self.optimizer_detail_state = self.ttk.Label(detail, text="Aktueller Zustand: —", style="OptimizerDetailMuted.TLabel", wraplength=310, justify="left")
+        self.optimizer_detail_state = self.ttk.Label(detail, text="Aktueller Zustand: —", style="OptimizerDetailMuted.TLabel", wraplength=380, justify="left")
         self.optimizer_detail_state.pack(anchor="w")
-        self.optimizer_detail_status = self.ttk.Label(detail, text="Status: —", style="OptimizerDetail.TLabel", foreground=_OPTIMIZER_THEME["accent"], wraplength=310, justify="left")
+        self.optimizer_detail_status = self.ttk.Label(detail, text="Status: —", style="OptimizerDetail.TLabel", foreground=_OPTIMIZER_THEME["accent"], wraplength=380, justify="left")
         self.optimizer_detail_status.pack(anchor="w", pady=(4, 12))
         self.optimizer_detail_sections: dict[str, object] = {}
         for key, heading in (("what", "WAS IST DAS?"), ("why", "WARUM FÜR DIESES SYSTEM?"), ("effect", "MÖGLICHER EFFEKT"), ("evidence", "EVIDENZ & GÜLTIGKEIT"), ("change", "ÄNDERUNG & WIEDERHERSTELLUNG")):
             self.ttk.Label(detail, text=heading, style="OptimizerDetailMuted.TLabel", foreground=_OPTIMIZER_THEME["accent"], font=(self.ui_font, 7, "bold")).pack(anchor="w", pady=(8, 2))
-            value = self.ttk.Label(detail, text="—", style="OptimizerDetailMuted.TLabel", wraplength=310, justify="left")
+            value = self.ttk.Label(detail, text="—", style="OptimizerDetailMuted.TLabel", wraplength=380, justify="left")
             value.pack(anchor="w")
             self.optimizer_detail_sections[key] = value
         self.optimizer_detail_technical_action = RoundedOptimizerAction(
@@ -2788,7 +3012,7 @@ class AnalyzerShellApp:
         )
         self.optimizer_detail_technical_action.canvas.configure(background=_OPTIMIZER_THEME["surface_detail"])
         self.optimizer_detail_technical_action.pack(fill="x", pady=(10, 0))
-        self.optimizer_detail_technical_text = self.ttk.Label(detail, text="", style="OptimizerDetailMuted.TLabel", wraplength=310, justify="left")
+        self.optimizer_detail_technical_text = self.ttk.Label(detail, text="", style="OptimizerDetailMuted.TLabel", wraplength=380, justify="left")
         self.optimizer_detail_technical_visible = False
 
     def _render_optimizer_hardware_chips(self) -> None:
@@ -2815,6 +3039,10 @@ class AnalyzerShellApp:
         self.optimizer_detail_view.pack_forget()
         self.optimizer_overview_view.pack(fill="both", expand=True)
         self._render_optimizer_overview(self.optimizer_view_data)
+        if hasattr(self, "optimizer_master_canvas") and self.optimizer_master_canvas.winfo_ismapped():
+            self.optimizer_master_mode = "overview"
+            self.optimizer_master_canvas.lift()
+            self._draw_optimizer_master()
         if self.system_canvas is not None:
             self.root.after_idle(lambda: self.system_canvas.yview_moveto(0.0))
 
@@ -2825,6 +3053,10 @@ class AnalyzerShellApp:
         selected = next(item for item in optimizer_domain_overview(self.optimizer_view_data) if item["domain"] == domain)
         self.optimizer_detail_screen_title.configure(text=str(selected["title"]).upper())
         self._render_optimizer_detail_table()
+        if hasattr(self, "optimizer_master_canvas") and self.optimizer_master_canvas.winfo_ismapped():
+            self.optimizer_master_mode = "detail"
+            self.optimizer_master_canvas.lift()
+            self._draw_optimizer_master()
         if self.system_canvas is not None:
             self.root.after_idle(lambda: self.system_canvas.yview_moveto(0.0))
 
@@ -2860,9 +3092,9 @@ class AnalyzerShellApp:
             card = card_surface.body
             label_style = "OptimizerAreaActive.TLabel" if active else "OptimizerArea.TLabel"
             muted_style = "OptimizerAreaActiveMuted.TLabel" if active else "OptimizerAreaMuted.TLabel"
-            # Area identity is neutral. Blue marks the active/focused route;
-            # green/yellow/red remain reserved for actual recommendation state.
-            accent = _OPTIMIZER_THEME["accent"] if active else _OPTIMIZER_THEME["secondary"]
+            # The approved MASTER gives each fixed area a compact identity
+            # accent without changing any evidence-derived semantic status.
+            accent = _OPTIMIZER_DOMAIN_ACCENTS[str(item["domain"])]
             self.ttk.Label(card, text="●", style=label_style, foreground=accent, font=(self.display_font, 17, "bold")).pack(anchor="w")
             self.ttk.Label(card, text="AKTIV" if active else "OPTIMIZER BEREICH", style=muted_style, foreground=accent, font=(self.ui_font, 7, "bold")).pack(anchor="w", pady=(2, 0))
             self.ttk.Label(card, text=item["title"], style=label_style, font=(self.display_font, 10, "bold")).pack(anchor="w", pady=(6, 3))
@@ -3718,8 +3950,8 @@ class AnalyzerShellApp:
         self.dashboard_system_scan_attention.set(view["attention"])
         self.dashboard_system_scan_attention_label.pack(before=self.dashboard_system_scan_details_button, anchor="w", pady=(1, 4))
         self.optimizer_hardware_values = {
-            "CPU": str(entries["cpu"][1]), "GPU": str(entries["gpu"][1]),
-            "RAM": str(entries["memory"][1]), "DISPLAY": str(entries["display"][1]),
+            "OS": str(entries["windows"][1]), "CPU": str(entries["cpu"][1]),
+            "RAM": str(entries["memory"][1]), "GPU": str(entries["gpu"][1]),
         }
         self._render_optimizer_hardware_chips()
         self._render_system_check_results(payload)

@@ -37,6 +37,25 @@ def test_system_profile_is_versioned_read_only_and_preserves_unknowns() -> None:
     assert profile["field_observation"]["cs2.configuration"] == "NOT_AVAILABLE"
 
 
+def test_system_profile_projects_collector_bios_facts_without_inventing_values() -> None:
+    facts = _facts()
+    facts["bios"] = {}
+    facts["motherboard"] = {
+        "manufacturer": "Vendor",
+        "product": "Board",
+        "bios_version": "F2",
+        "bios_date": "2026-02-03",
+    }
+
+    profile = system_profile_from_facts(facts)
+
+    assert profile["bios"] == {
+        "manufacturer": "Vendor",
+        "version": "F2",
+        "date": "2026-02-03",
+    }
+
+
 def test_fixture_rules_cover_four_domains_and_are_not_real_rules() -> None:
     rules = fixture_rules()
     assert {rule.domain for rule in rules} == set(OptimizerDomain)
