@@ -1,5 +1,11 @@
 # V1 Work Plan
 
+> **Historical consolidation plan.** This document records the earlier
+> `dev/v1-foundation` migration intent. It is not the current capability
+> inventory and does not authorize an Apply/Restore path. The current local
+> architecture and roadmap boundary are in
+> [`PRODUCT_ROADMAP_ALIGNMENT.md`](PRODUCT_ROADMAP_ALIGNMENT.md).
+
 Branch: `dev/v1-foundation`
 
 ## Phase 1 — Inventory
@@ -29,7 +35,8 @@ Goal: one reproducible local V1 build that can start cleanly and expose the firs
 - normalize configuration
 - add tests for critical paths
 - document setup and dependencies
-- verify backup/restore behavior where system changes are involved
+- future only: verify backup/restore behavior before any separately approved
+  system-change capability
 
 ## Exit condition for V1 foundation
 

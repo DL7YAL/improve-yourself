@@ -4,14 +4,15 @@ Private development repository for a CS2-focused system analysis, optimization, 
 
 ## Status
 
-**V1 foundation — in development**
+**Local V1 foundation — in development; replay core uses `iy.replay/v2`.**
 
 The current priority is to consolidate the existing prototypes into one clean, reliable V1 codebase. Older local builds remain reference material and are not treated as active branches.
 
 ## V1 modules
 
 - `system_check` — hardware, drivers, Windows and anti-cheat readiness checks
-- `optimizer` — curated, reversible performance-oriented configuration
+- `optimizer` — current read-only System Check evidence and planning input;
+  future configuration/restore work remains separate
 - `demo_analyzer` — CS2 demo parsing and scene analysis
 - `tactical_replay` — visual reconstruction of relevant scenes
 
@@ -21,7 +22,8 @@ The current priority is to consolidate the existing prototypes into one clean, r
 - Clear recommendations instead of data overload
 - Few deliberate user choices
 - No unnecessary overclocking or risky tweaks
-- Changes should be reversible whenever possible
+- Future system changes must be reversible whenever possible; no automatic
+  system change is implemented in the current local core
 - Analysis before raw statistics
 - Tactical Replay uses its own analysis-oriented sound language
 - V2/V3 ideas are documented, not silently pulled into V1
@@ -54,16 +56,21 @@ improve-yourself/
 - Do not commit generated reports, demos, caches, virtual environments, secrets or machine-specific files
 
 See [`docs/BRANCHING.md`](docs/BRANCHING.md) for the branch policy and [`docs/ROADMAP.md`](docs/ROADMAP.md) for the product roadmap.
+The current-versus-future boundary is recorded in
+[`docs/PRODUCT_ROADMAP_ALIGNMENT.md`](docs/PRODUCT_ROADMAP_ALIGNMENT.md).
 
 ## Current next step
 
 The saved prototypes are inventoried in
 [`docs/PROTOTYPE_INVENTORY.md`](docs/PROTOTYPE_INVENTORY.md). The integrated
-[`iy-workflow`](docs/V1_LOCAL_WORKFLOW.md) now produces a read-only System
-Check, demo analysis, bounded replay, local viewer and review manifest. The next
-supported local start is `tools/dev/Start-V1Review.ps1`; it also provides the
-reduced review surface and source-bound local review-state persistence.
-Optimizer apply/restore remains a separate later safety boundary.
+[`iy-workflow`](docs/V1_LOCAL_WORKFLOW.md) remains a separate
+legacy-compatible local V1 workflow with its own bounded replay, viewer and
+review manifest. The canonical V2 Analyzer/Replay flow is documented in
+[`docs/PRODUCT_ROADMAP_ALIGNMENT.md`](docs/PRODUCT_ROADMAP_ALIGNMENT.md).
+`tools/dev/Start-V1Review.ps1` remains the supported start for the isolated V1
+workflow and its source-bound local review-state persistence.
+Optimizer Apply/Restore is not implemented; it remains a separate future safety
+boundary. The current local Optimizer path is read-only evidence only.
 
 ## Experimental desktop build
 

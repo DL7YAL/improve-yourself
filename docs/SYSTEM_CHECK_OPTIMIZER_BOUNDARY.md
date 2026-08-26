@@ -12,7 +12,11 @@ explicit iy-system-check
                                                    v
                                       future Optimizer planning only
 
-explicit iy-analyze --> iy.analysis/v1 --> iy.replay/v1 --> 2D / later 3D review
+explicit iy-demo-workflow --> iy.analysis/v1 --> iy.replay/v2
+                                               --> ReplayStore / ReplayController
+                                               --> 2D / 3D / review consumers
+
+separate legacy-compatible iy-workflow --> iy.replay/v1 --> its own local viewer/review artifacts
 ```
 
 `iy-optimizer-input` accepts only an explicit `iy.system_check/v1` document
@@ -26,6 +30,13 @@ page contains only demo analysis and replay evidence unless a caller explicitly
 uses the reusable review renderer with a System Check document. This preserves
 existing combined-review capability for an explicitly selected artifact while
 removing it as an automatic product dependency.
+
+`iy-workflow` continues to document the explicit legacy-compatible
+`iy.replay/v1` workflow. It is not an active fallback for the canonical
+`iy.replay/v2` path and does not authorize a second replay store/controller.
+Other V1 replay references are historical/compatibility context. For the
+broader current-versus-future distinction, see
+[`PRODUCT_ROADMAP_ALIGNMENT.md`](PRODUCT_ROADMAP_ALIGNMENT.md).
 
 ## Explicit local use
 
