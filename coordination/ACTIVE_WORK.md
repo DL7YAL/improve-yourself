@@ -6,8 +6,8 @@ GitHub `main` is the canonical source of truth.
 
 ## Codex
 
-Task: product-roadmap-alignment
-Branch: codex/product-roadmap-alignment
+Task: replay-v1-retirement-assessment
+Branch: codex/replay-v1-retirement-assessment
 Base HEAD: verify current `main` immediately before branch creation
 Owned files:
 - docs/**
@@ -18,15 +18,15 @@ Handoff required: NO
 
 ## Azure
 
-Task: harden-iac-ci-phase1
-Branch: azure/harden-iac-ci-phase1
+Task: harden-iac-ci-phase2-design
+Branch: azure/harden-iac-ci-phase2-design
 Base HEAD: verify current `main` immediately before branch creation
 Owned files:
 - azure/**
 - config/azure_config.py
 - services/azure_*.py
 - requirements-azure.txt
-- .env.example (only if required by the approved Azure task)
+- coordination/** (only Azure-specific coordination notes if explicitly needed)
 Status: READY
 Depends on Codex: NO
 Handoff required: NO
@@ -44,4 +44,4 @@ Handoff required: NO
 - Codex must not modify Azure-owned files during this task.
 - Azure must not modify protected local product-core files during this task.
 - Region/data-residency choice remains unresolved; do not switch regions without explicit authorization.
-- Azure Phase 1 must not deploy or modify live Azure resources. Repo-only changes, validation, and dry-run/what-if preparation are allowed when explicitly authorized.
+- Azure Phase 2 design must remain repo-only. No live deployment or live Azure resource modification is authorized.
