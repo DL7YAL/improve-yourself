@@ -28,6 +28,7 @@ iy-workflow = "improve_yourself.workflow:main"
 iy-review-server = "improve_yourself.review_server:main"
 iy-analysis-flow = "improve_yourself.analysis_flow:main"
 iy-demo-workflow = "improve_yourself.demo_workflow:main"
+iy-v2-local-review = "improve_yourself.v2_local_review:main"
 iy-analyzer-shell = "improve_yourself.analyzer_shell:main"
 
 [tool.pytest.ini_options]
