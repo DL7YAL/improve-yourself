@@ -1,5 +1,8 @@
 import json
 from pathlib import Path
+from threading import Thread
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 import pytest
 
@@ -29,11 +32,11 @@ def test_load_requires_intact_hash_bound_v2_workflow(tmp_path: Path, monkeypatch
 
 def test_load_fails_closed_for_non_review_or_unvalidated_workflow(tmp_path: Path, monkeypatch) -> None:
     path = _manifest(tmp_path / "demo-workflow.json", status="READY_FOR_SELECTION")
-    with pytest.raises(ValueError, match="hash-bound"):
+    with pytest.raises(ValueError, match="READY_FOR_REVIEW"):
         review.load_v2_review_workflow(path)
     path = _manifest(tmp_path / "other.json")
     monkeypatch.setattr(review, "_validate_reusable_workflow", lambda *_args: False)
-    with pytest.raises(ValueError, match="hash-bound"):
+    with pytest.raises(ValueError, match="integrity validation failed"):
         review.load_v2_review_workflow(path)
 
 
@@ -53,3 +56,24 @@ def test_prepare_uses_existing_v2_tactical_export_only_after_validation(tmp_path
     assert calls == [path]
     assert root == tmp_path
     assert "tactical-replay.html" in allowed
+
+
+def test_loopback_server_serves_only_registered_artifacts(tmp_path: Path) -> None:
+    (tmp_path / "review.html").write_text("<h1>review</h1>", encoding="utf-8")
+    (tmp_path / "private.txt").write_text("not served", encoding="utf-8")
+    server = review.V2LocalReviewServer(("127.0.0.1", 0), tmp_path, {"review.html"})
+    worker = Thread(target=server.serve_forever, daemon=True)
+    worker.start()
+    root = f"http://127.0.0.1:{server.server_port}"
+    try:
+        assert urlopen(f"{root}/review.html").read() == b"<h1>review</h1>"
+        with pytest.raises(HTTPError) as missing:
+            urlopen(f"{root}/private.txt")
+        assert missing.value.code == 404
+        with pytest.raises(HTTPError) as post:
+            urlopen(Request(f"{root}/review.html", data=b"{}", method="POST"))
+        assert post.value.code == 404
+    finally:
+        server.shutdown()
+        server.server_close()
+        worker.join(timeout=2)

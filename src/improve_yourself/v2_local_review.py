@@ -54,14 +54,14 @@ def load_v2_review_workflow(manifest_path: Path) -> tuple[Path, dict[str, Any], 
     manifest_path = manifest_path.resolve()
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     source_hash = manifest.get("source_sha256")
-    if (
-        manifest.get("schema") != "iy.demo_workflow/v1"
-        or manifest.get("status") != "READY_FOR_REVIEW"
-        or not isinstance(source_hash, str)
-        or len(source_hash) != 64
-        or not _validate_reusable_workflow(manifest_path, source_hash)
-    ):
-        raise ValueError("expected an intact, hash-bound READY_FOR_REVIEW V2 workflow")
+    if manifest.get("schema") != "iy.demo_workflow/v1":
+        raise ValueError("V2 review requires an iy.demo_workflow/v1 manifest")
+    if manifest.get("status") != "READY_FOR_REVIEW":
+        raise ValueError("V2 review requires a workflow completed through READY_FOR_REVIEW")
+    if not isinstance(source_hash, str) or len(source_hash) != 64:
+        raise ValueError("V2 review requires a 64-character source hash")
+    if not _validate_reusable_workflow(manifest_path, source_hash):
+        raise ValueError("V2 review rejected the workflow: source-bound artifacts or Replay V2 integrity validation failed")
     root = manifest_path.parent.resolve()
     artifacts = manifest.get("artifacts")
     if not isinstance(artifacts, dict):
