@@ -1656,3 +1656,23 @@ MODEL_PROFILE: terra
 MODEL_REASON: Konfliktauflösung an einem kanonischen Datenvertrag, vollständige Regression und privacy-sensible Branch-Konsolidierung.
 COMPUTER_USE: no
 COMMIT/PR: `b07c5a5 merge: integrate main viewer semantics into v2 foundation`, gepusht nach `origin/codex/integrate-main-dev-v1`.
+
+# Handoff 2026-08-26 — V2 integration consolidation / PR #7 final technical check
+
+STATUS: READY_FOR_TRISTAN_REVIEW
+TASK: Den bestehenden Integrationsbranch ohne neue Produktfunktion gegen den aktuellen `origin/main`-Stand konsolidieren und technisch PR-fähig prüfen. Kein Blind-Merge und keine Änderung an `main`.
+BRANCH / REMOTES: `codex/integrate-main-dev-v1` auf `af57141c3172428c8ae224bbf44f2b38bfa959ae`; geprüft gegen `origin/main` `f0e07713f573272a5d7847b7af467712588eb9ed`. PR #7 bleibt offen und ist nicht als Release oder Mergefreigabe zu lesen.
+MAIN REVIEW: Nach PR #8 liegen 25 Main-only-Commits vor (einschließlich der beiden PR-#8-Commits). Die relevanten lokalen Produktsemantiken sind bereits schmal und V2-konform enthalten: Viewer-Navigation/Tempo/evidenzgebundene Death-Visibility, AWPy-Rundenqualität, read-only Optimizer-Input und getrennte Review-Präsentation. Azure-/Deployment-/Storage-/KeyVault-/DB-Arbeit sowie der Excel-Report bleiben bewusst separat; sie erzeugen keine Abhängigkeit im lokalen Analyzer-/Replay-Kern. Es wurde kein weiterer Main-Merge durchgeführt.
+ARCHITECTURE CHECK: Es gibt genau eine `AnalyzerDataHub`-Definition und eine Awpy-Importgrenze. Der aktive Shell-/Demo-Workflow bleibt auf validiertem `iy.replay/v2` plus `ReplayStore`/`ReplayController`; der vorhandene V1-Exportpfad ist nicht an die V2-Shell gebunden und wurde nicht gelöscht. `AnalyzerCore` liefert Match Data an den Hub; Tactical und Review konsumieren Hub-Projektionen. System Check bleibt eine getrennte read-only Geschwisterquelle. `optimizer_input` ist nur eine validierte Sicht auf `profile_from_system_check()` und kennzeichnet ausdrücklich, dass Demo-/Replay-Daten nicht enthalten sind. Im geschützten lokalen Kern gibt es keine Azure-Importabhängigkeit.
+CHANGED: Ausschließlich `coordination/CURRENT.md` auf den erreichten Integrations-/PR-Status aktualisiert. `docs/AGENT_BASE.md` bleibt unverändert, weil sein Abschnitt ausdrücklich ein historischer Snapshot vom 2026-08-21 ist; keine widersprüchliche operative Quelle.
+VERIFIED:
+- vollständige Test-Suite: **227/227 PASS** (`pytest -p no:cacheprovider` in isolierter Python-Umgebung);
+- `compileall` für `src` und `tests` mit Bytecode-Ziel außerhalb des Repositories: PASS;
+- `git diff --check`: PASS;
+- Secret-/Token-/Private-Key-Scan: 0 Treffer; Privacy-Scan außerhalb absichtlicher Testfixtures: 0 private Pfade; Artefakt-Scan: 0 getrackte Build-, Cache-, Demo-, Archiv- oder Datenbankartefakte.
+OPEN: Nur die menschliche finale PR-#7-Abnahme bzw. ein präziser Befund. Kein Architekturkonflikt und kein technischer Blocker aus diesem Konsolidierungsgate.
+NEXT: Ausschließlich finalen PR-Check durchführen. Kein Merge nach `main`, kein Release und keine neue Produkt- oder Azure-Arbeit ohne ausdrückliche Freigabe.
+MODEL_PROFILE: terra
+MODEL_REASON: Schmale, nachweisbare Integrationskonsolidierung ohne Erweiterung der Produktarchitektur.
+COMPUTER_USE: no
+COMMIT/PR: Dokumentationscommit folgt auf `codex/integrate-main-dev-v1`; PR #7 bleibt offen.
