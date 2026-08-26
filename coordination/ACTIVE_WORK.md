@@ -6,20 +6,27 @@ GitHub `main` is the canonical source of truth.
 
 ## Codex
 
-Task: —
-Branch: —
-Base HEAD: —
-Owned files: —
+Task: product-roadmap-alignment
+Branch: codex/product-roadmap-alignment
+Base HEAD: 9c5e6ed10ce721876d67b739a9e06d3e3e2329f6
+Owned files:
+- docs/**
+- coordination/** (except files explicitly owned by Azure during this task)
 Status: READY
 Depends on Azure: NO
 Handoff required: NO
 
 ## Azure
 
-Task: —
-Branch: —
-Base HEAD: —
-Owned files: —
+Task: harden-iac-ci-phase1
+Branch: azure/harden-iac-ci-phase1
+Base HEAD: 9c5e6ed10ce721876d67b739a9e06d3e3e2329f6
+Owned files:
+- azure/**
+- config/azure_config.py
+- services/azure_*.py
+- requirements-azure.txt
+- .env.example (only if required by the approved Azure task)
 Status: READY
 Depends on Codex: NO
 Handoff required: NO
@@ -33,3 +40,7 @@ Handoff required: NO
 - If file ownership overlaps, STOP and coordinate before continuing.
 - Use status values: `READY`, `IN PROGRESS`, `BLOCKED`, `PASS`.
 - Keep entries short and current. This file tracks active work, not project history.
+- Codex must not modify Azure-owned files during this task.
+- Azure must not modify protected local product-core files during this task.
+- Region/data-residency choice remains unresolved; do not switch regions without explicit authorization.
+- Azure Phase 1 must not deploy or modify live Azure resources. Repo-only changes, validation, and dry-run/what-if preparation are allowed when explicitly authorized.
