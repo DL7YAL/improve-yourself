@@ -6,8 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from awpy import Demo
-
+from .analyzer_core import AnalysisRequestV1, AnalyzerCore
 from .importer import materialize_demo
 from .validation import validate_analysis_payload
 
@@ -102,9 +101,10 @@ def export_replay(source: Path, analysis_path: Path, output: Path, max_frames: i
     if digest != analysis.get("source_sha256"):
         raise ValueError("demo and analysis source hashes differ")
     with materialize_demo(source.resolve(), max_bytes=2_000_000_000) as demo_path:
-        demo = Demo(str(demo_path), verbose=False)
-        demo.parse(player_props=["pitch", "yaw"])
-        payload = build_replay_payload(analysis, _records(demo.ticks), max_frames=max_frames)
+        prepared = AnalyzerCore().prepare(
+            AnalysisRequestV1.create(source), parser_path=demo_path, source_sha256=digest, source_name=source.name
+        )
+        payload = build_replay_payload(analysis, _records(prepared.parsed_demo.ticks), max_frames=max_frames)
     output.mkdir(parents=True, exist_ok=True)
     destination = output / f"{digest[:12]}.replay.json"
     destination.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

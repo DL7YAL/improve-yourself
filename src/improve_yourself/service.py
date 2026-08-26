@@ -3,8 +3,9 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from typing import Any
 
-from .awpy_adapter import AwpyAdapter
+from .analyzer_core import AnalysisRequestV1, AnalyzerCore, CoreParseResult
 from .domain import round_multikills
 from .importer import materialize_demo
 from .model import AnalysisResult
@@ -18,50 +19,30 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def build_analysis_user_view(kills: list, multikills: list, quality: object) -> dict:
-    quality_status = getattr(quality, "status", "not_assessable")
-    missing = list(getattr(quality, "missing_channels", []))
-    if quality_status == "ok":
-        assessment = {
-            "status": "OK", "priority": "informativ",
-            "message": "Die verfügbaren Ereignisdaten reichen für diese erste Einordnung aus.",
-            "action": "Szenen im Tactical Replay mit eigenem Spielkontext prüfen.",
-        }
-    elif quality_status == "limited":
-        assessment = {
-            "status": "Hinweis", "priority": "wichtig",
-            "message": "Ein Teil der Ereignisdaten fehlt; einzelne Fragen bleiben offen.",
-            "action": "Szenen prüfen, aber fehlende Quellen nicht hineininterpretieren.",
-        }
-    else:
-        assessment = {
-            "status": "Nicht prüfbar / unbekannt", "priority": "wichtig",
-            "message": "Zentrale Daten fehlen; eine belastbare Szenenbewertung ist eingeschränkt.",
-            "action": "Eine andere Demo oder vollständiger verfügbare Daten verwenden. Keine Aussage erzwingen.",
-        }
-    limitations = [
-        "Schritt-Ereignisse fehlen; soundbezogene Hinweise sind nicht bewertbar." if channel == "footsteps"
-        else f"Der Datenkanal „{channel}“ fehlt und wird nicht bewertet."
-        for channel in missing
-    ]
-    return {
-        "facts": [
-            f"{len(kills)} Kills wurden aus der Demo gelesen.",
-            f"{len(multikills)} Multi-Kill-Szenen wurden als Review-Einstieg gefunden.",
-        ],
-        "indicators": [
-            "Szenen sind Prüfhinweise und kein Cheat-Nachweis.",
-        ],
-        "limitations": limitations or ["Keine relevante Datenlücke gemeldet."],
-        "assessment": assessment,
-    }
-
-
-def analyze(source: Path, output_directory: Path, max_bytes: int = 2_000_000_000) -> Path:
+def analyze(
+    source: Path,
+    output_directory: Path,
+    max_bytes: int = 2_000_000_000,
+    *,
+    source_sha256: str | None = None,
+    parsed_demo: Any | None = None,
+    core_result: CoreParseResult | None = None,
+) -> Path:
+    """Write the existing iy.analysis/v1 artifact from a canonical source."""
     source = source.resolve()
-    checksum = _sha256(source)
-    with materialize_demo(source, max_bytes=max_bytes) as demo_path:
-        header, kills, channels, quality = AwpyAdapter().parse(str(demo_path))
+    checksum = source_sha256 or _sha256(source)
+    if core_result is not None:
+        header, kills, channels, quality = core_result.analysis_input
+    elif parsed_demo is None:
+        with materialize_demo(source, max_bytes=max_bytes) as demo_path:
+            prepared = AnalyzerCore().prepare(
+                AnalysisRequestV1.create(source), parser_path=demo_path, source_sha256=checksum, source_name=source.name
+            )
+            header, kills, channels, quality = prepared.analysis_input
+    else:
+        # Compatibility for the former private call path.  New product code
+        # passes ``core_result`` so the Core remains the Awpy boundary.
+        raise ValueError("parsed_demo is internal; pass a CoreParseResult")
     tickrate_value = header.get("tick_rate", header.get("tickrate"))
     result = AnalysisResult(
         source_name=source.name,
@@ -73,9 +54,7 @@ def analyze(source: Path, output_directory: Path, max_bytes: int = 2_000_000_000
         data_quality=quality,
         available_channels=sorted(channels),
     )
-    payload = result.to_dict()
-    payload["user_view"] = build_analysis_user_view(kills, result.multikills, quality)
     output_directory.mkdir(parents=True, exist_ok=True)
     destination = output_directory / f"{checksum[:12]}.analysis.json"
-    destination.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    destination.write_text(json.dumps(result.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
     return destination

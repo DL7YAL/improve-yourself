@@ -2,6 +2,11 @@
 
 import unittest
 from unittest.mock import Mock, patch, MagicMock
+
+import pytest
+
+pytest.importorskip("azure.identity", reason="Azure infrastructure tests require the explicit optional Azure SDK extras")
+
 from config.azure_config import AzureConfig, AzureServices
 from services.azure_storage import AzureStorageService
 from services.azure_keyvault import AzureKeyVaultService
@@ -41,14 +46,14 @@ class TestAzureStorageService(unittest.TestCase):
         mock_container = Mock()
         mock_blob = Mock()
         mock_blob.url = 'https://example.blob.core.windows.net/container/blob.txt'
-        
+
         self.mock_blob_client.get_container_client.return_value = mock_container
         mock_container.upload_blob.return_value = mock_blob
-        
+
         # Test upload
         data = b'test data'
         url = self.storage_service.upload_blob('test-container', 'test.txt', data)
-        
+
         self.assertEqual(url, 'https://example.blob.core.windows.net/container/blob.txt')
         mock_container.upload_blob.assert_called_once()
 
@@ -57,12 +62,12 @@ class TestAzureStorageService(unittest.TestCase):
         mock_container = Mock()
         mock_blob1 = Mock(name='blob1.txt')
         mock_blob2 = Mock(name='blob2.txt')
-        
+
         self.mock_blob_client.get_container_client.return_value = mock_container
         mock_container.list_blobs.return_value = [mock_blob1, mock_blob2]
-        
+
         blobs = self.storage_service.list_blobs('test-container')
-        
+
         self.assertEqual(len(blobs), 2)
 
 
@@ -79,9 +84,9 @@ class TestAzureKeyVaultService(unittest.TestCase):
     def test_set_secret(self):
         """Test setting a secret."""
         self.mock_keyvault_client.set_secret.return_value = Mock()
-        
+
         self.keyvault_service.set_secret('test-secret', 'secret-value')
-        
+
         self.mock_keyvault_client.set_secret.assert_called_once_with(
             'test-secret', 'secret-value', tags=None
         )
@@ -91,9 +96,9 @@ class TestAzureKeyVaultService(unittest.TestCase):
         mock_secret = Mock()
         mock_secret.value = 'secret-value'
         self.mock_keyvault_client.get_secret.return_value = mock_secret
-        
+
         value = self.keyvault_service.get_secret('test-secret')
-        
+
         self.assertEqual(value, 'secret-value')
         self.mock_keyvault_client.get_secret.assert_called_once_with('test-secret')
 

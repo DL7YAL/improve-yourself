@@ -19,17 +19,17 @@ class AzureConfig:
         self.client_id = os.getenv('AZURE_CLIENT_ID')
         self.client_secret = os.getenv('AZURE_CLIENT_SECRET')
         self.resource_group = os.getenv('AZURE_RESOURCE_GROUP')
-        
+
         # Service endpoints
         self.keyvault_url = os.getenv('AZURE_KEYVAULT_URL')
         self.storage_account_url = os.getenv('AZURE_STORAGE_ACCOUNT_URL')
         self.cosmos_endpoint = os.getenv('AZURE_COSMOS_ENDPOINT')
         self.sql_server = os.getenv('AZURE_SQL_SERVER')
         self.sql_database = os.getenv('AZURE_SQL_DATABASE')
-        
+
         # Monitoring
         self.app_insights_connection_string = os.getenv('APPLICATIONINSIGHTS_CONNECTION_STRING')
-        
+
         # Initialize credentials
         self.credential = self._get_credential()
 

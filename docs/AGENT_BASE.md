@@ -4,6 +4,53 @@
 
 Dieses Repository ist die gemeinsame Source of Truth für alle Arbeitsumgebungen des Projekts. Roadrunner of Lightning Detonation Aurel (kurz: Aurel) und Codex / The Beast dürfen in getrennten Sessions und Tools arbeiten, müssen aber Entscheidungen, Übergaben und relevante Arbeitsstände hier synchronisieren.
 
+## Synchronisierter Basisstand — 2026-08-21
+
+Dieser Abschnitt ist der gemeinsame Einstiegspunkt für den aktuell gepushten Arbeitsstand. Die operative Detailwahrheit bleibt `coordination/CURRENT.md`; vollständige technische Verlaufsnachweise stehen in `coordination/agents/codex.md`. Der Stand liegt auf `dev/v1-foundation`; `main` wurde nicht verändert und bleibt einer ausdrücklichen Review-/Merge-Entscheidung vorbehalten.
+
+### Versionierter Stand und Qualitätsgate
+
+- Branch: `dev/v1-foundation`
+- Letzter vor dieser Basissynchronisierung gepushter Implementierungscommit: `4d4c161cf3dc10a6202253a7ee3ebf49fe31ecf3`
+- Reproduzierbares Gate: 119/119 Tests, Abhängigkeitsprüfung, acht öffentliche CLI-Smokes, Python-Compile und `git diff --check` PASS.
+- Öffentliche Einstiege: `iy-analyze`, `iy-system-check`, `iy-workflow`, `iy-replay-viewer`, `iy-review-server`, `iy-analysis-flow`, `iy-demo-workflow`, `iy-analyzer-shell`.
+- Generierte Demo-, Replay-, Ergebnis- und lokale Runtime-Dateien bleiben ignoriert und werden nicht als personenbezogene oder maschinenspezifische Repository-Artefakte gepusht.
+
+### Analyzer und echter End-to-End-Nachweis
+
+- Die einzige Replay-Wahrheit ist `iy.replay/v2`. Analyzer, Analysefluss, 2D Tactical Replay und 3D/POV dürfen Demo-Zustand nicht unabhängig neu interpretieren.
+- Verbindlicher Fluss: Demo -> Awpy-Parser -> benannte Teams/Spieler -> Full Demo oder Player Select -> neutrales Analyseprofil -> objektive Regelkombinationen -> zusammengeführte Szenen -> Timeline/JSON/HTML -> CS2-Review-Tick.
+- V1-Szenenanker sind objektiv belegbare Kills, Headshots, Wallbangs, Smoke-Kills, Entry-Kills und begrenzte Multi-Kill-Kombinationen. Unzureichend belegte Trade-/Sound-/Informationsregeln bleiben deaktiviert; es gibt keine Suspect-, ML- oder Cheat-Klassifikation.
+- Reale Runtime-Evidenz: `fut-vs-mouz-m2-ancient.dem`, SHA-256 `c183dd61fc6a619f7af435d45eab374cd6f0097a7bd0da779971b15ef6746f7f`, Ancient, 18 Runden, 10 benannte Spieler, 235 Marker/Regelresultate und 54 zusammengeführte Szenen. Der erzeugte erste Szenentick 3654 wurde im installierten CS2 sichtbar angesprungen und stabil pausiert.
+- Die ältere reale Mirage-Demo bleibt gültige Awpy-/Analyse-Evidenz, ist aber keine CS2-Runtime-Abnahme, weil ihre normale Wiedergabe reproduzierbar mit `Failed to parse message` endet.
+
+### Lokale Analyzer-Shell und Review-Sicherheit
+
+- Die Tk-Shell ist ein dünner Adapter über `run_demo_workflow`, `rerender_demo_workflow` und den kanonischen ReplayStore; sie besitzt keinen zweiten Parser und keine zweite Regel-/Szenenlogik.
+- Sie bietet reale `.dem`/`.dem.zst`-Auswahl, benannte CT-/T-Line-ups, Full Demo, deduplizierten Player Select, Dropdown + Add Player sowie CT/T/Reset.
+- `Vorhandene Analyse öffnen` akzeptiert nur ein ausdrücklich gewähltes `demo-workflow.json`. Schema, Status, Real-/Local-/No-Fake-Policy, 64-stelliger Source-Hash, relative eingeschlossene Pflichtartefakte, Analysis/Replay/Flow/Timeline-Hashkonsistenz, Auswahl/Zähler und sämtliche Replay-Chunk-Hashes werden fail-closed geprüft. Es gibt keinen Ordnerscan und kein Recent-Autoselect.
+- `Quelldemo zuordnen` akzeptiert nur eine ausdrücklich gewählte Demo mit exakt passendem SHA-256. Erst dann wird atomar ausschließlich ihr Basename gespeichert; kein privater absoluter Pfad, kein Kopieren, Umbenennen, Suchen oder Reparse.
+- Die vollständige Integrität wird unmittelbar vor jedem Auswahl-Rerender und vor jeder CS2-Koordinator-Erstellung erneut geprüft. Nachträgliche Änderungen blockieren den Downstream-Aufruf und löschen alte Readiness.
+- CS2-Review ist loopback-only und fail-closed: Netcon muss auf `127.0.0.1:21212` erreichbar sein, CS2 muss `[DEMO]` melden und `demo_info` muss den exakt erwarteten Dateinamen ausweisen. Browserdaten dürfen nur eine kanonisch erlaubte Scene-ID/Tick-Kombination auslösen; der einzige schreibende CS2-Befehl ist der daraus erzeugte `demo_gototick`.
+
+### Weitere V1-Komponenten
+
+- 2D Tactical Replay: Der manuelle Sichtcheck aller sieben realen Mirage-Szenen bestand; Positionen und Blickrichtungen waren plausibel, ohne erkennbare Spiegelung, Fehlrotation, starke Verschiebung oder falsche Skalierung.
+- 3D/POV: Gemeinsamer ReplayFrame-Vertrag, ReplayStore/Controller, First-Person POV, feste Third-Person-Analysekamera, Player-Renderzustand, kamera-relative Waffen-Proxys, Sichtlinienauswertung, Smoke-Evidenzgate und Einweg-Renderer-Session sind implementiert und getestet. Produkt-UI, finale Assetqualität und vollständige Runtime-Integration bleiben getrennte Folgearbeit.
+- System Check: read-only Baseline für Windows, CPU, RAM, Mainboard/BIOS, GPU-Treiber, Refresh Rate, Secure Boot und TPM. Nicht belegbare Werte bleiben REVIEW; keine automatischen Firmware-, Treiber-, Registry- oder Windows-Änderungen.
+- Lokaler V1-Ablauf: System Check, Analyse, Replay, selbsttragender Viewer, lokaler Review-Server und hashgebundene Manifeste sind reproduzierbar verbunden. Reviewzustände werden loopback-only, origin-/größen-/szenen-/hashgeprüft und atomar gespeichert.
+
+### Benchmark, Blocker und Grenzen
+
+- Nuke-Graybox-/frühe-Kamera-Reparaturen und der zielbegrenzte, backup-/hashgeprüfte Benchmark-Sync sind versioniert und abgeschlossen.
+- Multi-Map-/Hammer-Full-Compile bleibt `WAITING_FOR_TRISTAN`: CS2 und Workshop Tools sind aktuell und Hammer lädt die VMAP, aber VRAD bricht vor der Build-Pipeline ab, weil `check_raytracing_support.vrad3` im erwarteten CS2-Mount-/Assetkontext nicht lesbar ist. Die RX 7900 XTX wird als Vulkan Physical Device erkannt; es gibt keinen Beleg für fehlende Hardware-RT-Unterstützung.
+- Bis zu einer offiziellen SDK-/Valve-Klärung werden keine Treiber-, Registry-, Adrenalin-, Controller-, Szenengeometrie-, Smoke- oder Benchmark-Runtime-Änderungen vorgenommen.
+- Nicht in diesen V1-Stand gezogen werden OBS, Clip-/Videoeditor-Workflows, automatisches Rendering, Windowed-/Borderless-Zwang, ML-/Anti-Cheat-Klassifikation, vollständige Standard-Angle-Erkennung sowie Optimizer-/System-Check-Arbeit innerhalb des Replay-Strangs.
+
+### Aktuell nächster freigegebener Engineering-Schritt
+
+Der zusammenhängende Stand `Improve Yourself – Experimental` verbindet objektiven Demo-Preflight, Auswahl, lokale Profile/Rules, zusammengeführte Szenen, neutrales Embedded Review, Tactical Replay, Report und CS2-Tick. `docs/design/Improve_Yourself_Concept_Preview_Discord_Q98.pdf` ist die verbindliche visuelle und strukturelle Master-Referenz; der aktuelle Branch bleibt die funktionale Wahrheit. Analyzer-Einstieg, Review und Tactical Replay bilden die Master-Komposition nun mit kompakter Sidebar, mehrspaltigen Panels, Szenenrails, dominanter Kartenfläche und kontextnahen Aktionen erkennbar ab. Variant-3-Wortmarke und Compact-Icon bleiben kanonisch. Review und Tactical Replay verwenden denselben validierten Szenenkontext und dieselbe Replay-Wahrheit; der HTML-Viewer ist nur Export/Fallback. Nicht belegte Radar-, Utility-, Score- oder Eventdaten wurden nicht erfunden. System Check/Optimizer bleibt read-only und teilreferenziert; keine Optimizer-Funktion wurde in Replay-Arbeit gezogen. Status: `WAITING_FOR_TRISTAN`; nächster Schritt ist Tristans Abnahme des gepushten Portable-Flows. `main` bleibt ohne ausdrückliche Review-/Merge-Freigabe unverändert.
+
 ## Grundprinzip
 
 1. `main` enthält nur den akzeptierten gemeinsamen Stand.
@@ -124,3 +171,39 @@ Bestehende Regeln in `docs/BRANCHING.md` haben Vorrang, falls sie enger gefasst 
 ## Konfliktregel
 
 Bei widersprüchlichen Änderungen wird nichts still überschrieben. Der Konflikt wird in `coordination/CURRENT.md` sichtbar gemacht und Tristan entscheidet bei Produkt-/Rollenfragen final. Technische Konflikte sollen mit reproduzierbaren Belegen, Tests oder Messdaten geklärt werden.
+
+## Aktueller Experimental-Abnahmestand (2026-08-21)
+
+Der Analyzer-/Review-/Tactical-Slice bleibt bis zur visuellen Nutzerabnahme auf `WAITING_FOR_TRISTAN`. Der aktuelle Branch `dev/v1-foundation` enthält den gezielten Visual-Master-Conformance-Pass innerhalb der bestehenden nativen Desktop-Shell: Midnight-/Metallic-Flächen, Panelhierarchie, Controls, Navigation und Variant-3-Branding wurden grafisch angeglichen; Analyzer-Inhalt bleibt bei der Mindestgröße 1080x720 per Scroll erreichbar. Parser-, Szenen-, Replay-, NetCon-, System-Check- und Optimizer-Autoritäten wurden nicht erweitert. Kein neuer Product Slice und kein Merge nach `main` vor Tristans Abnahme; genaue Screen-Matrix, Tests, Build und Restabweichungen stehen im neuesten `coordination/agents/codex.md`-Handoff.
+
+Für Home ist Seite 03 der Concept Preview die direkte strukturelle und visuelle Master-Referenz. Die vollständige Command-Center-Hierarchie mit sechs Moduleinstiegen, realen Statuskarten, Fortschritt, letzter Analyse, Schnellzugriff und unteren Informationsflächen ist zu erhalten; eine generische Ersatz-Dashboard-Komposition ist nicht zulässig. Reale Daten und ehrliche Nicht-verfügbar-Zustände ersetzen alle illustrativen Beispielwerte.
+
+Der nachfolgende Home-Korrekturpass bleibt rein grafisch: Die akzeptierte Fensteranordnung, Modulreihenfolge, Datenbindung und Navigation werden nicht erneut umgebaut. Die produktive Umsetzung hat über die generischen Shell-Controls hinaus eigene Midnight-/Metallic-Karten, feine akzentcodierte Konturen, moderne Aktionsflächen sowie zurückhaltende technische Instrument-/Linienelemente zu zeigen. Variant-3-Branding bleibt kanonisch; neue Produktfunktion oder illustrative Kennzahl ist dadurch nicht autorisiert. Status bleibt `WAITING_FOR_TRISTAN`, bis Tristan den frischen Portable-Build gegen Page 03 abgenommen hat.
+
+Für den finalen Home-Korrekturpass gilt ergänzend: Orbitron ist ausschließlich Display-/Technikschrift, Inter ist die reguläre UI-/Leseschrift. Beide werden aus versionierten, lizenzbeigefügten Assets nur für den Prozess registriert; eine systemweite Font-Installation ist nicht erlaubt. Der Dashboard-Scrollbar darf nur erscheinen, wenn der echte Canvas-Inhalt den verfügbaren Viewport überschreitet. Die Page-03-Hierarchie bleibt oben verankert und verteilt die vorhandene Höhe über begrenzte Grid-Mindestgrößen und Abstände; Schrift, Buttons und Icons werden nicht proportional aufgeblasen.
+
+Für die sechs oberen Home-Modul-Cards gilt: Ihre Actions werden ausschließlich über einen gemeinsamen vertikalen Card-Grid-Aufbau in derselben letzten Zeile verankert. Die Beschreibung darf unterschiedlich hoch sein; nur der flexible Zwischenraum absorbiert diese Differenz. Keine individuellen Pixel-Offsets oder Card-spezifischen Button-Höhen. Das gilt ebenso für den responsiven 3x2-Reflow.
+
+Der abschließende Home-Master-Pass verändert ausschließlich gemeinsame visuelle Komponenten: Sidebar-Navigation und Statusfläche verwenden eine eigene gerundete Midnight-Komponente mit ruhigem aktivem Blau-/Glow-Zustand statt nativer rechteckiger Auswahlrahmen. Die gemeinsamen Card-/Panel-Tokens bleiben dunkel und tonal nah beieinander; Konturen sind subtil. Keine Home-Struktur, Action-Grid, Typografie, Viewport-Logik oder Produktfunktion wird dabei verändert.
+
+Der finale Home-Master-Stand verwendet verbindlich die mittlere Informationsfolge **Letzter Systemscan → Dein Fortschritt – Überblick → Letzte Analysen**; der frühere Schnellzugriff ist entfernt. Der Systemscan darf nur bestehende lokale `iy.system_check/v1`-Evidenz in CPU, GPU, RAM, Windows, Treiber und Monitor projizieren. Ohne einen solchen Datensatz bleiben alle sechs Werte und der Gesamtstatus ausdrücklich neutral. Fortschrittsdimensionen sind vorbereitete Darstellung, keine Quelle für Beispielwerte. Theme-Grundwerte sind `#010D19` (App), `#182D4F` (Panel), `#30485A` (Panel soft), `#075C94`/`#0A9AE7`/`#0065DA` (Akzente), `#D0D1D3`/`#8F97A4`/`#627188` (Text); die dunklen Flächen dominieren, Akzente bleiben funktional und zurückhaltend.
+
+Der darauf folgende Home-Farb-/Surface-Pass ersetzt für Home die vorstehenden helleren Panelwerte: verbindlich sind `#020A12` (App), `#03101C` (Sidebar), `#071725` (Panel), `#0A1C2D` (raised), `#0D2236` (Hover), ein subtiler Border nahe `#0A2132`/`#071A27`, `#0B79C9`/`#13A7E8` als kontrollierte Akzente und `#E4E8ED`/`#A0ABB8`/`#687789` für Text. Die großen Card-Flächen bleiben damit nahezu schwarz/dunkel-Navy; Cyan, Modulfarben und Glow sind ausschließlich Führung, Status oder Aktion. Struktur, Radien, Typografie und Responsive-Geometrie bleiben unverändert.
+
+## UI Completion Pass — Dark V1 Shared System (2026-08-21)
+
+`HOME DARK V1 – READY FOR FINAL VISUAL ACCEPTANCE` ist ein Abnahme-Kandidat, keine implizite Produktfreigabe. Die verbindliche Home-Komposition, insbesondere **Letzter Systemscan → Dein Fortschritt – Überblick → Letzte Analysen**, bleibt unverändert. Bis zu Tristans ausdrücklicher Sichtabnahme ist weder ein Merge nach `main` noch ein neuer Product Slice autorisiert.
+
+Die bestehende native Shell nutzt dieselben Dark-V1-Oberflächenwerte auch für die vorhandenen Kernrouten: Analyzer / eingebetteter Review, Tactical Replay, System Check / Optimizer, Rules, Reports und Settings. Gemeinsame Card-, Button-, Formular-, Status- und Überschriftsstile dürfen konsistent angepasst werden; Parser-, Replay-, Szenen-, NetCon-, System-Check- und Optimizer-Logik bleiben dabei unverändert. Kein neuer Screen, keine neue Engine und keine frei erfundenen Datenwerte.
+
+## Home final visual template lock (2026-08-21)
+
+Home ist strukturell abgeschlossen. Die kanonische Home-Template-Oberfläche verwendet für die sechs oberen Module die bereits definierte dunkle Panel-Stufe `#071725` statt einer helleren raised-Fläche. Ihre Actions sind eine einzige wiederverwendete, abgerundete Home-Komponente: gleiche Höhe, Breite, Position und Padding, dunkle Innenfläche, feine modulbezogene Kontur und unveränderte bestehende Command-/Disabled-/Keyboard-Anbindung. Diese Regel betrifft ausschließlich Home; sie ist keine stillschweigende Freigabe, die Formsprache ohne einen neuen Auftrag auf weitere Produktseiten auszubreiten.
+
+Nach diesem Pass wird Home als `HOME VISUAL TEMPLATE LOCKED – READY FOR FINAL VISUAL ACCEPTANCE` behandelt. Informationsarchitektur, Datenwahrheit, responsive Geometrie, Sidebar, Typografie, Branding Variant 3 sowie die festgelegte Mittelreihe dürfen nicht erneut verändert werden. Keine weitere UI-Arbeit ohne neuen Auftrag; kein Merge nach `main` ohne ausdrückliche Produktentscheidung.
+
+## Product decision — Home functional acceptance (2026-08-21)
+
+Home ist für die weitere Produktentwicklung **funktional akzeptiert**, aber **visuell nicht final abgenommen**. Der aktuelle Home-Stand bleibt unverändert: Navigation, Modulaufteilung, bestehende Systemscan-Projektion, Fortschritt, letzte Analysen und Informationsbereiche sind die akzeptierte Arbeitsbasis. Ein späterer, bewusster Final-Polish entscheidet global über Farbflächen, Card-/Button-/Border-/Radius-/Akzent-Tokens und erst danach über eine Übertragung auf weitere Seiten. Bis dahin keine isolierte Home-Korrektur und keine ungeprüfte Stil-Vervielfältigung.
+
+Der nächste funktionale Schwerpunkt ist ausschließlich **System Check / Optimizer**: zuerst den vorhandenen read-only `iy.system_check/v1`-Ergebnisfluss mit echten lokalen Daten erfassen und in der bestehenden Route nachvollziehbar darstellen. Keine automatische Firmware-, Treiber-, Registry- oder Windows-Änderung; Fakten, Bewertung, Hinweise und unbekannte Werte bleiben getrennt.

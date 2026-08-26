@@ -29,6 +29,20 @@ This file records decisions that should not be repeatedly reopened without a con
 - **Impact:** The Beast has discretion to include a small fixed set of common agent variants when implementation is cheap and clean. If it requires substantial extra work, asset handling, Workshop dependencies or troubleshooting, keep the current standard models and consider the item complete. This is a bonus/polish item and must not delay multi-map transitions, camera work, measurement quality or release readiness.
 - **Date:** 2026-08-17
 
+## 3D / POV V1 view and replay boundary — locked
+
+- **Decision:** Tactical Replay V1 uses one canonical tick-based replay truth for 2D, First Person POV and one fixed Third-Person Analysis Camera. Evidence-qualified sightline visualization is mandatory V1 functionality. The Third-Person camera is a deterministic analysis preset, not a freecam/orbit/cinematic system. The views do not parse or independently reinterpret demo state, and missing state or map evidence is never invented.
+- **Reason:** Tick-preserving comparison across views is the product value of 3D/POV. A single replay contract prevents semantic drift, while fixed analytical cameras and qualified sightlines provide spatial learning value without expanding V1 into a game-engine or cinematic system.
+- **Impact:** The incompatible full-match contract is introduced as `iy.replay/v2`; `iy.replay/v1` remains a compatibility path until 2D migration is proven. First Person, fixed Third Person and sightlines are acceptance requirements. Freecam, orbit, cinematic direction, inferred geometry/state and renderer-owned playback are deferred and must not enter V1 implementation.
+- **Date:** 2026-08-20
+
+## Demo Analyzer V1 neutral scene-flow boundary — locked
+
+- **Decision:** The V1 analyzer follows `Demo -> Parser -> Teams/Player Selection -> Analysis Profile -> Rule Engine -> Merged Scenes -> Review`. Internally it separates indicators, named rules or rule combinations, profiles and results. The standard engine is neutral for review/highlight/coaching/custom use rather than a suspect-only engine. Full Demo and multi-player selection are the two selection modes; CT/T are quick selectors inside Player Select, not a third team-analysis mode. Only objective evidenced event anchors are enabled in V1, overlapping markers from one situation merge into one scene, and weak standalone information indicators cannot emit standard scenes.
+- **Reason:** Stable Awpy/replay evidence and deliberate scene merging provide useful review output without fake data, duplicate situations or premature anti-cheat interpretation.
+- **Impact:** Player names and observed starting line-ups remain visible while stable IDs are retained internally. Kill, headshot, evidenced wallbang/through-smoke/blind qualifiers, entry and bounded multi-kill combinations may anchor V1 scenes. Trade and information-review combinations remain disabled unless their required timing/sight/sound/context evidence is complete. Review output retains exact ticks and local CS2 seek commands; OBS/video/ML/anti-cheat classification stays deferred.
+- **Date:** 2026-08-21
+
 ## Decision format
 
 When a new decision is added, record:

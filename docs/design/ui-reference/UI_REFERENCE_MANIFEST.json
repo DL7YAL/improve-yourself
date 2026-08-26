@@ -1,0 +1,20 @@
+{
+  "pack": "Improve Yourself UI Reference Pack",
+  "version": "1.0.0",
+  "purpose": "Machine-readable visual source-of-truth package for UI implementation and visual acceptance.",
+  "authority_rule": "Files marked MASTER are authoritative for visible composition. SUPERSEDED files are archival only.",
+  "content_rule": "Mockup/example values are not product truth; real runtime data, product rules, evidence and safety constraints remain authoritative for content and behavior.",
+  "implementation_rule": "Match layout, hierarchy, proportions, navigation, cards, spacing, typography, colors, borders, states and overall visual language as closely as practical. Do not reconstruct MASTER screens from the PDF when the corresponding PNG exists.",
+  "optimizer_rule": "optimizer_overview_MASTER.png and system_optimizer_detail_MASTER.png are the only authoritative Optimizer visual references in this pack. optimizer_legacy_from_concept_pdf_SUPERSEDED.png must not be used as implementation target.",
+  "files": [
+    {"file": "analyzer_MASTER.png", "screen_id": "analyzer", "status": "MASTER", "width": 1815, "height": 990, "sha256": "c081ae6839d0609dbdd5f56535668d298fa9c31c554c502ae41acab4c4fa7046", "note": "Improve Analyzer visual source of truth"},
+    {"file": "benchmark_MASTER.png", "screen_id": "benchmark", "status": "MASTER", "width": 1815, "height": 990, "sha256": "7d59d3645497753eb485b8f0d813b324c0483a611a3f3f9853ee1305b55c62b1", "note": "Improve Benchmark visual source of truth"},
+    {"file": "dashboard_home_MASTER.png", "screen_id": "dashboard_home", "status": "MASTER", "width": 1815, "height": 990, "sha256": "9fcc1b00f3c10fb3400376d77cb2da2b34c6da8a1dc082a3a9df59a23e7d7a74", "note": "Home / Dashboard visual source of truth"},
+    {"file": "demo_analyzer_MASTER.png", "screen_id": "demo_analyzer", "status": "MASTER", "width": 1815, "height": 990, "sha256": "fc4420513323667d14a3f7a1c1ba212a8e4f5a3e52d98c3b1e5e630709382753", "note": "Demo Analyzer visual source of truth"},
+    {"file": "my_improvement_MASTER.png", "screen_id": "my_improvement", "status": "MASTER", "width": 1815, "height": 990, "sha256": "618b10e4aa18330a189c8fb96ccf28d8d01d623e31c14e5ae3fc729e65d95530", "note": "My Improvement visual source of truth"},
+    {"file": "optimizer_legacy_from_concept_pdf_SUPERSEDED.png", "screen_id": "optimizer_legacy", "status": "SUPERSEDED", "width": 1815, "height": 990, "sha256": "c6a47fd897750b2c3a7d54ec07b53774f8161f14717e498dcb3aaae5973a3af3", "note": "Legacy optimizer image from concept PDF; keep for history only, never use for implementation"},
+    {"file": "optimizer_overview_MASTER.png", "screen_id": "optimizer_overview", "status": "MASTER", "width": 1536, "height": 1024, "sha256": "e2e91fdc4e69e11f567f1fe4a921883200dcf365f8fd68cee052a1aea4d6a004", "note": "Current Optimizer overview visual source of truth; supersedes PDF optimizer concept"},
+    {"file": "system_optimizer_detail_MASTER.png", "screen_id": "system_optimizer_detail", "status": "MASTER", "width": 1536, "height": 1024, "sha256": "4b0b5d5e4cb632159935d4b51aaf4f5f1b104d1e89cd1e15fbfdec217b8bdb51", "note": "Current System Optimizer detail visual source of truth"},
+    {"file": "tactical_viewer_MASTER.png", "screen_id": "tactical_viewer", "status": "MASTER", "width": 1815, "height": 990, "sha256": "481a5be06360391b9dec721a7e78da1548bce4d04cd3bcf8728df6ed28077c7f", "note": "2D Tactical / Viewer visual source of truth"}
+  ]
+}

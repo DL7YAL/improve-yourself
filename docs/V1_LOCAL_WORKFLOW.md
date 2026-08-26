@@ -64,7 +64,7 @@ local service and open the printed address:
 .venv\Scripts\iy-review-server '<run-directory>\workflow.json'
 ```
 
-The UI supports `unreviewed`, `reviewed`, `discarded` and `clip-worthy`, plus a
+The UI supports `unreviewed`, `reviewed`, `discarded` and `follow-up`, plus a
 note of at most 2,000 characters per known scene. It writes only
 `review-state.json` (`iy.review_state/v1`) beside the generated artifacts.
 Analysis and replay JSON remain unchanged. Requests are size-limited, scene- and

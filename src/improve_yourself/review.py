@@ -103,7 +103,7 @@ def render_review_surface(
         f'<small>{len(scene.get("frames", []))} Frames · Tick {int(scene.get("start_tick", 0))}–{int(scene.get("end_tick", 0))}</small></div>'
         f'<div class="scene-review"><select aria-label="Review-Status">'
         f'<option value="unreviewed">Ungeprüft</option><option value="reviewed">Geprüft</option>'
-        f'<option value="discarded">Verworfen</option><option value="clip-worthy">Clipwürdig</option></select>'
+        f'<option value="discarded">Verworfen</option><option value="follow-up">Näher ansehen</option></select>'
         f'<textarea maxlength="2000" rows="2" placeholder="Optionale Notiz" aria-label="Review-Notiz"></textarea></div></li>'
         for scene in replay.get("scenes", [])
     ) or '<li class="empty">Keine Multi-Kill-Szenen in dieser Demo.</li>'

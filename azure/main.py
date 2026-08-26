@@ -26,14 +26,14 @@ class ApplicationContext:
     def __init__(self):
         self.config = AzureConfig()
         self.services = AzureServices(self.config)
-        
+
         # Initialize service clients
         self.storage = AzureStorageService(self.services)
         self.keyvault = AzureKeyVaultService(self.services)
-        
+
         # Setup monitoring
         self.services.configure_monitoring()
-        
+
         logger.info("Application context initialized with Azure services")
 
     def initialize_databases(self):
@@ -51,7 +51,7 @@ class ApplicationContext:
                 logger.info("SQL Database connection established")
             except Exception as e:
                 logger.error(f"Failed to initialize SQL Database: {e}")
-        
+
         # Cosmos DB
         if self.config.cosmos_endpoint:
             try:
@@ -70,19 +70,19 @@ def main():
     try:
         app_context = ApplicationContext()
         app_context.initialize_databases()
-        
+
         logger.info("Application started successfully with full Azure integration")
-        
+
         # Example usage
         # Upload a file
         # with open('example.txt', 'rb') as f:
         #     url = app_context.storage.upload_blob('uploads', 'example.txt', f)
         #     logger.info(f"File uploaded to: {url}")
-        
+
         # Get a secret
         # secret = app_context.keyvault.get_secret('my-secret')
         # logger.info(f"Retrieved secret: {secret[:10]}...")
-        
+
     except Exception as e:
         logger.error(f"Application error: {e}", exc_info=True)
         sys.exit(1)

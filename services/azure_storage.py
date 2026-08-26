@@ -16,12 +16,12 @@ class AzureStorageService:
 
     def upload_blob(self, container_name: str, blob_name: str, data: BinaryIO) -> str:
         """Upload a blob to Azure Storage.
-        
+
         Args:
             container_name: Name of the storage container
             blob_name: Name of the blob
             data: File-like object to upload
-            
+
         Returns:
             URL of uploaded blob
         """
@@ -36,11 +36,11 @@ class AzureStorageService:
 
     def download_blob(self, container_name: str, blob_name: str) -> bytes:
         """Download a blob from Azure Storage.
-        
+
         Args:
             container_name: Name of the storage container
             blob_name: Name of the blob
-            
+
         Returns:
             Blob data as bytes
         """
@@ -54,11 +54,11 @@ class AzureStorageService:
 
     def list_blobs(self, container_name: str, prefix: Optional[str] = None) -> list:
         """List blobs in a container.
-        
+
         Args:
             container_name: Name of the storage container
             prefix: Optional prefix to filter results
-            
+
         Returns:
             List of blob names
         """
@@ -72,7 +72,7 @@ class AzureStorageService:
 
     def delete_blob(self, container_name: str, blob_name: str) -> None:
         """Delete a blob from Azure Storage.
-        
+
         Args:
             container_name: Name of the storage container
             blob_name: Name of the blob
@@ -87,7 +87,7 @@ class AzureStorageService:
 
     def create_container(self, container_name: str) -> None:
         """Create a new container.
-        
+
         Args:
             container_name: Name of the container to create
         """

@@ -3,7 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from improve_yourself.viewer import active_players_at_tick, render_viewer, world_to_radar
+from improve_yourself.viewer import render_viewer, visible_players_at_frame, world_to_radar
+from test_replay_controller import _store
 
 
 def replay_payload() -> dict:
@@ -26,23 +27,14 @@ def test_world_to_radar_rejects_invalid_scale() -> None:
         world_to_radar(0, 0, 0, 0, 0)
 
 
-def test_known_kill_hides_only_the_documented_victim_from_its_tick() -> None:
+def test_viewer_hides_only_explicitly_dead_v2_players() -> None:
     players = [
-        {"name": "Alive", "side": "CT"},
-        {"name": "Victim", "side": "T"},
+        {"player_id": "alive", "name": "Alive", "alive": True},
+        {"player_id": "dead", "name": "Dead", "alive": False},
+        {"player_id": "unknown", "name": "Unknown"},
     ]
-    events = [{"tick": 200, "attacker": "Alive", "victim": "Victim", "weapon": "ak47"}]
 
-    assert [player["name"] for player in active_players_at_tick(players, events, 199)] == ["Alive", "Victim"]
-    assert [player["name"] for player in active_players_at_tick(players, events, 200)] == ["Alive"]
-    assert [player["name"] for player in active_players_at_tick(players, events, 300)] == ["Alive"]
-
-
-def test_missing_or_malformed_kill_evidence_does_not_hide_a_player() -> None:
-    players = [{"name": "Player", "side": "CT"}]
-    events = [{"tick": "200", "victim": "Player"}, {"tick": 200, "victim": ""}]
-
-    assert active_players_at_tick(players, events, 300) == players
+    assert [player["player_id"] for player in visible_players_at_frame(players)] == ["alive", "unknown"]
 
 
 def test_renders_self_contained_html_and_escapes_script_end(tmp_path: Path) -> None:
@@ -61,9 +53,7 @@ def test_renders_self_contained_html_and_escapes_script_end(tmp_path: Path) -> N
     assert 'id="previous-frame"' in html
     assert 'id="next-scene"' in html
     assert 'id="speed"' in html
-    assert 'id="event-info"' in html
-    assert 'active_players' in html
-    assert 'dokumentierten Kill-Tick' in html
+    assert "explizit belegtem Todeszustand" in html
 
 
 def test_rejects_wrong_schema(tmp_path: Path) -> None:
@@ -71,3 +61,17 @@ def test_rejects_wrong_schema(tmp_path: Path) -> None:
     source.write_text('{"schema":"wrong","coordinate_space":"cs2_world","scenes":[]}', encoding="utf-8")
     with pytest.raises(ValueError, match="iy.replay/v1"):
         render_viewer(source, tmp_path / "viewer.html")
+
+
+def test_renders_v2_store_with_controller_state_and_timing_boundary(tmp_path: Path) -> None:
+    store_root = tmp_path / "store"
+    store_root.mkdir()
+    store = _store(store_root, tick_rate=None)
+    result = render_viewer(store.manifest_path, tmp_path / "viewer-v2.html")
+    html = result.read_text(encoding="utf-8")
+    assert '"source_schema":"iy.replay/v2"' in html
+    assert '"requested_tick":14,"resolved_tick":12' in html
+    assert '"timing_available":false' in html
+    assert "Zeitbasis nicht verfügbar" in html
+    assert "gemeinsame Replay-Wahrheit v2" in html
+    assert 'id="player-wrap"' in html

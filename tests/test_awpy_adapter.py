@@ -1,4 +1,4 @@
-from improve_yourself.awpy_adapter import _read_optional_channel, _regular_kills, _round_for_kill, _round_for_tick
+from improve_yourself.awpy_adapter import AwpyAdapter, _read_optional_channel, _regular_kills, _round_for_kill, _round_for_tick
 from improve_yourself.domain import round_multikills
 
 
@@ -29,10 +29,10 @@ def test_missing_explicit_round_number_falls_back_to_official_round_boundary() -
     assert _round_for_kill({"tick": 165_532}, 165_532, rounds) == 25
 
 
-def test_pre_match_kills_without_regular_round_state_are_excluded_from_match_stats() -> None:
+def test_warmup_events_are_excluded_before_regular_match_metrics_and_scenes() -> None:
     rounds = [{"round_num": 1, "start": 100, "official_end": 500, "winner": "t", "reason": "ct_killed"}]
     rows = [
-        {"tick": 10, "round_num": 0, "attacker_name": "Knife", "victim_name": "Victim"},
+        {"tick": 10, "round_num": 0, "attacker_name": "Warmup", "victim_name": "Victim"},
         {"tick": 150, "round_num": 1, "attacker_name": "Match", "victim_name": "Victim-1"},
         {"tick": 200, "round_num": 1, "attacker_name": "Match", "victim_name": "Victim-2"},
         {"tick": 250, "round_num": 1, "attacker_name": "Match", "victim_name": "Victim-3"},
@@ -46,12 +46,25 @@ def test_pre_match_kills_without_regular_round_state_are_excluded_from_match_sta
     assert round_multikills(kills)[0].round_number == 1
 
 
-def test_regular_match_without_pre_match_phase_keeps_all_kills_and_never_emits_round_zero() -> None:
-    rounds = [{"round_num": 1, "start": 100, "official_end": 500, "winner": "t", "reason": "ct_killed"}]
-    rows = [{"tick": 150, "round_num": 1, "attacker_name": "Match", "victim_name": "Victim"}]
+class _Frame:
+    def __init__(self, rows: list[dict]) -> None:
+        self.rows = rows
 
-    kills, excluded = _regular_kills(rows, rounds)
+    def to_dicts(self) -> list[dict]:
+        return self.rows
 
-    assert excluded == 0
-    assert len(kills) == 1
-    assert kills[0].round_number == 1
+
+class _DemoWithWarmup:
+    header = {"map_name": "de_ancient"}
+    rounds = _Frame([{"round_num": 1, "start": 100, "official_end": 500, "winner": "t", "reason": "ct_killed"}])
+    kills = _Frame([
+        {"tick": 10, "round_num": 0, "attacker_name": "Warmup", "victim_name": "Victim"},
+        {"tick": 150, "round_num": 1, "attacker_name": "Match", "victim_name": "Victim-1"},
+    ])
+
+
+def test_adapter_reports_excluded_non_match_events_without_emitting_them_as_kills() -> None:
+    _header, kills, _available, quality = AwpyAdapter().adapt(_DemoWithWarmup())
+
+    assert [(kill.round_number, kill.attacker) for kill in kills] == [(1, "Match")]
+    assert any("außerhalb regulärer Matchrunden" in warning for warning in quality.warnings)

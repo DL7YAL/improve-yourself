@@ -26,11 +26,11 @@ class AzureSQLService:
 
     def execute_query(self, query: str, params: tuple = ()) -> List[tuple]:
         """Execute a SQL query.
-        
+
         Args:
             query: SQL query string
             params: Query parameters
-            
+
         Returns:
             Query results
         """
@@ -45,11 +45,11 @@ class AzureSQLService:
 
     def execute_update(self, query: str, params: tuple = ()) -> int:
         """Execute an INSERT/UPDATE/DELETE query.
-        
+
         Args:
             query: SQL query string
             params: Query parameters
-            
+
         Returns:
             Number of affected rows
         """
@@ -76,10 +76,10 @@ class AzureCosmosService:
 
     def create_item(self, item: Dict[str, Any]) -> Dict[str, Any]:
         """Create an item in Cosmos DB.
-        
+
         Args:
             item: Item to create (must have 'id' and partition key)
-            
+
         Returns:
             Created item
         """
@@ -91,11 +91,11 @@ class AzureCosmosService:
 
     def read_item(self, item_id: str, partition_key: str) -> Dict[str, Any]:
         """Read an item from Cosmos DB.
-        
+
         Args:
             item_id: Item ID
             partition_key: Partition key value
-            
+
         Returns:
             Item data
         """
@@ -107,11 +107,11 @@ class AzureCosmosService:
 
     def query_items(self, query: str, parameters: Optional[List] = None) -> List[Dict]:
         """Query items from Cosmos DB.
-        
+
         Args:
             query: SQL-like query string
             parameters: Optional query parameters
-            
+
         Returns:
             List of matching items
         """
@@ -126,10 +126,10 @@ class AzureCosmosService:
 
     def upsert_item(self, item: Dict[str, Any]) -> Dict[str, Any]:
         """Insert or update an item in Cosmos DB.
-        
+
         Args:
             item: Item to upsert
-            
+
         Returns:
             Upserted item
         """
@@ -141,7 +141,7 @@ class AzureCosmosService:
 
     def delete_item(self, item_id: str, partition_key: str) -> None:
         """Delete an item from Cosmos DB.
-        
+
         Args:
             item_id: Item ID
             partition_key: Partition key value

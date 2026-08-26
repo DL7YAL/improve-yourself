@@ -14,15 +14,21 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.3,<9"]
+renderer-spike = ["panda3d==1.10.16", "panda3d-gltf==1.3.0"]
 
 [project.scripts]
 iy-analyze = "improve_yourself.cli:main"
 iy-replay-viewer = "improve_yourself.viewer:main"
 iy-system-check = "improve_yourself.system_check:main"
+iy-system-profile = "improve_yourself.optimizer_foundation:main"
+iy-network-quality = "improve_yourself.network_quality:main"
+iy-optimizer-matrix = "improve_yourself.optimizer_evidence:main"
 iy-optimizer-input = "improve_yourself.optimizer_input:main"
-iy-system-check-review = "improve_yourself.system_review:main"
 iy-workflow = "improve_yourself.workflow:main"
 iy-review-server = "improve_yourself.review_server:main"
+iy-analysis-flow = "improve_yourself.analysis_flow:main"
+iy-demo-workflow = "improve_yourself.demo_workflow:main"
+iy-analyzer-shell = "improve_yourself.analyzer_shell:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -37,6 +37,8 @@ def test_renders_reduced_review_surface_and_escapes_content(tmp_path: Path) -> N
     result = render_review_surface(system, analysis, replay, viewer, tmp_path / "review.html")
     document = result.read_text(encoding="utf-8")
     assert "Tactical Replay öffnen" in document
+    assert "Clipwürdig" not in document
+    assert "Näher ansehen" in document
     assert 'href="viewer.html"' in document
     assert "CPU &lt;fast&gt;" in document
     assert "Detected &amp; safe" in document

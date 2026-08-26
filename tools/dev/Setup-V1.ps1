@@ -24,7 +24,7 @@ function Invoke-Checked {
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $venvRoot = Join-Path $repositoryRoot '.venv'
 $venvPython = Join-Path $venvRoot 'Scripts\python.exe'
-$cliNames = @('iy-analyze', 'iy-system-check', 'iy-optimizer-input', 'iy-system-check-review', 'iy-workflow', 'iy-replay-viewer', 'iy-review-server')
+$cliNames = @('iy-analyze', 'iy-system-check', 'iy-optimizer-input', 'iy-workflow', 'iy-replay-viewer', 'iy-review-server', 'iy-analysis-flow', 'iy-demo-workflow', 'iy-analyzer-shell')
 $lockFile = Join-Path $repositoryRoot 'requirements.lock'
 
 if (-not (Test-Path -LiteralPath $lockFile -PathType Leaf)) {
@@ -38,7 +38,7 @@ try {
         Invoke-Checked -Executable $pyLauncher.Source -Arguments @('-3.13', '-m', 'venv', '.venv') -Description 'Create Python 3.13 virtual environment'
     }
 
-    $version = & $venvPython -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")'
+    $version = & $venvPython -c "import sys; print('%d.%d' % (sys.version_info.major, sys.version_info.minor))"
     if ($LASTEXITCODE -ne 0) {
         throw "Unable to inspect virtual-environment Python at $venvPython."
     }

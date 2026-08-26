@@ -16,7 +16,7 @@ class AzureKeyVaultService:
 
     def set_secret(self, name: str, value: str, tags: Optional[dict] = None) -> None:
         """Set a secret in Key Vault.
-        
+
         Args:
             name: Secret name
             value: Secret value
@@ -31,10 +31,10 @@ class AzureKeyVaultService:
 
     def get_secret(self, name: str) -> str:
         """Retrieve a secret from Key Vault.
-        
+
         Args:
             name: Secret name
-            
+
         Returns:
             Secret value
         """
@@ -47,7 +47,7 @@ class AzureKeyVaultService:
 
     def delete_secret(self, name: str) -> None:
         """Delete a secret from Key Vault.
-        
+
         Args:
             name: Secret name
         """
@@ -60,7 +60,7 @@ class AzureKeyVaultService:
 
     def list_secrets(self) -> list:
         """List all secrets in Key Vault.
-        
+
         Returns:
             List of secret names
         """

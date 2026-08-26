@@ -8,6 +8,16 @@ from awpy import Demo
 from .model import DataQuality, Kill
 
 OPTIONAL_CHANNELS = ("damages", "shots", "bomb", "smokes", "infernos", "grenades", "footsteps")
+REPLAY_PLAYER_PROPS = (
+    "health",
+    "armor_value",
+    "pitch",
+    "yaw",
+    "active_weapon_name",
+    "velocity_X",
+    "velocity_Y",
+    "velocity_Z",
+)
 
 
 def _records(frame: Any) -> list[dict[str, Any]]:
@@ -30,8 +40,8 @@ def _value(row: dict[str, Any], names: Iterable[str], default: Any = None) -> An
 def _round_for_tick(tick: int, rounds: list[dict[str, Any]]) -> int:
     for index, round_row in enumerate(rounds, start=1):
         start = int(_value(round_row, ("start", "start_tick"), -1))
-        # `end` can precede late official kill events (for example a bomb
-        # explosion). `official_end` retains the full round boundary.
+        # The parser's regular end can precede official late-round events.
+        # Prefer the explicit official boundary when it is available.
         end = int(_value(round_row, ("official_end", "end", "end_tick"), 2**63 - 1))
         if start <= tick <= end:
             number = _value(round_row, ("round_num", "round_number"), index)
@@ -43,7 +53,7 @@ def _round_for_tick(tick: int, rounds: list[dict[str, Any]]) -> int:
 
 
 def _round_for_kill(row: dict[str, Any], tick: int, rounds: list[dict[str, Any]]) -> int:
-    """Use AWPy's explicit kill round when present; otherwise use boundaries."""
+    """Prefer AWPy's explicit kill-round evidence over a boundary fallback."""
     number = _value(row, ("round_num", "round_number"))
     try:
         if number is not None and int(number) >= 1:
@@ -54,7 +64,7 @@ def _round_for_kill(row: dict[str, Any], tick: int, rounds: list[dict[str, Any]]
 
 
 def _regular_round_numbers(rounds: list[dict[str, Any]]) -> set[int]:
-    """Return only completed regular rounds with a usable AWPy round state."""
+    """Return only completed rounds backed by usable AWPy round evidence."""
     numbers: set[int] = set()
     for round_row in rounds:
         number = _value(round_row, ("round_num", "round_number"))
@@ -71,7 +81,7 @@ def _regular_round_numbers(rounds: list[dict[str, Any]]) -> set[int]:
 
 
 def _regular_kills(kill_rows: list[dict[str, Any]], rounds: list[dict[str, Any]]) -> tuple[list[Kill], int]:
-    """Exclude events without completed regular-round evidence from match metrics."""
+    """Exclude warmup and unproven-round events from regular match metrics."""
     regular_rounds = _regular_round_numbers(rounds)
     kills: list[Kill] = []
     excluded = 0
@@ -103,13 +113,20 @@ def _read_optional_channel(demo: Any, channel: str) -> tuple[Any, str | None]:
 
 
 class AwpyAdapter:
-    def parse(self, path: str) -> tuple[dict[str, Any], list[Kill], list[str], DataQuality]:
+    """Adapt one parsed Awpy demo without giving consumers a second parser truth."""
+
+    def parse_demo(self, path: str) -> Any:
         demo = Demo(path, verbose=False)
-        demo.parse()
+        # The replay builder needs these fields. Parsing them here lets the
+        # workflow derive the compact analysis and replay-v2 from one Awpy run.
+        demo.parse(player_props=list(REPLAY_PLAYER_PROPS))
+        return demo
+
+    def adapt(self, demo: Any) -> tuple[dict[str, Any], list[Kill], list[str], DataQuality]:
         header = getattr(demo, "header", {}) or {}
         rounds = _records(getattr(demo, "rounds", None))
         kill_rows = _records(getattr(demo, "kills", None))
-        kills, excluded_pre_match = _regular_kills(kill_rows, rounds)
+        kills, excluded_non_match = _regular_kills(kill_rows, rounds)
 
         available = ["rounds", "kills"]
         missing: list[str] = []
@@ -128,9 +145,13 @@ class AwpyAdapter:
         if "footsteps" in missing:
             status = "limited"
             warnings.append("Footstep-Ereignisse fehlen; soundbezogene Marker sind deaktiviert.")
-        if excluded_pre_match:
-            warnings.append(f"{excluded_pre_match} Ereignis(se) außerhalb regulärer Matchrunden wurden ausgeschlossen.")
+        if excluded_non_match:
+            warnings.append(f"{excluded_non_match} Ereignis(se) außerhalb regulärer Matchrunden wurden ausgeschlossen.")
         if not rounds or not kill_rows:
             status = "not_assessable"
             warnings.append("Zentrale Runden- oder Killdaten fehlen.")
         return header, kills, available, DataQuality(status, missing, warnings)
+
+    def parse(self, path: str) -> tuple[dict[str, Any], list[Kill], list[str], DataQuality]:
+        """Compatibility entry point for independent analysis callers."""
+        return self.adapt(self.parse_demo(path))

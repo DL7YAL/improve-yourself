@@ -58,22 +58,32 @@ See [`docs/BRANCHING.md`](docs/BRANCHING.md) for the branch policy and [`docs/RO
 ## Current next step
 
 The saved prototypes are inventoried in
-[`docs/PROTOTYPE_INVENTORY.md`](docs/PROTOTYPE_INVENTORY.md). The independent
-[`System Check / Optimizer boundary`](docs/SYSTEM_CHECK_OPTIMIZER_BOUNDARY.md)
-keeps read-only machine evidence separate from demo/replay work.
-`iy-system-check` can explicitly produce the primary planning input for the
-future Optimizer through `iy-optimizer-input`; `iy-workflow` remains the
-separate demo analysis, bounded replay, local viewer and review path. The next
-supported replay start is `tools/dev/Start-V1Review.ps1`; it also provides the
+[`docs/PROTOTYPE_INVENTORY.md`](docs/PROTOTYPE_INVENTORY.md). The integrated
+[`iy-workflow`](docs/V1_LOCAL_WORKFLOW.md) now produces a read-only System
+Check, demo analysis, bounded replay, local viewer and review manifest. The next
+supported local start is `tools/dev/Start-V1Review.ps1`; it also provides the
 reduced review surface and source-bound local review-state persistence.
 Optimizer apply/restore remains a separate later safety boundary.
 
-For a separate local System Check / Optimizer Input review after explicitly
-generating both JSON artifacts:
+## Experimental desktop build
+
+Start the unified local desktop shell with the normal demo/workflow selection:
 
 ```powershell
-.venv\Scripts\iy-system-check-review results\system-check.json results\optimizer-input.json --serve --port 8879
+.\tools\dev\Start-Experimental.ps1
 ```
+
+For a reproducible review of one existing result without parsing the demo again:
+
+```powershell
+.\tools\dev\Start-Experimental.ps1 `
+  -Workflow '.\results\demo-workflow-ancient\c183dd61fc6a\demo-workflow.json'
+```
+
+The explicit workflow path passes through the same fail-closed schema, policy,
+hash, artifact and replay-chunk validation as the native Open action. The shell
+is local-only; generated demos/results remain ignored and no System Check or
+Optimizer change is applied automatically.
 
 ## Demo Analyzer V1 foundation
 
