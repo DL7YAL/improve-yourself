@@ -1656,4 +1656,4 @@ NEXT: Tristan prüft ausschließlich den gepushten Integrationsbranch und entsch
 MODEL_PROFILE: terra
 MODEL_REASON: Konfliktauflösung an einem kanonischen Datenvertrag, vollständige Regression und privacy-sensible Branch-Konsolidierung.
 COMPUTER_USE: no
-COMMIT/PR: Integrationscommit folgt unmittelbar nach diesem Handoff auf `codex/integrate-main-dev-v1`.
+COMMIT/PR: `b07c5a5 merge: integrate main viewer semantics into v2 foundation`, gepusht nach `origin/codex/integrate-main-dev-v1`.
