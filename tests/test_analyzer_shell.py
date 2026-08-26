@@ -67,6 +67,7 @@ def test_optimizer_product_view_is_domain_driven_read_only_and_accepts_synthetic
 def test_optimizer_evidence_view_keeps_missing_cs2_state_explicit() -> None:
     payload = {
         "schema": "iy.system_check/v1",
+        "policy": {"read_only": True, "changes_applied": False},
         "checks": [
             {"id": "gpu", "evidence": {"adapters": [{"name": "AMD Radeon RX 7900 XTX", "driver_version": "24.10.1"}]}},
             {"id": "display", "evidence": {"refresh_rates_hz": [240]}},

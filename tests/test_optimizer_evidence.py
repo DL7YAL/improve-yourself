@@ -31,6 +31,7 @@ def test_matrix_is_machine_readable_and_covers_every_evidence_class() -> None:
 def test_system_check_projection_does_not_invent_cs2_or_driver_option_state() -> None:
     payload = {
         "schema": "iy.system_check/v1",
+        "policy": {"read_only": True, "changes_applied": False},
         "checks": [
             {"id": "cpu", "evidence": {"name": "AMD Ryzen 7 7800X3D"}},
             {"id": "gpu", "evidence": {"adapters": [{"name": "AMD Radeon RX 7900 XTX", "driver_version": "24.10.1"}]}},
@@ -55,6 +56,7 @@ def test_system_check_projection_does_not_invent_cs2_or_driver_option_state() ->
 def test_system_check_projection_consumes_the_active_twelve_check_display_and_monitor_contract() -> None:
     payload = {
         "schema": "iy.system_check/v1",
+        "policy": {"read_only": True, "changes_applied": False},
         "checks": [
             {"id": "display", "evidence": {"active_displays": [{"name": "GPU output", "refresh_hz": 165}]}},
             {"id": "monitor", "evidence": {"monitors": [{"name": "Verified monitor"}]}},

@@ -251,6 +251,9 @@ def profile_from_system_check(payload: dict[str, object], *, goal: GoalProfile =
     """Project known system-check evidence without manufacturing unavailable settings."""
     if payload.get("schema") != "iy.system_check/v1" or not isinstance(payload.get("checks"), list):
         return None
+    policy = payload.get("policy")
+    if not isinstance(policy, dict) or policy.get("read_only") is not True or policy.get("changes_applied") is not False:
+        return None
     checks = {item.get("id"): item for item in payload["checks"] if isinstance(item, dict) and isinstance(item.get("id"), str)}
     gpu = ((checks.get("gpu") or {}).get("evidence") or {}).get("adapters") or []
     adapter = gpu[0] if isinstance(gpu, list) and gpu and isinstance(gpu[0], dict) else {}
