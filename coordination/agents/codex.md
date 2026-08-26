@@ -1676,3 +1676,27 @@ MODEL_PROFILE: terra
 MODEL_REASON: Schmale, nachweisbare Integrationskonsolidierung ohne Erweiterung der Produktarchitektur.
 COMPUTER_USE: no
 COMMIT/PR: Dokumentationscommit folgt auf `codex/integrate-main-dev-v1`; PR #7 bleibt offen.
+
+# Handoff 2026-08-26 — Controlled `origin/main` merge for PR #7
+
+STATUS: READY_FOR_TRISTAN_REVIEW
+TASK: PR #7 kontrolliert auf den aktuellen Main-Stand bringen, ohne die V2-Architektur zu ersetzen. Kein Merge von PR #7 nach `main` und kein Release.
+BRANCH / BASE: `codex/integrate-main-dev-v1`; kontrollierter No-FF-Merge von `origin/main` `f0e07713f573272a5d7847b7af467712588eb9ed` (enthält PR #8/.env-Sanierung).
+MERGE DECISIONS:
+- `iy.replay/v2`, `ReplayStore`/`ReplayController`, AnalyzerCore, AnalyzerDataHub und Tactical Replay V2 bleiben unverändert kanonisch. Der alte V1-Analyse-/Review-User-View aus `main` wurde nicht wieder an den V2-Pfad gebunden; die bestehende V2-Review-Präsentation bleibt die einzige aktive Review-Projektion.
+- Der AWPy-Konflikt enthält dieselbe Round-Evidence-Semantik; die bestehende V2-Fassung mit expliziter Rundennummer, `official_end` und Ausschluss unbelegter/Warmup-Runden bleibt maßgeblich.
+- `optimizer_input` bleibt ein dünner Adapter über `profile_from_system_check()`. Der explizite JSON-Export-Einstieg wurde nur auf dieser vorhandenen Evidence-Grenze ergänzt; kein Apply-/Restore-/Demo-/Replay-Input und kein System-Review-HTML-Einstieg wurde aktiviert.
+- Azure-Dateien bleiben getrennte optionale Infrastruktur. Der lokale Analyzer-/Replay-/Optimizer-Kern importiert sie nicht. Azure-Service-Tests überspringen ohne ausdrücklich installierte Azure-SDK-Extras, statt den Default-Kern abhängig zu machen.
+- `.env` ist nicht getrackt, `.env.example` ist getrackt und enthält 13 placeholders-only Zuweisungen; `.env` bleibt ignoriert.
+VERIFIED:
+- vollständige Suite: **230 PASS, 1 optionaler Azure-Infrastrukturtest SKIPPED** (Azure-SDK-Extras nicht Teil der lokalen Default-Umgebung);
+- `compileall` für `src`, `tests`, `config` und `services` mit Bytecode-Ziel außerhalb des Repositories: PASS;
+- `git diff --check`: PASS;
+- Privacy-/Artefakt-Scan: keine privaten Pfade außerhalb absichtlicher Testfixtures, keine getrackten Build-/Cache-/Demo-/Archiv-/Datenbankartefakte;
+- Secret-Scan: keine Private Keys und keine konkreten Secretwerte festgestellt. Breite Bezeichnerhinweise liegen ausschließlich in placeholders-only `.env.example`, Umgebungsvariablenzugriffen, Azure-Infrastruktur-/Dokumentationscode oder Testdaten.
+OPEN: Nur der finale GitHub-PR-#7-Check nach Push. Kein nachgewiesener Architekturkonflikt.
+NEXT: Ausschließlich PR #7 prüfen; kein Merge nach `main`, Release oder neue Produkt-/Azure-Arbeit ohne ausdrückliche Freigabe.
+MODEL_PROFILE: terra
+MODEL_REASON: Kontrollierte Konfliktauflösung mit V2-Architekturschutz und isolierter optionaler Infrastruktur.
+COMPUTER_USE: no
+COMMIT/PR: Merge-Commit folgt auf `codex/integrate-main-dev-v1`.

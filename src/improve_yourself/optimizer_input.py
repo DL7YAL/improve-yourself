@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import argparse
+import json
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from .optimizer_evidence import GoalProfile, profile_from_system_check
@@ -81,3 +84,33 @@ def build_optimizer_input(system_check: dict[str, object], *, goal: GoalProfile 
             "demo_or_replay_data_included": False,
         },
     }
+
+
+def export_optimizer_input(system_path: Path, output_path: Path) -> Path:
+    """Write an explicit, read-only optimizer-input projection.
+
+    The caller supplies a System Check artifact; this function neither discovers
+    input nor accepts demo/replay data and never applies a configuration change.
+    """
+    value = json.loads(system_path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError("expected System Check JSON object")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(build_optimizer_input(value), ensure_ascii=False, indent=2), encoding="utf-8")
+    return output_path
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Create a read-only Optimizer input from an explicit System Check artifact")
+    parser.add_argument("system_check", type=Path)
+    parser.add_argument("--output", type=Path, default=Path("results/optimizer-input.json"))
+    args = parser.parse_args()
+    try:
+        print(export_optimizer_input(args.system_check, args.output))
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        parser.error(str(error))
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())

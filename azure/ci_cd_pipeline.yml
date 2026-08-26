@@ -1,0 +1,106 @@
+# Azure Pipelines CI/CD Configuration
+
+trigger:
+  - main
+  - develop
+
+pr:
+  - main
+  - develop
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  pythonVersion: '3.10'
+  azureResourceGroup: 'improve-yourself-rg'
+  azureLocation: 'westeurope'
+
+stages:
+  - stage: Build
+    displayName: 'Build Stage'
+    jobs:
+      - job: BuildAndTest
+        displayName: 'Build and Test'
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '$(pythonVersion)'
+            displayName: 'Use Python $(pythonVersion)'
+
+          - script: |
+              python -m pip install --upgrade pip
+              pip install -r requirements-azure.txt
+              pip install pytest pytest-cov pylint
+            displayName: 'Install dependencies'
+
+          - script: |
+              pylint services/ config/ azure/
+            displayName: 'Run linting'
+            continueOnError: true
+
+          - script: |
+              pytest tests/ -v --cov=services --cov=config --cov-report=xml
+            displayName: 'Run tests with coverage'
+
+          - task: PublishCodeCoverageResults@1
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+            displayName: 'Publish code coverage'
+
+  - stage: Deploy
+    displayName: 'Deploy Stage'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: DeployInfrastructure
+        displayName: 'Deploy Infrastructure'
+        steps:
+          - task: AzureResourceGroupDeployment@2
+            inputs:
+              azureSubscription: 'improve-yourself-subscription'
+              action: 'Create Or Update Resource Group'
+              resourceGroupName: '$(azureResourceGroup)'
+              location: '$(azureLocation)'
+              templateLocation: 'Linked artifact'
+              csmFile: '$(Build.SourcesDirectory)/azure/deployment.bicep'
+              overrideParameters: '-environment dev'
+            displayName: 'Deploy Bicep template'
+
+      - task: AzureCLI@2
+        inputs:
+          azureSubscription: 'improve-yourself-subscription'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            # Get deployment outputs
+            STORAGE_URL=$(az deployment group show -g $(azureResourceGroup) --query properties.outputs.storageAccountUrl.value -o tsv)
+            KEYVAULT_URL=$(az deployment group show -g $(azureResourceGroup) --query properties.outputs.keyVaultUrl.value -o tsv)
+
+            # Set pipeline variables
+            echo "##vso[task.setvariable variable=STORAGE_URL]$STORAGE_URL"
+            echo "##vso[task.setvariable variable=KEYVAULT_URL]$KEYVAULT_URL"
+        displayName: 'Retrieve deployment outputs'
+
+  - stage: SecurityScan
+    displayName: 'Security Scan Stage'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: SecurityScanning
+        displayName: 'Security and Compliance'
+        steps:
+          - script: |
+              pip install bandit safety
+              bandit -r services/ config/ azure/ -f json -o bandit-report.json || true
+              safety check --json > safety-report.json || true
+            displayName: 'Run security checks'
+            continueOnError: true
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: '$(Build.ArtifactStagingDirectory)'
+              artifactName: 'security-reports'
+            displayName: 'Publish security reports'
+            condition: always()

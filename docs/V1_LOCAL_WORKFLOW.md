@@ -28,16 +28,15 @@ verified. `-NoServe` performs and validates the workflow but intentionally does
 not start the HTTP service; it exists for reproducible smoke tests and artifact
 generation.
 
-`iy-workflow` connects the first usable local product path without applying any
-system optimization:
+`iy-workflow` connects the first usable local demo/replay path without applying
+any system optimization or running a System Check:
 
-1. create an `iy.system_check/v1` read-only machine assessment;
-2. analyze one explicit local demo into `iy.analysis/v1`;
-3. export bounded Multi-Kill scenes into `iy.replay/v1`;
-4. create a self-contained local 2D viewer;
-5. create a reduced local review start page with system findings, data quality,
-   scene list and viewer link;
-6. write an `iy.workflow/v1` manifest linking all artifacts.
+1. analyze one explicit local demo into `iy.analysis/v1`;
+2. export bounded Multi-Kill scenes into `iy.replay/v1`;
+3. create a self-contained local 2D viewer;
+4. create a reduced local review start page with data quality, scene list and
+   viewer link;
+5. write an `iy.workflow/v1` manifest linking those artifacts.
 
 ```powershell
 .venv\Scripts\iy-workflow '<match.dem.zst>' --output results\workflow
@@ -52,7 +51,7 @@ For a local Mirage radar resource:
 ```
 
 The run directory is keyed by the demo SHA-256 prefix. Its manifest records
-only relative artifact paths, the source hash, local/read-only policy and the
+only relative artifact paths, the source hash, local/no-change policy and the
 mandatory human-review boundary. It does not contain the original demo path.
 
 Open `review.html` as the human entry point. It summarizes findings without
@@ -76,3 +75,7 @@ source-bound, same-origin checked, atomically written and accepted only through
 is suspicious or that any player conclusion has been reached. The workflow
 does not change Windows, apply an Optimizer profile, elevate privileges, upload
 data or make an automated cheat verdict.
+
+System diagnostics are deliberately a separate explicit path. For the
+read-only System Check to Optimizer planning boundary, see
+[`SYSTEM_CHECK_OPTIMIZER_BOUNDARY.md`](SYSTEM_CHECK_OPTIMIZER_BOUNDARY.md).

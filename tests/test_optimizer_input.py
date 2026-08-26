@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
 from improve_yourself.optimizer_evidence import profile_from_system_check
-from improve_yourself.optimizer_input import OPTIMIZER_INPUT_SCHEMA, build_optimizer_input
+from improve_yourself.optimizer_input import OPTIMIZER_INPUT_SCHEMA, build_optimizer_input, export_optimizer_input
 
 
 def _system_check(*, checks: list[dict[str, object]]) -> dict[str, object]:
@@ -77,3 +80,14 @@ def test_unsafe_or_non_read_only_system_check_is_rejected() -> None:
     assert profile_from_system_check(payload) is None
     with pytest.raises(ValueError, match="read-only evidence"):
         build_optimizer_input(payload)
+
+
+def test_export_uses_only_an_explicit_system_check_artifact(tmp_path: Path) -> None:
+    source = tmp_path / "system-check.json"
+    source.write_text(json.dumps(_system_check(checks=[{"id": "cpu", "evidence": {"name": "CPU"}}])), encoding="utf-8")
+
+    output = export_optimizer_input(source, tmp_path / "optimizer-input.json")
+
+    result = json.loads(output.read_text(encoding="utf-8"))
+    assert result["schema"] == OPTIMIZER_INPUT_SCHEMA
+    assert result["policy"]["demo_or_replay_data_included"] is False
