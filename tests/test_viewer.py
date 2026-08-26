@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from improve_yourself.viewer import render_viewer, world_to_radar
+from improve_yourself.viewer import render_viewer, visible_players_at_frame, world_to_radar
 from test_replay_controller import _store
 
 
@@ -27,6 +27,16 @@ def test_world_to_radar_rejects_invalid_scale() -> None:
         world_to_radar(0, 0, 0, 0, 0)
 
 
+def test_viewer_hides_only_explicitly_dead_v2_players() -> None:
+    players = [
+        {"player_id": "alive", "name": "Alive", "alive": True},
+        {"player_id": "dead", "name": "Dead", "alive": False},
+        {"player_id": "unknown", "name": "Unknown"},
+    ]
+
+    assert [player["player_id"] for player in visible_players_at_frame(players)] == ["alive", "unknown"]
+
+
 def test_renders_self_contained_html_and_escapes_script_end(tmp_path: Path) -> None:
     payload = replay_payload()
     payload["scenes"][0]["marker_player"] = "</script><script>alert(1)</script>"
@@ -40,6 +50,10 @@ def test_renders_self_contained_html_and_escapes_script_end(tmp_path: Path) -> N
     assert "data:image/png;base64,dGVzdC1yYWRhcg==" in html
     assert "</script><script>alert(1)</script>" not in html
     assert "\\u003c/script>" in html
+    assert 'id="previous-frame"' in html
+    assert 'id="next-scene"' in html
+    assert 'id="speed"' in html
+    assert "explizit belegtem Todeszustand" in html
 
 
 def test_rejects_wrong_schema(tmp_path: Path) -> None:
@@ -60,3 +74,4 @@ def test_renders_v2_store_with_controller_state_and_timing_boundary(tmp_path: Pa
     assert '"timing_available":false' in html
     assert "Zeitbasis nicht verfügbar" in html
     assert "gemeinsame Replay-Wahrheit v2" in html
+    assert 'id="player-wrap"' in html

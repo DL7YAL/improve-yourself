@@ -1629,3 +1629,31 @@ MODEL_PROFILE: terra
 MODEL_REASON: Eng begrenzte Versionierung, read-only Datenkorrektur und vollständige Regression eines bestehenden Optimizer-Slices.
 COMPUTER_USE: no
 COMMIT/PR: `2219fad fix: finalize read-only optimizer projection`; Handoff-Commit folgt unmittelbar danach auf `dev/v1-foundation`.
+
+# Handoff 2026-08-26 — Main/Dev V2 integration candidate
+
+STATUS: READY_FOR_TRISTAN_REVIEW
+TASK: `origin/main` kontrolliert in den aktuellen Dev-Stand integrieren, ohne Rückfall auf den alten `iy.replay/v1`-Viewerpfad. `iy.replay/v2`, AnalyzerCore und AnalyzerDataHub bleiben verbindlich.
+BRANCH / BASE: `codex/integrate-main-dev-v1`, angelegt von `origin/dev/v1-foundation` `fe09319`; kontrollierter Merge von `origin/main` `5b611ad`.
+MERGE DECISIONS:
+- `src/improve_yourself/replay.py`: die konfliktfreie V1-Ereignisprojektion aus `main` bleibt als kompatibler Legacy-Export erhalten. Der produktive Analyzer-/Tactical-/Viewerpfad bleibt `iy.replay/v2`; kein neuer Parser, kein zweiter Hub und kein V1-Rückfall.
+- `src/improve_yourself/viewer.py`: Devs V2-Store-/Controller-/Timing-Grenze bleibt erhalten. Portiert wurden nur die geforderten semantischen Funktionen: vorherige/nächste Szene, vorheriger/nächster Frame und Tempoauswahl. Die Spielerprojektion blendet ausschließlich Zustände mit explizitem `alive is False` aus; fehlende/unknown Werte bleiben sichtbar. Ereignistext verwendet nur den vorhandenen `event_count`, keine erfundenen Kill-Details.
+- `tests/test_viewer.py`: die bestehenden V2-Store-/Timing-Tests bleiben erhalten; zusätzlich prüft ein kleiner Vertragstest die fail-closed Death-Visibility. Der alte V1-Event-/Death-Pfad wurde nicht übernommen.
+- `coordination/CURRENT.md`: aktuelle Dev-Produktwahrheit bleibt maßgeblich; der 2D-Viewer referenziert den V2-Integrationsstatus statt einen alten V1-Mergezustand.
+- `coordination/agents/codex.md`: historische Main-Handoffs wurden nicht ungeprüft angehängt. Dieser Eintrag hält nur die aktuelle, privacy-neutrale Integrationsentscheidung fest.
+- `docs/AGENT_BASE.md`: die additive Foundry-Regel aus `main` wurde konfliktfrei übernommen.
+CHANGED: `coordination/CURRENT.md`, `docs/AGENT_BASE.md`, `src/improve_yourself/replay.py`, `src/improve_yourself/viewer.py`, `tests/test_replay.py`, `tests/test_viewer.py`, `coordination/agents/codex.md`.
+VERIFIED:
+- vollständige Suite: **216/216 PASS**;
+- Viewer-/Replay-/Analyzer-/Optimizer-Abdeckung ist darin enthalten; gezielte Vorprüfung dieser Bereiche: **35/35 PASS**;
+- `compileall` für `src`: PASS, mit temporärem Bytecode-Ziel außerhalb des Arbeitsbaums;
+- `git diff --check`: PASS;
+- Diff-basierter Privacy-/Artefakt-/Secret-Scan: keine neu hinzugefügten Demo-, Ergebnis-, Archiv-, EXE-, Cache- oder Datenbankartefakte; keine konkreten privaten Windows-Pfade und keine Secret-/Token-/Passwort- oder Private-Key-Muster im gestagten Text.
+OPEN:
+- Vor einem eventuellen Merge nach `main` ist ausschließlich ein menschlicher V2-Viewer-Sichtcheck offen: Szenen-/Frame-Navigation, Tempo, Player-Filter, sichtbare/verborgene Spieler bei explizitem `alive`, sowie die deaktivierte Wiedergabe ohne belegte Tickrate.
+- Kein Merge nach `main`, kein Release und keine weitere Produktarbeit ohne ausdrückliche Freigabe.
+NEXT: Tristan prüft ausschließlich den gepushten Integrationsbranch und entscheidet über die V2-Viewer-Sichtabnahme bzw. einen präzisen Korrekturauftrag. Ohne Auftrag warten.
+MODEL_PROFILE: terra
+MODEL_REASON: Konfliktauflösung an einem kanonischen Datenvertrag, vollständige Regression und privacy-sensible Branch-Konsolidierung.
+COMPUTER_USE: no
+COMMIT/PR: Integrationscommit folgt unmittelbar nach diesem Handoff auf `codex/integrate-main-dev-v1`.

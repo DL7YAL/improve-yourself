@@ -38,6 +38,11 @@ def _radar_data_uri(path: Path | None) -> str:
     return f"data:{mime};base64,{base64.b64encode(data).decode('ascii')}"
 
 
+def visible_players_at_frame(players: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Hide only players explicitly reported dead by the canonical replay state."""
+    return [player for player in players if player.get("alive") is not False]
+
+
 def render_viewer(
     replay_path: Path,
     output_path: Path,
@@ -112,12 +117,12 @@ input[type=range]{flex:1;min-width:180px}.stage{position:relative;aspect-ratio:1
 canvas{width:100%;height:100%;background:#07101a;border-radius:8px}.pill{color:#a9bed7;font-size:13px}.warn{color:#ffc56e}
 </style></head><body><main class="shell">
 <div class="bar"><h1>Improve Yourself · 2D Replay</h1><span id="map" class="pill"></span><span id="quality" class="pill"></span></div>
-<section class="card bar"><label>Szene <select id="scene"></select></label><label id="player-wrap" hidden>Spieler <select id="player"></select></label><button id="play">▶ Abspielen</button><input id="frame" type="range" min="0" value="0"><span id="tick" class="pill"></span></section>
+<section class="card bar"><label>Szene <select id="scene"></select></label><button id="previous-scene">‹ Szene</button><button id="next-scene">Szene ›</button><button id="previous-frame">‹ Frame</button><button id="play">▶ Abspielen</button><button id="next-frame">Frame ›</button><label>Tempo <select id="speed"><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label><label id="player-wrap" hidden>Spieler <select id="player"></select></label><input id="frame" type="range" min="0" value="0"><span id="tick" class="pill"></span></section>
 <section class="card stage"><canvas id="canvas" width="1024" height="1024"></canvas></section>
-<section class="card meta"><span class="pill">T = orange · CT = blau · Linie = Blickrichtung</span><span id="notice" class="pill warn"></span></section>
+<section class="card meta"><span class="pill">T = orange · CT = blau · Linie = Blickrichtung</span><span class="pill">Spieler verschwinden nur bei explizit belegtem Todeszustand.</span><span id="notice" class="pill warn"></span></section><section class="card"><strong id="scene-info"></strong><div id="event-info" class="pill"></div></section>
 </main><script>const MODEL=__IY_VIEWER_MODEL__;
 const replay=MODEL.replay,radar=MODEL.radar,canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d');
-const sceneEl=document.querySelector('#scene'),frameEl=document.querySelector('#frame'),playEl=document.querySelector('#play'),playerEl=document.querySelector('#player');let playing=false,timer=null,img=null;
+const sceneEl=document.querySelector('#scene'),frameEl=document.querySelector('#frame'),playEl=document.querySelector('#play'),speedEl=document.querySelector('#speed'),playerEl=document.querySelector('#player'),eventEl=document.querySelector('#event-info'),sceneInfoEl=document.querySelector('#scene-info');let playing=false,timer=null,img=null;
 const isV2=replay.source_schema==='iy.replay/v2',timingAvailable=!isV2||replay.controller.timing_available;
 document.querySelector('#map').textContent=replay.map_name;document.querySelector('#quality').textContent=isV2?`${replay.scenes.length} Szenen · gemeinsame Replay-Wahrheit v2`:`${replay.scenes.length} Szenen · ${replay.data_quality.omitted_incomplete_player_snapshots} ausgelassene Snapshots`;
 replay.scenes.forEach((s,i)=>sceneEl.add(new Option(`Runde ${s.round_number} · ${s.marker_player}`,i)));
@@ -127,10 +132,11 @@ function scene(){return replay.scenes[Number(sceneEl.value)||0]}function frame()
 function project(p,players){if(img)return[(p.x-radar.pos_x)/radar.scale*canvas.width/img.naturalWidth,(radar.pos_y-p.y)/radar.scale*canvas.height/img.naturalHeight];
  const xs=players.map(q=>q.x),ys=players.map(q=>q.y),minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys),span=Math.max(maxX-minX,maxY-minY,1);return[100+(p.x-minX)/span*824,924-(p.y-minY)/span*824]}
 function draw(){ctx.clearRect(0,0,1024,1024);if(img)ctx.drawImage(img,0,0,1024,1024);else{ctx.strokeStyle='#1c3046';for(let n=0;n<=1024;n+=128){ctx.beginPath();ctx.moveTo(n,0);ctx.lineTo(n,1024);ctx.stroke();ctx.beginPath();ctx.moveTo(0,n);ctx.lineTo(1024,n);ctx.stroke()}}
- const f=frame();if(!f)return;const s=scene(),frameIndex=Number(frameEl.value),requested=frameIndex===0?(s.requested_tick??f.tick):f.tick,resolved=f.tick;document.querySelector('#tick').textContent=isV2?`Tick ${resolved} · angefordert ${requested} · Frame ${frameIndex+1}/${s.frames.length}`:`Tick ${f.tick} · Frame ${frameIndex+1}/${s.frames.length}`;
- for(const p of f.players){const [x,y]=project(p,f.players),color=p.side.toUpperCase()==='CT'?'#55aaff':'#ff9f43',a=p.yaw*Math.PI/180,selected=!playerEl.value||playerEl.value===p.player_id;ctx.globalAlpha=selected?1:.35;ctx.strokeStyle=color;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*34,y-Math.sin(a)*34);ctx.stroke();ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();ctx.font='16px system-ui';ctx.fillStyle='#fff';ctx.fillText(p.name,x+14,y-12)}ctx.globalAlpha=1}
+ const f=frame();if(!f)return;const s=scene(),frameIndex=Number(frameEl.value),requested=frameIndex===0?(s.requested_tick??f.tick):f.tick,resolved=f.tick;document.querySelector('#tick').textContent=isV2?`Tick ${resolved} · angefordert ${requested} · Frame ${frameIndex+1}/${s.frames.length}`:`Tick ${f.tick} · Frame ${frameIndex+1}/${s.frames.length}`;sceneInfoEl.textContent=`Runde ${s.round_number} · ${s.marker_player}`;eventEl.textContent=typeof f.event_count==='number'?`${f.event_count} belegte Ereignisse am Snapshot.`:'Keine Ereignisdaten am Snapshot.';
+ const visiblePlayers=f.players.filter(p=>p.alive!==false);for(const p of visiblePlayers){const [x,y]=project(p,visiblePlayers),color=p.side.toUpperCase()==='CT'?'#55aaff':'#ff9f43',a=p.yaw*Math.PI/180,selected=!playerEl.value||playerEl.value===p.player_id;ctx.globalAlpha=selected?1:.35;ctx.strokeStyle=color;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*34,y-Math.sin(a)*34);ctx.stroke();ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();ctx.font='16px system-ui';ctx.fillStyle='#fff';ctx.fillText(p.name,x+14,y-12)}ctx.globalAlpha=1}
+function step(delta){const max=Number(frameEl.max);frameEl.value=Math.min(max,Math.max(0,Number(frameEl.value)+delta));draw()}
 function reset(){playing=false;clearInterval(timer);playEl.textContent='▶ Abspielen';const s=scene();frameEl.max=Math.max(0,(s?.frames.length||1)-1);frameEl.value=0;draw()}
-sceneEl.onchange=()=>{const s=scene();if(isV2)playerEl.value=s.focus_player_id||'';reset()};playerEl.onchange=draw;frameEl.oninput=draw;playEl.onclick=()=>{if(!timingAvailable)return;playing=!playing;playEl.textContent=playing?'⏸ Pause':'▶ Abspielen';clearInterval(timer);if(playing)timer=setInterval(()=>{const max=Number(frameEl.max);frameEl.value=Number(frameEl.value)>=max?0:Number(frameEl.value)+1;draw()},100)};if(isV2)playerEl.value=scene()?.focus_player_id||'';reset();</script></body></html>'''
+sceneEl.onchange=()=>{const s=scene();if(isV2)playerEl.value=s.focus_player_id||'';reset()};playerEl.onchange=draw;frameEl.oninput=draw;document.querySelector('#previous-frame').onclick=()=>step(-1);document.querySelector('#next-frame').onclick=()=>step(1);document.querySelector('#previous-scene').onclick=()=>{sceneEl.value=Math.max(0,Number(sceneEl.value)-1);sceneEl.onchange()};document.querySelector('#next-scene').onclick=()=>{sceneEl.value=Math.min(replay.scenes.length-1,Number(sceneEl.value)+1);sceneEl.onchange()};playEl.onclick=()=>{if(!timingAvailable)return;playing=!playing;playEl.textContent=playing?'⏸ Pause':'▶ Abspielen';clearInterval(timer);if(playing)timer=setInterval(()=>{const max=Number(frameEl.max);frameEl.value=Number(frameEl.value)>=max?0:Number(frameEl.value)+1;draw()},100/Number(speedEl.value))};speedEl.onchange=()=>{if(playing){playEl.onclick();playEl.onclick()}};if(isV2)playerEl.value=scene()?.focus_player_id||'';reset();</script></body></html>'''
 
 
 if __name__ == "__main__":

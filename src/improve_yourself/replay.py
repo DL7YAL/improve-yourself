@@ -66,12 +66,22 @@ def build_replay_payload(
                     "yaw": float(row.get("yaw", 0.0)),
                 })
             frames.append({"tick": tick, "players": sorted(players, key=lambda p: (p["side"], p["name"]))})
+        events = [
+            {
+                "tick": kill["tick"], "attacker": kill["attacker"], "victim": kill["victim"],
+                "weapon": kill["weapon"], "headshot": kill["headshot"],
+                "marker_multikill": kill["attacker"] == marker["player"],
+            }
+            for kill in analysis["kills"]
+            if kill["round_number"] == marker["round_number"] and start <= kill["tick"] <= end
+        ]
         scenes.append({
             "round_number": marker["round_number"],
             "marker_player": marker["player"],
             "start_tick": start,
             "end_tick": end,
             "frames": frames,
+            "events": events,
         })
     return {
         "schema": REPLAY_SCHEMA,
