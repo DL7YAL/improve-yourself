@@ -1,4 +1,4 @@
-# Azure Pipelines CI/CD Configuration
+# Azure Pipelines CI/CD Configuration (Phase 1 — validation only, no apply)
 
 trigger:
   - main
@@ -49,39 +49,51 @@ stages:
               summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
             displayName: 'Publish code coverage'
 
-  - stage: Deploy
-    displayName: 'Deploy Stage'
+          # Validate Bicep syntax early
+          - task: AzureCLI@2
+            displayName: 'Validate Bicep syntax'
+            inputs:
+              azureSubscription: 'improve-yourself-subscription'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -euo pipefail
+                az bicep version
+                az bicep build --file azure/deployment.bicep --stdout >/dev/null
+
+  - stage: IaC_Validate
+    displayName: 'IaC Validation (what-if when secret provided)'
     dependsOn: Build
     condition: succeeded()
     jobs:
-      - job: DeployInfrastructure
-        displayName: 'Deploy Infrastructure'
+      - job: WhatIf
+        displayName: 'Bicep what-if (no apply)'
         steps:
-          - task: AzureResourceGroupDeployment@2
+          - task: AzureCLI@2
+            displayName: 'What-if (skips if SQL_ADMIN_PASSWORD not set)'
             inputs:
               azureSubscription: 'improve-yourself-subscription'
-              action: 'Create Or Update Resource Group'
-              resourceGroupName: '$(azureResourceGroup)'
-              location: '$(azureLocation)'
-              templateLocation: 'Linked artifact'
-              csmFile: '$(Build.SourcesDirectory)/azure/deployment.bicep'
-              overrideParameters: '-environment dev'
-            displayName: 'Deploy Bicep template'
-
-      - task: AzureCLI@2
-        inputs:
-          azureSubscription: 'improve-yourself-subscription'
-          scriptType: 'bash'
-          scriptLocation: 'inlineScript'
-          inlineScript: |
-            # Get deployment outputs
-            STORAGE_URL=$(az deployment group show -g $(azureResourceGroup) --query properties.outputs.storageAccountUrl.value -o tsv)
-            KEYVAULT_URL=$(az deployment group show -g $(azureResourceGroup) --query properties.outputs.keyVaultUrl.value -o tsv)
-
-            # Set pipeline variables
-            echo "##vso[task.setvariable variable=STORAGE_URL]$STORAGE_URL"
-            echo "##vso[task.setvariable variable=KEYVAULT_URL]$KEYVAULT_URL"
-        displayName: 'Retrieve deployment outputs'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -euo pipefail
+                if [ -z "${SQL_ADMIN_PASSWORD:-}" ]; then
+                  echo "No SQL_ADMIN_PASSWORD provided. Skipping what-if to avoid exposing/guessing secret values."
+                  exit 0
+                fi
+                DEPLOY_NAME="dryrun-$(Build.BuildNumber)"
+                PARAMS=(
+                  -p environment=dev
+                  -p appName=improve-yourself
+                  -p sqlAdminUser=app_sql_admin
+                  -p sqlAdminPassword="$SQL_ADMIN_PASSWORD"
+                )
+                az deployment group what-if \
+                  -g "$(azureResourceGroup)" \
+                  -n "$DEPLOY_NAME" \
+                  -f "$(Build.SourcesDirectory)/azure/deployment.bicep" \
+                  "${PARAMS[@]}" \
+                  --no-pretty-print
 
   - stage: SecurityScan
     displayName: 'Security Scan Stage'
