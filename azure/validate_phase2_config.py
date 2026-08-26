@@ -172,13 +172,6 @@ def validate_bicep_contract(bicep_path: Path) -> list[str]:
         "native Storage publicNetworkAccess toggle": (
             "publicNetworkAccess: enablePublicNetworkStorage ? 'Enabled' : 'Disabled'"
         ),
-        "Blob service child resource": (
-            "resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01'"
-        ),
-        "Blob diagnostic scope": "scope: blobService",
-        "Blob StorageRead diagnostic category": "{ category: 'StorageRead', enabled: true }",
-        "Blob StorageWrite diagnostic category": "{ category: 'StorageWrite', enabled: true }",
-        "Blob StorageDelete diagnostic category": "{ category: 'StorageDelete', enabled: true }",
         "Key Vault publicNetworkAccess toggle": (
             "publicNetworkAccess: enablePublicNetworkKeyVault ? 'Enabled' : 'Disabled'"
         ),
@@ -187,6 +180,60 @@ def validate_bicep_contract(bicep_path: Path) -> list[str]:
         ),
         "SQL publicNetworkAccess toggle": (
             "publicNetworkAccess: enablePublicNetworkSql ? 'Enabled' : 'Disabled'"
+        ),
+        "Blob service child resource": (
+            "resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01'"
+        ),
+        "Blob diagnostic scope": "scope: blobService",
+        "Blob StorageRead diagnostic category": "{ category: 'StorageRead', enabled: true }",
+        "Blob StorageWrite diagnostic category": "{ category: 'StorageWrite', enabled: true }",
+        "Blob StorageDelete diagnostic category": "{ category: 'StorageDelete', enabled: true }",
+        "Key Vault diagnostic scope": "scope: keyVault",
+        "Key Vault AuditEvent category": "{ category: 'AuditEvent', enabled: true }",
+        "Cosmos diagnostic scope": "scope: cosmosDbAccount",
+        "Cosmos DataPlaneRequests category": "{ category: 'DataPlaneRequests', enabled: true }",
+        "Cosmos QueryRuntimeStatistics category": (
+            "{ category: 'QueryRuntimeStatistics', enabled: true }"
+        ),
+        "SQL Server diagnostic scope": "scope: sqlServer",
+        "SQL Server DevOpsOperationsAudit category": (
+            "{ category: 'DevOpsOperationsAudit', enabled: true }"
+        ),
+        "SQL Database diagnostic scope": "scope: sqlDatabase",
+        "SQL Database SQLSecurityAuditEvents category": (
+            "{ category: 'SQLSecurityAuditEvents', enabled: true }"
+        ),
+        "Storage private endpoint condition": (
+            "resource pe_storage 'Microsoft.Network/privateEndpoints@2023-05-01' = if "
+            "(enablePrivateEndpoints && hasPeSubnet)"
+        ),
+        "Key Vault private endpoint condition": (
+            "resource pe_kv 'Microsoft.Network/privateEndpoints@2023-05-01' = if "
+            "(enablePrivateEndpoints && hasPeSubnet)"
+        ),
+        "Cosmos private endpoint condition": (
+            "resource pe_cosmos 'Microsoft.Network/privateEndpoints@2023-05-01' = if "
+            "(enablePrivateEndpoints && hasPeSubnet)"
+        ),
+        "SQL private endpoint condition": (
+            "resource pe_sql 'Microsoft.Network/privateEndpoints@2023-05-01' = if "
+            "(enablePrivateEndpoints && hasPeSubnet)"
+        ),
+        "Storage Private DNS binding condition": (
+            "resource pe_storage_dns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' "
+            "= if (enablePrivateEndpoints && hasPeSubnet && length(privateDnsZoneIds_storage) > 0)"
+        ),
+        "Key Vault Private DNS binding condition": (
+            "resource pe_kv_dns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' "
+            "= if (enablePrivateEndpoints && hasPeSubnet && length(privateDnsZoneIds_keyvault) > 0)"
+        ),
+        "Cosmos Private DNS binding condition": (
+            "resource pe_cosmos_dns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' "
+            "= if (enablePrivateEndpoints && hasPeSubnet && length(privateDnsZoneIds_cosmos) > 0)"
+        ),
+        "SQL Private DNS binding condition": (
+            "resource pe_sql_dns 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2023-05-01' "
+            "= if (enablePrivateEndpoints && hasPeSubnet && length(privateDnsZoneIds_sql) > 0)"
         ),
     }
 
