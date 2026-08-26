@@ -1,5 +1,12 @@
 # Integrated local V1 workflow
 
+> **Legacy-compatible local workflow.** `iy-workflow` produces the separate
+> `iy.replay/v1` artifact contract described below. It remains supported for
+> its own local viewer/review artifacts, but is not the canonical V2 replay
+> path and must not be used as a fallback for V2 consumers. The canonical
+> `iy.replay/v2` path is `iy-demo-workflow`; see
+> [`PRODUCT_ROADMAP_ALIGNMENT.md`](PRODUCT_ROADMAP_ALIGNMENT.md).
+
 ## Supported Windows start
 
 From the repository root, the supported local entry point is:

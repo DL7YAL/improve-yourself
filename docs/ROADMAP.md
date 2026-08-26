@@ -1,5 +1,18 @@
 # Improve Yourself Roadmap
 
+## Reading this roadmap
+
+This file contains product direction, including future ideas. It is not a
+capability inventory. For the current implemented local architecture and the
+status of historical contracts, read
+[`PRODUCT_ROADMAP_ALIGNMENT.md`](PRODUCT_ROADMAP_ALIGNMENT.md) first.
+
+In particular, the present local Optimizer path is read-only evidence and
+planning input. Apply/Restore, backups, and automated system configuration are
+future work, not current V1 behavior. The active replay truth is
+`iy.replay/v2`; older V1 replay references are historical or compatibility
+context unless explicitly identified otherwise.
+
 ## V1 — Foundation / working product
 
 Goal: a stable, independent first version with real practical value.
@@ -12,11 +25,12 @@ Goal: a stable, independent first version with real practical value.
 - Clear result categories: OK / review / action required
 
 ### Optimizer
-- Curated performance-oriented configuration
-- No unnecessary tweaks or overclocking
-- Backup before changes
-- Reversible changes / restore path
-- Consider relevant CS2 and AMD Adrenalin configuration
+- **Current V1:** read-only System Check evidence and an explicit read-only
+  Optimizer-input export; no Apply/Restore or configuration authority.
+- **Future:** curated performance-oriented configuration, only where evidence,
+  safety design, explicit approval, and reversible operation have been proven.
+- Future action-capability prerequisites include backup/restore design and
+  validation, and must not be inferred from current evidence views.
 
 ### Demo Analyzer
 - Read CS2 demos automatically
@@ -60,8 +74,10 @@ Goal: not only detect what happened, but explain why it matters.
 - Automated opponent-perspective analysis
 - Automatic scene prioritization
 - Stronger Tactical Replay
-- Connect system analysis and optimizer results
-- Before/after measurements
+- Connect system analysis and optimizer results through explicit, evidence-led
+  interfaces
+- Before/after measurements, if a separately approved measurement design is
+  available
 - Better reports and explanations
 
 **V2 rule:** context is more important than a single statistic.
