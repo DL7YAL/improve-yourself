@@ -39,6 +39,9 @@ supported legacy-compatible local workflow. It is not the canonical V2 path;
 it must not be silently routed into V2 consumers or treated as a fallback for
 `ReplayStore` or `ReplayController`.
 
+The evidence-based retention decision and migration gates are recorded in
+[`REPLAY_V1_RETIREMENT_ASSESSMENT.md`](REPLAY_V1_RETIREMENT_ASSESSMENT.md).
+
 ## Optimizer authority: current versus future
 
 ### Implemented now
