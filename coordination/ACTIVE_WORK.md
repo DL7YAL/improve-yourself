@@ -8,7 +8,7 @@ GitHub `main` is the canonical source of truth.
 
 Task: product-roadmap-alignment
 Branch: codex/product-roadmap-alignment
-Base HEAD: 9c5e6ed10ce721876d67b739a9e06d3e3e2329f6
+Base HEAD: verify current `main` immediately before branch creation
 Owned files:
 - docs/**
 - coordination/** (except files explicitly owned by Azure during this task)
@@ -20,7 +20,7 @@ Handoff required: NO
 
 Task: harden-iac-ci-phase1
 Branch: azure/harden-iac-ci-phase1
-Base HEAD: 9c5e6ed10ce721876d67b739a9e06d3e3e2329f6
+Base HEAD: verify current `main` immediately before branch creation
 Owned files:
 - azure/**
 - config/azure_config.py
@@ -34,6 +34,7 @@ Handoff required: NO
 ## Rules
 
 - Read this file before starting parallel Codex/Azure work.
+- Verify current GitHub `main` immediately before creating a task branch; use that exact HEAD as the task base.
 - Do not modify files owned by the other active agent.
 - Codex branches use `codex/<task-name>`.
 - Azure branches use `azure/<task-name>`.
