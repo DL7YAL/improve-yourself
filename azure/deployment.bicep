@@ -1,8 +1,13 @@
-// Azure Bicep template for complete infrastructure deployment
+// Azure Bicep template for complete infrastructure deployment (Phase 1 hardened)
 
 param location string = resourceGroup().location
 param environment string = 'dev'
 param appName string = 'improve-yourself'
+
+// Secure SQL admin parameters
+param sqlAdminUser string = 'app_sql_admin'
+@secure()
+param sqlAdminPassword string
 
 var storageAccountName = '${appName}${environment}${uniqueString(resourceGroup().id)}'
 var keyvaultName = '${appName}-${environment}-kv'
@@ -10,8 +15,9 @@ var cosmosDbName = '${appName}-${environment}-cosmos'
 var sqlServerName = '${appName}-${environment}-sql'
 var sqlDatabaseName = '${appName}db'
 var appInsightsName = '${appName}-${environment}-ai'
+var logAnalyticsName = '${appName}-${environment}-law'
 
-// Storage Account
+// Storage Account (baseline hardening)
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   name: storageAccountName
   location: location
@@ -22,10 +28,12 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   properties: {
     accessTier: 'Hot'
     supportsHttpsTrafficOnly: true
+    minimumTlsVersion: 'TLS1_2'
+    allowBlobPublicAccess: false
   }
 }
 
-// Key Vault
+// Key Vault (baseline hardening)
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: keyvaultName
   location: location
@@ -35,13 +43,15 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
       family: 'A'
       name: 'standard'
     }
-    accessPolicies: []
-    enableSoftDelete: true
-    softDeleteRetentionInDays: 90
+    // Prefer RBAC over access policies
+    enableRbacAuthorization: true
+    // Purge protection on (soft-delete is always on with modern API versions)
+    enablePurgeProtection: true
+    // Intentionally not changing network ACLs in Phase 1
   }
 }
 
-// Cosmos DB Account
+// Cosmos DB Account (no network changes in Phase 1)
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = {
   name: cosmosDbName
   location: location
@@ -54,18 +64,18 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = {
         locationName: location
         failoverPriority: 0
       }
-    }
+    ]
     databaseAccountOfferType: 'Standard'
   }
 }
 
-// SQL Server
+// SQL Server (use secure parameters)
 resource sqlServer 'Microsoft.Sql/servers@2021-11-01' = {
   name: sqlServerName
   location: location
   properties: {
-    administratorLogin: 'sqladmin'
-    administratorLoginPassword: keyVault.properties.vaultUri
+    administratorLogin: sqlAdminUser
+    administratorLoginPassword: sqlAdminPassword
   }
 }
 
@@ -80,14 +90,30 @@ resource sqlDatabase 'Microsoft.Sql/servers/databases@2021-11-01' = {
   }
 }
 
-// Application Insights
-resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
+// Log Analytics Workspace (for workspace-based Application Insights)
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
+  name: logAnalyticsName
+  location: location
+  sku: {
+    name: 'PerGB2018'
+  }
+  properties: {
+    retentionInDays: 30
+    features: {
+      enableLogAccessUsingOnlyResourcePermissions: true
+    }
+  }
+}
+
+// Application Insights (workspace-based)
+resource appInsights 'Microsoft.Insights/components@2022-06-15' = {
   name: appInsightsName
   location: location
   kind: 'web'
   properties: {
     Application_Type: 'web'
-    RetentionInDays: 30
+    IngestionMode: 'ApplicationInsights'
+    WorkspaceResourceId: logAnalytics.id
   }
 }
 
@@ -96,4 +122,4 @@ output storageAccountUrl string = storageAccount.properties.primaryEndpoints.blo
 output keyVaultUrl string = keyVault.properties.vaultUri
 output cosmosDbEndpoint string = cosmosDbAccount.properties.documentEndpoint
 output sqlServerName string = sqlServer.properties.fullyQualifiedDomainName
-output appInsightsKey string = appInsights.properties.InstrumentationKey
+output appInsightsConnectionString string = appInsights.properties.ConnectionString
