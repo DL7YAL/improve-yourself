@@ -26,6 +26,7 @@ from .local_profiles import OBJECTIVE_RULES, LocalProfileStore
 from .optimizer_evidence import evaluate_profile, profile_from_system_check
 from .optimizer_foundation import OptimizationRule, integration_proof
 from .replay_store import ReplayStore
+from .review_presentation import build_review_presentation
 from .rule_pack import RulePackValidationError, import_rule_pack, load_rule_pack_document
 from .system_check import run_system_check
 
@@ -1200,6 +1201,11 @@ class AnalyzerShellController:
     def validate_current_workflow(self) -> Path:
         return validate_existing_workflow(self._require_result().manifest_path)
 
+    def review_presentation(self, system_check: dict[str, object] | None = None) -> dict[str, object]:
+        if self.data_hub is None:
+            raise RuntimeError("import a demo first")
+        return build_review_presentation(self.data_hub.for_consumer("review"), system_check)
+
     def _require_result(self) -> ShellResult:
         if self.result is None:
             raise RuntimeError("import a demo first")
@@ -1893,6 +1899,8 @@ class AnalyzerShellApp:
             text="Szenen, Evidenz und Notizen aus derselben Analyse · Tick-Sprung über den geprüften lokalen Coordinator",
             foreground=_THEME["muted"],
         ).pack(anchor="w", pady=(4, 14))
+        self.embedded_review_boundary = self.tk.StringVar(value="FAKTEN / HINWEISE / DATENLIMITS / NÄCHSTE SCHRITTE: Review noch nicht geladen · SYSTEM CHECK: UNKNOWN / NOT AVAILABLE")
+        self.ttk.Label(review, textvariable=self.embedded_review_boundary, style="Muted.TLabel", justify="left", wraplength=940).pack(anchor="w", pady=(0, 12))
 
         body = self.ttk.Frame(review, style="Content.TFrame")
         body.pack(fill="both", expand=True)
@@ -3592,6 +3600,7 @@ class AnalyzerShellApp:
             self._show_analyzer_tab("Review")
             self.embedded_review_frame.place(relx=0, rely=0, relwidth=1, relheight=1)
             self.embedded_review_frame.tkraise()
+            self._refresh_embedded_review_boundary()
             if self.embedded_review.scenes:
                 self.embedded_scene_list.selection_set(0)
                 self.embedded_scene_list.activate(0)
@@ -3605,6 +3614,21 @@ class AnalyzerShellApp:
 
     def _close_embedded_review(self) -> None:
         self.embedded_review_frame.place_forget()
+
+    def _refresh_embedded_review_boundary(self) -> None:
+        try:
+            presentation = self.controller.review_presentation(getattr(self, "review_system_check_payload", None))
+            analysis = presentation["analysis"]
+            system = presentation["system_check"]
+            self.embedded_review_boundary.set(
+                f"FAKTEN: {' · '.join(analysis['facts'])}\n"
+                f"PRÜFHINWEISE: {' · '.join(analysis['hints'])}\n"
+                f"DATENLIMITS: {' · '.join(analysis['limits'])}\n"
+                f"NÄCHSTE SCHRITTE: {' · '.join(analysis['next_steps'])}\n"
+                f"SYSTEM CHECK (getrennte Quelle): {system['availability']}"
+            )
+        except (RuntimeError, ValueError):
+            self.embedded_review_boundary.set("FAKTEN / HINWEISE / DATENLIMITS / NÄCHSTE SCHRITTE: UNKNOWN / NOT AVAILABLE · SYSTEM CHECK: getrennt und unbekannt")
 
     def _select_embedded_scene(self, _event=None) -> None:
         selection = self.embedded_scene_list.curselection()
@@ -3955,6 +3979,9 @@ class AnalyzerShellApp:
         }
         self._render_optimizer_hardware_chips()
         self._render_system_check_results(payload)
+        self.review_system_check_payload = payload
+        if self.embedded_review is not None:
+            self._refresh_embedded_review_boundary()
         self._render_optimizer_evidence(payload)
         profile = profile_from_system_check(payload)
         if profile is not None:
