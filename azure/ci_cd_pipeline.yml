@@ -49,7 +49,7 @@ stages:
               summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
             displayName: 'Publish code coverage'
 
-          # Validate Bicep syntax early
+          # Validate Bicep syntax early (runs in pipeline)
           - task: AzureCLI@2
             displayName: 'Validate Bicep syntax'
             inputs:
@@ -94,6 +94,8 @@ stages:
                   -f "$(Build.SourcesDirectory)/azure/deployment.bicep" \
                   "${PARAMS[@]}" \
                   --no-pretty-print
+            env:
+              SQL_ADMIN_PASSWORD: $(SQL_ADMIN_PASSWORD)
 
   - stage: SecurityScan
     displayName: 'Security Scan Stage'
