@@ -1602,3 +1602,30 @@ MODEL_PROFILE: terra
 MODEL_REASON: Enger Contract-/Fail-closed-Pass mit realem Demo-E2E-Nachweis und ohne Produktsemantik-Ausweitung.
 COMPUTER_USE: no
 COMMIT/PR: `acb885b refactor: clarify analyzer core contracts`, gepusht nach `origin/dev/v1-foundation`.
+
+# Handoff 2026-08-26 — Optimizer visual package and read-only BIOS projection
+
+STATUS: WAITING_FOR_TRISTAN
+TASK: Abgeschlossene Optimizer-UI-/Referenzpaket-Änderungen und den verifizierten read-only BIOS-Projektionsfehler versionieren. Keine neue Produktfunktion, keine Apply-Autorität und keine Systemänderung.
+BRANCH / BASE: `dev/v1-foundation`; gegenüber `origin/main` enthält der Branch weiterhin die bestehende, noch nicht nach `main` gemergte V1-Entwicklung. Dieser Handoff dokumentiert ausschließlich den aktuellen Optimizer-Checkpoint.
+IMPLEMENTATION_COMMIT: `2219fad fix: finalize read-only optimizer projection`.
+CHANGED:
+- `Data/UI/Optimizer/`: versioniertes Optimizer-MASTER-Paket mit Manifest, Source-Precedence, Screen-Spezifikationen, Acceptance-Contract und den zwei hashgeprüften PNG-Exports. Die Exporte entsprechen den bereits verbindlichen Optimizer-MASTER-Hashes.
+- `src/improve_yourself/analyzer_shell.py` und `tests/test_analyzer_shell.py`: vorhandene Optimizer-Overview-/Detail-Präsentation an die freigegebenen MASTER-Strukturen gebunden, mit lokaler Detailnavigation und ohne Änderung von Evaluations-, Empfehlungs- oder Apply-Semantik.
+- `src/improve_yourself/optimizer_foundation.py` und `tests/test_optimizer_foundation.py`: der read-only Collector publiziert BIOS-Version/-Datum im Mainboard-Record; der Systemprofil-Adapter projiziert diese belegten Werte nun nach `bios`, sofern kein expliziter BIOS-Datensatz vorliegt. Explizite BIOS-Daten bleiben vorrangig; fehlende Werte werden nicht ergänzt.
+VERIFIED:
+- vollständige Test-Suite: **215/215 PASS** (`pytest -p no:cacheprovider` in isolierter Python-3.13-Umgebung);
+- relevante Optimizer-/System-Check-Strecke nach der BIOS-Korrektur: **40/40 PASS**;
+- schreibfreie Syntaxprüfung der fünf Optimizer-/Collector-Module: PASS;
+- `git diff --check`: PASS;
+- lokaler read-only Collector-Lauf: Windows-, CPU-, GPU-, RAM-, Mainboard-/BIOS- und Display-Fakten vorhanden; `bios.version` wurde korrekt aus dem vorhandenen Mainboard-Fakt nach `iy.system_profile/v1` projiziert. Keine Registry-, Treiber-, BIOS-, Windows-, Netzwerk- oder MTU-Änderung.
+OPEN:
+- Der aktuelle Collector lieferte keine Netzwerkadapterdaten; Adapter-/MTU-/RSS-/EEE-Zustände bleiben deshalb unbekannt und werden nicht empfohlen.
+- GPU-Name und Treiberversion liegen vor, ein separater GPU-Vendor-Fakt fehlt; die Grafikregel bleibt daher korrekt `INSUFFICIENT_EVIDENCE`.
+- Die Optimizer-MASTER-Paketdateien sind versioniert und automatisiert regressionsgeprüft. Ein erneuter manueller Runtime-Screenshotvergleich gegen beide MASTER-Screens ist in diesem Abschlusslauf nicht durchgeführt worden und bleibt ausschließlich menschliche Sichtabnahme.
+- Kein Merge nach `main`, kein Release und keine weitere Produktarbeit ohne expliziten Auftrag.
+NEXT: Tristan prüft ausschließlich die zwei Optimizer-Screens gegen die versionierten MASTER-Exports und entscheidet über Sichtabnahme bzw. einen präzisen visuellen Korrekturauftrag. Bis dahin keine Folgearbeit beginnen.
+MODEL_PROFILE: terra
+MODEL_REASON: Eng begrenzte Versionierung, read-only Datenkorrektur und vollständige Regression eines bestehenden Optimizer-Slices.
+COMPUTER_USE: no
+COMMIT/PR: `2219fad fix: finalize read-only optimizer projection`; Handoff-Commit folgt unmittelbar danach auf `dev/v1-foundation`.
