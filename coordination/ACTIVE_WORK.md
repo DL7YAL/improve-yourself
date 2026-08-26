@@ -6,27 +6,29 @@ GitHub `main` is the canonical source of truth.
 
 ## Codex
 
-Task: replay-v1-retirement-assessment
-Branch: codex/replay-v1-retirement-assessment
+Task: v2-local-review-replacement
+Branch: codex/v2-local-review-replacement
 Base HEAD: verify current `main` immediately before branch creation
 Owned files:
+- src/improve_yourself/**
+- tests/**
+- tools/dev/**
+- pyproject.toml
 - docs/**
-- coordination/** (except files explicitly owned by Azure during this task)
 Status: READY
 Depends on Azure: NO
 Handoff required: NO
 
 ## Azure
 
-Task: harden-iac-ci-phase2-design
-Branch: azure/harden-iac-ci-phase2-design
+Task: harden-iac-ci-phase2-validation
+Branch: azure/harden-iac-ci-phase2-validation
 Base HEAD: verify current `main` immediately before branch creation
 Owned files:
 - azure/**
 - config/azure_config.py
 - services/azure_*.py
 - requirements-azure.txt
-- coordination/** (only Azure-specific coordination notes if explicitly needed)
 Status: READY
 Depends on Codex: NO
 Handoff required: NO
@@ -41,7 +43,8 @@ Handoff required: NO
 - If file ownership overlaps, STOP and coordinate before continuing.
 - Use status values: `READY`, `IN PROGRESS`, `BLOCKED`, `PASS`.
 - Keep entries short and current. This file tracks active work, not project history.
-- Codex must not modify Azure-owned files during this task.
-- Azure must not modify protected local product-core files during this task.
+- Codex must preserve the canonical AnalyzerCore / AnalyzerDataHub / iy.replay/v2 / ReplayStore / ReplayController path. No second parser, store, controller, data hub, or V1 fallback may be introduced.
+- Codex must not remove the existing V1 workflow in this sprint. Build the V2 replacement alongside it and preserve fail-closed/local-first behavior.
+- Azure must not modify protected local product-core files.
 - Region/data-residency choice remains unresolved; do not switch regions without explicit authorization.
-- Azure Phase 2 design must remain repo-only. No live deployment or live Azure resource modification is authorized.
+- Azure Phase 2 validation remains repo-only. No live deployment or live Azure resource modification is authorized.
