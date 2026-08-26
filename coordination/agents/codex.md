@@ -1644,8 +1644,7 @@ MERGE DECISIONS:
 - `docs/AGENT_BASE.md`: die additive Foundry-Regel aus `main` wurde konfliktfrei übernommen.
 CHANGED: `coordination/CURRENT.md`, `docs/AGENT_BASE.md`, `src/improve_yourself/replay.py`, `src/improve_yourself/viewer.py`, `tests/test_replay.py`, `tests/test_viewer.py`, `coordination/agents/codex.md`.
 VERIFIED:
-- vollständige Suite: **216/216 PASS**;
-- Viewer-/Replay-/Analyzer-/Optimizer-Abdeckung ist darin enthalten; gezielte Vorprüfung dieser Bereiche: **35/35 PASS**;
+- vollständige Suite: **216/216 PASS**; sie enthält die Viewer-/Replay-/Analyzer-/Optimizer-Abdeckung;
 - `compileall` für `src`: PASS, mit temporärem Bytecode-Ziel außerhalb des Arbeitsbaums;
 - `git diff --check`: PASS;
 - Diff-basierter Privacy-/Artefakt-/Secret-Scan: keine neu hinzugefügten Demo-, Ergebnis-, Archiv-, EXE-, Cache- oder Datenbankartefakte; keine konkreten privaten Windows-Pfade und keine Secret-/Token-/Passwort- oder Private-Key-Muster im gestagten Text.
