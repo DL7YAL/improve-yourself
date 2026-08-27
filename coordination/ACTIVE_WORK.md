@@ -20,20 +20,17 @@ Status: PASS / STALE — completed and merged through PR #14
 
 ## Azure — current task
 
-Task: complete-2d-map-overview-dataset
-Branch: azure/2d-map-overview-data-prep
-Base HEAD: 9ea1a9d0d5126c615a1a9f3b02cab91ca826fba5
+Task: 2d-map-overview-full-mapset
+Branch: azure/2d-map-overview-full-mapset
+Base HEAD: b5835ac9c7b78f7a61b39e90569181cea90ee51b
 Owned files:
 - coordination/ACTIVE_WORK.md
 - resources/map_overviews/**
-- tools/map_overview_data/**
 - tests/map_overview_data/**
-Status: PASS
+Status: IN PROGRESS
 Depends on Codex: NO
 Handoff required: YES — future consumer must use canonical Replay/Analyzer current-tick state
-Scope: Extend the validated iy.map_overview_metadata/v1 pilot only to maps evidenced by the current repository/product context. No runtime, parser, Replay, Analyzer, controller, store, DataHub, V1, cloud, or Azure changes.
-Prepared dataset: de_ancient VERIFIED, de_mirage VERIFIED, de_anubis UNVERIFIED because its tracked overview descriptor omits an explicit rotation value.
-Validation: pytest, validator CLI for Ancient/Mirage/Anubis, compileall, git diff --check, transform references, Anubis rejection, and fail-closed probes passed on 2026-08-27.
+Scope: Add static iy.map_overview_metadata/v1 packages for intended competitive maps only. No runtime, parser, Replay, Analyzer, controller, store, DataHub, V1, cloud, Azure, or viewer changes.
 
 ## Rules
 
