@@ -20,18 +20,18 @@ Status: PASS / STALE — completed and merged through PR #14
 
 ## Azure — current task
 
-Task: 2d-map-overview-data-prep
+Task: complete-2d-map-overview-dataset
 Branch: azure/2d-map-overview-data-prep
-Base HEAD: 0167dff75caf23028c3f5e675f1d5890e7241d5d
+Base HEAD: 9ea1a9d0d5126c615a1a9f3b02cab91ca826fba5
 Owned files:
 - coordination/ACTIVE_WORK.md
 - resources/map_overviews/**
 - tools/map_overview_data/**
 - tests/map_overview_data/**
-Status: PASS
+Status: IN PROGRESS
 Depends on Codex: NO
 Handoff required: YES — future consumer must use canonical Replay/Analyzer current-tick state
-Validation: pytest, validator CLI, compile/syntax, git diff --check, transform references, and unknown-field fail-closed probe passed on 2026-08-27.
+Scope: Extend the validated iy.map_overview_metadata/v1 pilot only to maps evidenced by the current repository/product context. No runtime, parser, Replay, Analyzer, controller, store, DataHub, V1, cloud, or Azure changes.
 
 ## Rules
 
