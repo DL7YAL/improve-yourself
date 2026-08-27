@@ -87,6 +87,15 @@ def test_manual_valid_workflow_injection_or_reference_edit_is_not_actionable(tmp
     assert library.entries()[0]["state"] == "INVALID"
 
 
+def test_real_v1_workflow_filename_is_legacy_and_never_validated_as_v2(tmp_path: Path) -> None:
+    legacy = tmp_path / "legacy" / "workflow.json"; legacy.parent.mkdir(); legacy.write_text(json.dumps({"schema": "iy.workflow/v1"}), encoding="utf-8")
+    library = LocalAnalysisLibrary(tmp_path / "index.json", lambda _path: (_ for _ in ()).throw(AssertionError("V1 must not route to V2")))
+    entry = {"manifest_path": str(legacy), "demo_basename": "legacy", "map_id": "unknown", "source_hash_prefix": "", "scene_count": None, "workflow_type": "V1"}
+    entry["registration_seal"] = library._seal(entry)
+    library.index_path.write_text(json.dumps({"schema": "iy.local_analysis_library/v1", "entries": [entry]}), encoding="utf-8")
+    assert library.entries()[0]["state"] == "LEGACY V1"
+
+
 def test_shell_library_ui_routes_only_through_existing_controller_boundaries() -> None:
     render = inspect.getsource(AnalyzerShellApp._render_analysis_library)
     open_entry = inspect.getsource(AnalyzerShellApp._open_library_workflow)

@@ -439,6 +439,28 @@ def test_shell_opens_validated_existing_workflow_without_runner(tmp_path: Path) 
     assert controller.selected_ids == ["ct1"]
 
 
+def test_shell_successful_switch_replaces_all_prior_context(tmp_path: Path) -> None:
+    first = _write_result(tmp_path / "first", ("ct1",))
+    second = _write_result(tmp_path / "second", ("t1",))
+    controller = AnalyzerShellController(tmp_path)
+    controller.open_existing_workflow(first)
+    controller.open_existing_workflow(second)
+    assert controller.result is not None and controller.result.manifest_path == second
+    assert controller.data_hub is not None
+    assert controller.selected_ids == ["t1"] and "ct1" not in controller.selected_ids
+
+
+def test_shell_failed_switch_clears_prior_context(tmp_path: Path) -> None:
+    first = _write_result(tmp_path / "first", ("ct1",))
+    broken = _write_result(tmp_path / "broken", ("t1",))
+    payload = json.loads(broken.read_text(encoding="utf-8")); payload["source_sha256"] = "BAD"; broken.write_text(json.dumps(payload), encoding="utf-8")
+    controller = AnalyzerShellController(tmp_path); controller.open_existing_workflow(first)
+    with pytest.raises(ValueError): controller.open_existing_workflow(broken)
+    assert controller.result is None and controller.data_hub is None
+    assert controller.selected_ids == [] and controller.selection_mode == "full_demo"
+    with pytest.raises(RuntimeError): controller.validate_current_workflow()
+
+
 @pytest.mark.parametrize("mutation, message", [
     (lambda manifest: manifest.update(source_sha256="BAD"), "source_sha256"),
     (lambda manifest: manifest["artifacts"].update(review="../review.html"), "escapes workflow root"),

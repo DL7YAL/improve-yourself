@@ -12,10 +12,16 @@ scan, no newest-result selection and no automatic discovery. Each list entry is
 validated again with the existing canonical workflow validator before it can be
 used; invalid, tampered, unavailable and legacy V1 entries remain disabled.
 
-The library distinguishes `READY`, `MISSING SOURCE`, `INVALID`, `TAMPERED`,
+The library distinguishes `READY`, `MISSING SOURCE LINK`, `INVALID`, `TAMPERED`,
 `LEGACY V1`, and `UNAVAILABLE`. Removing an entry deletes only its local index
 reference, never a demo or a workflow artifact. Source relinking remains the
 existing explicit hash-matching flow; a nonmatching demo is rejected.
+
+`MISSING SOURCE LINK` means only that the workflow lacks source-link metadata.
+It does not prove whether the original source demo exists on disk. The local
+registration seal is corruption/tamper evidence for the navigation index; it
+is not protection against a malicious local user who controls both the index
+and its companion token file.
 
 ## Manual acceptance for Brix
 
