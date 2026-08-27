@@ -33,9 +33,12 @@ class OptimizerDomain(StrEnum):
 class RecommendationState(StrEnum):
     RECOMMENDED = "RECOMMENDED"
     ALREADY_RECOMMENDED = "ALREADY_RECOMMENDED"
+    ALREADY_OPTIMAL = "ALREADY_OPTIMAL"
     CONDITIONAL = "CONDITIONAL"
     NO_CHANGE = "NO_CHANGE"
     INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
+    NOT_AVAILABLE = "NOT_AVAILABLE"
+    UNSUPPORTED = "UNSUPPORTED"
 
 
 class RuleMaturity(StrEnum):
@@ -169,20 +172,33 @@ def evaluate_recommendations(profile: dict[str, object], rules: Iterable[Optimiz
     accepted: set[str] = set()
     available_evidence = tuple(evidence_records)
     for rule in rules or fixture_rules():
-        missing: set[str] = set()
+        # Preserve canonical condition order.  A set here made the reported
+        # missing-path sequence dependent on hash iteration.
+        missing: list[str] = []
         unmet: list[str] = []
         excluded = False
         for condition in rule.compatibility.required:
             matched, absent = _matches(profile, condition)
-            if absent: missing.add(absent)
+            if absent and absent not in missing: missing.append(absent)
             elif not matched: unmet.append(condition[0])
         for condition in rule.compatibility.excluded:
             matched, absent = _matches(profile, condition)
-            if absent: missing.add(absent)
+            if absent and absent not in missing: missing.append(absent)
             if matched: excluded = True
         evidence_for_rule = [record for record in (*rule.evidence, *available_evidence) if record.rule_id in {rule.rule_id, "network-quality-observation"}]
         trace = {"required": [], "exclusions": [], "conflicts": list(rule.compatibility.conflicts_with)}
-        if any(conflict in accepted for conflict in rule.compatibility.conflicts_with):
+        observations = profile.get("observation_states") if isinstance(profile.get("observation_states"), dict) else {}
+        capabilities = profile.get("capability_states") if isinstance(profile.get("capability_states"), dict) else {}
+        # Required-condition order is deterministic: explicit NOT_AVAILABLE wins;
+        # otherwise any unresolved required observation is UNKNOWN.
+        missing_states = [str(observations.get(path, "UNKNOWN")) for path in missing]
+        declared_observation = "NOT_AVAILABLE" if "NOT_AVAILABLE" in missing_states else "UNKNOWN" if missing_states else None
+        declared_capability = str(capabilities.get(rule.rule_id, capabilities.get(rule.domain.value, "")))
+        if declared_capability == "UNSUPPORTED":
+            state, rationale = RecommendationState.UNSUPPORTED, "Declared capability is unsupported for this canonical path."
+        elif declared_observation == "NOT_AVAILABLE":
+            state, rationale = RecommendationState.NOT_AVAILABLE, "Declared observation is not available in this system/context."
+        elif any(conflict in accepted for conflict in rule.compatibility.conflicts_with):
             state, rationale = RecommendationState.NO_CHANGE, "Conflicts with an already selected compatible rule."
         elif missing:
             state, rationale = RecommendationState.INSUFFICIENT_EVIDENCE, "Missing evidence: " + ", ".join(sorted(missing))
@@ -192,6 +208,8 @@ def evaluate_recommendations(profile: dict[str, object], rules: Iterable[Optimiz
             state, rationale = RecommendationState.CONDITIONAL, "Conditions not currently met: " + ", ".join(sorted(unmet))
         elif rule.maturity in {RuleMaturity.EXPERIMENTAL, RuleMaturity.REJECTED_NO_BENEFIT}:
             state, rationale = RecommendationState.NO_CHANGE, f"Rule maturity {rule.maturity.value} is not eligible for Improve recommendations."
+        elif isinstance(profile.get("observed_desired_states"), dict) and profile["observed_desired_states"].get(rule.rule_id) is True:
+            state, rationale = RecommendationState.ALREADY_OPTIMAL, "Observed current state satisfies the canonical desired state."
         elif isinstance(profile.get("current_recommendations"), dict) and profile["current_recommendations"].get(rule.rule_id) is True:
             state, rationale = RecommendationState.ALREADY_RECOMMENDED, "The read-only profile records the recommended state already present."
         else:
@@ -206,7 +224,17 @@ def evaluate_recommendations(profile: dict[str, object], rules: Iterable[Optimiz
             state, rationale = RecommendationState.NO_CHANGE, "Security/performance trade-off fixtures are never automatically recommended or applied."
         if state in {RecommendationState.RECOMMENDED, RecommendationState.ALREADY_RECOMMENDED}:
             accepted.add(rule.rule_id)
-        results.append({"rule_id": rule.rule_id, "domain": rule.domain.value, "state": state.value, "rationale": rationale, "missing_evidence": sorted(missing), "compatibility_trace": trace, "evidence_records": [asdict(record) for record in evidence_for_rule], "fixture_only": rule.fixture_only, "rule": rule.as_dict()})
+        observation_state = "NOT_AVAILABLE" if declared_observation == "NOT_AVAILABLE" else "KNOWN" if not missing else "UNKNOWN"
+        capability_status = declared_capability if declared_capability in {"SUPPORTED", "UNSUPPORTED", "UNKNOWN"} else "UNKNOWN" if missing else "SUPPORTED"
+        if missing or state in {RecommendationState.NOT_AVAILABLE, RecommendationState.UNSUPPORTED}:
+            action = "NOT_APPLYABLE"
+        elif rule.domain is OptimizerDomain.BIOS:
+            action = "MANUAL_ONLY"
+        elif state in {RecommendationState.RECOMMENDED, RecommendationState.ALREADY_RECOMMENDED}:
+            action = "RECOMMEND_ONLY"
+        else:
+            action = "NOT_APPLYABLE"
+        results.append({"rule_id": rule.rule_id, "domain": rule.domain.value, "state": state.value, "recommendation_state": state.value, "observation_state": observation_state, "evidence_status": "SUFFICIENT" if not missing else "INSUFFICIENT", "capability_status": capability_status, "action_classification": action, "restart_requirement": "RESTART_REQUIRED" if rule.restart_required else "NONE", "restore_theory": "METADATA_ONLY" if rule.restore_capable else "NONE", "rationale": rationale, "comparison_tags": [], "missing_evidence": sorted(missing), "compatibility_trace": trace, "evidence_records": [asdict(record) for record in evidence_for_rule], "fixture_only": rule.fixture_only, "rule": rule.as_dict()})
     return {"schema": FOUNDATION_SCHEMA, "profile_schema": profile.get("schema", "unknown"), "profile_id": profile.get("profile_id", profile.get("system_id", "unknown")), "read_only": True, "evidence_path": {"configuration_evidence": [asdict(record) for record in available_evidence if record.source_type != "OBSERVED_NETWORK_QUALITY"], "observed_network_quality": [asdict(record) for record in available_evidence if record.source_type == "OBSERVED_NETWORK_QUALITY"]}, "results": results}
 
 
