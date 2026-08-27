@@ -72,6 +72,14 @@ def test_offline_network_mode_is_rendered_without_vendor_claim() -> None:
     assert review["network_mode"] == "OFFLINE"
 
 
+def test_missing_or_malformed_network_contract_stays_unknown(tmp_path: Path) -> None:
+    value = system_check(); value["policy"].pop("official_vendor_comparisons", None)
+    assert build_evidence_review(value)["network_mode"] == "UNKNOWN"
+    review = build_evidence_review(system_check()); review["network_mode"] = "invented"
+    with pytest.raises(ValueError, match="network mode"):
+        render_evidence_review(review, tmp_path / "review.html")
+
+
 @pytest.mark.parametrize("policy", [
     {"read_only": False, "changes_applied": False},
     {"read_only": True, "changes_applied": True},

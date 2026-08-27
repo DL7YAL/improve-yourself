@@ -95,6 +95,8 @@ def build_evidence_review(system_check: dict[str, object]) -> dict[str, object]:
         item = dict(raw)
         item["availability"] = _availability(item)
         items.append(item)
+    comparison = system_check.get("policy", {}).get("official_vendor_comparisons") if isinstance(system_check.get("policy"), dict) else None
+    network_mode = "OFFLINE" if comparison is False else "OFFICIAL COMPARISON" if comparison is True else "UNKNOWN"
     return {
         "schema": "iy.optimizer_evidence_review/v1",
         "source": optimizer_input["source"],
@@ -102,7 +104,7 @@ def build_evidence_review(system_check: dict[str, object]) -> dict[str, object]:
                    "apply_available": False, "restore_available": False, "demo_or_replay_data_included": False},
         "items": items,
         "unknown_or_unreadable_items": optimizer_input["optimizer_readiness"]["unknown_or_unreadable_items"],
-        "network_mode": "OFFLINE" if system_check.get("policy", {}).get("official_vendor_comparisons") is False else "OFFICIAL COMPARISON",
+        "network_mode": network_mode,
     }
 
 
@@ -110,6 +112,8 @@ def render_evidence_review(review: dict[str, object], output: Path) -> Path:
     if review.get("schema") != "iy.optimizer_evidence_review/v1":
         raise ValueError("expected optimizer evidence review")
     _validate_review_policy(review)
+    if review.get("network_mode") not in {"OFFLINE", "OFFICIAL COMPARISON", "UNKNOWN"}:
+        raise ValueError("review network mode is invalid")
     items = review.get("items")
     if not isinstance(items, list):
         raise ValueError("review items must be evidence objects")
