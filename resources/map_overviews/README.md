@@ -15,15 +15,38 @@ The overview package may only transform canonical world-space X/Y values into
 2D overview coordinates. It must not become a parser, store, controller, data
 hub, or source of gameplay truth.
 
+## Supported map set
+
+The current repository provides concrete product/runtime evidence for exactly
+three CS2 maps relevant to this static dataset:
+
+- `de_ancient`: current Tactical MapRegistry proof and real Analyzer/Replay V2
+  evidence.
+- `de_mirage`: real 2D Viewer/V1 workflow evidence and an existing documented
+  Awpy overview transform. Inclusion here is static metadata only and does not
+  add a V1 runtime fallback.
+- `de_anubis`: real Replay V2 and 3D/POV evidence plus a local map-asset gate.
+
+Benchmark-only Nuke/Inferno references and maps that appear only as generic or
+synthetic test strings are not silently declared supported Tactical maps.
+
+Every supported map has one package under `maps/`. A package may be valid but
+have an `UNVERIFIED` transform when a required source value cannot be verified.
+That state is intentionally non-transformable.
+
 ## Layout
 
 - `schema/iy.map_overview_metadata.v1.schema.json` — versioned JSON contract.
-- `maps/de_ancient.json` — first numeric metadata pilot.
+- `maps/de_ancient.json` — verified zero-rotation transform.
+- `maps/de_mirage.json` — verified zero-rotation transform.
+- `maps/de_anubis.json` — valid package with unresolved transform because its
+  tracked descriptor omits an explicit rotation value.
 - `../../tools/map_overview_data/validate.py` — deterministic, standard-library
   validator and transform reference implementation.
-- `../../tests/map_overview_data/test_map_overview_data.py` — contract tests.
+- `../../tests/map_overview_data/test_map_overview_data.py` — contract and
+  map-specific tests.
 
-No Valve radar image or other proprietary map asset is committed. The pilot
+No Valve radar image or other proprietary map asset is committed. The dataset
 contains only numeric projection metadata and source notes.
 
 ## Contract summary
@@ -39,7 +62,7 @@ Important fields:
 - `transform`: world origin, world-units-per-pixel scale, axis orientation,
   rotation, clipping, and rounding behavior.
 - `layers`: Z/layer metadata only when verified. Unresolved thresholds remain
-  `null` and must not be inferred.
+  unresolved and must not be inferred.
 - `reference_points`: deterministic transform anchors, not gameplay events.
 - `provenance`: pinned source records and limitations.
 - `verification`: package-level verified and unresolved fields.
@@ -63,9 +86,8 @@ canvas Y increases down. CS2 world X maps to positive canvas X. CS2 world Y is
 inverted and maps to negative canvas Y before the subtraction above.
 
 `rotation_deg_clockwise` is defined as clockwise screen-space rotation after
-axis conversion and before clipping. This V1 pilot accepts only verified zero
-rotation. Non-zero rotation is rejected until a map-specific convention is
-verified.
+axis conversion and before clipping. This V1 contract accepts only verified
+zero rotation. Non-zero or missing rotation is not guessed.
 
 The transform returns floating-point coordinates without rounding. Bounds are
 inclusive: `0 <= x <= width` and `0 <= y <= height`. Out-of-bounds values are
@@ -73,38 +95,51 @@ returned unchanged with `in_bounds = false`; they are never clamped or promoted
 to valid positions.
 
 Z does not participate in the X/Y transform. A viewer may select a layer only
-when verified Z thresholds exist. `de_ancient` has no verified layer thresholds
-in this package, so its layer remains unresolved and must not be guessed.
+when verified Z thresholds exist. None of the current packages claims verified
+Z thresholds, so layer selection remains unresolved.
 
-## Pilot: de_ancient
+## Per-map transform status
 
-`de_ancient` was selected because the repository already contains an explicit
-unverified Ancient map-resource placeholder and real Ancient Replay V2 evidence,
-while public game-tracking metadata exposes a simple zero-rotation overview
-transform.
+### de_ancient — VERIFIED
 
-Verified numeric transform values:
+- origin: `(-2953, 2164)`
+- scale: `5`
+- rotation: `0`
+- canvas: `1024 x 1024`
+- anchors:
+  - `(-2953, 2164) -> (0, 0)`
+  - `(-393, -396) -> (512, 512)`
+  - `(2167, -2956) -> (1024, 1024)`
 
-- upper-left world origin: `(-2953, 2164)`
-- scale: `5` world units per overview pixel
-- rotation source value: `0`
-- logical canvas: `1024 x 1024`
+### de_mirage — VERIFIED
 
-Derived deterministic anchors:
+- origin: `(-3230, 1713)`
+- scale: `5`
+- rotation: `0`
+- canvas: `1024 x 1024`
+- anchors:
+  - `(-3230, 1713) -> (0, 0)`
+  - `(-670, -847) -> (512, 512)`
+  - `(1890, -3407) -> (1024, 1024)`
 
-- `(-2953, 2164) -> (0, 0)`
-- `(-393, -396) -> (512, 512)`
-- `(2167, -2956) -> (1024, 1024)`
+### de_anubis — UNVERIFIED TRANSFORM
 
-These anchors validate the projection basis only. They are not claims about a
+The tracked descriptor verifies `pos_x=-2796`, `pos_y=3328`, and `scale=5.22`,
+but contains no explicit `rotate` field. The existing V1 contract requires an
+explicitly verified zero rotation before numeric transform values become
+trusted. Therefore the package keeps all active transform numbers `null`, uses
+`UNRESOLVED` orientation, contains no transform reference points, and records
+the observed source values only in provenance. A future task may activate them
+only after rotation/orientation is independently verified.
+
+Transform anchors validate projection bases only. They are not claims about a
 player, bombsite, spawn, tick, event, or navigable geometry.
 
 ## Provenance and distribution
 
-Projection numbers are transcribed from the tracked CS2 overview descriptor at
+Projection descriptors are pinned to the tracked CS2 overview files at
 SteamDatabase/GameTracking-CS2 commit
-`8651ef311b783fee253fc15c30966e4a15a3cacb`, file
-`game/csgo/pak01_dir/resource/overviews/de_ancient.txt`.
+`8651ef311b783fee253fc15c30966e4a15a3cacb`.
 
 The formula and 1024-pixel plotting convention are cross-checked against Awpy
 commit `007b119a6a5b4b8ee7d3011d96ce00bed7323c12`, especially
@@ -117,23 +152,27 @@ Only the small numeric metadata required for projection is committed.
 ## Beast/Codex integration handoff
 
 1. Data lives under `resources/map_overviews/`.
-2. Validate `iy.map_overview_metadata/v1` before consuming it.
-3. Apply the formula above to canonical Replay/Analyzer world X/Y values.
-4. Preserve float coordinates and the explicit `in_bounds` result.
-5. Do not infer Z layers when thresholds are unresolved.
-6. Load any future visual asset only through a separately approved asset path;
-   this pilot intentionally ships none.
-7. **Current tick and entity state MUST come from the existing canonical
+2. The supported dataset is exactly `de_ancient`, `de_mirage`, and `de_anubis`
+   until a separate product-scope decision adds another map.
+3. Validate `iy.map_overview_metadata/v1` before consuming a package.
+4. Use only packages whose transform status is exactly `VERIFIED`.
+5. Apply the formula above to canonical Replay/Analyzer world X/Y values.
+6. Preserve float coordinates and the explicit `in_bounds` result.
+7. Do not infer Z layers when thresholds are unresolved.
+8. Load any future visual asset only through a separately approved asset path;
+   this dataset intentionally ships none.
+9. **Current tick and entity state MUST come from the existing canonical
    Replay/Analyzer path.**
-8. **This package is data/projection metadata only.**
-9. Do not add a V1 fallback, second parser, second ReplayStore, second
-   ReplayController, second AnalyzerDataHub, or viewer-owned tick authority.
+10. **This package is data/projection metadata only.**
+11. Do not add a V1 fallback, second parser, second ReplayStore, second
+    ReplayController, second AnalyzerDataHub, or viewer-owned tick authority.
 
 ## Remaining unknowns
 
-- No distributable overview image is included.
-- No Z thresholds or multi-level selection rules are verified for Ancient.
-- No named landmark has a verified world-coordinate pair in this package.
+- No distributable overview images are included.
+- No Z thresholds or multi-level selection rules are verified.
+- No named landmark has a verified world-coordinate pair in this dataset.
+- `de_anubis` rotation/orientation remains unresolved.
 - Non-zero overview rotation is not implemented or asserted.
-- Visual alignment against a legally supplied runtime asset remains a future
+- Visual alignment against legally supplied runtime assets remains a future
   Beast/Codex acceptance step.

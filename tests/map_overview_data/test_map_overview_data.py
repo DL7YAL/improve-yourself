@@ -13,11 +13,31 @@ from tools.map_overview_data.validate import (
 )
 
 ROOT = Path(__file__).resolve().parents[2]
-PILOT = ROOT / "resources" / "map_overviews" / "maps" / "de_ancient.json"
+MAPS = ROOT / "resources" / "map_overviews" / "maps"
+PILOT = MAPS / "de_ancient.json"
+SUPPORTED_MAPS = {"de_ancient", "de_mirage", "de_anubis"}
 
 
 def pilot() -> dict:
     return deepcopy(load_and_validate(PILOT))
+
+
+def map_document(map_id: str) -> dict:
+    return deepcopy(load_and_validate(MAPS / f"{map_id}.json"))
+
+
+def test_supported_map_packages_match_current_repository_scope() -> None:
+    assert {path.stem for path in MAPS.glob("*.json")} == SUPPORTED_MAPS
+
+
+@pytest.mark.parametrize("map_id", sorted(SUPPORTED_MAPS))
+def test_every_supported_map_package_validates_and_preserves_identity(map_id: str) -> None:
+    document = map_document(map_id)
+    assert document["schema"] == "iy.map_overview_metadata/v1"
+    assert document["map_id"] == map_id
+    assert document["asset"]["status"] == "NOT_INCLUDED"
+    assert document["asset"]["reference"] is None
+    assert document["provenance"]["sources"]
 
 
 def test_pilot_schema_and_required_fields_are_valid() -> None:
@@ -75,11 +95,34 @@ def test_malformed_rotation_or_orientation_is_rejected(field, value) -> None:
         validate_document(document)
 
 
-def test_verified_transform_examples_are_deterministic() -> None:
-    document = pilot()
-    assert transform_world(document, -2953, 2164) == {"x": 0.0, "y": 0.0, "in_bounds": True}
-    assert transform_world(document, -393, -396) == {"x": 512.0, "y": 512.0, "in_bounds": True}
-    assert transform_world(document, 2167, -2956) == {"x": 1024.0, "y": 1024.0, "in_bounds": True}
+@pytest.mark.parametrize(
+    "map_id,world_x,world_y,expected_x,expected_y",
+    [
+        ("de_ancient", -2953, 2164, 0.0, 0.0),
+        ("de_ancient", -393, -396, 512.0, 512.0),
+        ("de_ancient", 2167, -2956, 1024.0, 1024.0),
+        ("de_mirage", -3230, 1713, 0.0, 0.0),
+        ("de_mirage", -670, -847, 512.0, 512.0),
+        ("de_mirage", 1890, -3407, 1024.0, 1024.0),
+    ],
+)
+def test_verified_map_transform_examples_are_deterministic(
+    map_id: str, world_x: float, world_y: float, expected_x: float, expected_y: float,
+) -> None:
+    result = transform_world(map_document(map_id), world_x, world_y)
+    assert result == {"x": expected_x, "y": expected_y, "in_bounds": True}
+
+
+def test_anubis_unverified_transform_is_valid_but_not_usable() -> None:
+    document = map_document("de_anubis")
+    assert document["transform"]["verification_status"] == "UNVERIFIED"
+    assert document["transform"]["origin_world"]["x"] is None
+    assert document["transform"]["origin_world"]["y"] is None
+    assert document["transform"]["world_units_per_pixel"] is None
+    assert document["transform"]["rotation_deg_clockwise"] is None
+    assert document["reference_points"] == []
+    with pytest.raises(OverviewValidationError, match="not verified"):
+        transform_world(document, -2796, 3328)
 
 
 def test_out_of_bounds_values_are_not_clamped() -> None:
