@@ -54,7 +54,7 @@ class LocalAnalysisLibrary:
         return tuple(result)
 
     def _inspect(self, entry: dict[str, object]) -> dict[str, object]:
-        view = {key: entry.get(key) for key in ("demo_basename", "map_id", "source_hash_prefix", "scene_count", "workflow_type")}
+        view = {key: entry.get(key) for key in ("manifest_path", "demo_basename", "map_id", "source_hash_prefix", "scene_count", "workflow_type")}
         reference = entry.get("manifest_path")
         if not isinstance(reference, str) or not reference:
             return dict(view, state="INVALID", reason="Malformed library reference")
