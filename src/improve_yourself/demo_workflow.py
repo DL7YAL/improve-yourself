@@ -99,6 +99,11 @@ def _validate_reusable_workflow(path: Path, source_hash: str) -> bool:
             timeline = json.loads(artifact("timeline").read_text(encoding="utf-8"))
             if flow.get("source", {}).get("sha256") != source_hash or timeline.get("source", {}).get("sha256") != source_hash:
                 return False
+            hashes = manifest.get("artifact_sha256")
+            if not isinstance(hashes, dict): return False
+            for name in ("review",):
+                artifact_path = artifact(name)
+                if hashes.get(name) != _sha256(artifact_path): return False
     except (FileNotFoundError, KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
         return False
     return True
@@ -272,6 +277,7 @@ def rerender_demo_workflow(
         "scenes": len(flow["scenes"]),
     }
     manifest["artifacts"].update(flow_artifacts)
+    manifest["artifact_sha256"] = {"review": _sha256(root / flow_artifacts["review"])}
     timing = manifest.get("timing")
     if isinstance(timing, dict):
         phases = dict(timing.get("phases", {}))
