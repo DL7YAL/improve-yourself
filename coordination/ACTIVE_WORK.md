@@ -28,10 +28,10 @@ Owned files:
 - resources/map_overviews/**
 - tools/map_overview_data/**
 - tests/map_overview_data/**
-Status: BLOCKED
+Status: PASS
 Depends on Codex: NO
 Handoff required: YES — future consumer must use canonical Replay/Analyzer current-tick state
-Blocker: Repository files and deterministic tests are prepared, but this GitHub MCP session has no command/test execution facility. Required pytest, validator CLI, compile/syntax, and git diff --check execution cannot be truthfully reported.
+Validation: pytest, validator CLI, compile/syntax, git diff --check, transform references, and unknown-field fail-closed probe passed on 2026-08-27.
 
 ## Rules
 
