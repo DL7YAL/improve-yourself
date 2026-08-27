@@ -13,9 +13,10 @@ from .demo_workflow import _validate_reusable_workflow, ensure_tactical_replay_e
 
 
 class V2LocalReviewServer(ThreadingHTTPServer):
-    def __init__(self, address: tuple[str, int], directory: Path, artifacts: set[str]) -> None:
+    def __init__(self, address: tuple[str, int], directory: Path, artifacts: set[str], hashes: dict[str, str]) -> None:
         self.directory = directory
         self.artifacts = artifacts
+        self.hashes = hashes
         super().__init__(address, V2LocalReviewHandler)
 
 
@@ -35,6 +36,12 @@ class V2LocalReviewHandler(BaseHTTPRequestHandler):
             self.send_error(HTTPStatus.NOT_FOUND, "artifact not available")
             return
         body = path.read_bytes()
+        expected = self.server.hashes.get(requested)
+        if expected is not None:
+            import hashlib
+            if hashlib.sha256(body).hexdigest() != expected:
+                self.send_error(HTTPStatus.GONE, "artifact integrity check failed")
+                return
         content_type = "text/html; charset=utf-8" if path.suffix == ".html" else "application/json; charset=utf-8"
         if path.suffix == ".txt":
             content_type = "text/plain; charset=utf-8"
@@ -49,19 +56,19 @@ class V2LocalReviewHandler(BaseHTTPRequestHandler):
         self.send_error(HTTPStatus.NOT_FOUND, "no mutable API is provided")
 
 
-def load_v2_review_workflow(manifest_path: Path) -> tuple[Path, dict[str, Any], set[str]]:
+def load_v2_review_workflow(manifest_path: Path) -> tuple[Path, dict[str, Any], set[str], dict[str, str]]:
     """Load only an intact, READY_FOR_REVIEW V2 workflow with its matching source hash."""
     manifest_path = manifest_path.resolve()
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     source_hash = manifest.get("source_sha256")
-    if (
-        manifest.get("schema") != "iy.demo_workflow/v1"
-        or manifest.get("status") != "READY_FOR_REVIEW"
-        or not isinstance(source_hash, str)
-        or len(source_hash) != 64
-        or not _validate_reusable_workflow(manifest_path, source_hash)
-    ):
-        raise ValueError("expected an intact, hash-bound READY_FOR_REVIEW V2 workflow")
+    if manifest.get("schema") != "iy.demo_workflow/v1":
+        raise ValueError("V2 review requires an iy.demo_workflow/v1 manifest")
+    if manifest.get("status") != "READY_FOR_REVIEW":
+        raise ValueError("V2 review requires a workflow completed through READY_FOR_REVIEW")
+    if not isinstance(source_hash, str) or len(source_hash) != 64:
+        raise ValueError("V2 review requires a 64-character source hash")
+    if not _validate_reusable_workflow(manifest_path, source_hash):
+        raise ValueError("V2 review rejected the workflow: source-bound artifacts or Replay V2 integrity validation failed")
     root = manifest_path.parent.resolve()
     artifacts = manifest.get("artifacts")
     if not isinstance(artifacts, dict):
@@ -71,17 +78,22 @@ def load_v2_review_workflow(manifest_path: Path) -> tuple[Path, dict[str, Any], 
         value = artifacts.get(key)
         if isinstance(value, str) and value and Path(value).name == value:
             allowed.add(value)
-    return root, manifest, allowed
+    hashes = manifest.get("artifact_sha256")
+    if not isinstance(hashes, dict) or not isinstance(hashes.get("review"), str):
+        raise ValueError("V2 review requires a hash-bound review artifact")
+    bound = {str(artifacts[key]): str(value) for key, value in hashes.items()
+             if key in artifacts and isinstance(artifacts[key], str) and artifacts[key] in allowed}
+    return root, manifest, allowed, bound
 
 
-def prepare_v2_local_review(manifest_path: Path) -> tuple[Path, set[str]]:
+def prepare_v2_local_review(manifest_path: Path) -> tuple[Path, set[str], dict[str, str]]:
     """Validate first, then lazily produce the existing V2 tactical HTML artifact."""
-    root, _manifest, _allowed = load_v2_review_workflow(manifest_path)
+    root, _manifest, _allowed, _hashes = load_v2_review_workflow(manifest_path)
     ensure_tactical_replay_export(manifest_path)
-    root, _manifest, allowed = load_v2_review_workflow(manifest_path)
+    root, _manifest, allowed, hashes = load_v2_review_workflow(manifest_path)
     if "tactical-replay.html" not in allowed:
         raise ValueError("V2 tactical replay export was not registered")
-    return root, allowed
+    return root, allowed, hashes
 
 
 def main() -> int:
@@ -93,11 +105,11 @@ def main() -> int:
     if not 1 <= args.port <= 65535:
         parser.error("port must be between 1 and 65535")
     try:
-        directory, artifacts = prepare_v2_local_review(args.workflow)
+        directory, artifacts, hashes = prepare_v2_local_review(args.workflow)
         if args.prepare_only:
             print(directory / "review.html")
             return 0
-        server = V2LocalReviewServer(("127.0.0.1", args.port), directory, artifacts)
+        server = V2LocalReviewServer(("127.0.0.1", args.port), directory, artifacts, hashes)
     except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError) as error:
         parser.error(str(error))
     print(f"Review: http://127.0.0.1:{server.server_port}/review.html")
