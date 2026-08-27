@@ -1,0 +1,54 @@
+{
+  "schema": "iy.3d_pov_render_ready/v1",
+  "map_id": "de_anubis",
+  "purpose": "renderer_preparation_only",
+  "canonical_runtime": {
+    "replay_schema": "iy.replay/v2",
+    "store": "ReplayStore",
+    "playback_authority": "ReplayController",
+    "data_hub": "AnalyzerDataHub",
+    "renderer_interface": "ReplayRenderer",
+    "owns_tick": false,
+    "parses_demo": false,
+    "embeds_replay_frames": false
+  },
+  "map_geometry": {
+    "runtime_contract": "iy.map_asset/v1",
+    "required_status": "available",
+    "distribution": "local_only_or_approved_derivative",
+    "bundled": false,
+    "fallback": "explicit_3d_unavailable",
+    "diagnostic_only_asset": "../original_assets/reference_bounds.obj"
+  },
+  "assets": [
+    {"asset_id": "iy.player_proxy.abstract_v1", "kind": "player_proxy", "path": "../original_assets/player_proxy.obj", "license": "CC0-1.0", "classification": "FALLBACK"},
+    {"asset_id": "iy.weapon_proxy.generic_v1", "kind": "weapon_proxy", "path": "../original_assets/weapon_proxy.obj", "license": "CC0-1.0", "classification": "FALLBACK"},
+    {"asset_id": "iy.materials.neutral_v1", "kind": "materials", "path": "../original_assets/materials.mtl", "license": "CC0-1.0", "classification": "FALLBACK"},
+    {"asset_id": "iy.texture.neutral_grid_v1", "kind": "texture", "path": "../original_assets/neutral_grid.ppm", "license": "CC0-1.0", "classification": "FALLBACK"},
+    {"asset_id": "iy.reference_bounds.anubis_v1", "kind": "diagnostic_bounds", "path": "../original_assets/reference_bounds.obj", "license": "CC0-1.0", "classification": "FALLBACK_DIAGNOSTIC_ONLY"}
+  ],
+  "semantic_mapping": "semantic_assets.json",
+  "camera_policy": "render_profile.json",
+  "environment": "render_profile.json#environment",
+  "collision_visibility": {
+    "source": "validated local iy.map_asset/v1 visibility_mesh",
+    "classification": "VERIFIED_WHEN_ASSET_GATE_PASSES",
+    "missing_policy": "UNKNOWN; never infer clear line of sight"
+  },
+  "dynamic_objects": "render_profile.json#dynamic_objects",
+  "floor_policy": "render_profile.json#floors",
+  "fallbacks": [
+    "Abstract player and weapon proxies are renderer fallbacks, not replay truth.",
+    "FOV, eye height, clipping planes and lighting are renderer fallbacks.",
+    "Missing map geometry produces explicit 3D unavailable; diagnostic bounds are test-only.",
+    "Unknown weapon IDs retain their text semantic and use the generic proxy.",
+    "No floor name is inferred from world Z."
+  ],
+  "reference_scene": "reference_scene.json",
+  "licensing": {"original_assets": "CC0-1.0", "valve_assets_bundled": false, "valve_geometry_required_for_redistributable_package": false, "local_geometry_policy": "Existing iy.map_asset/v1 gate only"},
+  "verification": {
+    "status": "READY_FOR_EXECUTION_VALIDATION",
+    "prepared": ["asset IDs", "player proxy", "weapon proxy", "materials", "texture", "semantic weapon mapping", "procedural sound mapping", "lighting defaults", "camera fallback policy", "dynamic-object policy", "floor policy", "reference scene", "licensing boundaries"],
+    "pending": ["execute deterministic tests", "renderer-specific asset import smoke", "local geometry load smoke", "performance and UI integration"]
+  }
+}

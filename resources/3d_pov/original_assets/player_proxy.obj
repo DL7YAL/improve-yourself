@@ -1,0 +1,35 @@
+# Original abstract player proxy; no Valve model or likeness
+# SPDX-License-Identifier: CC0-1.0
+mtllib materials.mtl
+o improve_player_proxy
+usemtl player_neutral
+# body box, centered at origin, feet z=0, shoulders z=56
+v -12 -8 0
+v 12 -8 0
+v 12 8 0
+v -12 8 0
+v -12 -8 56
+v 12 -8 56
+v 12 8 56
+v -12 8 56
+f 1 2 3 4
+f 5 8 7 6
+f 1 5 6 2
+f 2 6 7 3
+f 3 7 8 4
+f 4 8 5 1
+# abstract head box, no facial features
+v -7 -7 56
+v 7 -7 56
+v 7 7 56
+v -7 7 56
+v -7 -7 70
+v 7 -7 70
+v 7 7 70
+v -7 7 70
+f 9 10 11 12
+f 13 16 15 14
+f 9 13 14 10
+f 10 14 15 11
+f 11 15 16 12
+f 12 16 13 9

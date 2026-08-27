@@ -1,0 +1,19 @@
+# Original diagnostic bounds wireframe; not Anubis geometry
+# SPDX-License-Identifier: CC0-1.0
+mtllib materials.mtl
+o anubis_reference_bounds_only
+usemtl reference_bounds
+v -3202.5049 -3456.0 -704.0
+v 2816.5098 -3456.0 -704.0
+v 2816.5098 4736.0 -704.0
+v -3202.5049 4736.0 -704.0
+v -3202.5049 -3456.0 1012.0
+v 2816.5098 -3456.0 1012.0
+v 2816.5098 4736.0 1012.0
+v -3202.5049 4736.0 1012.0
+l 1 2 3 4 1
+l 5 6 7 8 5
+l 1 5
+l 2 6
+l 3 7
+l 4 8
