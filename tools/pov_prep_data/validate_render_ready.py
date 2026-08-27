@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -30,6 +31,28 @@ def _resolve(root: Path, relative: Any, field: str) -> Path:
     if not candidate.is_file():
         raise RenderReadyValidationError(f"{field} file is missing")
     return candidate
+
+
+def _git_blob_sha1(path: Path) -> str:
+    body = path.read_bytes()
+    return hashlib.sha1(f"blob {len(body)}\0".encode("ascii") + body).hexdigest()
+
+
+def _validate_original_asset(path: Path, kind: str) -> None:
+    text = path.read_text(encoding="utf-8")
+    if path.suffix == ".obj":
+        vertices = [line for line in text.splitlines() if line.startswith("v ")]
+        primitives = [line for line in text.splitlines() if line.startswith(("f ", "l "))]
+        if len(vertices) < 8 or not primitives:
+            raise RenderReadyValidationError(f"{kind} OBJ lacks deterministic geometry")
+    elif path.suffix == ".mtl":
+        if "newmtl player_ct" not in text or "newmtl player_t" not in text or "newmtl weapon_neutral" not in text:
+            raise RenderReadyValidationError("material library lacks required semantic materials")
+    elif path.suffix == ".ppm":
+        if not text.startswith("P3\n") or "4 4\n255\n" not in text:
+            raise RenderReadyValidationError("diagnostic texture is not the expected ASCII PPM")
+    else:
+        raise RenderReadyValidationError(f"unsupported original asset format: {path.suffix}")
 
 
 def validate_document(document: dict[str, Any], package_path: Path) -> dict[str, Any]:
@@ -63,7 +86,11 @@ def validate_document(document: dict[str, Any], package_path: Path) -> dict[str,
         ids.add(asset_id)
         if item.get("license") != "CC0-1.0" or not str(item.get("classification", "")).startswith("FALLBACK"):
             raise RenderReadyValidationError("bundled assets must be original fallback assets")
-        _resolve(root, item.get("path"), f"assets[{index}].path")
+        path = _resolve(root, item.get("path"), f"assets[{index}].path")
+        expected_blob = item.get("git_blob_sha1")
+        if not isinstance(expected_blob, str) or len(expected_blob) != 40 or _git_blob_sha1(path) != expected_blob.lower():
+            raise RenderReadyValidationError(f"asset integrity differs: {asset_id}")
+        _validate_original_asset(path, str(item.get("kind")))
     semantic_path = _resolve(root, document.get("semantic_mapping"), "semantic_mapping")
     profile_reference = str(document.get("camera_policy"))
     profile_path = _resolve(root, profile_reference.split("#", 1)[0], "camera_policy")
@@ -71,6 +98,12 @@ def validate_document(document: dict[str, Any], package_path: Path) -> dict[str,
     semantic = json.loads(semantic_path.read_text(encoding="utf-8"))
     if semantic.get("schema") != "iy.3d_pov_semantic_assets/v1" or semantic.get("license") != "CC0-1.0":
         raise RenderReadyValidationError("semantic asset mapping is invalid")
+    categories = _object(_object(semantic.get("weapon_representations"), "weapon_representations").get("categories"), "weapon categories")
+    if "unknown" not in categories or categories["unknown"].get("ids") != []:
+        raise RenderReadyValidationError("weapon mapping requires a non-inventing unknown fallback")
+    mapped_ids = [weapon_id for category in categories.values() for weapon_id in category.get("ids", [])]
+    if len(mapped_ids) != len(set(mapped_ids)):
+        raise RenderReadyValidationError("weapon semantic IDs must not map to multiple categories")
     profile = json.loads(profile_path.read_text(encoding="utf-8"))
     if profile.get("schema") != "iy.3d_pov_render_profile/v1":
         raise RenderReadyValidationError("render profile is invalid")
