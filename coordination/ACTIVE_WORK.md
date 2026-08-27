@@ -27,10 +27,12 @@ Owned files:
 - coordination/ACTIVE_WORK.md
 - resources/map_overviews/**
 - tests/map_overview_data/**
-Status: IN PROGRESS
+Status: BLOCKED
 Depends on Codex: NO
 Handoff required: YES — future consumer must use canonical Replay/Analyzer current-tick state
 Scope: Add static iy.map_overview_metadata/v1 packages for intended competitive maps only. No runtime, parser, Replay, Analyzer, controller, store, DataHub, V1, cloud, Azure, or viewer changes.
+Prepared: de_inferno, de_nuke, de_overpass, de_train, and de_vertigo intrinsic X/Y packages plus full nine-map deterministic coverage. Nuke/Train/Vertigo layer observations remain provenance-only and runtime layer policy remains UNRESOLVED.
+Blocker: This MCP session cannot execute pytest, validator CLI, compileall, or git diff --check. Beast execution validation is required before PASS.
 
 ## Rules
 
