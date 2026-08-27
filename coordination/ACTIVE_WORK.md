@@ -16,6 +16,10 @@ Task: optimizer-golden-master-v2
 Branch: codex/optimizer-golden-master-v2
 Status: PASS — canonical V2 result contract, deterministic 150 base, and separate 60-case adapter validated locally.
 
+Task: unified-viewer-v1-ancient
+Branch: codex/unified-viewer-v1-ancient
+Status: PASS (technical) — controller-derived read-only Ancient 2D Viewer state, repository-safe generated background and focused authority/decoupling tests. Product visual acceptance remains LOCAL_PRODUCT_VISUAL_VALIDATION_REQUIRED; no Valve asset is included.
+
 ### Azure
 
 Task: harden-iac-ci-phase2-validation

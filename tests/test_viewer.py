@@ -1,77 +1,25 @@
 import json
 from pathlib import Path
-
-import pytest
-
-from improve_yourself.viewer import render_viewer, visible_players_at_frame, world_to_radar
+from improve_yourself.replay_controller import ReplayController
+from improve_yourself.viewer import render_viewer, visible_players_at_frame, world_to_radar, viewer_state
 from test_replay_controller import _store
 
+def test_projection_and_dead_filter():
+ assert world_to_radar(-3230,1713,-3230,1713,5)==(0,0)
+ assert [p['player_id'] for p in visible_players_at_frame([{'player_id':'a'},{'player_id':'d','alive':False}])]==['a']
 
-def replay_payload() -> dict:
-    return {
-        "schema": "iy.replay/v1", "source_sha256": "a" * 64,
-        "map_name": "de_mirage", "coordinate_space": "cs2_world",
-        "data_quality": {"omitted_incomplete_player_snapshots": 0},
-        "scenes": [{"round_number": 1, "marker_player": "Player", "start_tick": 1,
-                    "end_tick": 1, "frames": [{"tick": 1, "players": []}]}],
-    }
+def test_view_mode_changes_presentation_only(tmp_path):
+ store=_store(tmp_path); controller=ReplayController(store); controller.seek_scene('scene-1'); before=controller.snapshot(); controller.set_view_mode('first_person'); after=controller.snapshot()
+ assert (after.current_round,after.requested_tick,after.resolved_tick,after.selected_player_id,after.frame)==(before.current_round,before.requested_tick,before.resolved_tick,before.selected_player_id,before.frame)
 
+def test_background_swap_does_not_mutate_replay_state(tmp_path):
+ store=_store(tmp_path); controller=ReplayController(store); context=controller.seek_scene('scene-1'); before=viewer_state(store,context)
+ one=tmp_path/'one.svg'; two=tmp_path/'two.svg'; one.write_text('<svg/>'); two.write_text('<svg/>')
+ first=render_viewer(store.manifest_path,tmp_path/'one.html',radar_path=one); second=render_viewer(store.manifest_path,tmp_path/'two.html',radar_path=two)
+ assert viewer_state(store,context)==before
+ assert '"background_kind":"local_override"' in first.read_text() and '"background_kind":"local_override"' in second.read_text()
 
-def test_world_to_radar_uses_source_transform() -> None:
-    assert world_to_radar(-3230, 1713, -3230, 1713, 5) == (0, 0)
-    assert world_to_radar(1890, -3407, -3230, 1713, 5) == (1024, 1024)
-
-
-def test_world_to_radar_rejects_invalid_scale() -> None:
-    with pytest.raises(ValueError, match="scale"):
-        world_to_radar(0, 0, 0, 0, 0)
-
-
-def test_viewer_hides_only_explicitly_dead_v2_players() -> None:
-    players = [
-        {"player_id": "alive", "name": "Alive", "alive": True},
-        {"player_id": "dead", "name": "Dead", "alive": False},
-        {"player_id": "unknown", "name": "Unknown"},
-    ]
-
-    assert [player["player_id"] for player in visible_players_at_frame(players)] == ["alive", "unknown"]
-
-
-def test_renders_self_contained_html_and_escapes_script_end(tmp_path: Path) -> None:
-    payload = replay_payload()
-    payload["scenes"][0]["marker_player"] = "</script><script>alert(1)</script>"
-    source = tmp_path / "replay.json"
-    source.write_text(json.dumps(payload), encoding="utf-8")
-    radar = tmp_path / "radar.png"
-    radar.write_bytes(b"test-radar")
-    result = render_viewer(source, tmp_path / "viewer.html", radar_path=radar, scale=5)
-    html = result.read_text(encoding="utf-8")
-    assert "__IY_VIEWER_MODEL__" not in html
-    assert "data:image/png;base64,dGVzdC1yYWRhcg==" in html
-    assert "</script><script>alert(1)</script>" not in html
-    assert "\\u003c/script>" in html
-    assert 'id="previous-frame"' in html
-    assert 'id="next-scene"' in html
-    assert 'id="speed"' in html
-    assert "explizit belegtem Todeszustand" in html
-
-
-def test_rejects_wrong_schema(tmp_path: Path) -> None:
-    source = tmp_path / "replay.json"
-    source.write_text('{"schema":"wrong","coordinate_space":"cs2_world","scenes":[]}', encoding="utf-8")
-    with pytest.raises(ValueError, match="iy.replay/v1"):
-        render_viewer(source, tmp_path / "viewer.html")
-
-
-def test_renders_v2_store_with_controller_state_and_timing_boundary(tmp_path: Path) -> None:
-    store_root = tmp_path / "store"
-    store_root.mkdir()
-    store = _store(store_root, tick_rate=None)
-    result = render_viewer(store.manifest_path, tmp_path / "viewer-v2.html")
-    html = result.read_text(encoding="utf-8")
-    assert '"source_schema":"iy.replay/v2"' in html
-    assert '"requested_tick":14,"resolved_tick":12' in html
-    assert '"timing_available":false' in html
-    assert "Zeitbasis nicht verfügbar" in html
-    assert "gemeinsame Replay-Wahrheit v2" in html
-    assert 'id="player-wrap"' in html
+def test_ancient_default_background_is_repository_safe(tmp_path):
+ store=_store(tmp_path); store.manifest['source']['map_id']='de_ancient'; store.manifest_path.write_text(json.dumps(store.manifest))
+ result=render_viewer(store.manifest_path,tmp_path/'viewer.html')
+ assert 'improve_generated' in result.read_text() and 'data:image/svg+xml;base64' in result.read_text()

@@ -1,143 +1,35 @@
+"""Read-only Improve 2D presentation from canonical ReplayController truth."""
 from __future__ import annotations
-
-import argparse
-import base64
-import json
-import mimetypes
+import argparse, base64, json, mimetypes
 from pathlib import Path
 from typing import Any
-
 from .replay import REPLAY_SCHEMA
 from .replay_contract import REPLAY_V2_SCHEMA
-from .replay_controller import ReplayController
+from .replay_controller import ReplayContext, ReplayController
 from .replay_store import ReplayStore
-from .tactical_2d import TACTICAL_2D_PROJECTION_SCHEMA, build_tactical_2d_projection
 
-
-def world_to_radar(x: float, y: float, pos_x: float, pos_y: float, scale: float) -> tuple[float, float]:
-    """Project CS2 world coordinates into Source radar-image pixels."""
-    if scale <= 0:
-        raise ValueError("radar scale must be positive")
-    return ((x - pos_x) / scale, (pos_y - y) / scale)
-
-
-def _validate_replay(payload: dict[str, Any]) -> None:
-    if payload.get("schema") not in (REPLAY_SCHEMA, TACTICAL_2D_PROJECTION_SCHEMA):
-        raise ValueError(f"expected {REPLAY_SCHEMA} or {REPLAY_V2_SCHEMA} replay payload")
-    if payload.get("coordinate_space") != "cs2_world":
-        raise ValueError("viewer requires cs2_world coordinates")
-    if not isinstance(payload.get("scenes"), list):
-        raise ValueError("replay scenes must be a list")
-
-
-def _radar_data_uri(path: Path | None) -> str:
-    if path is None:
-        return ""
-    data = path.read_bytes()
-    mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
-    return f"data:{mime};base64,{base64.b64encode(data).decode('ascii')}"
-
-
-def visible_players_at_frame(players: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Hide only players explicitly reported dead by the canonical replay state."""
-    return [player for player in players if player.get("alive") is not False]
-
-
-def render_viewer(
-    replay_path: Path,
-    output_path: Path,
-    *,
-    radar_path: Path | None = None,
-    pos_x: float = 0,
-    pos_y: float = 0,
-    scale: float = 1,
-    scenes: list[dict[str, Any]] | None = None,
-) -> Path:
-    payload = json.loads(replay_path.read_text(encoding="utf-8"))
-    if payload.get("schema") == REPLAY_V2_SCHEMA:
-        store = ReplayStore(replay_path)
-        if scenes is not None:
-            store.manifest["scenes"] = [
-                {"scene_id": item["scene_id"], "round_number": item["round_number"],
-                 "tick": item["review_tick"], "end_tick": item["end_tick"],
-                 "focus_player_id": item.get("focus_player_id")}
-                for item in scenes
-            ]
-        payload = build_tactical_2d_projection(store, ReplayController(store))
-    _validate_replay(payload)
-    if radar_path is not None and scale <= 0:
-        raise ValueError("radar scale must be positive")
-
-    model = {
-        "replay": payload,
-        "radar": {
-            "data_uri": _radar_data_uri(radar_path),
-            "pos_x": pos_x,
-            "pos_y": pos_y,
-            "scale": scale,
-        },
-    }
-    # Escaping '<' prevents an embedded player name from closing the script tag.
-    model_json = json.dumps(model, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
-    html = _HTML.replace("__IY_VIEWER_MODEL__", model_json)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(html, encoding="utf-8")
-    return output_path
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Create a self-contained iy.replay/v1 or iy.replay/v2 2D viewer")
-    parser.add_argument("replay", type=Path)
-    parser.add_argument("--output", type=Path, default=Path("results/replay/viewer.html"))
-    parser.add_argument("--radar", type=Path)
-    parser.add_argument("--pos-x", type=float, default=0)
-    parser.add_argument("--pos-y", type=float, default=0)
-    parser.add_argument("--scale", type=float, default=1)
-    args = parser.parse_args()
-    try:
-        result = render_viewer(
-            args.replay, args.output, radar_path=args.radar,
-            pos_x=args.pos_x, pos_y=args.pos_y, scale=args.scale,
-        )
-    except (FileNotFoundError, ValueError, json.JSONDecodeError) as error:
-        parser.error(str(error))
-    print(result)
-    return 0
-
-
-_HTML = r'''<!doctype html>
-<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Improve Yourself – 2D Replay</title>
-<style>
-:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#09111d;color:#e9f0fa}*{box-sizing:border-box}
-body{margin:0;padding:20px}.shell{max-width:1180px;margin:auto}.bar,.meta{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-h1{font-size:20px;margin:0 auto 0 0}.card{background:#111e30;border:1px solid #263851;border-radius:12px;padding:14px;margin-top:14px}
-button,select,input{accent-color:#62a8ff;background:#17283d;color:#fff;border:1px solid #3a506d;border-radius:7px;padding:7px}
-input[type=range]{flex:1;min-width:180px}.stage{position:relative;aspect-ratio:1;max-height:72vh;margin:auto}
-canvas{width:100%;height:100%;background:#07101a;border-radius:8px}.pill{color:#a9bed7;font-size:13px}.warn{color:#ffc56e}
-</style></head><body><main class="shell">
-<div class="bar"><h1>Improve Yourself · 2D Replay</h1><span id="map" class="pill"></span><span id="quality" class="pill"></span></div>
-<section class="card bar"><label>Szene <select id="scene"></select></label><button id="previous-scene">‹ Szene</button><button id="next-scene">Szene ›</button><button id="previous-frame">‹ Frame</button><button id="play">▶ Abspielen</button><button id="next-frame">Frame ›</button><label>Tempo <select id="speed"><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label><label id="player-wrap" hidden>Spieler <select id="player"></select></label><input id="frame" type="range" min="0" value="0"><span id="tick" class="pill"></span></section>
-<section class="card stage"><canvas id="canvas" width="1024" height="1024"></canvas></section>
-<section class="card meta"><span class="pill">T = orange · CT = blau · Linie = Blickrichtung</span><span class="pill">Spieler verschwinden nur bei explizit belegtem Todeszustand.</span><span id="notice" class="pill warn"></span></section><section class="card"><strong id="scene-info"></strong><div id="event-info" class="pill"></div></section>
-</main><script>const MODEL=__IY_VIEWER_MODEL__;
-const replay=MODEL.replay,radar=MODEL.radar,canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d');
-const sceneEl=document.querySelector('#scene'),frameEl=document.querySelector('#frame'),playEl=document.querySelector('#play'),speedEl=document.querySelector('#speed'),playerEl=document.querySelector('#player'),eventEl=document.querySelector('#event-info'),sceneInfoEl=document.querySelector('#scene-info');let playing=false,timer=null,img=null;
-const isV2=replay.source_schema==='iy.replay/v2',timingAvailable=!isV2||replay.controller.timing_available;
-document.querySelector('#map').textContent=replay.map_name;document.querySelector('#quality').textContent=isV2?`${replay.scenes.length} Szenen · gemeinsame Replay-Wahrheit v2`:`${replay.scenes.length} Szenen · ${replay.data_quality.omitted_incomplete_player_snapshots} ausgelassene Snapshots`;
-replay.scenes.forEach((s,i)=>sceneEl.add(new Option(`Runde ${s.round_number} · ${s.marker_player}`,i)));
-if(isV2){document.querySelector('#player-wrap').hidden=false;playerEl.add(new Option('Kein Spieler gewählt',''));replay.players.forEach(p=>playerEl.add(new Option(p.display_name,p.player_id)));if(!timingAvailable){playEl.disabled=true;playEl.textContent='▶ Zeitbasis nicht verfügbar';document.querySelector('#notice').textContent='Navigation ist exakt; automatische Wiedergabe ist ohne belegte Tickrate deaktiviert.'}}
-if(radar.data_uri){img=new Image();img.onload=draw;img.src=radar.data_uri}else document.querySelector('#notice').textContent='Kein Radar eingebettet – relative Weltansicht.';
-function scene(){return replay.scenes[Number(sceneEl.value)||0]}function frame(){return scene()?.frames[Number(frameEl.value)||0]}
-function project(p,players){if(img)return[(p.x-radar.pos_x)/radar.scale*canvas.width/img.naturalWidth,(radar.pos_y-p.y)/radar.scale*canvas.height/img.naturalHeight];
- const xs=players.map(q=>q.x),ys=players.map(q=>q.y),minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys),span=Math.max(maxX-minX,maxY-minY,1);return[100+(p.x-minX)/span*824,924-(p.y-minY)/span*824]}
-function draw(){ctx.clearRect(0,0,1024,1024);if(img)ctx.drawImage(img,0,0,1024,1024);else{ctx.strokeStyle='#1c3046';for(let n=0;n<=1024;n+=128){ctx.beginPath();ctx.moveTo(n,0);ctx.lineTo(n,1024);ctx.stroke();ctx.beginPath();ctx.moveTo(0,n);ctx.lineTo(1024,n);ctx.stroke()}}
- const f=frame();if(!f)return;const s=scene(),frameIndex=Number(frameEl.value),requested=frameIndex===0?(s.requested_tick??f.tick):f.tick,resolved=f.tick;document.querySelector('#tick').textContent=isV2?`Tick ${resolved} · angefordert ${requested} · Frame ${frameIndex+1}/${s.frames.length}`:`Tick ${f.tick} · Frame ${frameIndex+1}/${s.frames.length}`;sceneInfoEl.textContent=`Runde ${s.round_number} · ${s.marker_player}`;eventEl.textContent=typeof f.event_count==='number'?`${f.event_count} belegte Ereignisse am Snapshot.`:'Keine Ereignisdaten am Snapshot.';
- const visiblePlayers=f.players.filter(p=>p.alive!==false);for(const p of visiblePlayers){const [x,y]=project(p,visiblePlayers),color=p.side.toUpperCase()==='CT'?'#55aaff':'#ff9f43',a=p.yaw*Math.PI/180,selected=!playerEl.value||playerEl.value===p.player_id;ctx.globalAlpha=selected?1:.35;ctx.strokeStyle=color;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*34,y-Math.sin(a)*34);ctx.stroke();ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();ctx.font='16px system-ui';ctx.fillStyle='#fff';ctx.fillText(p.name,x+14,y-12)}ctx.globalAlpha=1}
-function step(delta){const max=Number(frameEl.max);frameEl.value=Math.min(max,Math.max(0,Number(frameEl.value)+delta));draw()}
-function reset(){playing=false;clearInterval(timer);playEl.textContent='▶ Abspielen';const s=scene();frameEl.max=Math.max(0,(s?.frames.length||1)-1);frameEl.value=0;draw()}
-sceneEl.onchange=()=>{const s=scene();if(isV2)playerEl.value=s.focus_player_id||'';reset()};playerEl.onchange=draw;frameEl.oninput=draw;document.querySelector('#previous-frame').onclick=()=>step(-1);document.querySelector('#next-frame').onclick=()=>step(1);document.querySelector('#previous-scene').onclick=()=>{sceneEl.value=Math.max(0,Number(sceneEl.value)-1);sceneEl.onchange()};document.querySelector('#next-scene').onclick=()=>{sceneEl.value=Math.min(replay.scenes.length-1,Number(sceneEl.value)+1);sceneEl.onchange()};playEl.onclick=()=>{if(!timingAvailable)return;playing=!playing;playEl.textContent=playing?'⏸ Pause':'▶ Abspielen';clearInterval(timer);if(playing)timer=setInterval(()=>{const max=Number(frameEl.max);frameEl.value=Number(frameEl.value)>=max?0:Number(frameEl.value)+1;draw()},100/Number(speedEl.value))};speedEl.onchange=()=>{if(playing){playEl.onclick();playEl.onclick()}};if(isV2)playerEl.value=scene()?.focus_player_id||'';reset();</script></body></html>'''
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+def world_to_radar(x: float,y: float,pos_x: float,pos_y: float,scale: float)->tuple[float,float]:
+    if scale<=0: raise ValueError("radar scale must be positive")
+    return (x-pos_x)/scale,(pos_y-y)/scale
+def visible_players_at_frame(players:list[dict[str,Any]])->list[dict[str,Any]]: return [p for p in players if p.get("alive") is not False]
+def _uri(path:Path|None)->str:
+    if path is None:return ""
+    return "data:%s;base64,%s"%(mimetypes.guess_type(path.name)[0] or "application/octet-stream",base64.b64encode(path.read_bytes()).decode())
+def _root()->Path:return Path(__file__).resolve().parents[2]
+def viewer_state(store:ReplayStore,context:ReplayContext)->dict[str,Any]:
+    ids={p["player_id"]:p for p in store.manifest["players"]}; players=[]
+    for p in context.frame.get("players",[]):
+        q=p.get("position"); yaw=p.get("view_yaw_deg")
+        if q is not None and yaw is not None: players.append({"player_id":p["player_id"],"name":ids.get(p["player_id"],{}).get("display_name",p["player_id"]),"side":p.get("team","unknown"),"x":q["x"],"y":q["y"],"yaw":yaw,"alive":p.get("alive")})
+    return {"schema":"iy.viewer_state/v1","map_id":store.manifest["source"]["map_id"],"round_number":context.current_round,"requested_tick":context.requested_tick,"resolved_tick":context.resolved_tick,"selected_player_id":context.selected_player_id,"selected_player":{"player_id":context.selected_player_id},"view_mode":context.view_mode,"frame":{"tick":context.frame["tick"],"players":players}}
+def render_viewer(replay_path:Path,output_path:Path,*,radar_path:Path|None=None,pos_x:float=0,pos_y:float=0,scale:float=1,scenes:list[dict[str,Any]]|None=None)->Path:
+    payload=json.loads(replay_path.read_text(encoding="utf-8"))
+    if payload.get("schema")==REPLAY_SCHEMA:
+        # Legacy artifacts remain viewable; the product path below is V2 only.
+        frame=payload["scenes"][0]["frames"][0]; state={"schema":"iy.viewer_state/v1","map_id":payload["map_name"],"round_number":payload["scenes"][0]["round_number"],"requested_tick":frame["tick"],"resolved_tick":frame["tick"],"selected_player_id":None,"view_mode":"tactical_2d","frame":frame}; model={"state":state,"transform":{"origin_world":{"x":pos_x,"y":pos_y},"world_units_per_pixel":scale},"background":_uri(radar_path),"background_kind":"legacy"}; output_path.parent.mkdir(parents=True,exist_ok=True); output_path.write_text(_HTML.replace("__MODEL__",json.dumps(model,separators=(",",":")).replace("<","\\u003c")),encoding="utf-8"); return output_path
+    if payload.get("schema")!=REPLAY_V2_SCHEMA: raise ValueError(f"expected {REPLAY_SCHEMA} or {REPLAY_V2_SCHEMA} replay payload")
+    store=ReplayStore(replay_path); controller=ReplayController(store); scene=(scenes or store.manifest.get("scenes",[])); scene=scene[0] if scene else None; context=controller.seek(scene["round_number"],scene.get("review_tick",scene.get("tick"))) if scene else controller.snapshot(); context=controller.select_player(scene.get("focus_player_id")) if scene and scene.get("focus_player_id") else context; state=viewer_state(store,context); meta=json.loads((_root()/"resources/map_overviews/maps"/(state["map_id"]+".json")).read_text()); bg=radar_path or _root()/"resources/generated_overviews"/state["map_id"]/"overview.svg"; model={"state":state,"transform":meta["transform"],"background":_uri(bg if bg.is_file() else None),"background_kind":"local_override" if radar_path else "improve_generated"}; output_path.parent.mkdir(parents=True,exist_ok=True); output_path.write_text(_HTML.replace("__MODEL__",json.dumps(model,separators=(",",":")).replace("<","\\u003c")),encoding="utf-8"); return output_path
+def main()->int:
+ p=argparse.ArgumentParser();p.add_argument("replay",type=Path);p.add_argument("--output",type=Path,default=Path("viewer.html"));p.add_argument("--radar",type=Path);a=p.parse_args();print(render_viewer(a.replay,a.output,radar_path=a.radar));return 0
+_HTML='''<!doctype html><meta charset="utf-8"><title>Improve Viewer</title><style>body{margin:0;background:#08111d;color:#edf5ff;font:14px system-ui}.shell{max-width:1280px;margin:auto;padding:20px}.head,.panel{background:#101f31;border:1px solid #29435e;border-radius:14px;padding:16px}.grid{display:grid;grid-template-columns:1fr 240px;gap:16px;margin-top:16px}.stage{position:relative;aspect-ratio:1}.stage img{width:100%;height:100%}.m{position:absolute;width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%);background:#ff9d3f;border:2px solid white}.ct{background:#3b9bff}.sel{outline:4px solid #f5d66b}.player{padding:8px;margin:6px;background:#162b42;border-radius:7px}</style><main class=shell><header class=head><b>IMPROVE YOURSELF · TACTICAL VIEWER</b><div id=c></div></header><section class=grid><div class=panel><div id=s class=stage></div></div><aside class=panel><b>Spieler</b><div id=p></div></aside></section></main><script>const M=__MODEL__,S=M.state,T=M.transform,O=T.origin_world,sc=T.world_units_per_pixel,s=document.querySelector('#s'),i=new Image;i.src=M.background;s.append(i);c.textContent=`${S.map_id} · Runde ${S.round_number} · Tick ${S.resolved_tick} · angefordert ${S.requested_tick}`;for(const x of S.frame.players.filter(x=>x.alive!==false)){let e=document.createElement('i');e.className='m '+(x.side==='CT'?'ct':'')+(x.player_id===S.selected_player_id?' sel':'');e.style.left=(x.x-O.x)/sc/10.24+'%';e.style.top=(O.y-x.y)/sc/10.24+'%';s.append(e);let r=document.createElement('div');r.className='player';r.textContent=x.name+' · '+x.side;p.append(r)}</script>'''
+if __name__=="__main__":raise SystemExit(main())
