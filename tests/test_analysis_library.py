@@ -1,9 +1,11 @@
 import json
+import inspect
 from pathlib import Path
 
 import pytest
 
 from improve_yourself.analysis_library import LocalAnalysisLibrary
+from improve_yourself.analyzer_shell import AnalyzerShellApp
 
 
 def _workflow(root: Path, *, source_name: str = "match.dem", valid: bool = True) -> Path:
@@ -64,3 +66,17 @@ def test_registration_rejects_invalid_or_traversal_path(tmp_path: Path) -> None:
     library = LocalAnalysisLibrary(tmp_path / "index.json", _validator)
     with pytest.raises((ValueError, FileNotFoundError)):
         library.register(tmp_path / ".." / "not-a-workflow.json")
+
+
+def test_shell_library_ui_routes_only_through_existing_controller_boundaries() -> None:
+    render = inspect.getsource(AnalyzerShellApp._render_analysis_library)
+    open_entry = inspect.getsource(AnalyzerShellApp._open_library_workflow)
+    relink = inspect.getsource(AnalyzerShellApp._relink_library_workflow)
+    remove = inspect.getsource(AnalyzerShellApp._remove_library_workflow)
+    assert "demo_basename" in render and "source_hash_prefix" in render
+    assert 'text=detail' in render and 'text=reference' not in render
+    assert 'state == "READY"' in render and 'state == "MISSING SOURCE"' in render
+    assert "open_existing_workflow" in open_entry
+    assert "link_source_demo" in inspect.getsource(AnalyzerShellApp._link_source)
+    assert "remove_from_library" in remove
+    assert "open_existing_workflow" in relink
