@@ -40,9 +40,9 @@ class PandaReplayRenderer:
         if self._disposed:
             raise RuntimeError("renderer is disposed")
 
-    def load_map(self, manifest_path: Path) -> None:
+    def load_map(self, manifest_path: Path, replay_map_id: str = "de_anubis") -> None:
         self._require_live()
-        assessment = assess_map_asset(manifest_path, "de_anubis")
+        assessment = assess_map_asset(manifest_path, replay_map_id)
         if assessment.availability != "available" or assessment.manifest is None:
             raise RuntimeError(f"map asset unavailable: {assessment.availability}: {assessment.reason}")
         descriptor = assessment.manifest["render_mesh"]
@@ -58,7 +58,7 @@ class PandaReplayRenderer:
         model.setTwoSided(True)
         self._base.camLens.setNearFar(1.0, 20000.0)
         self._map = model
-        self._visibility = TriVisibilityMesh.from_verified_manifest(manifest_path, "de_anubis")
+        self._visibility = TriVisibilityMesh.from_verified_manifest(manifest_path, replay_map_id)
 
     def set_frame(self, frame: ReplayFrame) -> None:
         self._require_live()

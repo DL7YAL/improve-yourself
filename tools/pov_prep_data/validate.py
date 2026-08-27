@@ -43,7 +43,7 @@ def validate_document(document: dict[str, Any]) -> dict[str, Any]:
     unexpected = set(document) - _REQUIRED
     if unexpected:
         raise PovPrepValidationError(f"unknown top-level fields: {', '.join(sorted(unexpected))}")
-    if document.get("schema") != SCHEMA or document.get("map_id") != "de_anubis" or document.get("purpose") != "data_research_evidence_only":
+    if document.get("schema") != SCHEMA or not isinstance(document.get("map_id"), str) or not document["map_id"].startswith("de_") or document.get("purpose") != "data_research_evidence_only":
         raise PovPrepValidationError("prep identity contract is invalid")
 
     runtime = _object(document.get("canonical_runtime"), "canonical_runtime")
@@ -76,8 +76,10 @@ def validate_document(document: dict[str, Any]) -> dict[str, Any]:
     if axes != {"x": "engine_horizontal_x", "y": "engine_horizontal_y", "z": "up"}:
         raise PovPrepValidationError("coordinate axes are invalid")
     transform = _object(coordinate.get("transform_to_replay"), "coordinate_contract.transform_to_replay")
-    if transform != {"status": "VERIFIED_LOCAL_REFERENCE", "scale": 1.0, "rotation_deg": [0.0, 0.0, 0.0], "translation": [0.0, 0.0, 0.0], "axis_swap": "none", "axis_inversion": "none"}:
-        raise PovPrepValidationError("world-to-replay transform must remain the verified identity")
+    identity = {"scale": 1.0, "rotation_deg": [0.0, 0.0, 0.0], "translation": [0.0, 0.0, 0.0], "axis_swap": "none", "axis_inversion": "none"}
+    transform_status = transform.get("status")
+    if transform_status not in {"VERIFIED_LOCAL_REFERENCE", "EXPECTED_IDENTITY_PENDING_LOCAL_VALIDATION"} or {key: value for key, value in transform.items() if key != "status"} != identity:
+        raise PovPrepValidationError("world-to-replay transform must be an explicit identity candidate")
     floor = _object(coordinate.get("floor_model"), "coordinate_contract.floor_model")
     if floor.get("status") != "UNRESOLVED" or floor.get("selection_axis") != "UNRESOLVED" or floor.get("ranges") != []:
         raise PovPrepValidationError("floor data must remain unresolved")
@@ -97,8 +99,12 @@ def validate_document(document: dict[str, Any]) -> dict[str, Any]:
         raise PovPrepValidationError("FOV must not be invented")
 
     anchors = document.get("reference_anchors")
-    if not isinstance(anchors, list) or len(anchors) < 3:
-        raise PovPrepValidationError("at least three reference anchors are required")
+    if not isinstance(anchors, list):
+        raise PovPrepValidationError("reference anchors must be a list")
+    if transform_status == "VERIFIED_LOCAL_REFERENCE" and len(anchors) < 3:
+        raise PovPrepValidationError("verified identity requires at least three reference anchors")
+    if transform_status == "EXPECTED_IDENTITY_PENDING_LOCAL_VALIDATION" and anchors:
+        raise PovPrepValidationError("unverified identity must not claim reference anchors")
     for index, anchor in enumerate(anchors):
         item = _object(anchor, f"reference_anchors[{index}]")
         world = _vec3(item.get("world"), f"reference_anchors[{index}].world")
@@ -114,7 +120,7 @@ def validate_document(document: dict[str, Any]) -> dict[str, Any]:
     if redistribution.get("bundled_proprietary_assets") is not False or redistribution.get("policy") != "REFERENCE_METADATA_ONLY":
         raise PovPrepValidationError("redistribution boundary is invalid")
     verification = _object(document.get("verification"), "verification")
-    if verification.get("status") != "PARTIAL_LOCAL_REFERENCE" or not isinstance(verification.get("unresolved"), list) or not verification["unresolved"]:
+    if verification.get("status") not in {"PARTIAL_LOCAL_REFERENCE", "PREPARED_PENDING_LOCAL_VERIFICATION"} or not isinstance(verification.get("unresolved"), list) or not verification["unresolved"]:
         raise PovPrepValidationError("verification must retain unresolved items")
     return document
 
@@ -125,7 +131,7 @@ def load_and_validate(path: Path) -> dict[str, Any]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate static Anubis 3D/POV preparation metadata")
+    parser = argparse.ArgumentParser(description="Validate static 3D/POV preparation metadata")
     parser.add_argument("paths", nargs="+", type=Path)
     args = parser.parse_args()
     try:
