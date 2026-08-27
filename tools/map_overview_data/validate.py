@@ -47,6 +47,9 @@ def validate_document(document: dict[str, Any]) -> dict[str, Any]:
     missing = _REQUIRED_TOP_LEVEL - set(document)
     if missing:
         raise OverviewValidationError(f"missing required fields: {', '.join(sorted(missing))}")
+    unexpected = set(document) - _REQUIRED_TOP_LEVEL
+    if unexpected:
+        raise OverviewValidationError(f"unknown top-level fields: {', '.join(sorted(unexpected))}")
     if document.get("schema") != SCHEMA:
         raise OverviewValidationError(f"schema must be {SCHEMA}")
     map_id = document.get("map_id")

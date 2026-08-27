@@ -35,6 +35,13 @@ def test_missing_required_field_fails_closed() -> None:
         validate_document(document)
 
 
+def test_unknown_top_level_field_fails_closed() -> None:
+    document = pilot()
+    document["untrusted_extra"] = {"status": "VERIFIED"}
+    with pytest.raises(OverviewValidationError, match="unknown top-level fields: untrusted_extra"):
+        validate_document(document)
+
+
 @pytest.mark.parametrize("scale", [0, -1, float("inf"), "5"])
 def test_invalid_scale_is_rejected(scale) -> None:
     document = pilot()
