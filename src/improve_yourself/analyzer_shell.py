@@ -1115,6 +1115,7 @@ class AnalyzerShellController:
         return self.result
 
     def open_existing_workflow(self, manifest_path: Path) -> ShellResult:
+        self.begin_import()
         manifest = validate_existing_workflow(manifest_path)
         self.result = self._load(manifest)
         self.data_hub = _load_analyzer_data_hub(manifest)
@@ -2516,7 +2517,7 @@ class AnalyzerShellApp:
         try:
             result = operation()
         except Exception as error:
-            self.root.after(0, lambda: self.status.set(f"Bibliothekseintrag nicht geöffnet: {error}"))
+            self.root.after(0, lambda: self.status.set("Bibliothekseintrag konnte nicht sicher geöffnet werden."))
         else:
             self.root.after(0, lambda: complete(result))
 

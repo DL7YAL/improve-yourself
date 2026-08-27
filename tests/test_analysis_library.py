@@ -48,9 +48,14 @@ def test_tampered_missing_source_and_legacy_v1_are_disabled(tmp_path: Path) -> N
     missing_source = _workflow(tmp_path / "missing", source_name="")
     legacy = tmp_path / "legacy" / "demo-workflow.json"; legacy.parent.mkdir(); legacy.write_text(json.dumps({"schema": "iy.workflow/v1"}), encoding="utf-8")
     index = tmp_path / "index.json"
-    index.write_text(json.dumps({"schema": "iy.local_analysis_library/v1", "entries": [
-        {"manifest_path": str(tampered)}, {"manifest_path": str(missing_source)}, {"manifest_path": str(legacy)}]}), encoding="utf-8")
-    states = [item["state"] for item in LocalAnalysisLibrary(index, _validator).entries()]
+    library = LocalAnalysisLibrary(index, _validator)
+    entries = []
+    for path in (tampered, missing_source, legacy):
+        entry = {"manifest_path": str(path), "demo_basename": "unknown", "map_id": "unknown", "source_hash_prefix": "", "scene_count": None, "workflow_type": "V2"}
+        entry["registration_seal"] = library._seal(entry)
+        entries.append(entry)
+    index.write_text(json.dumps({"schema": "iy.local_analysis_library/v1", "entries": entries}), encoding="utf-8")
+    states = [item["state"] for item in library.entries()]
     assert states == ["TAMPERED", "MISSING SOURCE", "LEGACY V1"]
 
 
@@ -66,6 +71,20 @@ def test_registration_rejects_invalid_or_traversal_path(tmp_path: Path) -> None:
     library = LocalAnalysisLibrary(tmp_path / "index.json", _validator)
     with pytest.raises((ValueError, FileNotFoundError)):
         library.register(tmp_path / ".." / "not-a-workflow.json")
+
+
+def test_manual_valid_workflow_injection_or_reference_edit_is_not_actionable(tmp_path: Path) -> None:
+    registered = _workflow(tmp_path / "registered")
+    injected = _workflow(tmp_path / "injected")
+    index = tmp_path / "index.json"
+    library = LocalAnalysisLibrary(index, _validator); library.register(registered)
+    document = json.loads(index.read_text(encoding="utf-8"))
+    document["entries"].append({"manifest_path": str(injected)})
+    index.write_text(json.dumps(document), encoding="utf-8")
+    assert [item["state"] for item in library.entries()] == ["READY", "INVALID"]
+    document["entries"][0]["manifest_path"] = str(injected)
+    index.write_text(json.dumps(document), encoding="utf-8")
+    assert library.entries()[0]["state"] == "INVALID"
 
 
 def test_shell_library_ui_routes_only_through_existing_controller_boundaries() -> None:

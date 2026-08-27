@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 import os
+import hashlib
+import secrets
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
@@ -32,6 +34,7 @@ class LocalAnalysisLibrary:
         if manifest.get("schema") != _V2_SCHEMA or manifest.get("status") != "READY_FOR_REVIEW":
             raise ValueError("only a validated READY_FOR_REVIEW V2 workflow can be registered")
         entry = self._metadata(manifest_path, manifest)
+        entry["registration_seal"] = self._seal(entry)
         document = self._load_document()
         entries = [item for item in document["entries"] if item.get("manifest_path") != entry["manifest_path"]]
         entries.append(entry)
@@ -55,13 +58,15 @@ class LocalAnalysisLibrary:
 
     def _inspect(self, entry: dict[str, object]) -> dict[str, object]:
         view = {key: entry.get(key) for key in ("manifest_path", "demo_basename", "map_id", "source_hash_prefix", "scene_count", "workflow_type")}
+        if not isinstance(entry.get("registration_seal"), str) or not secrets.compare_digest(entry["registration_seal"], self._seal(entry)):
+            return dict(view, state="INVALID", reason="Registration evidence is invalid")
         reference = entry.get("manifest_path")
         if not isinstance(reference, str) or not reference:
             return dict(view, state="INVALID", reason="Malformed library reference")
         path = Path(reference)
         if ".." in path.parts:
             return dict(view, state="INVALID", reason="Malformed library reference")
-        if path.name != "demo-workflow.json" or not path.is_file():
+        if not path.is_file():
             return dict(view, state="UNAVAILABLE", reason="Registered workflow is unavailable")
         try:
             manifest = self._read_manifest(path)
@@ -69,6 +74,8 @@ class LocalAnalysisLibrary:
             return dict(view, state="INVALID", reason="Registered manifest is invalid")
         if manifest.get("schema") == _V1_SCHEMA:
             return dict(view, state="LEGACY V1", reason="Legacy workflow is not routed to V2")
+        if path.name != "demo-workflow.json":
+            return dict(view, state="INVALID", reason="Unsupported workflow filename")
         if manifest.get("schema") != _V2_SCHEMA:
             return dict(view, state="INVALID", reason="Unsupported workflow schema")
         try:
@@ -77,7 +84,7 @@ class LocalAnalysisLibrary:
             return dict(view, state="TAMPERED", reason="Canonical workflow validation failed")
         source_name = manifest.get("source_demo_name")
         if not isinstance(source_name, str) or not source_name:
-            return dict(view, state="MISSING SOURCE", reason="Source demo needs safe relink before coordinator use")
+            return dict(view, state="MISSING SOURCE", reason="Source-link metadata requires safe relink")
         return dict(view, state="READY", reason="Validated local workflow")
 
     def _load_document(self) -> dict[str, object]:
@@ -101,6 +108,30 @@ class LocalAnalysisLibrary:
         finally:
             if temporary.exists():
                 temporary.unlink()
+
+    def _seal(self, entry: dict[str, object]) -> str:
+        payload = {key: value for key, value in entry.items() if key != "registration_seal"}
+        return hashlib.sha256(self._registration_token() + json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
+
+    def _registration_token(self) -> bytes:
+        path = self.index_path.with_suffix(self.index_path.suffix + ".registration")
+        try:
+            token = path.read_bytes()
+            if len(token) == 32:
+                return token
+        except OSError:
+            pass
+        path.parent.mkdir(parents=True, exist_ok=True)
+        token = secrets.token_bytes(32)
+        handle, name = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)
+        temporary = Path(name)
+        try:
+            with os.fdopen(handle, "wb") as stream:
+                stream.write(token); stream.flush(); os.fsync(stream.fileno())
+            temporary.replace(path)
+        finally:
+            if temporary.exists(): temporary.unlink()
+        return token
 
     @staticmethod
     def _read_manifest(path: Path) -> dict[str, object]:
