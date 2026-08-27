@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Improve local geometry v1","type":"object","required":["schema","map_id","coordinate_space","areas"],"properties":{"schema":{"const":"iy.map_geometry/v1"},"map_id":{"type":"string"},"coordinate_space":{"const":"cs2_world"},"areas":{"type":"array"}}}
