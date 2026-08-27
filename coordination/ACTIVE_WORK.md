@@ -28,12 +28,12 @@ Owned files:
 - resources/map_overviews/**
 - tools/map_overview_data/**
 - tests/map_overview_data/**
-Status: BLOCKED
+Status: PASS
 Depends on Codex: NO
 Handoff required: YES — future consumer must use canonical Replay/Analyzer current-tick state
 Scope: Extend the validated iy.map_overview_metadata/v1 pilot only to maps evidenced by the current repository/product context. No runtime, parser, Replay, Analyzer, controller, store, DataHub, V1, cloud, or Azure changes.
 Prepared dataset: de_ancient VERIFIED, de_mirage VERIFIED, de_anubis UNVERIFIED because its tracked overview descriptor omits an explicit rotation value.
-Blocker: This MCP session cannot execute pytest, validator CLI, compileall, or git diff --check for the newly added map packages. Beast execution validation is required before PASS or PR creation.
+Validation: pytest, validator CLI for Ancient/Mirage/Anubis, compileall, git diff --check, transform references, Anubis rejection, and fail-closed probes passed on 2026-08-27.
 
 ## Rules
 
