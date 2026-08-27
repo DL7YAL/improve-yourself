@@ -102,6 +102,7 @@ def build_evidence_review(system_check: dict[str, object]) -> dict[str, object]:
                    "apply_available": False, "restore_available": False, "demo_or_replay_data_included": False},
         "items": items,
         "unknown_or_unreadable_items": optimizer_input["optimizer_readiness"]["unknown_or_unreadable_items"],
+        "network_mode": "OFFLINE" if system_check.get("policy", {}).get("official_vendor_comparisons") is False else "OFFICIAL COMPARISON",
     }
 
 
@@ -113,6 +114,7 @@ def render_evidence_review(review: dict[str, object], output: Path) -> Path:
     if not isinstance(items, list):
         raise ValueError("review items must be evidence objects")
     evidence_items = _validate_review_items(items)
+    counts = {state: sum(item["availability"] == state for item in evidence_items) for state in ("KNOWN", "UNKNOWN", "NOT AVAILABLE")}
     rows = "".join(
         "<article><h2>{label} <small>{availability}</small></h2><p><b>Observed:</b> {state}</p>"
         "<p><b>Technical status:</b> {status}</p>{source}<p><b>Evidence details:</b> {evidence}</p></article>".format(
@@ -126,7 +128,7 @@ def render_evidence_review(review: dict[str, object], output: Path) -> Path:
     )
     page = """<!doctype html><meta charset='utf-8'><title>Optimizer Evidence Review</title>
 <style>body{{font:16px system-ui;background:#08111e;color:#eef4fb;max-width:960px;margin:auto;padding:24px}}article{{background:#111f32;border:1px solid #2a3d58;border-radius:10px;padding:14px;margin:12px 0}}small{{color:#8bd5ff}}code{{white-space:pre-wrap}}</style>
-<h1>Optimizer Evidence Review</h1><p><b>LOCAL REPORT / READ-ONLY</b> — no recommendation changes the system. No system change was made.</p><p>Artifacts remain local and no user evidence is uploaded. System Check may query fixed official vendor sources; if a request fails, its evidence remains UNKNOWN or NOT AVAILABLE.</p><p>Unknown evidence remains UNKNOWN; unavailable readers remain NOT AVAILABLE.</p>{rows}""".format(rows=rows)
+<h1>Optimizer Evidence Review</h1><p><b>LOCAL REPORT / READ-ONLY</b> — no recommendation changes the system. No system change was made.</p><p><b>Report mode:</b> LOCAL READ-ONLY · <b>Network mode:</b> {network}</p><p><b>Summary:</b> KNOWN {known} · UNKNOWN {unknown} · NOT AVAILABLE {unavailable}</p><p><b>Legend:</b> KNOWN is supported by current evidence. UNKNOWN means evidence is insufficient or failed safely. NOT AVAILABLE means the current reader cannot reliably provide the value.</p><p>Artifacts remain local and no user evidence is uploaded. In normal mode System Check may query fixed official vendor sources; OFFLINE makes no vendor comparison requests.</p>{rows}""".format(rows=rows, network=html.escape(str(review.get("network_mode", "OFFICIAL COMPARISON"))), known=counts["KNOWN"], unknown=counts["UNKNOWN"], unavailable=counts["NOT AVAILABLE"])
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(page, encoding="utf-8")
     return output

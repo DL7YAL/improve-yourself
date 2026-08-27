@@ -63,6 +63,13 @@ def test_review_preserves_unknown_and_read_only_policy(tmp_path: Path) -> None:
     assert "fixed official vendor sources" in page
     assert "<button" not in page and "<form" not in page
     assert "Apply" not in page and "Restore" not in page
+    assert "Legend:" in page and "Summary:" in page
+
+
+def test_offline_network_mode_is_rendered_without_vendor_claim() -> None:
+    value = system_check(); value["policy"]["official_vendor_comparisons"] = False
+    review = build_evidence_review(value)
+    assert review["network_mode"] == "OFFLINE"
 
 
 @pytest.mark.parametrize("policy", [
