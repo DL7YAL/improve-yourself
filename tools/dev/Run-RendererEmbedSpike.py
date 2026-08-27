@@ -63,7 +63,7 @@ def main() -> int:
     viewport.pack(fill="both", expand=True)
     root.update_idletasks()
     renderer = PandaReplayRenderer(viewport.winfo_id())
-    renderer.load_map(args.manifest)
+    renderer.load_map(args.manifest, store.manifest["source"]["map_id"])
     renderer.set_frame(chosen)
     renderer.set_camera_player(player.player_id)
     renderer.set_view_mode("third_person")

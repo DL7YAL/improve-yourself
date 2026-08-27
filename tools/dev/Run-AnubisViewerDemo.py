@@ -64,7 +64,7 @@ def main() -> int:
     viewport.pack(fill="both", expand=True)
     root.update_idletasks()
     renderer = PandaReplayRenderer(viewport.winfo_id())
-    renderer.load_map(args.manifest)
+    renderer.load_map(args.manifest, store.manifest["source"]["map_id"])
     session = ReplayRendererSession(controller, renderer)
     sizes: list[tuple[int, int]] = []
 
