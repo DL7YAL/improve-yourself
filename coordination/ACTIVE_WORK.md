@@ -37,7 +37,7 @@ Owned files:
 - tools/pov_prep_data/validate.py
 - tools/dev/Build-LocalAnubisAsset.py
 - tests/pov_prep_data/test_mirage_pov_prep.py
-Status: IN PROGRESS
+Status: BLOCKED — static prep and Beast handoff are committed; Azure/MCP has no command-execution capability to run the required pytest/validator/compile/diff checks. Beast must execute the listed static validations before PR readiness.
 Depends on Codex: NO
 Handoff required: YES — Beast must execute only through existing ReplayStore → ReplayController → ReplayRendererSession → PandaReplayRenderer and iy.map_asset/v1.
 Scope: Mirage static provenance/prep, generic local-asset-builder map ID support, targeted static validation, and local execution handoff. No protected replay/runtime/controller/renderer implementation, parser, DataHub, cloud, or Azure-resource changes.
