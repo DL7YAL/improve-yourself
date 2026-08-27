@@ -439,6 +439,39 @@ def test_shell_opens_validated_existing_workflow_without_runner(tmp_path: Path) 
     assert controller.selected_ids == ["ct1"]
 
 
+def test_shell_successful_switch_replaces_all_prior_context(tmp_path: Path) -> None:
+    first_hash = "a" * 64
+    second_hash = "b" * 64
+    first = _write_result(tmp_path / "first", ("ct1",), source_hash=first_hash)
+    second = _write_result(tmp_path / "second", ("t1",), source_hash=second_hash)
+    controller = AnalyzerShellController(tmp_path)
+    first_result = controller.open_existing_workflow(first)
+    assert first_result.manifest_path == first
+    assert controller.data_hub is not None
+    assert controller.data_hub.overview()["source"]["sha256"] == first_hash
+
+    second_result = controller.open_existing_workflow(second)
+
+    assert second_result.manifest_path == second
+    assert controller.result is not None and controller.result.manifest_path == second
+    assert controller.data_hub is not None
+    overview = controller.data_hub.overview()
+    assert overview["source"]["sha256"] == second_hash
+    assert overview["source"]["sha256"] != first_hash
+    assert controller.selected_ids == ["t1"] and "ct1" not in controller.selected_ids
+
+
+def test_shell_failed_switch_clears_prior_context(tmp_path: Path) -> None:
+    first = _write_result(tmp_path / "first", ("ct1",))
+    broken = _write_result(tmp_path / "broken", ("t1",))
+    payload = json.loads(broken.read_text(encoding="utf-8")); payload["source_sha256"] = "BAD"; broken.write_text(json.dumps(payload), encoding="utf-8")
+    controller = AnalyzerShellController(tmp_path); controller.open_existing_workflow(first)
+    with pytest.raises(ValueError): controller.open_existing_workflow(broken)
+    assert controller.result is None and controller.data_hub is None
+    assert controller.selected_ids == [] and controller.selection_mode == "full_demo"
+    with pytest.raises(RuntimeError): controller.validate_current_workflow()
+
+
 @pytest.mark.parametrize("mutation, message", [
     (lambda manifest: manifest.update(source_sha256="BAD"), "source_sha256"),
     (lambda manifest: manifest["artifacts"].update(review="../review.html"), "escapes workflow root"),

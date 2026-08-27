@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .analysis_flow import AnalysisProfile
+from .analysis_library import LocalAnalysisLibrary
 from .cs2_review_coordinator import Cs2ReviewCoordinator, ReviewCoordinatorServer, ReviewPreflight
 from .demo_workflow import ensure_tactical_replay_export, preflight_demo_workflow, rerender_demo_workflow
 from .analyzer_data_hub import AnalyzerDataHub
@@ -1082,6 +1083,7 @@ class AnalyzerShellController:
         self.profile_store = profile_store or LocalProfileStore(output_root / "profiles")
         self.profiles = {profile.profile_id: profile for profile in self.profile_store.list_profiles()}
         self.profile_id = "review_v1"
+        self.library = LocalAnalysisLibrary(output_root / "analysis-library.json", validate_existing_workflow)
         self.result: ShellResult | None = None
         self.data_hub: AnalyzerDataHub | None = None
         self.selected_ids: list[str] = []
@@ -1108,14 +1110,19 @@ class AnalyzerShellController:
         self.selection_mode = "full_demo"
         self.result = self._load(manifest)
         self.data_hub = _load_analyzer_data_hub(manifest)
+        if self.result.status == "READY_FOR_REVIEW":
+            self.library.register(manifest)
         return self.result
 
     def open_existing_workflow(self, manifest_path: Path) -> ShellResult:
+        self.begin_import()
         manifest = validate_existing_workflow(manifest_path)
         self.result = self._load(manifest)
         self.data_hub = _load_analyzer_data_hub(manifest)
         self.selected_ids = list(self.result.selected_ids)
         self.selection_mode = self.result.selection_mode
+        if self.result.status == "READY_FOR_REVIEW":
+            self.library.register(manifest)
         return self.result
 
     def link_source_demo(self, demo: Path) -> ShellResult:
@@ -1137,6 +1144,8 @@ class AnalyzerShellController:
                 temporary.unlink()
         self.result = self._load(manifest_path)
         self.data_hub = _load_analyzer_data_hub(manifest_path)
+        if self.result.status == "READY_FOR_REVIEW":
+            self.library.register(manifest_path)
         return self.result
 
     def set_full_demo(self) -> None:
@@ -1182,7 +1191,16 @@ class AnalyzerShellController:
         )
         self.result = self._load(manifest)
         self.data_hub = _load_analyzer_data_hub(manifest)
+        if self.result.status == "READY_FOR_REVIEW":
+            self.library.register(manifest)
         return self.result
+
+    def library_entries(self) -> tuple[dict[str, object], ...]:
+        return self.library.entries()
+
+    def remove_from_library(self, manifest_path: Path) -> None:
+        """Remove only the navigation reference; workflow files remain untouched."""
+        self.library.remove(manifest_path)
 
     def select_profile(self, profile_id: str) -> None:
         if profile_id not in self.profiles:
@@ -2417,6 +2435,13 @@ class AnalyzerShellApp:
         self.ttk.Button(demo_actions, text="Analyse konfigurieren", command=self._show_analyzer_setup).pack(side="left")
         self.demo_review_button = self.ttk.Button(demo_actions, text="Szenen im Review", command=self._open_review, state="disabled")
         self.demo_review_button.pack(side="left", padx=8)
+        self.analysis_library = self.ttk.LabelFrame(page, text="LOKALE ANALYSE-BIBLIOTHEK", padding=10)
+        self.analysis_library.pack(fill="x", pady=(14, 0))
+        self.analysis_library_status = self.tk.StringVar(value="Keine explizit registrierte Analyse.")
+        self.ttk.Label(self.analysis_library, textvariable=self.analysis_library_status, style="Muted.TLabel").pack(anchor="w")
+        self.analysis_library_rows = self.ttk.Frame(self.analysis_library, style="Content.TFrame")
+        self.analysis_library_rows.pack(fill="x", pady=(8, 0))
+        self._render_analysis_library()
 
     def _render_demo_analyzer_page(self, result: ShellResult) -> None:
         self.demo_library_text.set("Die aktuelle Auswahl stammt aus dem lokalen, fail-closed Workflow. Es werden keine Demos automatisch importiert oder kopiert.")
@@ -2443,6 +2468,77 @@ class AnalyzerShellApp:
                 "Szenen und Review entstehen erst nach der expliziten Analyse."
             )
             self.demo_review_button.configure(state="disabled")
+
+    def _render_analysis_library(self) -> None:
+        """Render only local index presentation data; never expose paths or trust it."""
+        if not hasattr(self, "analysis_library_rows"):
+            return
+        for child in self.analysis_library_rows.winfo_children():
+            child.destroy()
+        entries = self.controller.library_entries()
+        if not entries:
+            self.analysis_library_status.set("Keine explizit registrierte Analyse. Es wird nichts automatisch gesucht oder ausgewählt.")
+            return
+        self.analysis_library_status.set("Jeder Eintrag wird vor dem Öffnen erneut über den kanonischen Workflow geprüft.")
+        for entry in entries:
+            state = str(entry.get("state") or "UNAVAILABLE")
+            row = self.ttk.Frame(self.analysis_library_rows, style="Card.TFrame", padding=8)
+            row.pack(fill="x", pady=3)
+            detail = f"{entry.get('demo_basename') or 'unbekannte Demo'} · {entry.get('map_id') or 'unknown'} · SHA {entry.get('source_hash_prefix') or '—'} · {entry.get('scene_count') if entry.get('scene_count') is not None else '—'} Szenen"
+            self.ttk.Label(row, text=detail, style="Card.TLabel").pack(side="left")
+            self.ttk.Label(row, text=state, style="StatusBadge.TLabel").pack(side="left", padx=8)
+            reason = str(entry.get("reason") or "")
+            if state != "READY":
+                self.ttk.Label(row, text=reason, style="Muted.TLabel").pack(side="left", padx=4)
+            reference = entry.get("manifest_path")
+            path = Path(str(reference)) if isinstance(reference, str) else None
+            ready = state == "READY" and path is not None
+            self.ttk.Button(row, text="Review öffnen", command=lambda value=path: self._open_library_workflow(value, tactical=False), state="normal" if ready else "disabled").pack(side="right", padx=3)
+            self.ttk.Button(row, text="Tactical Replay", command=lambda value=path: self._open_library_workflow(value, tactical=True), state="normal" if ready else "disabled").pack(side="right", padx=3)
+            if state == "MISSING SOURCE LINK":
+                self.ttk.Button(row, text="Quelle zuordnen", command=lambda value=path: self._relink_library_workflow(value)).pack(side="right", padx=3)
+            self.ttk.Button(row, text="Entfernen", command=lambda value=path: self._remove_library_workflow(value)).pack(side="right", padx=3)
+
+    def _open_library_workflow(self, manifest_path: Path | None, *, tactical: bool) -> None:
+        if manifest_path is None:
+            return
+        def opened() -> ShellResult:
+            return self.controller.open_existing_workflow(manifest_path)
+        def complete(result: ShellResult) -> None:
+            self._finish_background(result, False)
+            if tactical:
+                self._open_review(); self._open_tactical_from_review()
+            else:
+                self._open_review()
+        self.status.set("Bibliotheksanalyse wird erneut geprüft …")
+        threading.Thread(target=lambda: self._library_open_worker(opened, complete), daemon=True).start()
+
+    def _library_open_worker(self, operation, complete) -> None:
+        try:
+            result = operation()
+        except Exception as error:
+            self.root.after(0, lambda: self.status.set("Bibliothekseintrag konnte nicht sicher geöffnet werden."))
+        else:
+            self.root.after(0, lambda: complete(result))
+
+    def _relink_library_workflow(self, manifest_path: Path | None) -> None:
+        if manifest_path is None:
+            return
+        self.status.set("Bibliotheksanalyse wird erneut geprüft …")
+        def complete(result: ShellResult) -> None:
+            self._finish_background(result, False)
+            self._link_source()
+        threading.Thread(
+            target=lambda: self._library_open_worker(lambda: self.controller.open_existing_workflow(manifest_path), complete),
+            daemon=True,
+        ).start()
+
+    def _remove_library_workflow(self, manifest_path: Path | None) -> None:
+        if manifest_path is None:
+            return
+        self.controller.remove_from_library(manifest_path)
+        self._render_analysis_library()
+        self.status.set("Nur der lokale Bibliothekseintrag wurde entfernt.")
 
     def _build_benchmark_page(self) -> None:
         page = self.pages["Benchmark"]
@@ -3494,6 +3590,7 @@ class AnalyzerShellApp:
             f"SHA-256 {result.source_sha256[:12]}… · lokaler Workflow"
         )
         self._render_demo_analyzer_page(result)
+        self._render_analysis_library()
         ready = result.status == "READY_FOR_REVIEW"
         self.report_status.set(
             f"{result.scene_count} zusammengeführte Szenen · Quelle {result.source_sha256[:12]}…"

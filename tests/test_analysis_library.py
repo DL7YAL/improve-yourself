@@ -1,0 +1,330 @@
+import json
+import inspect
+from pathlib import Path
+
+import pytest
+
+from improve_yourself.analysis_library import LocalAnalysisLibrary
+from improve_yourself.analyzer_shell import AnalyzerShellApp
+import improve_yourself.analyzer_shell as analyzer_shell_module
+
+
+def _workflow(root: Path, *, source_name: str = "match.dem", valid: bool = True) -> Path:
+    root.mkdir(parents=True, exist_ok=True)
+    path = root / "demo-workflow.json"
+    path.write_text(json.dumps({"schema": "iy.demo_workflow/v1", "status": "READY_FOR_REVIEW", "source_sha256": "a" * 64, "source_demo_name": source_name, "preflight": {"map_id": "de_ancient"}, "counts": {"scenes": 3}, "valid": valid}), encoding="utf-8")
+    return path
+
+
+def _validator(path: Path) -> Path:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if path.name != "demo-workflow.json" or payload.get("valid") is not True:
+        raise ValueError("invalid canonical workflow")
+    return path
+
+
+def test_register_reload_deduplicate_and_remove_reference(tmp_path: Path) -> None:
+    manifest = _workflow(tmp_path / "analysis")
+    library = LocalAnalysisLibrary(tmp_path / "index.json", _validator)
+    library.register(manifest); library.register(manifest)
+    assert len(library.entries()) == 1 and library.entries()[0]["state"] == "READY"
+    reloaded = LocalAnalysisLibrary(tmp_path / "index.json", _validator)
+    assert reloaded.entries()[0]["map_id"] == "de_ancient"
+    reloaded.remove(manifest)
+    assert reloaded.entries() == () and manifest.exists()
+
+
+def test_corrupt_or_broken_entry_does_not_break_other_registered_entry(tmp_path: Path) -> None:
+    good = _workflow(tmp_path / "good")
+    index = tmp_path / "index.json"
+    library = LocalAnalysisLibrary(index, _validator); library.register(good)
+    document = json.loads(index.read_text(encoding="utf-8")); document["entries"].append({"manifest_path": "../bad"})
+    index.write_text(json.dumps(document), encoding="utf-8")
+    states = [item["state"] for item in library.entries()]
+    assert states == ["READY", "INVALID"]
+
+
+def test_tampered_missing_source_and_legacy_v1_are_disabled(tmp_path: Path) -> None:
+    tampered = _workflow(tmp_path / "tampered", valid=False)
+    missing_source = _workflow(tmp_path / "missing", source_name="")
+    legacy = tmp_path / "legacy" / "demo-workflow.json"; legacy.parent.mkdir(); legacy.write_text(json.dumps({"schema": "iy.workflow/v1"}), encoding="utf-8")
+    index = tmp_path / "index.json"
+    library = LocalAnalysisLibrary(index, _validator)
+    entries = []
+    for path in (tampered, missing_source, legacy):
+        entry = {"manifest_path": str(path), "demo_basename": "unknown", "map_id": "unknown", "source_hash_prefix": "", "scene_count": None, "workflow_type": "V2"}
+        entry["registration_seal"] = library._seal(entry)
+        entries.append(entry)
+    index.write_text(json.dumps({"schema": "iy.local_analysis_library/v1", "entries": entries}), encoding="utf-8")
+    states = [item["state"] for item in library.entries()]
+    assert states == ["TAMPERED", "MISSING SOURCE LINK", "LEGACY V1"]
+
+
+def test_bad_index_recovers_and_registration_never_selects_latest(tmp_path: Path) -> None:
+    index = tmp_path / "index.json"; index.write_text("{", encoding="utf-8")
+    first = _workflow(tmp_path / "first"); second = _workflow(tmp_path / "second")
+    library = LocalAnalysisLibrary(index, _validator); library.register(first)
+    assert [item["demo_basename"] for item in library.entries()] == ["match.dem"]
+    assert second not in [Path(str(item.get("manifest_path", ""))) for item in library.entries()]
+
+
+def test_registration_rejects_invalid_or_traversal_path(tmp_path: Path) -> None:
+    library = LocalAnalysisLibrary(tmp_path / "index.json", _validator)
+    with pytest.raises((ValueError, FileNotFoundError)):
+        library.register(tmp_path / ".." / "not-a-workflow.json")
+
+
+def test_manual_valid_workflow_injection_or_reference_edit_is_not_actionable(tmp_path: Path) -> None:
+    registered = _workflow(tmp_path / "registered")
+    injected = _workflow(tmp_path / "injected")
+    index = tmp_path / "index.json"
+    library = LocalAnalysisLibrary(index, _validator); library.register(registered)
+    document = json.loads(index.read_text(encoding="utf-8"))
+    document["entries"].append({"manifest_path": str(injected)})
+    index.write_text(json.dumps(document), encoding="utf-8")
+    assert [item["state"] for item in library.entries()] == ["READY", "INVALID"]
+    document["entries"][0]["manifest_path"] = str(injected)
+    index.write_text(json.dumps(document), encoding="utf-8")
+    assert library.entries()[0]["state"] == "INVALID"
+
+
+def test_real_v1_workflow_filename_is_legacy_and_never_validated_as_v2(tmp_path: Path) -> None:
+    legacy = tmp_path / "legacy" / "workflow.json"; legacy.parent.mkdir(); legacy.write_text(json.dumps({"schema": "iy.workflow/v1"}), encoding="utf-8")
+    library = LocalAnalysisLibrary(tmp_path / "index.json", lambda _path: (_ for _ in ()).throw(AssertionError("V1 must not route to V2")))
+    entry = {"manifest_path": str(legacy), "demo_basename": "legacy", "map_id": "unknown", "source_hash_prefix": "", "scene_count": None, "workflow_type": "V1"}
+    entry["registration_seal"] = library._seal(entry)
+    library.index_path.write_text(json.dumps({"schema": "iy.local_analysis_library/v1", "entries": [entry]}), encoding="utf-8")
+    assert library.entries()[0]["state"] == "LEGACY V1"
+
+
+def test_shell_library_ui_routes_only_through_existing_controller_boundaries() -> None:
+    render = inspect.getsource(AnalyzerShellApp._render_analysis_library)
+    open_entry = inspect.getsource(AnalyzerShellApp._open_library_workflow)
+    relink = inspect.getsource(AnalyzerShellApp._relink_library_workflow)
+    remove = inspect.getsource(AnalyzerShellApp._remove_library_workflow)
+    assert "demo_basename" in render and "source_hash_prefix" in render
+    assert 'text=detail' in render and 'text=reference' not in render
+    assert 'state == "READY"' in render and 'state == "MISSING SOURCE LINK"' in render
+    assert "open_existing_workflow" in open_entry
+    assert "link_source_demo" in inspect.getsource(AnalyzerShellApp._link_source)
+    assert "remove_from_library" in remove
+    assert "open_existing_workflow" in relink
+
+
+class _SynchronousThread:
+    def __init__(self, *, target, daemon: bool) -> None:
+        self._target = target
+        self.daemon = daemon
+
+    def start(self) -> None:
+        self._target()
+
+
+class _ImmediateRoot:
+    def after(self, _delay: int, callback) -> None:
+        callback()
+
+
+class _StatusCapture:
+    def __init__(self) -> None:
+        self.values: list[str] = []
+
+    def set(self, value: str) -> None:
+        self.values.append(value)
+
+
+def _callback_app(monkeypatch: pytest.MonkeyPatch, controller, calls: list[object]) -> AnalyzerShellApp:
+    """Run the existing UI callbacks synchronously without building a Tk window."""
+    monkeypatch.setattr(analyzer_shell_module.threading, "Thread", _SynchronousThread)
+    app = object.__new__(AnalyzerShellApp)
+    app.controller = controller
+    app.root = _ImmediateRoot()
+    app.status = _StatusCapture()
+    app._finish_background = lambda result, recheck: calls.append(("finish", result, recheck))
+    app._open_review = lambda: calls.append("review")
+    app._open_tactical_from_review = lambda: calls.append("tactical")
+    app._link_source = lambda: calls.append("link-source")
+    return app
+
+
+def test_library_review_action_opens_exact_manifest_before_existing_review_route(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    manifest = _workflow(tmp_path / "ready")
+    calls: list[object] = []
+
+    class Controller:
+        def open_existing_workflow(self, value: Path) -> str:
+            calls.append(("open", value))
+            return "loaded"
+
+    app = _callback_app(monkeypatch, Controller(), calls)
+    app._open_library_workflow(manifest, tactical=False)
+
+    assert calls == [("open", manifest), ("finish", "loaded", False), "review"]
+
+
+def test_failed_library_review_open_never_transitions_to_review(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    manifest = _workflow(tmp_path / "invalid")
+    calls: list[object] = []
+
+    class Controller:
+        def open_existing_workflow(self, value: Path) -> None:
+            calls.append(("open", value))
+            raise ValueError("tampered")
+
+    app = _callback_app(monkeypatch, Controller(), calls)
+    app._open_library_workflow(manifest, tactical=False)
+
+    assert calls == [("open", manifest)]
+    assert app.status.values[-1] == "Bibliothekseintrag konnte nicht sicher geöffnet werden."
+
+
+def test_library_tactical_action_opens_before_existing_review_and_tactical_routes(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    manifest = _workflow(tmp_path / "ready")
+    calls: list[object] = []
+
+    class Controller:
+        def open_existing_workflow(self, value: Path) -> str:
+            calls.append(("open", value))
+            return "loaded"
+
+    app = _callback_app(monkeypatch, Controller(), calls)
+    app._open_library_workflow(manifest, tactical=True)
+
+    assert calls == [("open", manifest), ("finish", "loaded", False), "review", "tactical"]
+
+
+def test_failed_library_tactical_open_never_transitions_to_tactical(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    manifest = _workflow(tmp_path / "invalid")
+    calls: list[object] = []
+
+    class Controller:
+        def open_existing_workflow(self, value: Path) -> None:
+            calls.append(("open", value))
+            raise ValueError("tampered")
+
+    app = _callback_app(monkeypatch, Controller(), calls)
+    app._open_library_workflow(manifest, tactical=True)
+
+    assert calls == [("open", manifest)]
+
+
+def test_library_relink_opens_exact_missing_source_manifest_before_existing_link_action(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    manifest = _workflow(tmp_path / "missing", source_name="")
+    calls: list[object] = []
+
+    class Controller:
+        def open_existing_workflow(self, value: Path) -> str:
+            calls.append(("open", value))
+            return "loaded"
+
+    app = _callback_app(monkeypatch, Controller(), calls)
+    app._relink_library_workflow(manifest)
+
+    assert calls == [("open", manifest), ("finish", "loaded", False), "link-source"]
+
+
+def test_library_relink_uses_existing_link_source_demo_with_selected_source(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    manifest = _workflow(tmp_path / "missing", source_name="")
+    source_demo = tmp_path / "matched.dem"; source_demo.write_bytes(b"demo")
+    calls: list[object] = []
+
+    class Controller:
+        result = None
+
+        def open_existing_workflow(self, value: Path) -> str:
+            calls.append(("open", value))
+            self.result = object()
+            return "loaded"
+
+        def link_source_demo(self, value: Path) -> str:
+            calls.append(("link", value))
+            return "relinked"
+
+    app = _callback_app(monkeypatch, Controller(), calls)
+    monkeypatch.setattr("tkinter.filedialog.askopenfilename", lambda **_kwargs: str(source_demo))
+
+    def immediate_background(_message, operation, *, recheck: bool = False, **_kwargs) -> None:
+        calls.append(("background", recheck))
+        operation()
+
+    app._background = immediate_background
+    app._link_source = AnalyzerShellApp._link_source.__get__(app, AnalyzerShellApp)
+    app._relink_library_workflow(manifest)
+
+    assert calls == [
+        ("open", manifest), ("finish", "loaded", False),
+        ("background", True), ("link", source_demo),
+    ]
+
+
+def test_library_remove_routes_to_controller_and_leaves_artifacts_unchanged(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    manifest = _workflow(tmp_path / "ready")
+    artifact = manifest.parent / "artifact.txt"; artifact.write_bytes(b"artifact")
+    before_manifest, before_artifact = manifest.read_bytes(), artifact.read_bytes()
+    calls: list[object] = []
+    library = LocalAnalysisLibrary(tmp_path / "index.json", _validator)
+    library.register(manifest)
+
+    class Controller:
+        def remove_from_library(self, value: Path) -> None:
+            calls.append(("remove", value))
+            library.remove(value)
+
+    app = _callback_app(monkeypatch, Controller(), calls)
+    app._render_analysis_library = lambda: calls.append("render")
+    app._remove_library_workflow(manifest)
+
+    assert calls == [("remove", manifest), "render"]
+    assert library.entries() == ()
+    assert manifest.read_bytes() == before_manifest
+    assert artifact.read_bytes() == before_artifact
+
+
+def test_real_v1_row_disables_v2_actions_but_keeps_remove_enabled(tmp_path: Path) -> None:
+    legacy = tmp_path / "legacy" / "workflow.json"; legacy.parent.mkdir()
+    legacy.write_text(json.dumps({"schema": "iy.workflow/v1"}), encoding="utf-8")
+    library = LocalAnalysisLibrary(tmp_path / "index.json", lambda _path: (_ for _ in ()).throw(AssertionError("V1 must not route to V2")))
+    entry = {"manifest_path": str(legacy), "demo_basename": "legacy.dem", "map_id": "unknown", "source_hash_prefix": "", "scene_count": None, "workflow_type": "V1"}
+    entry["registration_seal"] = library._seal(entry)
+    library.index_path.write_text(json.dumps({"schema": "iy.local_analysis_library/v1", "entries": [entry]}), encoding="utf-8")
+
+    buttons: dict[str, str] = {}
+
+    class Widget:
+        def pack(self, **_kwargs) -> None:
+            pass
+
+    class Rows(Widget):
+        def winfo_children(self) -> list[Widget]:
+            return []
+
+    class Ttk:
+        @staticmethod
+        def Frame(*_args, **_kwargs) -> Widget:
+            return Widget()
+
+        @staticmethod
+        def Label(*_args, **_kwargs) -> Widget:
+            return Widget()
+
+        @staticmethod
+        def Button(*_args, text: str, **kwargs) -> Widget:
+            buttons[text] = kwargs.get("state", "normal")
+            return Widget()
+
+    class Controller:
+        def library_entries(self):
+            return library.entries()
+
+    app = object.__new__(AnalyzerShellApp)
+    app.controller = Controller()
+    app.ttk = Ttk()
+    app.analysis_library_rows = Rows()
+    app.analysis_library_status = _StatusCapture()
+    AnalyzerShellApp._render_analysis_library(app)
+
+    assert library.entries()[0]["state"] == "LEGACY V1"
+    assert buttons["Review öffnen"] == "disabled"
+    assert buttons["Tactical Replay"] == "disabled"
+    assert "Quelle zuordnen" not in buttons
+    assert buttons["Entfernen"] == "normal"
