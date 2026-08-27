@@ -1,0 +1,15 @@
+{
+  "schema": "iy.map_overview_metadata/v1",
+  "map_id": "de_nuke",
+  "asset": {"status": "NOT_INCLUDED", "reference": null, "upstream_material_identifier": "overviews/de_nuke", "reason": "No Valve overview image is redistributed; only numeric projection and layer metadata is included."},
+  "canvas": {"width": 1024, "height": 1024, "unit": "overview_pixel", "origin": "top_left", "x_direction": "right", "y_direction": "down"},
+  "transform": {"verification_status": "VERIFIED", "input_coordinate_space": "cs2_world_xy", "origin_world": {"x": -3453, "y": 2887, "convention": "upper_left_world_coordinate"}, "world_units_per_pixel": 7, "world_x_to_canvas": "positive_x", "world_y_to_canvas": "negative_y", "rotation_deg_clockwise": 0, "rounding": "none_float", "clipping": "classify_only_no_clamp", "bounds_inclusive": true},
+  "layers": {"status": "VERIFIED", "selection_axis": "world_z", "items": [{"id": "default", "altitude_min": -495, "altitude_max": 10000}, {"id": "lower", "altitude_min": -10000, "altitude_max": -495}], "reason": "Thresholds are transcribed from the shipped 2D overview descriptor and are not 3D geometry/floor proof."},
+  "reference_points": [
+    {"id": "transform_top_left", "world": {"x": -3453, "y": 2887}, "expected_overview": {"x": 0, "y": 0}, "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM", "meaning": "projection_basis_only"},
+    {"id": "transform_center", "world": {"x": 131, "y": -697}, "expected_overview": {"x": 512, "y": 512}, "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM", "meaning": "projection_basis_only"},
+    {"id": "transform_bottom_right", "world": {"x": 3715, "y": -4281}, "expected_overview": {"x": 1024, "y": 1024}, "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM", "meaning": "projection_basis_only"}
+  ],
+  "provenance": {"retrieved_utc": "2026-08-27T00:00:00Z", "sources": [{"role": "projection_and_2d_layer_values", "repository": "SteamDatabase/GameTracking-CS2", "commit": "8651ef311b783fee253fc15c30966e4a15a3cacb", "path": "game/csgo/pak01_dir/resource/overviews/de_nuke.txt", "values_used": {"pos_x": -3453, "pos_y": 2887, "scale": 7, "source_rotate_flag": null, "intrinsic_rotation_deg_clockwise": 0, "verticalsections": {"default": [-495, 10000], "lower": [-10000, -495]}}, "authority_note": "2D overview thresholds are preserved as 2D presentation metadata only."}], "distribution_note": "No overview texture or game asset is included."},
+  "verification": {"status": "PARTIAL", "verified_fields": ["canvas.width", "canvas.height", "transform.origin_world", "transform.world_units_per_pixel", "transform.rotation_deg_clockwise", "layers", "reference_points"], "unresolved_fields": ["asset.reference", "named_landmark_world_coordinates", "3d_geometry_layer_correctness"]}
+}
