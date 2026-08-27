@@ -31,7 +31,7 @@ try {
     if (-not $manifestText -or -not (Test-Path -LiteralPath $manifestText -PathType Leaf)) { throw 'V2 workflow did not return a valid manifest path.' }
     Write-Host "==> Validate hash-bound workflow: $manifestText" -ForegroundColor Cyan
     if ($NoServe) { Write-Host '==> Prepare review artifacts without starting a server' -ForegroundColor Cyan; & $reviewCli $manifestText '--prepare-only'; if ($LASTEXITCODE -ne 0) { throw "V2 review preparation failed with exit code $LASTEXITCODE." }; Write-Host 'READY: Open the printed review.html locally, or rerun without -NoServe for loopback serving.' -ForegroundColor Green; return }
-    Write-Host "==> Start local review at http://127.0.0.1:$Port/review.html" -ForegroundColor Green
+    Write-Host '==> Starting local review...' -ForegroundColor Cyan
     & $reviewCli $manifestText '--port' ([string]$Port)
     if ($LASTEXITCODE -ne 0) { throw "V2 review server failed with exit code $LASTEXITCODE." }
 }

@@ -29,6 +29,14 @@ controller, accept V1 replay input, upload data, bind to LAN, or change system
 settings. `iy-workflow` and `Start-V1Review.ps1` remain supported legacy paths
 and are untouched by this replacement.
 
+Static local-review mode deliberately has no CS2 coordinator endpoint. Scene
+ticks remain visible as evidence, but the page does not offer an action to open
+CS2. The Analyzer Shell is the separate coordinator-capable route. The static
+review is rendered from the canonical Replay V2 store/controller flow; it does
+not require an `AnalyzerDataHub` projection because it consumes no match-data
+consumer projection. `AnalyzerDataHub` remains the canonical owner for its
+separate Analyzer/Tactical/Review match-data projections.
+
 ## Manual review checklist for Brix
 
 1. Run the one-command launch with a local `.dem` or `.dem.zst` file.
