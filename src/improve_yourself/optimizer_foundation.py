@@ -37,6 +37,8 @@ class RecommendationState(StrEnum):
     CONDITIONAL = "CONDITIONAL"
     NO_CHANGE = "NO_CHANGE"
     INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
+    NOT_AVAILABLE = "NOT_AVAILABLE"
+    UNSUPPORTED = "UNSUPPORTED"
 
 
 class RuleMaturity(StrEnum):
@@ -183,7 +185,15 @@ def evaluate_recommendations(profile: dict[str, object], rules: Iterable[Optimiz
             if matched: excluded = True
         evidence_for_rule = [record for record in (*rule.evidence, *available_evidence) if record.rule_id in {rule.rule_id, "network-quality-observation"}]
         trace = {"required": [], "exclusions": [], "conflicts": list(rule.compatibility.conflicts_with)}
-        if any(conflict in accepted for conflict in rule.compatibility.conflicts_with):
+        observations = profile.get("observation_states") if isinstance(profile.get("observation_states"), dict) else {}
+        capabilities = profile.get("capability_states") if isinstance(profile.get("capability_states"), dict) else {}
+        declared_observation = next((str(observations[path]) for path in missing if observations.get(path) in {"UNKNOWN", "NOT_AVAILABLE"}), None)
+        declared_capability = str(capabilities.get(rule.rule_id, capabilities.get(rule.domain.value, "")))
+        if declared_capability == "UNSUPPORTED":
+            state, rationale = RecommendationState.UNSUPPORTED, "Declared capability is unsupported for this canonical path."
+        elif declared_observation == "NOT_AVAILABLE":
+            state, rationale = RecommendationState.NOT_AVAILABLE, "Declared observation is not available in this system/context."
+        elif any(conflict in accepted for conflict in rule.compatibility.conflicts_with):
             state, rationale = RecommendationState.NO_CHANGE, "Conflicts with an already selected compatible rule."
         elif missing:
             state, rationale = RecommendationState.INSUFFICIENT_EVIDENCE, "Missing evidence: " + ", ".join(sorted(missing))
@@ -209,9 +219,9 @@ def evaluate_recommendations(profile: dict[str, object], rules: Iterable[Optimiz
             state, rationale = RecommendationState.NO_CHANGE, "Security/performance trade-off fixtures are never automatically recommended or applied."
         if state in {RecommendationState.RECOMMENDED, RecommendationState.ALREADY_RECOMMENDED}:
             accepted.add(rule.rule_id)
-        observation_state = "KNOWN" if not missing else "UNKNOWN"
-        capability_status = "UNKNOWN" if missing else "SUPPORTED"
-        if missing:
+        observation_state = "NOT_AVAILABLE" if declared_observation == "NOT_AVAILABLE" else "KNOWN" if not missing else "UNKNOWN"
+        capability_status = declared_capability if declared_capability in {"SUPPORTED", "UNSUPPORTED", "UNKNOWN"} else "UNKNOWN" if missing else "SUPPORTED"
+        if missing or state in {RecommendationState.NOT_AVAILABLE, RecommendationState.UNSUPPORTED}:
             action = "NOT_APPLYABLE"
         elif rule.domain is OptimizerDomain.BIOS:
             action = "MANUAL_ONLY"
