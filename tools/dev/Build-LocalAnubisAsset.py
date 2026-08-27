@@ -18,9 +18,10 @@ def sha256(path: Path) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Build an ignored local-only Anubis asset derivative")
+    parser = argparse.ArgumentParser(description="Build an ignored local-only CS2 map asset derivative")
     parser.add_argument("source_glb", type=Path)
     parser.add_argument("output", type=Path)
+    parser.add_argument("--map-id", required=True)
     parser.add_argument("--source-build-id", required=True)
     parser.add_argument("--source-vpk-sha256", required=True)
     parser.add_argument("--reference-demo-sha256", required=True)
@@ -28,11 +29,11 @@ def main() -> int:
     result = build_local_derivative(args.source_glb, args.output)
     manifest = {
         "schema": "iy.map_asset/v1",
-        "map_id": "de_anubis",
+        "map_id": args.map_id,
         "asset_version": f"local-cs2-{args.source_build_id}",
         "source_kind": "local_cs2_extraction",
         "source_build_id": args.source_build_id,
-        "source_description": f"Local-only physics derivative from installed de_anubis.vpk sha256:{args.source_vpk_sha256}",
+        "source_description": f"Local-only physics derivative from installed {args.map_id}.vpk sha256:{args.source_vpk_sha256}",
         "coordinate_space": "cs2_world",
         "units": "source_unit",
         "axis": {"x": "east-west", "y": "north-south", "z": "up"},
@@ -49,6 +50,7 @@ def main() -> int:
         "derivative": {
             "normal_world_nodes": result["normal_world_nodes"],
             "triangles": result["triangles"],
+            "geometry_bounds": {"status": "PENDING_LOCAL_MEASUREMENT"},
             "generated_at_utc": datetime.now(UTC).isoformat(),
         },
     }
