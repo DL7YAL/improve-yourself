@@ -18,22 +18,24 @@ Task: harden-iac-ci-phase2-validation
 Branch: azure/harden-iac-ci-phase2-validation
 Status: PASS / STALE — completed and merged through PR #14
 
-## Azure — current task
-
 Task: complete-2d-map-overview-dataset
 Branch: azure/2d-map-overview-data-prep
-Base HEAD: 9ea1a9d0d5126c615a1a9f3b02cab91ca826fba5
+Status: PASS / STALE — merged through PR #19; rotation clarification merged through PR #20
+
+## Azure — current task
+
+Task: 3d-pov-anubis-prep
+Branch: azure/3d-pov-anubis-prep
+Base HEAD: b5835ac9c7b78f7a61b39e90569181cea90ee51b
 Owned files:
 - coordination/ACTIVE_WORK.md
-- resources/map_overviews/**
-- tools/map_overview_data/**
-- tests/map_overview_data/**
-Status: PASS
+- resources/3d_pov/**
+- tools/pov_prep_data/**
+- tests/pov_prep_data/**
+Status: IN PROGRESS
 Depends on Codex: NO
-Handoff required: YES — future consumer must use canonical Replay/Analyzer current-tick state
-Scope: Extend the validated iy.map_overview_metadata/v1 pilot only to maps evidenced by the current repository/product context. No runtime, parser, Replay, Analyzer, controller, store, DataHub, V1, cloud, or Azure changes.
-Prepared dataset: de_ancient VERIFIED, de_mirage VERIFIED, de_anubis UNVERIFIED because its tracked overview descriptor omits an explicit rotation value.
-Validation: pytest, validator CLI for Ancient/Mirage/Anubis, compileall, git diff --check, transform references, Anubis rejection, and fail-closed probes passed on 2026-08-27.
+Handoff required: YES — Beast must consume only through existing ReplayRenderer/ReplayController and iy.map_asset/v1 boundaries
+Scope: Static Anubis asset/research/coordinate/camera-input evidence only. No product runtime, parser, Replay, Analyzer, controller, store, DataHub, viewer, cloud, or Azure-resource changes.
 
 ## Rules
 
@@ -47,6 +49,6 @@ Validation: pytest, validator CLI for Ancient/Mirage/Anubis, compileall, git dif
 - Keep entries short and current. This file tracks active work, not project history.
 - Preserve the canonical AnalyzerCore / AnalyzerDataHub / iy.replay/v2 / ReplayStore / ReplayController path. No second parser, store, controller, data hub, or V1 fallback may be introduced.
 - Azure must not modify protected local product-core files.
-- Map overview preparation is static data/projection metadata only. Current tick and entity state must come from the existing canonical Replay/Analyzer path.
+- 3D/POV prep is static data/evidence only. Current tick and entity/POV state must come from the existing canonical Replay/Analyzer path.
 - Region/data-residency choice remains unresolved; do not switch regions without explicit authorization.
 - No live deployment or live Azure resource modification is authorized.
