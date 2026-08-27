@@ -1,9 +1,10 @@
 import json
 import re
 import pytest
+from dataclasses import replace
 from pathlib import Path
 from improve_yourself.replay_controller import ReplayController
-from improve_yourself.viewer import render_viewer, visible_players_at_frame, world_to_radar, viewer_state
+from improve_yourself.viewer import render_viewer, render_viewer_state, visible_players_at_frame, world_to_radar, viewer_state
 from test_replay_controller import _store
 
 def test_projection_and_dead_filter():
@@ -13,6 +14,10 @@ def test_projection_and_dead_filter():
 def test_view_mode_changes_presentation_only(tmp_path):
  store=_store(tmp_path); controller=ReplayController(store); controller.seek_scene('scene-1'); before=controller.snapshot(); controller.set_view_mode('first_person'); after=controller.snapshot()
  assert (after.current_round,after.requested_tick,after.resolved_tick,after.selected_player_id,after.frame)==(before.current_round,before.requested_tick,before.resolved_tick,before.selected_player_id,before.frame)
+
+def test_frame_tick_mismatch_is_rejected(tmp_path):
+ store=_store(tmp_path); context=replace(ReplayController(store).snapshot(), resolved_tick=999)
+ with pytest.raises(ValueError, match='frame tick must equal resolved tick'): render_viewer_state(store,context,tmp_path/'bad.html')
 
 def test_background_swap_does_not_mutate_replay_state(tmp_path):
  store=_store(tmp_path); controller=ReplayController(store); context=controller.seek_scene('scene-1'); before=viewer_state(store,context)
