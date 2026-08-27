@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .analysis_flow import AnalysisProfile
+from .analysis_library import LocalAnalysisLibrary
 from .cs2_review_coordinator import Cs2ReviewCoordinator, ReviewCoordinatorServer, ReviewPreflight
 from .demo_workflow import ensure_tactical_replay_export, preflight_demo_workflow, rerender_demo_workflow
 from .analyzer_data_hub import AnalyzerDataHub
@@ -1082,6 +1083,7 @@ class AnalyzerShellController:
         self.profile_store = profile_store or LocalProfileStore(output_root / "profiles")
         self.profiles = {profile.profile_id: profile for profile in self.profile_store.list_profiles()}
         self.profile_id = "review_v1"
+        self.library = LocalAnalysisLibrary(output_root / "analysis-library.json", validate_existing_workflow)
         self.result: ShellResult | None = None
         self.data_hub: AnalyzerDataHub | None = None
         self.selected_ids: list[str] = []
@@ -1108,6 +1110,8 @@ class AnalyzerShellController:
         self.selection_mode = "full_demo"
         self.result = self._load(manifest)
         self.data_hub = _load_analyzer_data_hub(manifest)
+        if self.result.status == "READY_FOR_REVIEW":
+            self.library.register(manifest)
         return self.result
 
     def open_existing_workflow(self, manifest_path: Path) -> ShellResult:
@@ -1116,6 +1120,8 @@ class AnalyzerShellController:
         self.data_hub = _load_analyzer_data_hub(manifest)
         self.selected_ids = list(self.result.selected_ids)
         self.selection_mode = self.result.selection_mode
+        if self.result.status == "READY_FOR_REVIEW":
+            self.library.register(manifest)
         return self.result
 
     def link_source_demo(self, demo: Path) -> ShellResult:
@@ -1137,6 +1143,8 @@ class AnalyzerShellController:
                 temporary.unlink()
         self.result = self._load(manifest_path)
         self.data_hub = _load_analyzer_data_hub(manifest_path)
+        if self.result.status == "READY_FOR_REVIEW":
+            self.library.register(manifest_path)
         return self.result
 
     def set_full_demo(self) -> None:
@@ -1182,7 +1190,16 @@ class AnalyzerShellController:
         )
         self.result = self._load(manifest)
         self.data_hub = _load_analyzer_data_hub(manifest)
+        if self.result.status == "READY_FOR_REVIEW":
+            self.library.register(manifest)
         return self.result
+
+    def library_entries(self) -> tuple[dict[str, object], ...]:
+        return self.library.entries()
+
+    def remove_from_library(self, manifest_path: Path) -> None:
+        """Remove only the navigation reference; workflow files remain untouched."""
+        self.library.remove(manifest_path)
 
     def select_profile(self, profile_id: str) -> None:
         if profile_id not in self.profiles:
