@@ -30,21 +30,24 @@ Task: 3d-pov-anubis-render-ready-prep
 Branch: azure/3d-pov-anubis-prep
 Status: PASS / STALE — merged through PR #21; shared original/permissive fallback assets and render-ready contracts remain reusable static preparation only.
 
-## Azure — current task
-
 Task: 3d-pov-mirage-prep-v2
 Branch: azure/3d-pov-mirage-prep-v2
-Base HEAD: ce743519d073a6f2cc09355f89da572753fdc0a4
+Status: BLOCKED / SUPERSEDED — static preparation remains on its branch for a later Beast validation handoff; owner instruction ended this as the active Azure assignment on 2026-08-27.
+
+## Azure — current task
+
+Task: unified-viewer-v1-ancient
+Branch: azure/unified-viewer-v1-ancient
+Base HEAD: 1605d3c68db00791c9740d389b335cc8d1695c63
 Owned files:
 - coordination/ACTIVE_WORK.md
-- resources/3d_pov/de_mirage/**
-- tools/pov_prep_data/validate.py
-- tools/dev/Build-LocalAnubisAsset.py
-- tests/pov_prep_data/test_mirage_pov_prep.py
-Status: BLOCKED — static prep and Beast handoff are committed; Azure/MCP has no command-execution capability to run the required pytest/validator/compile/diff checks. Beast must execute the listed static validations before PR readiness.
+- Viewer/product files required for the Ancient 2D vertical slice
+- a small read-only shared Viewer-State adapter/contract
+- generated Ancient product background assets selectively adapted from PR #26
+- focused Viewer-State, map-background, and Viewer tests
+Status: IN PROGRESS
 Depends on Codex: NO
-Handoff required: YES — Beast must execute only through existing ReplayStore → ReplayController → ReplayRendererSession → PandaReplayRenderer and iy.map_asset/v1.
-Scope: Mirage static provenance/prep, generic local-asset-builder map ID support, targeted static validation, and local execution handoff. No protected replay/runtime/controller/renderer implementation, parser, DataHub, cloud, or Azure-resource changes.
+Scope: one canonical ReplayStore/ReplayController, read-only derived Viewer State, replaceable 2D map background, Ancient player/view-direction product rendering, and future 3D-compatible state. No parser, Replay V2, ReplayStore, ReplayController, AnalyzerCore, AnalyzerDataHub, transform-authority, cloud, or Azure-resource changes.
 
 ## Rules
 
@@ -57,7 +60,7 @@ Scope: Mirage static provenance/prep, generic local-asset-builder map ID support
 - Use status values: `READY`, `IN PROGRESS`, `BLOCKED`, `PASS`.
 - Keep entries short and current. This file tracks active work, not project history.
 - Preserve the canonical AnalyzerCore / AnalyzerDataHub / iy.replay/v2 / ReplayStore / ReplayController path. No second parser, store, controller, data hub, or V1 fallback may be introduced.
-- Azure must not modify protected local product-core files.
+- Azure must not modify protected local product-core files except where the project owner explicitly authorizes a narrowly scoped product slice in the current task.
 - 3D/POV prep is static data/evidence only. Current tick and entity/POV state must come from the existing canonical Replay/Analyzer path.
 - Region/data-residency choice remains unresolved; do not switch regions without explicit authorization.
 - No live deployment or live Azure resource modification is authorized.
