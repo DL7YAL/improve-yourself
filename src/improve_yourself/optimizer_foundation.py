@@ -33,6 +33,7 @@ class OptimizerDomain(StrEnum):
 class RecommendationState(StrEnum):
     RECOMMENDED = "RECOMMENDED"
     ALREADY_RECOMMENDED = "ALREADY_RECOMMENDED"
+    ALREADY_OPTIMAL = "ALREADY_OPTIMAL"
     CONDITIONAL = "CONDITIONAL"
     NO_CHANGE = "NO_CHANGE"
     INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
@@ -192,6 +193,8 @@ def evaluate_recommendations(profile: dict[str, object], rules: Iterable[Optimiz
             state, rationale = RecommendationState.CONDITIONAL, "Conditions not currently met: " + ", ".join(sorted(unmet))
         elif rule.maturity in {RuleMaturity.EXPERIMENTAL, RuleMaturity.REJECTED_NO_BENEFIT}:
             state, rationale = RecommendationState.NO_CHANGE, f"Rule maturity {rule.maturity.value} is not eligible for Improve recommendations."
+        elif isinstance(profile.get("observed_desired_states"), dict) and profile["observed_desired_states"].get(rule.rule_id) is True:
+            state, rationale = RecommendationState.ALREADY_OPTIMAL, "Observed current state satisfies the canonical desired state."
         elif isinstance(profile.get("current_recommendations"), dict) and profile["current_recommendations"].get(rule.rule_id) is True:
             state, rationale = RecommendationState.ALREADY_RECOMMENDED, "The read-only profile records the recommended state already present."
         else:
@@ -206,7 +209,17 @@ def evaluate_recommendations(profile: dict[str, object], rules: Iterable[Optimiz
             state, rationale = RecommendationState.NO_CHANGE, "Security/performance trade-off fixtures are never automatically recommended or applied."
         if state in {RecommendationState.RECOMMENDED, RecommendationState.ALREADY_RECOMMENDED}:
             accepted.add(rule.rule_id)
-        results.append({"rule_id": rule.rule_id, "domain": rule.domain.value, "state": state.value, "rationale": rationale, "missing_evidence": sorted(missing), "compatibility_trace": trace, "evidence_records": [asdict(record) for record in evidence_for_rule], "fixture_only": rule.fixture_only, "rule": rule.as_dict()})
+        observation_state = "KNOWN" if not missing else "UNKNOWN"
+        capability_status = "UNKNOWN" if missing else "SUPPORTED"
+        if missing:
+            action = "NOT_APPLYABLE"
+        elif rule.domain is OptimizerDomain.BIOS:
+            action = "MANUAL_ONLY"
+        elif state in {RecommendationState.RECOMMENDED, RecommendationState.ALREADY_RECOMMENDED}:
+            action = "RECOMMEND_ONLY"
+        else:
+            action = "NOT_APPLYABLE"
+        results.append({"rule_id": rule.rule_id, "domain": rule.domain.value, "state": state.value, "recommendation_state": state.value, "observation_state": observation_state, "evidence_status": "SUFFICIENT" if not missing else "INSUFFICIENT", "capability_status": capability_status, "action_classification": action, "restart_requirement": "RESTART_REQUIRED" if rule.restart_required else "NONE", "restore_theory": "METADATA_ONLY" if rule.restore_capable else "NONE", "rationale": rationale, "comparison_tags": [], "missing_evidence": sorted(missing), "compatibility_trace": trace, "evidence_records": [asdict(record) for record in evidence_for_rule], "fixture_only": rule.fixture_only, "rule": rule.as_dict()})
     return {"schema": FOUNDATION_SCHEMA, "profile_schema": profile.get("schema", "unknown"), "profile_id": profile.get("profile_id", profile.get("system_id", "unknown")), "read_only": True, "evidence_path": {"configuration_evidence": [asdict(record) for record in available_evidence if record.source_type != "OBSERVED_NETWORK_QUALITY"], "observed_network_quality": [asdict(record) for record in available_evidence if record.source_type == "OBSERVED_NETWORK_QUALITY"]}, "results": results}
 
 
