@@ -187,7 +187,10 @@ def evaluate_recommendations(profile: dict[str, object], rules: Iterable[Optimiz
         trace = {"required": [], "exclusions": [], "conflicts": list(rule.compatibility.conflicts_with)}
         observations = profile.get("observation_states") if isinstance(profile.get("observation_states"), dict) else {}
         capabilities = profile.get("capability_states") if isinstance(profile.get("capability_states"), dict) else {}
-        declared_observation = next((str(observations[path]) for path in missing if observations.get(path) in {"UNKNOWN", "NOT_AVAILABLE"}), None)
+        # Required-condition order is deterministic: explicit NOT_AVAILABLE wins;
+        # otherwise any unresolved required observation is UNKNOWN.
+        missing_states = [str(observations.get(path, "UNKNOWN")) for path in missing]
+        declared_observation = "NOT_AVAILABLE" if "NOT_AVAILABLE" in missing_states else "UNKNOWN" if missing_states else None
         declared_capability = str(capabilities.get(rule.rule_id, capabilities.get(rule.domain.value, "")))
         if declared_capability == "UNSUPPORTED":
             state, rationale = RecommendationState.UNSUPPORTED, "Declared capability is unsupported for this canonical path."

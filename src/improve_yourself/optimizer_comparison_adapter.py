@@ -5,29 +5,42 @@ from pathlib import Path
 from typing import Any
 from .optimizer_foundation import evaluate_recommendations
 
+COHORTS={"realistic","edge_stress","adversarial"}
+FIELDS={"system_id","group","hardware","settings","challenge","expected_behavior","boundaries","safety_traps"}
+PROJECTION_FIELDS={"goal","limitation","current_state","observation_availability","capability_support","vendor","oem_control_available","comparison_tags","observation_states","capability_states","observed_desired_states"}
+
+def validate_comparison_document(document: dict[str, Any]) -> list[str]:
+    cases=document.get("systems"); errors=[]
+    if not isinstance(cases,list) or len(cases)!=60: return ["systems must contain exactly 60 cases"]
+    ids=set(); counts={x:0 for x in COHORTS}
+    for number,case in enumerate(cases,1):
+        if not isinstance(case,dict): errors.append(f"case {number} is not an object"); continue
+        if FIELDS-case.keys(): errors.append(f"case {number} missing required fields")
+        ident=case.get("system_id"); group=case.get("group")
+        if not isinstance(ident,str) or ident in ids: errors.append(f"case {number} has invalid/duplicate system_id")
+        else: ids.add(ident)
+        if group not in COHORTS: errors.append(f"case {ident} has invalid cohort")
+        else: counts[group]+=1
+        if any(not isinstance(case.get(k),str) for k in FIELDS-{"system_id","group"}): errors.append(f"case {ident} has non-string prose field")
+    return errors+[f"{g} must contain 20 cases" for g,n in counts.items() if n!=20]
+
 def _profile(case: dict[str, Any]) -> dict[str, object]:
-    text = " ".join(str(case.get(k, "")) for k in ("hardware", "settings", "boundaries", "challenge")).upper()
-    vendor = "NVIDIA" if "NVIDIA" in text or "RTX" in text else "AMD" if "RADEON" in text else "UNKNOWN"
-    observation = "NOT_AVAILABLE" if "NOT AVAILABLE" in text or "ABSENT" in text else "UNKNOWN" if "UNKNOWN" in text else "KNOWN"
-    capability = "UNSUPPORTED" if "UNSUPPORTED" in text or "OEM LOCK" in text else "SUPPORTED" if "SUPPORTED" in text or "KNOWN ON" in text else "UNKNOWN"
-    known = observation == "KNOWN"
-    projection = {"goal":"QUALITY" if "QUALITY" in text else "PERFORMANCE" if "COMPETITIVE" in text or "PERFORMANCE" in text else "UNKNOWN","limitation":"CPU" if "CPU" in text else "GPU" if "GPU" in text else "UNKNOWN","current_state":"MISMATCH" if "MISMATCH" in text else "OPTIMAL" if "KNOWN OPTIMAL" in text else "UNKNOWN","observation_availability":observation,"capability_support":capability,"vendor":vendor,"oem_control_available":"NOT_AVAILABLE" if "OEM" in text and ("ABSENT" in text or "LOCK" in text) else "SUPPORTED" if "OEM" in text and "SUPPORTED" in text else "UNKNOWN"}
-    profile: dict[str, object] = {"schema":"iy.system_profile/v1","profile_id":case["system_id"],"ram":{"capacity_gb":32 if "32GB" in text or "64GB" in text else 8 if "8GB" in text else 16},"gpu":{"vendor":vendor,"driver_version":"declared" if known else None},"motherboard":{"product":"declared" if known else None},"bios":{"version":"declared" if known else None},"network":{"adapters":[{"name":"declared"}] if known else []},"goal":projection["goal"],"limitation":projection["limitation"],"comparison_tags":[case["system_id"],case["group"]],"challenge_projection":projection,"observation_states":{"gpu.driver_version":observation,"motherboard.product":observation,"bios.version":observation,"network.adapters":observation},"capability_states":{"GRAPHICS_OPTIMIZER":capability,"BIOS_OPTIMIZER": "UNSUPPORTED" if projection["oem_control_available"]=="NOT_AVAILABLE" else capability}}
-    if "KNOWN OPTIMAL" in text:
-        profile["observed_desired_states"]={"fixture-system-memory":True}
-    return profile
+    raw=case.get("projection", {})
+    if not isinstance(raw,dict) or set(raw)-PROJECTION_FIELDS: raise ValueError("invalid structured projection")
+    defaults={"goal":"UNKNOWN","limitation":"UNKNOWN","current_state":"UNKNOWN","observation_availability":"UNKNOWN","capability_support":"UNKNOWN","vendor":"UNKNOWN","oem_control_available":"UNKNOWN","comparison_tags":[],"observation_states":{},"capability_states":{},"observed_desired_states":{}}
+    p={**defaults,**raw}
+    if not isinstance(p["comparison_tags"],list) or any(not isinstance(p[k],dict) for k in ("observation_states","capability_states","observed_desired_states")): raise ValueError("invalid structured projection types")
+    return {"schema":"iy.system_profile/v1","profile_id":case["system_id"],"ram":{},"gpu":{"vendor":p["vendor"],"driver_version":None},"motherboard":{},"bios":{},"network":{"adapters":[]},"goal":p["goal"],"limitation":p["limitation"],"comparison_tags":[case["system_id"],case["group"],*p["comparison_tags"]],"challenge_projection":p,"observation_states":p["observation_states"],"capability_states":p["capability_states"],"observed_desired_states":p["observed_desired_states"]}
 
 def run_comparison_matrix(path: Path) -> dict[str, object]:
     document=json.loads(path.read_text(encoding="utf-8-sig"))
-    cases=document.get("systems")
-    if not isinstance(cases,list) or len(cases)!=60: raise ValueError("comparison matrix must contain 60 cases")
+    if not isinstance(document,dict): raise ValueError("comparison matrix root must be an object")
+    errors=validate_comparison_document(document)
+    if errors: raise ValueError("; ".join(errors))
     reports=[]
-    for case in cases:
-        if not isinstance(case,dict): raise ValueError("comparison case must be an object")
-        profile = _profile(case)
-        report=evaluate_recommendations(profile)
+    for case in document["systems"]:
+        profile=_profile(case); report=evaluate_recommendations(profile)
         for result in report["results"]:
-            result["comparison_tags"]=[case["system_id"],case["group"],str(case.get("expected_behavior",""))]
-            result["challenge_projection"] = profile["challenge_projection"]
+            result["comparison_tags"]=profile["comparison_tags"]; result["challenge_projection"]=profile["challenge_projection"]
         reports.append({"case_id":case["system_id"],"cohort":case["group"],"expected_pressure":case["expected_behavior"],"actual":report})
     return {"schema":"iy.optimizer_comparison_execution/v1","count":len(reports),"reports":reports}

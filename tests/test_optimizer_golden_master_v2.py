@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from improve_yourself.optimizer_comparison_adapter import run_comparison_matrix
+from improve_yourself.optimizer_comparison_adapter import run_comparison_matrix, validate_comparison_document
 from improve_yourself.optimizer_evidence import synthetic_system_matrix
 from improve_yourself.optimizer_foundation import RecommendationState, evaluate_recommendations
 
@@ -49,7 +49,7 @@ def test_150_matrix_is_deterministic_with_stable_case_ids() -> None:
 
 def test_challenge_adapter_executes_60_without_recommendation_fields(tmp_path: Path) -> None:
     case={"system_id":"cmp-x","group":"realistic","hardware":"RTX 4060 | 32GB","settings":"known","challenge":"x","expected_behavior":"no policy","boundaries":"none","safety_traps":"none"}
-    document={"systems":[{**case,"system_id":f"cmp-{i}"} for i in range(60)]}
+    document={"systems":[{**case,"system_id":f"cmp-{i}","group":("realistic" if i<20 else "edge_stress" if i<40 else "adversarial")} for i in range(60)]}
     path=tmp_path/'matrix.json'; path.write_text(json.dumps(document),encoding='utf-8')
     output=run_comparison_matrix(path)
     assert output["count"] == 60
@@ -58,8 +58,8 @@ def test_challenge_adapter_executes_60_without_recommendation_fields(tmp_path: P
 
 def test_challenge_projection_preserves_pairs_without_policy(tmp_path: Path) -> None:
     base={"group":"adversarial","hardware":"RTX 4060 | 32GB","challenge":"pair","expected_behavior":"semantic only","boundaries":"","safety_traps":"none"}
-    cases=[{**base,"system_id":"cmp-0","settings":"competitive CPU known optimal supported"},{**base,"system_id":"cmp-1","settings":"quality GPU mismatch unknown OEM lock unsupported"}]
-    document={"systems":[{**cases[i%2],"system_id":f"cmp-{i}"} for i in range(60)]}
+    cases=[{**base,"system_id":"cmp-0","settings":"prose is ignored","projection":{"goal":"PERFORMANCE","limitation":"CPU","current_state":"OPTIMAL","observation_availability":"KNOWN","capability_support":"SUPPORTED","vendor":"AMD","oem_control_available":"SUPPORTED","comparison_tags":["pair"],"observation_states":{},"capability_states":{"GRAPHICS_OPTIMIZER":"SUPPORTED"},"observed_desired_states":{}}},{**base,"system_id":"cmp-1","settings":"prose is ignored","projection":{"goal":"QUALITY","limitation":"GPU","current_state":"MISMATCH","observation_availability":"UNKNOWN","capability_support":"UNSUPPORTED","vendor":"AMD","oem_control_available":"NOT_AVAILABLE","comparison_tags":["pair"],"observation_states":{},"capability_states":{"GRAPHICS_OPTIMIZER":"UNSUPPORTED"},"observed_desired_states":{}}}]
+    document={"systems":[{**cases[i%2],"system_id":f"cmp-{i}","group":("realistic" if i<20 else "edge_stress" if i<40 else "adversarial")} for i in range(60)]}
     path=tmp_path/'pairs.json'; path.write_text(json.dumps(document),encoding='utf-8')
     reports=run_comparison_matrix(path)["reports"]
     first,second=reports[0]["actual"]["results"][0],reports[1]["actual"]["results"][0]
@@ -67,3 +67,10 @@ def test_challenge_projection_preserves_pairs_without_policy(tmp_path: Path) -> 
     assert first["challenge_projection"] != second["challenge_projection"]
     assert first["challenge_projection"]["goal"] == "PERFORMANCE"
     assert second["challenge_projection"]["observation_availability"] == "UNKNOWN"
+
+
+def test_actual_challenge_contract_requires_60_unique_20_20_20_typed_cases() -> None:
+    cases=[{"system_id":f"cmp-{i}","group":("realistic" if i<20 else "edge_stress" if i<40 else "adversarial"),"hardware":"x","settings":"x","challenge":"x","expected_behavior":"x","boundaries":"x","safety_traps":"x"} for i in range(60)]
+    assert validate_comparison_document({"systems":cases}) == []
+    cases[0]["group"]="wrong"
+    assert validate_comparison_document({"systems":cases})
