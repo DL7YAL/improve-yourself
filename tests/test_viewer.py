@@ -1,4 +1,6 @@
 import json
+import re
+import pytest
 from pathlib import Path
 from improve_yourself.replay_controller import ReplayController
 from improve_yourself.viewer import render_viewer, visible_players_at_frame, world_to_radar, viewer_state
@@ -18,8 +20,24 @@ def test_background_swap_does_not_mutate_replay_state(tmp_path):
  first=render_viewer(store.manifest_path,tmp_path/'one.html',radar_path=one); second=render_viewer(store.manifest_path,tmp_path/'two.html',radar_path=two)
  assert viewer_state(store,context)==before
  assert '"background_kind":"local_override"' in first.read_text() and '"background_kind":"local_override"' in second.read_text()
+ assert re.search(r'"state":(\{.*?\}),"transform"',first.read_text()).group(1)==re.search(r'"state":(\{.*?\}),"transform"',second.read_text()).group(1)
 
 def test_ancient_default_background_is_repository_safe(tmp_path):
  store=_store(tmp_path); store.manifest['source']['map_id']='de_ancient'; store.manifest_path.write_text(json.dumps(store.manifest))
  result=render_viewer(store.manifest_path,tmp_path/'viewer.html')
  assert 'improve_generated' in result.read_text() and 'data:image/svg+xml;base64' in result.read_text()
+
+def test_canvas_yaw_and_missing_background_are_honest(tmp_path):
+ store=_store(tmp_path); store.manifest['source']['map_id']='de_ancient'; store.manifest_path.write_text(json.dumps(store.manifest))
+ result=render_viewer(store.manifest_path,tmp_path/'viewer.html'); text=result.read_text()
+ assert 'M.canvas' in text and "className='dir'" in text
+ assert '10.24' not in (Path(__file__).parents[1]/'src/improve_yourself/viewer.py').read_text()
+ missing=Path(__file__).parents[1]/'resources/generated_overviews/de_ancient/overview.svg'; moved=missing.with_suffix('.svg.test'); missing.rename(moved)
+ try: assert '"background_available":false' in render_viewer(store.manifest_path,tmp_path/'missing.html').read_text()
+ finally: moved.rename(missing)
+
+def test_wrong_schema_and_script_escape(tmp_path):
+ bad=tmp_path/'bad.json'; bad.write_text('{"schema":"bad"}')
+ with pytest.raises(ValueError): render_viewer(bad,tmp_path/'out.html')
+ legacy=tmp_path/'legacy.json'; legacy.write_text(json.dumps({'schema':'iy.replay/v1','map_name':'de_x','coordinate_space':'cs2_world','scenes':[{'round_number':1,'frames':[{'tick':1,'players':[]}]}]}))
+ assert '\\u003c' not in render_viewer(legacy,tmp_path/'legacy.html').read_text()

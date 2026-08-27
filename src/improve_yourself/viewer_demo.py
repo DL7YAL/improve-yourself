@@ -8,7 +8,7 @@ from pathlib import Path
 from .replay_contract import PlayerState, ReplayFrame, replay_frame_from_dict
 from .replay_controller import ReplayContext, ReplayController
 from .replay_store import ReplayStore
-from .viewer import render_viewer
+from .viewer import render_viewer_state
 
 
 @dataclass(frozen=True)
@@ -44,17 +44,9 @@ def select_viewer_demo_state(
 
 
 def write_selected_2d_viewer(
-    replay_path: Path, output_path: Path, selection: ViewerDemoSelection
+    store: ReplayStore, output_path: Path, selection: ViewerDemoSelection
 ) -> Path:
     """Use the existing 2D viewer with a one-frame canonical scene selection."""
-    return render_viewer(
-        replay_path,
-        output_path,
-        scenes=[{
-            "scene_id": "viewer-demo-reference",
-            "round_number": selection.context.current_round,
-            "review_tick": selection.context.resolved_tick,
-            "end_tick": selection.context.resolved_tick,
-            "focus_player_id": selection.player.player_id,
-        }],
-    )
+    # The caller already owns the one canonical store/controller/context.
+    # Re-opening the manifest here would create a second presentation path.
+    return render_viewer_state(store, selection.context, output_path)

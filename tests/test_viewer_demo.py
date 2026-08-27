@@ -45,11 +45,18 @@ def test_2d_output_remains_usable_when_the_3d_asset_gate_is_missing(tmp_path) ->
     selection = select_viewer_demo_state(
         store, controller, round_number=1, tick=12, player_id="steam:7",
     )
-    output = write_selected_2d_viewer(store.manifest_path, tmp_path / "viewer.html", selection)
+    output = write_selected_2d_viewer(store, tmp_path / "viewer.html", selection)
 
     assert output.is_file()
     html = output.read_text(encoding="utf-8")
     assert '"tick":12' in html
     assert '"player_id":"steam:7"' in html
+
+def test_demo_export_does_not_construct_second_store(monkeypatch, tmp_path) -> None:
+    store = _store(tmp_path); controller = ReplayController(store)
+    chunk=store.load_round(1); chunk['frames'][1]['players']=[{'player_id':'steam:7','active':True,'alive':True,'team':'CT','position':{'x':1,'y':2,'z':3},'view_yaw_deg':0,'view_pitch_deg':0}]
+    selection=select_viewer_demo_state(store,controller,round_number=1,tick=12,player_id='steam:7')
+    monkeypatch.setattr('improve_yourself.viewer_demo.ReplayStore', lambda *_: (_ for _ in ()).throw(AssertionError('second store')))
+    assert write_selected_2d_viewer(store,tmp_path/'viewer.html',selection).is_file()
     unavailable = assess_map_asset(Path("missing-manifest.json"), "de_anubis")
     assert unavailable.availability == "missing"
