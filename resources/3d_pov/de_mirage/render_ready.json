@@ -1,0 +1,23 @@
+{
+  "schema": "iy.3d_pov_render_ready/v1",
+  "map_id": "de_mirage",
+  "purpose": "renderer_preparation_only",
+  "canonical_runtime": {"replay_schema": "iy.replay/v2", "store": "ReplayStore", "playback_authority": "ReplayController", "data_hub": "AnalyzerDataHub", "renderer_interface": "ReplayRenderer", "owns_tick": false, "parses_demo": false, "embeds_replay_frames": false},
+  "map_geometry": {"runtime_contract": "iy.map_asset/v1", "required_status": "available", "distribution": "local_only_or_approved_derivative", "bundled": false, "fallback": "explicit_3d_unavailable"},
+  "assets": [
+    {"asset_id": "iy.player_proxy.abstract_v1", "kind": "player_proxy", "path": "../original_assets/player_proxy.obj", "git_blob_sha1": "e05231854db21741620fb11aee82f3085d7fce73", "license": "CC0-1.0", "classification": "FALLBACK"},
+    {"asset_id": "iy.weapon_proxy.generic_v1", "kind": "weapon_proxy", "path": "../original_assets/weapon_proxy.obj", "git_blob_sha1": "19571b33ce5decf853c450c410cee8169ec111a3", "license": "CC0-1.0", "classification": "FALLBACK"},
+    {"asset_id": "iy.materials.neutral_v1", "kind": "materials", "path": "../original_assets/materials.mtl", "git_blob_sha1": "d83d84b507ead86e87acc818357a603876854c48", "license": "CC0-1.0", "classification": "FALLBACK"},
+    {"asset_id": "iy.texture.neutral_grid_v1", "kind": "texture", "path": "../original_assets/neutral_grid.ppm", "git_blob_sha1": "c2eb324d3abc5d343cc7986be6e3f153dfa00e67", "license": "CC0-1.0", "classification": "FALLBACK"}
+  ],
+  "semantic_mapping": "../de_anubis/semantic_assets.json",
+  "camera_policy": "../de_anubis/render_profile.json",
+  "environment": "../de_anubis/render_profile.json#environment",
+  "collision_visibility": {"source": "validated local iy.map_asset/v1 visibility_mesh", "classification": "VERIFIED_WHEN_ASSET_GATE_PASSES", "missing_policy": "UNKNOWN; never infer clear line of sight"},
+  "dynamic_objects": "../de_anubis/render_profile.json#dynamic_objects",
+  "floor_policy": "../de_anubis/render_profile.json#floors",
+  "fallbacks": ["Shared CC0 player/weapon/material assets are renderer fallbacks, not replay truth.", "FOV, eye height, clipping planes and lighting remain renderer fallbacks.", "Missing or non-available map geometry produces explicit 3D unavailable.", "Unknown weapon IDs retain text semantic and use generic proxy.", "No floor name is inferred from world Z."],
+  "reference_scene": "../de_anubis/reference_scene.json",
+  "licensing": {"original_assets": "CC0-1.0", "valve_assets_bundled": false, "valve_geometry_required_for_redistributable_package": false, "local_geometry_policy": "Existing iy.map_asset/v1 gate only"},
+  "verification": {"status": "PREP_READY_PENDING_LOCAL_EXECUTION", "prepared": ["canonical runtime boundary", "shared semantic asset mapping", "shared camera/environment fallback policy", "shared player and weapon proxies", "licensing boundary", "fail-closed map asset gate"], "pending": ["local Mirage VPK/resource verification", "local derivative build", "map asset assessment", "canonical Mirage replay-v2 recovery", "renderer import and visual smoke"]}
+}

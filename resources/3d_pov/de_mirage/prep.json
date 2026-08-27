@@ -1,0 +1,95 @@
+{
+  "schema": "iy.3d_pov_prep/v1",
+  "map_id": "de_mirage",
+  "purpose": "data_research_evidence_only",
+  "canonical_runtime": {
+    "replay_schema": "iy.replay/v2",
+    "store": "ReplayStore",
+    "playback_authority": "ReplayController",
+    "data_hub": "AnalyzerDataHub",
+    "owns_tick": false,
+    "parses_demo": false,
+    "embeds_replay_frames": false
+  },
+  "geometry_inventory": {
+    "runtime_asset_contract": "iy.map_asset/v1",
+    "bundled_files": [],
+    "candidates": [
+      {
+        "id": "installed_cs2_mirage_local_derivative",
+        "status": "EXPECTED_FROM_SOURCE2_CONVENTION",
+        "source_kind": "local_cs2_extraction",
+        "source_vpk": {
+          "name": "de_mirage.vpk",
+          "expected_local_path": "game/csgo/maps/de_mirage.vpk",
+          "sha256": "UNKNOWN",
+          "repository_path": null,
+          "bundled": false
+        },
+        "required_resource_manifest": {
+          "path": "maps/de_mirage/world_physics.vrman_c",
+          "classification": "EXPECTED_FROM_SOURCE2_CONVENTION"
+        },
+        "required_physics_model": {
+          "path": "maps/de_mirage/world_physics.vmdl_c",
+          "classification": "EXPECTED_FROM_SOURCE2_CONVENTION"
+        },
+        "alternative_vphys_c": {
+          "path": null,
+          "classification": "UNKNOWN",
+          "rule": "Do not substitute or extract a vphys_c unless the installed VPK listing proves its exact path and the vmdl_c route fails."
+        },
+        "render_mesh": {"format": "glTF_2_binary", "sha256": "UNKNOWN", "repository_path": null, "bundled": false},
+        "visibility_mesh": {"format": "little_endian_float32_triangle_soup", "sha256": "UNKNOWN", "triangles": "UNKNOWN", "repository_path": null, "bundled": false},
+        "distribution": "local_only",
+        "availability_rule": "Exact installed build ID, VPK hash, extracted physics GLB, derivative hashes, measured bounds/triangles, local manifest and available iy.map_asset/v1 assessment are required."
+      }
+    ],
+    "capabilities": {
+      "collision_geometry": "PENDING_LOCAL_EXTRACTION",
+      "visibility_geometry": "PENDING_LOCAL_EXTRACTION",
+      "neutral_visual_mesh": "PENDING_LOCAL_EXTRACTION",
+      "navigation_geometry": "UNRESOLVED",
+      "materials": "UNAVAILABLE",
+      "textures": "UNAVAILABLE",
+      "dynamic_geometry": "UNSUPPORTED",
+      "semantic_surfaces": "UNAVAILABLE"
+    }
+  },
+  "coordinate_contract": {
+    "coordinate_space": "cs2_world",
+    "units": "source_unit",
+    "physical_unit_conversion": "UNRESOLVED",
+    "handedness": "UNRESOLVED",
+    "axes": {"x": "engine_horizontal_x", "y": "engine_horizontal_y", "z": "up"},
+    "transform_to_replay": {"status": "EXPECTED_IDENTITY_PENDING_LOCAL_VALIDATION", "scale": 1.0, "rotation_deg": [0.0, 0.0, 0.0], "translation": [0.0, 0.0, 0.0], "axis_swap": "none", "axis_inversion": "none"},
+    "geometry_bounds": {"status": "UNKNOWN", "min": null, "max": null},
+    "observed_replay_bounds": {"status": "UNKNOWN", "positions_checked": 0, "min": null, "max": null},
+    "floor_model": {"status": "UNRESOLVED", "selection_axis": "UNRESOLVED", "ranges": [], "reason": "No extracted local mesh or replay-to-geometry validation exists."},
+    "overview_2d_reference": {"schema": "iy.map_overview_metadata/v1", "map_id": "de_mirage", "repository_path": "resources/map_overviews/maps/de_mirage.json", "authority": "REFERENCE_ONLY_NOT_3D_TRANSFORM"}
+  },
+  "camera_input_contract": {
+    "current_tick_source": "ReplayController.committed_snapshot.resolved_tick",
+    "frame_source": "ReplayStore via ReplayController committed canonical ReplayFrame",
+    "selected_player_source": "ReplayController.selected_player_id",
+    "required_first_person_fields": ["PlayerState.active", "PlayerState.position", "PlayerState.view_yaw_deg", "PlayerState.view_pitch_deg"],
+    "optional_fields": ["PlayerState.alive", "PlayerState.velocity", "PlayerState.health", "PlayerState.armor", "PlayerState.weapon"],
+    "eye_height": {"status": "UNRESOLVED_FROM_CANONICAL_DATA", "world_units": null, "reason": "Renderer calibration/configuration only; not map or replay truth."},
+    "fov": {"status": "UNAVAILABLE", "degrees": null, "reason": "No canonical per-player FOV evidence is established."},
+    "orientation": {"yaw_zero_axis": "positive_x", "positive_yaw_turns_toward": "positive_y", "positive_pitch": "look_down", "world_up": "positive_z", "roll_without_evidence": 0.0}
+  },
+  "reference_anchors": [],
+  "provenance": {
+    "repository_evidence": ["resources/map_overviews/maps/de_mirage.json", "docs/DEMO_ANALYZER_E2E_V1.md", "docs/3D_POV_V1_SLICE_C_ASSET_GATE.md", "tools/dev/Build-LocalAnubisAsset.py", "tools/dev/Run-ReplayV2Regression.ps1"],
+    "external_sources": [
+      {"name": "ValveResourceFormat", "use": "VPK browsing/extraction and vmdl_c GLB export; exact installed-tool version must be recorded locally."},
+      {"name": "Source 2 convention / VRF test corpus", "use": "world_physics.vrman_c resource-manifest and world_physics.vmdl_c physics-model naming convention; not proof of this installed Mirage VPK."}
+    ]
+  },
+  "redistribution": {"bundled_proprietary_assets": false, "policy": "REFERENCE_METADATA_ONLY", "notes": "No Valve VPK, extracted physics resource, GLB, TRI, demo, screenshot, or local manifest is committed."},
+  "verification": {
+    "status": "PREP_READY_PENDING_LOCAL_VERIFICATION",
+    "verified": ["canonical ReplayStore/ReplayController/ReplayRendererSession boundary", "Mirage 2D overview metadata", "historical Mirage demo hash/provenance", "shared original fallback asset contract and fail-closed map gate"],
+    "unresolved": ["installed CS2 build ID", "VPK path existence", "VPK SHA-256", "actual VPK resource list", "world_physics.vrman_c exact presence", "world_physics.vmdl_c exact presence", "any vphys_c alternative", "extracted GLB path/hash", "render/visibility hashes", "triangle count", "bounds", "world-to-scene transform", "iy.map_asset/v1 assessment", "current replay-v2 regression artifact", "active player/tick visual-smoke reference"]
+  }
+}
