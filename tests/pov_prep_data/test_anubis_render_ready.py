@@ -4,14 +4,16 @@ from copy import deepcopy
 import json
 import math
 from pathlib import Path
+import shutil
 
 import pytest
 
 from tools.pov_prep_data.validate_render_ready import RenderReadyValidationError, load_and_validate, validate_document
 
 ROOT = Path(__file__).resolve().parents[2]
-PACKAGE = ROOT / "resources" / "3d_pov" / "de_anubis" / "render_ready.json"
-SCENE = ROOT / "resources" / "3d_pov" / "de_anubis" / "reference_scene.json"
+RESOURCE_ROOT = ROOT / "resources" / "3d_pov"
+PACKAGE = RESOURCE_ROOT / "de_anubis" / "render_ready.json"
+SCENE = RESOURCE_ROOT / "de_anubis" / "reference_scene.json"
 
 
 def package() -> dict:
@@ -27,20 +29,42 @@ def test_render_ready_package_validates_and_owns_no_runtime_state() -> None:
     assert document["map_geometry"]["bundled"] is False
 
 
-def test_original_assets_are_present_and_cc0() -> None:
+def test_original_assets_are_present_cc0_and_integrity_bound() -> None:
     document = package()
     for asset in document["assets"]:
         assert asset["license"] == "CC0-1.0"
         assert asset["classification"].startswith("FALLBACK")
+        assert len(asset["git_blob_sha1"]) == 40
         path = (PACKAGE.parent / asset["path"]).resolve()
         assert path.is_file()
-        assert ROOT / "resources" / "3d_pov" in path.parents
+        assert RESOURCE_ROOT in path.parents
+
+
+def test_original_obj_and_texture_assets_are_structurally_loadable() -> None:
+    assets = RESOURCE_ROOT / "original_assets"
+    for name in ("player_proxy.obj", "weapon_proxy.obj", "reference_bounds.obj"):
+        lines = (assets / name).read_text(encoding="utf-8").splitlines()
+        assert len([line for line in lines if line.startswith("v ")]) >= 8
+        assert any(line.startswith(("f ", "l ")) for line in lines)
+    materials = (assets / "materials.mtl").read_text(encoding="utf-8")
+    assert all(name in materials for name in ("newmtl player_ct", "newmtl player_t", "newmtl weapon_neutral"))
+    texture = (assets / "neutral_grid.ppm").read_text(encoding="utf-8")
+    assert texture.startswith("P3\n") and "4 4\n255\n" in texture
+
+
+def test_asset_tampering_fails_integrity_without_touching_repository(tmp_path: Path) -> None:
+    copied = tmp_path / "3d_pov"
+    shutil.copytree(RESOURCE_ROOT, copied)
+    copied_package = copied / "de_anubis" / "render_ready.json"
+    player = copied / "original_assets" / "player_proxy.obj"
+    player.write_text(player.read_text(encoding="utf-8") + "\n# tampered\n", encoding="utf-8")
+    with pytest.raises(RenderReadyValidationError, match="asset integrity differs"):
+        load_and_validate(copied_package)
 
 
 def test_no_proprietary_or_executable_assets_are_bundled() -> None:
     forbidden = {".vpk", ".vmdl", ".vmdl_c", ".vphys", ".vphys_c", ".tri", ".glb", ".dll", ".exe", ".wav", ".mp3", ".ogg"}
-    root = ROOT / "resources" / "3d_pov"
-    assert not any(path.suffix.lower() in forbidden for path in root.rglob("*"))
+    assert not any(path.suffix.lower() in forbidden for path in RESOURCE_ROOT.rglob("*"))
     assert package()["licensing"]["valve_assets_bundled"] is False
 
 
@@ -78,22 +102,21 @@ def test_environment_camera_sound_and_floor_values_are_explicitly_classified() -
     assert semantic["sound_mapping"]["asset_files"] == []
 
 
-def test_invalid_runtime_or_fallback_claims_fail_closed() -> None:
+def test_invalid_runtime_or_fallback_claims_fail_closed(tmp_path: Path) -> None:
     runtime = package(); runtime["canonical_runtime"]["owns_tick"] = True
     with pytest.raises(RenderReadyValidationError, match="runtime boundary"):
         validate_document(runtime, PACKAGE)
     licensing = package(); licensing["licensing"]["valve_assets_bundled"] = True
     with pytest.raises(RenderReadyValidationError, match="licensing boundary"):
         validate_document(licensing, PACKAGE)
-    floors = package()
-    profile_path = PACKAGE.parent / floors["camera_policy"]
-    original = json.loads(profile_path.read_text(encoding="utf-8"))
-    modified = deepcopy(original); modified["floors"]["classification"] = "VERIFIED"
-    temporary = PACKAGE.parent / "invalid-render-profile.json"
-    temporary.write_text(json.dumps(modified), encoding="utf-8")
-    try:
-        floors["camera_policy"] = temporary.name
-        with pytest.raises(RenderReadyValidationError, match="floor policy"):
-            validate_document(floors, PACKAGE)
-    finally:
-        temporary.unlink()
+
+    copied = tmp_path / "3d_pov"
+    shutil.copytree(RESOURCE_ROOT, copied)
+    copied_package = copied / "de_anubis" / "render_ready.json"
+    copied_document = json.loads(copied_package.read_text(encoding="utf-8"))
+    profile_path = copied / "de_anubis" / "render_profile.json"
+    profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    profile["floors"]["classification"] = "VERIFIED"
+    profile_path.write_text(json.dumps(profile), encoding="utf-8")
+    with pytest.raises(RenderReadyValidationError, match="floor policy"):
+        validate_document(copied_document, copied_package)
