@@ -34,7 +34,7 @@
     {"system_id":"cmp-e11","vendor":"NVIDIA","observation_states":{"network.rss":"UNKNOWN"}},
     {"system_id":"cmp-e12","vendor":"NVIDIA","observation_states":{"game.display":"UNKNOWN"}},
     {"system_id":"cmp-e13","vendor":"AMD","capability_states":{"bios.pbo":"NOT_AVAILABLE"}},
-    {"system_id":"cmp-e14","vendor":"NVIDIA","goal":"QUALITY","observation_states":{"network.mtu":"UNKNOWN"}},
+    {"system_id":"cmp-e14","vendor":"NVIDIA","observation_states":{"network.mtu":"UNKNOWN"}},
     {"system_id":"cmp-e15","vendor":"NVIDIA","observation_states":{"intent":"UNKNOWN"}},
     {"system_id":"cmp-e16","vendor":"AMD","observation_states":{"feature":"UNKNOWN"}},
     {"system_id":"cmp-e17","vendor":"INTEL","capability_states":{"amd_control":"UNSUPPORTED","nvidia_control":"UNSUPPORTED","vendor_inventory":"NOT_AVAILABLE"}},
