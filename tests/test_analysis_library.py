@@ -56,7 +56,7 @@ def test_tampered_missing_source_and_legacy_v1_are_disabled(tmp_path: Path) -> N
         entries.append(entry)
     index.write_text(json.dumps({"schema": "iy.local_analysis_library/v1", "entries": entries}), encoding="utf-8")
     states = [item["state"] for item in library.entries()]
-    assert states == ["TAMPERED", "MISSING SOURCE", "LEGACY V1"]
+    assert states == ["TAMPERED", "MISSING SOURCE LINK", "LEGACY V1"]
 
 
 def test_bad_index_recovers_and_registration_never_selects_latest(tmp_path: Path) -> None:
@@ -94,7 +94,7 @@ def test_shell_library_ui_routes_only_through_existing_controller_boundaries() -
     remove = inspect.getsource(AnalyzerShellApp._remove_library_workflow)
     assert "demo_basename" in render and "source_hash_prefix" in render
     assert 'text=detail' in render and 'text=reference' not in render
-    assert 'state == "READY"' in render and 'state == "MISSING SOURCE"' in render
+    assert 'state == "READY"' in render and 'state == "MISSING SOURCE LINK"' in render
     assert "open_existing_workflow" in open_entry
     assert "link_source_demo" in inspect.getsource(AnalyzerShellApp._link_source)
     assert "remove_from_library" in remove

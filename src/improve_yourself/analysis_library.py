@@ -84,7 +84,7 @@ class LocalAnalysisLibrary:
             return dict(view, state="TAMPERED", reason="Canonical workflow validation failed")
         source_name = manifest.get("source_demo_name")
         if not isinstance(source_name, str) or not source_name:
-            return dict(view, state="MISSING SOURCE", reason="Source-link metadata requires safe relink")
+            return dict(view, state="MISSING SOURCE LINK", reason="Source-link metadata requires safe relink")
         return dict(view, state="READY", reason="Validated local workflow")
 
     def _load_document(self) -> dict[str, object]:

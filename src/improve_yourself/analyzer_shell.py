@@ -2495,7 +2495,7 @@ class AnalyzerShellApp:
             ready = state == "READY" and path is not None
             self.ttk.Button(row, text="Review öffnen", command=lambda value=path: self._open_library_workflow(value, tactical=False), state="normal" if ready else "disabled").pack(side="right", padx=3)
             self.ttk.Button(row, text="Tactical Replay", command=lambda value=path: self._open_library_workflow(value, tactical=True), state="normal" if ready else "disabled").pack(side="right", padx=3)
-            if state == "MISSING SOURCE":
+            if state == "MISSING SOURCE LINK":
                 self.ttk.Button(row, text="Quelle zuordnen", command=lambda value=path: self._relink_library_workflow(value)).pack(side="right", padx=3)
             self.ttk.Button(row, text="Entfernen", command=lambda value=path: self._remove_library_workflow(value)).pack(side="right", padx=3)
 
