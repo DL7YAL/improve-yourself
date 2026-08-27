@@ -154,13 +154,24 @@ def transform_world(document: dict[str, Any], world_x: Any, world_y: Any) -> dic
     origin_x = _finite_number(origin.get("x"), "transform.origin_world.x")
     origin_y = _finite_number(origin.get("y"), "transform.origin_world.y")
     scale = _finite_number(transform.get("world_units_per_pixel"), "transform.world_units_per_pixel")
+    # This is intrinsic coordinate rotation only.  A Source overview's
+    # presentation-orientation flag is provenance metadata and never changes
+    # the canonical world-to-canvas projection.
     if scale <= 0 or transform.get("world_x_to_canvas") != "positive_x" or transform.get("world_y_to_canvas") != "negative_y" or transform.get("rotation_deg_clockwise") != 0:
         raise OverviewValidationError("transform is not a supported verified V1 transform")
     x = (_finite_number(world_x, "world_x") - origin_x) / scale
     y = (origin_y - _finite_number(world_y, "world_y")) / scale
     width = _positive_dimension(canvas.get("width"), "canvas.width")
     height = _positive_dimension(canvas.get("height"), "canvas.height")
-    return {"x": x, "y": y, "in_bounds": 0 <= x <= width and 0 <= y <= height}
+    # The contract is inclusive in mathematical coordinates. Keep the raw float
+    # (no rounding), but do not classify a reference-edge value outside solely
+    # because decimal source scales cannot be represented exactly in binary.
+    tolerance = 1e-9
+    return {
+        "x": x,
+        "y": y,
+        "in_bounds": -tolerance <= x <= width + tolerance and -tolerance <= y <= height + tolerance,
+    }
 
 
 def load_and_validate(path: Path) -> dict[str, Any]:

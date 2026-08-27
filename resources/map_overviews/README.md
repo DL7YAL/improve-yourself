@@ -17,8 +17,8 @@ hub, or source of gameplay truth.
 
 ## Supported map set
 
-The current repository provides concrete product/runtime evidence for exactly
-three CS2 maps relevant to this static dataset:
+The current repository provides concrete product/runtime or verified overview
+descriptor evidence for exactly four CS2 maps relevant to this static dataset:
 
 - `de_ancient`: current Tactical MapRegistry proof and real Analyzer/Replay V2
   evidence.
@@ -26,6 +26,8 @@ three CS2 maps relevant to this static dataset:
   Awpy overview transform. Inclusion here is static metadata only and does not
   add a V1 runtime fallback.
 - `de_anubis`: real Replay V2 and 3D/POV evidence plus a local map-asset gate.
+- `de_dust2`: tracked CS2 overview descriptor evidence for the intrinsic X/Y
+  projection; this is static metadata only.
 
 Benchmark-only Nuke/Inferno references and maps that appear only as generic or
 synthetic test strings are not silently declared supported Tactical maps.
@@ -39,8 +41,10 @@ That state is intentionally non-transformable.
 - `schema/iy.map_overview_metadata.v1.schema.json` — versioned JSON contract.
 - `maps/de_ancient.json` — verified zero-rotation transform.
 - `maps/de_mirage.json` — verified zero-rotation transform.
-- `maps/de_anubis.json` — valid package with unresolved transform because its
-  tracked descriptor omits an explicit rotation value.
+- `maps/de_anubis.json` — verified intrinsic X/Y transform with unresolved
+  floor/layer metadata.
+- `maps/de_dust2.json` — verified intrinsic X/Y transform; its Source
+  presentation-orientation flag is preserved only in provenance.
 - `../../tools/map_overview_data/validate.py` — deterministic, standard-library
   validator and transform reference implementation.
 - `../../tests/map_overview_data/test_map_overview_data.py` — contract and
@@ -85,9 +89,17 @@ The logical canvas origin is the upper-left corner. Canvas X increases right;
 canvas Y increases down. CS2 world X maps to positive canvas X. CS2 world Y is
 inverted and maps to negative canvas Y before the subtraction above.
 
-`rotation_deg_clockwise` is defined as clockwise screen-space rotation after
-axis conversion and before clipping. This V1 contract accepts only verified
-zero rotation. Non-zero or missing rotation is not guessed.
+`rotation_deg_clockwise` is intrinsic world-to-canvas coordinate rotation only.
+This V1 contract accepts only verified zero intrinsic rotation. A Source/CS2
+overview `rotate` flag is a separate presentation-orientation flag and MUST NOT
+be converted into this intrinsic field.
+
+For an upstream Source/CS2 `rotate=1` flag, the separately verified
+presentation contract is a 90-degree clockwise rotation around the canvas/view
+center, after intrinsic projection. The visual overview asset and the already
+projected entity coordinates rotate together. This is visual presentation only:
+it does not enter Replay, Analyzer, tick, entity, or map-metadata intrinsic
+coordinate state.
 
 The transform returns floating-point coordinates without rounding. Bounds are
 inclusive: `0 <= x <= width` and `0 <= y <= height`. Out-of-bounds values are
@@ -122,15 +134,24 @@ Z thresholds, so layer selection remains unresolved.
   - `(-670, -847) -> (512, 512)`
   - `(1890, -3407) -> (1024, 1024)`
 
-### de_anubis — UNVERIFIED TRANSFORM
+### de_anubis — VERIFIED INTRINSIC X/Y / UNRESOLVED LAYERS
 
-The tracked descriptor verifies `pos_x=-2796`, `pos_y=3328`, and `scale=5.22`,
-but contains no explicit `rotate` field. The existing V1 contract requires an
-explicitly verified zero rotation before numeric transform values become
-trusted. Therefore the package keeps all active transform numbers `null`, uses
-`UNRESOLVED` orientation, contains no transform reference points, and records
-the observed source values only in provenance. A future task may activate them
-only after rotation/orientation is independently verified.
+The verified intrinsic projection uses `pos_x=-2796`, `pos_y=3328`, and
+`scale=5.22`, with intrinsic rotation `0`. The descriptor has no Source
+presentation rotate flag; that absence does not alter the intrinsic formula.
+No floor/Z layer rule is inferred.
+
+### de_dust2 — VERIFIED INTRINSIC X/Y / PRESENTATION FLAG RECORDED
+
+- origin: `(-2476, 3239)`
+- scale: `4.4`
+- intrinsic rotation: `0`
+- Source presentation rotate flag: `1` (recorded in provenance, not converted
+  into intrinsic coordinate rotation)
+- anchors:
+  - `(-2476, 3239) -> (0, 0)`
+  - `(-223.2, 986.2) -> (512, 512)`
+  - `(2029.6, -1266.6) -> (1024, 1024)`
 
 Transform anchors validate projection bases only. They are not claims about a
 player, bombsite, spawn, tick, event, or navigable geometry.
@@ -152,7 +173,8 @@ Only the small numeric metadata required for projection is committed.
 ## Beast/Codex integration handoff
 
 1. Data lives under `resources/map_overviews/`.
-2. The supported dataset is exactly `de_ancient`, `de_mirage`, and `de_anubis`
+2. The supported dataset is exactly `de_ancient`, `de_mirage`, `de_anubis`,
+   and `de_dust2`
    until a separate product-scope decision adds another map.
 3. Validate `iy.map_overview_metadata/v1` before consuming a package.
 4. Use only packages whose transform status is exactly `VERIFIED`.
@@ -172,7 +194,7 @@ Only the small numeric metadata required for projection is committed.
 - No distributable overview images are included.
 - No Z thresholds or multi-level selection rules are verified.
 - No named landmark has a verified world-coordinate pair in this dataset.
-- `de_anubis` rotation/orientation remains unresolved.
-- Non-zero overview rotation is not implemented or asserted.
+- No overview texture is included, so presentation rotation has no renderer
+  acceptance evidence in this repository.
 - Visual alignment against legally supplied runtime assets remains a future
   Beast/Codex acceptance step.

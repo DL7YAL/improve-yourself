@@ -5,7 +5,7 @@
     "status": "NOT_INCLUDED",
     "reference": null,
     "upstream_material_identifier": "overviews/de_anubis",
-    "reason": "No Valve overview image is redistributed by this repository; only source observations and unresolved projection metadata are included."
+    "reason": "No Valve overview image is redistributed by this repository; only derived numeric projection metadata is included."
   },
   "canvas": {
     "width": 1024,
@@ -16,17 +16,17 @@
     "y_direction": "down"
   },
   "transform": {
-    "verification_status": "UNVERIFIED",
+    "verification_status": "VERIFIED",
     "input_coordinate_space": "cs2_world_xy",
     "origin_world": {
-      "x": null,
-      "y": null,
+      "x": -2796,
+      "y": 3328,
       "convention": "upper_left_world_coordinate"
     },
-    "world_units_per_pixel": null,
-    "world_x_to_canvas": "UNRESOLVED",
-    "world_y_to_canvas": "UNRESOLVED",
-    "rotation_deg_clockwise": null,
+    "world_units_per_pixel": 5.22,
+    "world_x_to_canvas": "positive_x",
+    "world_y_to_canvas": "negative_y",
+    "rotation_deg_clockwise": 0,
     "rounding": "none_float",
     "clipping": "classify_only_no_clamp",
     "bounds_inclusive": true
@@ -37,24 +37,46 @@
     "items": [],
     "reason": "No verified vertical-section thresholds are included; no world-Z layer rule is inferred."
   },
-  "reference_points": [],
+  "reference_points": [
+    {
+      "id": "transform_top_left",
+      "world": {"x": -2796, "y": 3328},
+      "expected_overview": {"x": 0, "y": 0},
+      "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM",
+      "meaning": "projection_basis_only"
+    },
+    {
+      "id": "transform_center",
+      "world": {"x": -123.36, "y": 655.36},
+      "expected_overview": {"x": 512, "y": 512},
+      "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM",
+      "meaning": "projection_basis_only"
+    },
+    {
+      "id": "transform_bottom_right",
+      "world": {"x": 2549.28, "y": -2017.28},
+      "expected_overview": {"x": 1024, "y": 1024},
+      "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM",
+      "meaning": "projection_basis_only"
+    }
+  ],
   "provenance": {
     "retrieved_utc": "2026-08-27T00:00:00Z",
     "sources": [
       {
-        "role": "projection_values_observed_but_not_activated",
+        "role": "projection_values",
         "repository": "SteamDatabase/GameTracking-CS2",
         "commit": "8651ef311b783fee253fc15c30966e4a15a3cacb",
         "path": "game/csgo/pak01_dir/resource/overviews/de_anubis.txt",
-        "values_observed": {"pos_x": -2796, "pos_y": 3328, "scale": 5.22, "rotate": null},
-        "authority_note": "The tracked shipped descriptor omits an explicit rotate field, so the V1 transform remains unverified and inactive."
+        "values_used": {"pos_x": -2796, "pos_y": 3328, "scale": 5.22, "rotate": null, "intrinsic_rotation_deg_clockwise": 0},
+        "authority_note": "The tracked shipped descriptor omits a Source presentation rotate flag. That absence does not alter the verified intrinsic X/Y projection; presentation/layer behavior remains separate."
       },
       {
         "role": "formula_and_canvas_cross_check",
         "repository": "pnxenopoulos/awpy",
         "commit": "007b119a6a5b4b8ee7d3011d96ce00bed7323c12",
         "paths": ["awpy/plot/utils.py", "awpy/plot/plot.py"],
-        "authority_note": "Open-source Awpy plotting implementation cross-checks the general axis/scale convention but does not independently prove the missing map rotation value."
+        "authority_note": "Open-source Awpy plotting implementation cross-checks the intrinsic axis/scale convention; it does not make floor/layer claims."
       }
     ],
     "distribution_note": "No overview texture, executable content, demo content, or game asset is included."
@@ -65,15 +87,15 @@
       "canvas.width",
       "canvas.height",
       "asset.status",
-      "provenance.sources"
-    ],
-    "unresolved_fields": [
       "transform.origin_world",
       "transform.world_units_per_pixel",
       "transform.world_x_to_canvas",
       "transform.world_y_to_canvas",
       "transform.rotation_deg_clockwise",
       "reference_points",
+      "provenance.sources"
+    ],
+    "unresolved_fields": [
       "layers.selection_axis",
       "layers.items",
       "named_landmark_world_coordinates"
