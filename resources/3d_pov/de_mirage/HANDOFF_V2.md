@@ -143,7 +143,7 @@ The existing launcher is functionally map-generic and is the required path:
 ```powershell
 .\.venv\Scripts\python.exe .\tools\dev\Run-AnubisViewerDemo.py `
   '<LOCAL_ASSET_ROOT>\de_mirage\bundle\manifest.json' `
-  '<CANONICAL_িয_REPLAY_V2_MANIFEST>' `
+  '<CANONICAL_IY_REPLAY_V2_MANIFEST>' `
   --round-number <ROUND_NUMBER> `
   --tick <REQUESTED_TICK> `
   --player '<ACTIVE_PLAYER_ID>' `

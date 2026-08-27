@@ -22,22 +22,25 @@ Task: complete-2d-map-overview-dataset
 Branch: azure/2d-map-overview-data-prep
 Status: PASS / STALE — merged through PR #19; rotation clarification merged through PR #20
 
-## Azure — current task
-
 Task: 3d-pov-anubis-render-ready-prep
 Branch: azure/3d-pov-anubis-prep
-Base HEAD: b5835ac9c7b78f7a61b39e90569181cea90ee51b
+Status: PASS / STALE — merged through PR #21; shared original/permissive fallback assets and render-ready contracts remain reusable static preparation only.
+
+## Azure — current task
+
+Task: 3d-pov-mirage-prep-v2
+Branch: azure/3d-pov-mirage-prep-v2
+Base HEAD: ce743519d073a6f2cc09355f89da572753fdc0a4
 Owned files:
 - coordination/ACTIVE_WORK.md
-- resources/3d_pov/**
-- tools/pov_prep_data/**
-- tests/pov_prep_data/**
-Status: PASS
+- resources/3d_pov/de_mirage/**
+- tools/pov_prep_data/validate.py
+- tools/dev/Build-LocalAnubisAsset.py
+- tests/pov_prep_data/test_mirage_pov_prep.py
+Status: IN PROGRESS
 Depends on Codex: NO
-Handoff required: YES — Beast must consume only through existing ReplayRenderer/ReplayController and iy.map_asset/v1 boundaries
-Scope: Original/permissive renderer-facing sample assets, mappings, fallback policies and validation only. No product runtime, parser, Replay, Analyzer, controller, store, DataHub, final viewer, cloud, or Azure-resource changes.
-Prepared: CC0 player/weapon/bounds OBJ assets, neutral MTL/PPM, repository blob integrity, semantic weapon mapping, procedural sound mapping, camera/environment fallbacks, reference scene, licensing records, validator and deterministic tests.
-Validation: PASS — pytest tests/pov_prep_data tests/map_overview_data (59 passed), prep and render-ready validators, renderer import smoke, compileall, and git diff --check passed on 2026-08-27.
+Handoff required: YES — Beast must execute only through existing ReplayStore → ReplayController → ReplayRendererSession → PandaReplayRenderer and iy.map_asset/v1.
+Scope: Mirage static provenance/prep, generic local-asset-builder map ID support, targeted static validation, and local execution handoff. No protected replay/runtime/controller/renderer implementation, parser, DataHub, cloud, or Azure-resource changes.
 
 ## Rules
 
@@ -46,7 +49,7 @@ Validation: PASS — pytest tests/pov_prep_data tests/map_overview_data (59 pass
 - Do not modify files owned by another active agent.
 - Codex branches use `codex/<task-name>`.
 - Azure branches use `azure/<task-name>`.
-- If file ownership overlaps, STOP and coordinate before continuing.
+- If file ownership overlaps, STOP and coordinate.
 - Use status values: `READY`, `IN PROGRESS`, `BLOCKED`, `PASS`.
 - Keep entries short and current. This file tracks active work, not project history.
 - Preserve the canonical AnalyzerCore / AnalyzerDataHub / iy.replay/v2 / ReplayStore / ReplayController path. No second parser, store, controller, data hub, or V1 fallback may be introduced.
