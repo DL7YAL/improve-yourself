@@ -12,6 +12,10 @@ Task: v2-local-review-replacement
 Branch: codex/v2-local-review-replacement
 Status: PASS / STALE — completed and superseded by merged V2 review work
 
+Task: optimizer-golden-master-v2
+Branch: codex/optimizer-golden-master-v2
+Status: PASS — canonical V2 result contract, deterministic 150 base, and separate 60-case adapter validated locally.
+
 ### Azure
 
 Task: harden-iac-ci-phase2-validation
