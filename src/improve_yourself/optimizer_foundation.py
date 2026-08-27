@@ -172,16 +172,18 @@ def evaluate_recommendations(profile: dict[str, object], rules: Iterable[Optimiz
     accepted: set[str] = set()
     available_evidence = tuple(evidence_records)
     for rule in rules or fixture_rules():
-        missing: set[str] = set()
+        # Preserve canonical condition order.  A set here made the reported
+        # missing-path sequence dependent on hash iteration.
+        missing: list[str] = []
         unmet: list[str] = []
         excluded = False
         for condition in rule.compatibility.required:
             matched, absent = _matches(profile, condition)
-            if absent: missing.add(absent)
+            if absent and absent not in missing: missing.append(absent)
             elif not matched: unmet.append(condition[0])
         for condition in rule.compatibility.excluded:
             matched, absent = _matches(profile, condition)
-            if absent: missing.add(absent)
+            if absent and absent not in missing: missing.append(absent)
             if matched: excluded = True
         evidence_for_rule = [record for record in (*rule.evidence, *available_evidence) if record.rule_id in {rule.rule_id, "network-quality-observation"}]
         trace = {"required": [], "exclusions": [], "conflicts": list(rule.compatibility.conflicts_with)}
