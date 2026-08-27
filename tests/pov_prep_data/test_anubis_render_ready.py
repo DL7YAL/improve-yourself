@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 RESOURCE_ROOT = ROOT / "resources" / "3d_pov"
 PACKAGE = RESOURCE_ROOT / "de_anubis" / "render_ready.json"
 SCENE = RESOURCE_ROOT / "de_anubis" / "reference_scene.json"
+SCHEMA = RESOURCE_ROOT / "schema" / "iy.3d_pov_render_ready.v1.schema.json"
 
 
 def package() -> dict:
@@ -27,6 +28,26 @@ def test_render_ready_package_validates_and_owns_no_runtime_state() -> None:
     assert document["canonical_runtime"]["embeds_replay_frames"] is False
     assert document["map_geometry"]["runtime_contract"] == "iy.map_asset/v1"
     assert document["map_geometry"]["bundled"] is False
+
+
+def test_committed_render_ready_document_matches_json_schema_top_level_contract() -> None:
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    document = json.loads(PACKAGE.read_text(encoding="utf-8"))
+    expected_types = {
+        "canonical_runtime": "object", "map_geometry": "object", "assets": "array",
+        "semantic_mapping": "string", "camera_policy": "string", "environment": "string",
+        "collision_visibility": "object", "dynamic_objects": "string", "floor_policy": "string",
+        "fallbacks": "array", "reference_scene": "string", "licensing": "object", "verification": "object",
+    }
+    assert schema["additionalProperties"] is False
+    assert set(schema["required"]) == set(document)
+    json_type_to_python_type = {"object": dict, "array": list, "string": str}
+    for field, expected_type in expected_types.items():
+        assert schema["properties"][field]["type"] == expected_type
+        assert isinstance(document[field], json_type_to_python_type[expected_type])
+    assert schema["properties"]["schema"]["const"] == document["schema"]
+    assert schema["properties"]["map_id"]["const"] == document["map_id"]
+    assert schema["properties"]["purpose"]["const"] == document["purpose"]
 
 
 def test_original_assets_are_present_cc0_and_integrity_bound() -> None:
