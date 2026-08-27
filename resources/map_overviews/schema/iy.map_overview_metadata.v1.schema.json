@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "iy.map_overview_metadata/v1",
+  "title": "Improve Yourself 2D Map Overview Metadata V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "map_id",
+    "asset",
+    "canvas",
+    "transform",
+    "layers",
+    "reference_points",
+    "provenance",
+    "verification"
+  ],
+  "properties": {
+    "schema": {"const": "iy.map_overview_metadata/v1"},
+    "map_id": {"type": "string", "pattern": "^de_[a-z0-9_]+$"},
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reference", "upstream_material_identifier", "reason"],
+      "properties": {
+        "status": {"enum": ["INCLUDED", "NOT_INCLUDED", "UNRESOLVED"]},
+        "reference": {"type": ["string", "null"]},
+        "upstream_material_identifier": {"type": ["string", "null"]},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "canvas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "unit", "origin", "x_direction", "y_direction"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1},
+        "unit": {"const": "overview_pixel"},
+        "origin": {"const": "top_left"},
+        "x_direction": {"const": "right"},
+        "y_direction": {"const": "down"}
+      }
+    },
+    "transform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verification_status",
+        "input_coordinate_space",
+        "origin_world",
+        "world_units_per_pixel",
+        "world_x_to_canvas",
+        "world_y_to_canvas",
+        "rotation_deg_clockwise",
+        "rounding",
+        "clipping",
+        "bounds_inclusive"
+      ],
+      "properties": {
+        "verification_status": {"enum": ["VERIFIED", "UNVERIFIED"]},
+        "input_coordinate_space": {"const": "cs2_world_xy"},
+        "origin_world": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y", "convention"],
+          "properties": {
+            "x": {"type": ["number", "null"]},
+            "y": {"type": ["number", "null"]},
+            "convention": {"const": "upper_left_world_coordinate"}
+          }
+        },
+        "world_units_per_pixel": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "world_x_to_canvas": {"enum": ["positive_x", "UNRESOLVED"]},
+        "world_y_to_canvas": {"enum": ["negative_y", "UNRESOLVED"]},
+        "rotation_deg_clockwise": {"enum": [0, null]},
+        "rounding": {"const": "none_float"},
+        "clipping": {"const": "classify_only_no_clamp"},
+        "bounds_inclusive": {"const": true}
+      }
+    },
+    "layers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "selection_axis", "items", "reason"],
+      "properties": {
+        "status": {"enum": ["VERIFIED", "UNRESOLVED"]},
+        "selection_axis": {"enum": ["world_z", "UNRESOLVED"]},
+        "items": {"type": "array"},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "reference_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "world", "expected_overview", "verification_status", "meaning"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "world": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["x", "y"],
+            "properties": {"x": {"type": "number"}, "y": {"type": "number"}}
+          },
+          "expected_overview": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["x", "y"],
+            "properties": {"x": {"type": "number"}, "y": {"type": "number"}}
+          },
+          "verification_status": {"const": "VERIFIED_DERIVED_FROM_TRANSFORM"},
+          "meaning": {"const": "projection_basis_only"}
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["retrieved_utc", "sources", "distribution_note"],
+      "properties": {
+        "retrieved_utc": {"type": "string", "format": "date-time"},
+        "sources": {"type": "array", "minItems": 1},
+        "distribution_note": {"type": "string", "minLength": 1}
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "verified_fields", "unresolved_fields"],
+      "properties": {
+        "status": {"enum": ["VERIFIED", "PARTIAL", "UNVERIFIED"]},
+        "verified_fields": {"type": "array", "items": {"type": "string"}},
+        "unresolved_fields": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  }
+}

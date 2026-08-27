@@ -1,0 +1,103 @@
+{
+  "schema": "iy.map_overview_metadata/v1",
+  "map_id": "de_ancient",
+  "asset": {
+    "status": "NOT_INCLUDED",
+    "reference": null,
+    "upstream_material_identifier": "overviews/de_ancient",
+    "reason": "No Valve overview image is redistributed by this repository; only derived numeric projection metadata is included."
+  },
+  "canvas": {
+    "width": 1024,
+    "height": 1024,
+    "unit": "overview_pixel",
+    "origin": "top_left",
+    "x_direction": "right",
+    "y_direction": "down"
+  },
+  "transform": {
+    "verification_status": "VERIFIED",
+    "input_coordinate_space": "cs2_world_xy",
+    "origin_world": {
+      "x": -2953,
+      "y": 2164,
+      "convention": "upper_left_world_coordinate"
+    },
+    "world_units_per_pixel": 5,
+    "world_x_to_canvas": "positive_x",
+    "world_y_to_canvas": "negative_y",
+    "rotation_deg_clockwise": 0,
+    "rounding": "none_float",
+    "clipping": "classify_only_no_clamp",
+    "bounds_inclusive": true
+  },
+  "layers": {
+    "status": "UNRESOLVED",
+    "selection_axis": "UNRESOLVED",
+    "items": [],
+    "reason": "The tracked overview descriptor has no verified vertical-section thresholds; no world-Z layer rule is inferred."
+  },
+  "reference_points": [
+    {
+      "id": "transform_top_left",
+      "world": {"x": -2953, "y": 2164},
+      "expected_overview": {"x": 0, "y": 0},
+      "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM",
+      "meaning": "projection_basis_only"
+    },
+    {
+      "id": "transform_center",
+      "world": {"x": -393, "y": -396},
+      "expected_overview": {"x": 512, "y": 512},
+      "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM",
+      "meaning": "projection_basis_only"
+    },
+    {
+      "id": "transform_bottom_right",
+      "world": {"x": 2167, "y": -2956},
+      "expected_overview": {"x": 1024, "y": 1024},
+      "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM",
+      "meaning": "projection_basis_only"
+    }
+  ],
+  "provenance": {
+    "retrieved_utc": "2026-08-27T00:00:00Z",
+    "sources": [
+      {
+        "role": "projection_values",
+        "repository": "SteamDatabase/GameTracking-CS2",
+        "commit": "8651ef311b783fee253fc15c30966e4a15a3cacb",
+        "path": "game/csgo/pak01_dir/resource/overviews/de_ancient.txt",
+        "values_used": {"pos_x": -2953, "pos_y": 2164, "scale": 5, "rotate": 0},
+        "authority_note": "Public game-file tracker of the shipped CS2 overview descriptor; numeric values only are transcribed."
+      },
+      {
+        "role": "formula_and_canvas_cross_check",
+        "repository": "pnxenopoulos/awpy",
+        "commit": "007b119a6a5b4b8ee7d3011d96ce00bed7323c12",
+        "paths": ["awpy/plot/utils.py", "awpy/plot/plot.py"],
+        "authority_note": "Open-source Awpy plotting implementation used to cross-check axis inversion, scale convention, and 1024 logical plotting bounds."
+      }
+    ],
+    "distribution_note": "No overview texture, executable content, demo content, or game asset is included."
+  },
+  "verification": {
+    "status": "PARTIAL",
+    "verified_fields": [
+      "canvas.width",
+      "canvas.height",
+      "transform.origin_world",
+      "transform.world_units_per_pixel",
+      "transform.world_x_to_canvas",
+      "transform.world_y_to_canvas",
+      "transform.rotation_deg_clockwise",
+      "reference_points"
+    ],
+    "unresolved_fields": [
+      "asset.reference",
+      "layers.selection_axis",
+      "layers.items",
+      "named_landmark_world_coordinates"
+    ]
+  }
+}
