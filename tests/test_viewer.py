@@ -32,12 +32,18 @@ def test_canvas_yaw_and_missing_background_are_honest(tmp_path):
  result=render_viewer(store.manifest_path,tmp_path/'viewer.html'); text=result.read_text()
  assert 'M.canvas' in text and "className='dir'" in text
  assert '10.24' not in (Path(__file__).parents[1]/'src/improve_yourself/viewer.py').read_text()
- missing=Path(__file__).parents[1]/'resources/generated_overviews/de_ancient/overview.svg'; moved=missing.with_suffix('.svg.test'); missing.rename(moved)
- try: assert '"background_available":false' in render_viewer(store.manifest_path,tmp_path/'missing.html').read_text()
- finally: moved.rename(missing)
+ store.manifest['source']['map_id']='de_anubis'; store.manifest_path.write_text(json.dumps(store.manifest))
+ assert '"background_available":false' in render_viewer(store.manifest_path,tmp_path/'missing.html').read_text()
 
 def test_wrong_schema_and_script_escape(tmp_path):
  bad=tmp_path/'bad.json'; bad.write_text('{"schema":"bad"}')
  with pytest.raises(ValueError): render_viewer(bad,tmp_path/'out.html')
- legacy=tmp_path/'legacy.json'; legacy.write_text(json.dumps({'schema':'iy.replay/v1','map_name':'de_x','coordinate_space':'cs2_world','scenes':[{'round_number':1,'frames':[{'tick':1,'players':[]}]}]}))
- assert '\\u003c' not in render_viewer(legacy,tmp_path/'legacy.html').read_text()
+ legacy=tmp_path/'legacy.json'; hostile='</script><script>alert(1)</script>'; legacy.write_text(json.dumps({'schema':'iy.replay/v1','map_name':'de_x','coordinate_space':'cs2_world','scenes':[{'round_number':1,'frames':[{'tick':1,'players':[{'name':hostile}]}]}]}))
+ html=render_viewer(legacy,tmp_path/'legacy.html').read_text(); assert hostile not in html and '\\u003c/script>' in html
+ with pytest.raises(ValueError): render_viewer(legacy,tmp_path/'badscale.html',scale=0)
+
+def test_legacy_and_v2_models_satisfy_js_contract(tmp_path):
+ store=_store(tmp_path); v2=render_viewer(store.manifest_path,tmp_path/'v2.html').read_text()
+ legacy=tmp_path/'legacy.json'; legacy.write_text(json.dumps({'schema':'iy.replay/v1','map_name':'de_x','coordinate_space':'cs2_world','scenes':[{'round_number':1,'frames':[{'tick':1,'players':[]}]}]})); old=render_viewer(legacy,tmp_path/'old.html').read_text()
+ for text in (v2,old):
+  for key in ('"canvas"','"background_available"','"transform"','"requested_tick"','"resolved_tick"','"selected_player_id"','"view_mode"'): assert key in text
