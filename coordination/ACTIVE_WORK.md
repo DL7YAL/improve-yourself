@@ -24,7 +24,7 @@ Status: PASS / STALE — merged through PR #19; rotation clarification merged th
 
 ## Azure — current task
 
-Task: 3d-pov-anubis-prep
+Task: 3d-pov-anubis-render-ready-prep
 Branch: azure/3d-pov-anubis-prep
 Base HEAD: b5835ac9c7b78f7a61b39e90569181cea90ee51b
 Owned files:
@@ -32,12 +32,10 @@ Owned files:
 - resources/3d_pov/**
 - tools/pov_prep_data/**
 - tests/pov_prep_data/**
-Status: BLOCKED
+Status: IN PROGRESS
 Depends on Codex: NO
 Handoff required: YES — Beast must consume only through existing ReplayRenderer/ReplayController and iy.map_asset/v1 boundaries
-Scope: Static Anubis asset/research/coordinate/camera-input evidence only. No product runtime, parser, Replay, Analyzer, controller, store, DataHub, viewer, cloud, or Azure-resource changes.
-Prepared: candidate inventory, identity coordinate contract, canonical camera-input contract, three replay/world/2D anchors, redistribution boundary, validator and deterministic tests.
-Blocker: This MCP session cannot execute pytest, validator CLI, compileall, or git diff --check. Beast execution validation is required before PASS.
+Scope: Original/permissive renderer-facing sample assets, mappings, fallback policies and validation only. No product runtime, parser, Replay, Analyzer, controller, store, DataHub, final viewer, cloud, or Azure-resource changes.
 
 ## Rules
 
