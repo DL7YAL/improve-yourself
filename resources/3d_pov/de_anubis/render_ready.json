@@ -21,11 +21,11 @@
     "diagnostic_only_asset": "../original_assets/reference_bounds.obj"
   },
   "assets": [
-    {"asset_id": "iy.player_proxy.abstract_v1", "kind": "player_proxy", "path": "../original_assets/player_proxy.obj", "license": "CC0-1.0", "classification": "FALLBACK"},
-    {"asset_id": "iy.weapon_proxy.generic_v1", "kind": "weapon_proxy", "path": "../original_assets/weapon_proxy.obj", "license": "CC0-1.0", "classification": "FALLBACK"},
-    {"asset_id": "iy.materials.neutral_v1", "kind": "materials", "path": "../original_assets/materials.mtl", "license": "CC0-1.0", "classification": "FALLBACK"},
-    {"asset_id": "iy.texture.neutral_grid_v1", "kind": "texture", "path": "../original_assets/neutral_grid.ppm", "license": "CC0-1.0", "classification": "FALLBACK"},
-    {"asset_id": "iy.reference_bounds.anubis_v1", "kind": "diagnostic_bounds", "path": "../original_assets/reference_bounds.obj", "license": "CC0-1.0", "classification": "FALLBACK_DIAGNOSTIC_ONLY"}
+    {"asset_id": "iy.player_proxy.abstract_v1", "kind": "player_proxy", "path": "../original_assets/player_proxy.obj", "git_blob_sha1": "e05231854db21741620fb11aee82f3085d7fce73", "license": "CC0-1.0", "classification": "FALLBACK"},
+    {"asset_id": "iy.weapon_proxy.generic_v1", "kind": "weapon_proxy", "path": "../original_assets/weapon_proxy.obj", "git_blob_sha1": "19571b33ce5decf853c450c410cee8169ec111a3", "license": "CC0-1.0", "classification": "FALLBACK"},
+    {"asset_id": "iy.materials.neutral_v1", "kind": "materials", "path": "../original_assets/materials.mtl", "git_blob_sha1": "d83d84b507ead86e87acc818357a603876854c48", "license": "CC0-1.0", "classification": "FALLBACK"},
+    {"asset_id": "iy.texture.neutral_grid_v1", "kind": "texture", "path": "../original_assets/neutral_grid.ppm", "git_blob_sha1": "c2eb324d3abc5d343cc7986be6e3f153dfa00e67", "license": "CC0-1.0", "classification": "FALLBACK"},
+    {"asset_id": "iy.reference_bounds.anubis_v1", "kind": "diagnostic_bounds", "path": "../original_assets/reference_bounds.obj", "git_blob_sha1": "ff81a5334ed71beaa322895fac1a62c539faff45", "license": "CC0-1.0", "classification": "FALLBACK_DIAGNOSTIC_ONLY"}
   ],
   "semantic_mapping": "semantic_assets.json",
   "camera_policy": "render_profile.json",
@@ -48,7 +48,7 @@
   "licensing": {"original_assets": "CC0-1.0", "valve_assets_bundled": false, "valve_geometry_required_for_redistributable_package": false, "local_geometry_policy": "Existing iy.map_asset/v1 gate only"},
   "verification": {
     "status": "READY_FOR_EXECUTION_VALIDATION",
-    "prepared": ["asset IDs", "player proxy", "weapon proxy", "materials", "texture", "semantic weapon mapping", "procedural sound mapping", "lighting defaults", "camera fallback policy", "dynamic-object policy", "floor policy", "reference scene", "licensing boundaries"],
+    "prepared": ["asset IDs", "repository blob integrity", "player proxy", "weapon proxy", "materials", "texture", "semantic weapon mapping", "procedural sound mapping", "lighting defaults", "camera fallback policy", "dynamic-object policy", "floor policy", "reference scene", "licensing boundaries"],
     "pending": ["execute deterministic tests", "renderer-specific asset import smoke", "local geometry load smoke", "performance and UI integration"]
   }
 }
