@@ -26,21 +26,36 @@ Task: 3d-pov-anubis-render-ready-prep
 Branch: azure/3d-pov-anubis-prep
 Status: PASS / STALE — merged through PR #21; shared original/permissive fallback assets and render-ready contracts remain reusable static preparation only.
 
-## Azure — current task
-
 Task: 3d-pov-mirage-prep-v2
 Branch: azure/3d-pov-mirage-prep-v2
-Base HEAD: ce743519d073a6f2cc09355f89da572753fdc0a4
+Status: PASS / STALE — static prep and builder generalization are now present on main; PR #23 generalized the runtime map gate.
+
+## Azure — current task
+
+Task: 3d-pov-remaining-mapset-prep-v3
+Branch: azure/3d-pov-remaining-mapset-prep-v3
+Base HEAD: 75bfa3e6218cc26ddcfa89352111666785787bb7
 Owned files:
 - coordination/ACTIVE_WORK.md
-- resources/3d_pov/de_mirage/**
-- tools/pov_prep_data/validate.py
-- tools/dev/Build-LocalAnubisAsset.py
-- tests/pov_prep_data/test_mirage_pov_prep.py
-Status: BLOCKED — static prep and Beast handoff are committed; Azure/MCP has no command-execution capability to run the required pytest/validator/compile/diff checks. Beast must execute the listed static validations before PR readiness.
+- resources/3d_pov/de_ancient/**
+- resources/3d_pov/de_dust2/**
+- resources/3d_pov/de_inferno/**
+- resources/3d_pov/de_nuke/**
+- resources/3d_pov/de_overpass/**
+- resources/3d_pov/de_train/**
+- resources/3d_pov/de_vertigo/**
+- resources/map_overviews/maps/de_inferno.json
+- resources/map_overviews/maps/de_nuke.json
+- resources/map_overviews/maps/de_overpass.json
+- resources/map_overviews/maps/de_train.json
+- resources/map_overviews/maps/de_vertigo.json
+- tools/pov_prep_data/validate_mapset.py
+- tests/pov_prep_data/test_remaining_mapset_prep.py
+- tests/map_overview_data/test_map_overview_data.py
+Status: READY — static prep and handoffs are committed; executable pytest/validator/compile/diff checks remain BLOCKED_FOR_BEAST because GitHub MCP has no command runner.
 Depends on Codex: NO
-Handoff required: YES — Beast must execute only through existing ReplayStore → ReplayController → ReplayRendererSession → PandaReplayRenderer and iy.map_asset/v1.
-Scope: Mirage static provenance/prep, generic local-asset-builder map ID support, targeted static validation, and local execution handoff. No protected replay/runtime/controller/renderer implementation, parser, DataHub, cloud, or Azure-resource changes.
+Handoff required: YES — Beast performs current-build VPK extraction, local-only map derivatives, Replay V2 recovery and visible viewer smoke.
+Scope: Static preproduction for Ancient, Dust2, Inferno, Nuke, Overpass, Train and Vertigo only. No protected runtime, renderer, parser, Replay, Analyzer, controller, store, DataHub, Optimizer, cloud or Azure-resource change.
 
 ## Rules
 
