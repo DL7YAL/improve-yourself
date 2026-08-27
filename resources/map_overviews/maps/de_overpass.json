@@ -1,0 +1,27 @@
+{
+  "schema": "iy.map_overview_metadata/v1",
+  "map_id": "de_overpass",
+  "asset": {"status": "NOT_INCLUDED", "reference": null, "upstream_material_identifier": "overviews/de_overpass", "reason": "No Valve overview image is redistributed; only numeric projection metadata is included."},
+  "canvas": {"width": 1024, "height": 1024, "unit": "overview_pixel", "origin": "top_left", "x_direction": "right", "y_direction": "down"},
+  "transform": {
+    "verification_status": "VERIFIED", "input_coordinate_space": "cs2_world_xy",
+    "origin_world": {"x": -4831, "y": 1781, "convention": "upper_left_world_coordinate"},
+    "world_units_per_pixel": 5.2, "world_x_to_canvas": "positive_x", "world_y_to_canvas": "negative_y",
+    "rotation_deg_clockwise": 0, "rounding": "none_float", "clipping": "classify_only_no_clamp", "bounds_inclusive": true
+  },
+  "layers": {"status": "UNRESOLVED", "selection_axis": "UNRESOLVED", "items": [], "reason": "No verified vertical-section thresholds are included; no world-Z layer rule is inferred."},
+  "reference_points": [
+    {"id": "transform_top_left", "world": {"x": -4831, "y": 1781}, "expected_overview": {"x": 0, "y": 0}, "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM", "meaning": "projection_basis_only"},
+    {"id": "transform_center", "world": {"x": -2168.6, "y": -881.4}, "expected_overview": {"x": 512, "y": 512}, "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM", "meaning": "projection_basis_only"},
+    {"id": "transform_bottom_right", "world": {"x": 493.8, "y": -3543.8}, "expected_overview": {"x": 1024, "y": 1024}, "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM", "meaning": "projection_basis_only"}
+  ],
+  "provenance": {
+    "retrieved_utc": "2026-08-27T00:00:00Z",
+    "sources": [
+      {"role": "projection_values", "repository": "SteamDatabase/GameTracking-CS2", "commit": "8651ef311b783fee253fc15c30966e4a15a3cacb", "path": "game/csgo/pak01_dir/resource/overviews/de_overpass.txt", "values_used": {"pos_x": -4831, "pos_y": 1781, "scale": 5.2, "source_rotate_flag": 0, "intrinsic_rotation_deg_clockwise": 0}, "authority_note": "The explicit Source presentation rotate flag is recorded separately and is not converted into intrinsic coordinate rotation."},
+      {"role": "formula_and_canvas_cross_check", "repository": "pnxenopoulos/awpy", "commit": "007b119a6a5b4b8ee7d3011d96ce00bed7323c12", "paths": ["awpy/plot/utils.py", "awpy/plot/plot.py"], "authority_note": "Awpy cross-checks intrinsic axis/scale semantics and 1024 logical bounds."}
+    ],
+    "distribution_note": "No overview texture, executable content, demo content, or game asset is included."
+  },
+  "verification": {"status": "PARTIAL", "verified_fields": ["canvas.width", "canvas.height", "transform.origin_world", "transform.world_units_per_pixel", "transform.world_x_to_canvas", "transform.world_y_to_canvas", "transform.rotation_deg_clockwise", "reference_points"], "unresolved_fields": ["asset.reference", "layers.selection_axis", "layers.items", "named_landmark_world_coordinates"]}
+}
