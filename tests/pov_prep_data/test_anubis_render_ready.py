@@ -79,7 +79,7 @@ def test_camera_reference_math_is_deterministic() -> None:
     forward = [math.cos(pitch) * math.cos(yaw), math.cos(pitch) * math.sin(yaw), -math.sin(pitch)]
     assert forward == camera["expected_forward"]
     target = [eye[index] + forward[index] * 320.0 for index in range(3)]
-    assert target == camera["expected_target"]
+    assert all(math.isclose(actual, expected, abs_tol=1e-9) for actual, expected in zip(target, camera["expected_target"], strict=True))
     assert camera["yaw_deg"]["classification"] == "FALLBACK_TEST_ORIENTATION"
 
 

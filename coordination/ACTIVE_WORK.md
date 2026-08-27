@@ -32,12 +32,12 @@ Owned files:
 - resources/3d_pov/**
 - tools/pov_prep_data/**
 - tests/pov_prep_data/**
-Status: BLOCKED
+Status: PASS
 Depends on Codex: NO
 Handoff required: YES — Beast must consume only through existing ReplayRenderer/ReplayController and iy.map_asset/v1 boundaries
 Scope: Original/permissive renderer-facing sample assets, mappings, fallback policies and validation only. No product runtime, parser, Replay, Analyzer, controller, store, DataHub, final viewer, cloud, or Azure-resource changes.
 Prepared: CC0 player/weapon/bounds OBJ assets, neutral MTL/PPM, repository blob integrity, semantic weapon mapping, procedural sound mapping, camera/environment fallbacks, reference scene, licensing records, validator and deterministic tests.
-Blocker: This MCP session cannot execute pytest, validator CLIs, compileall, or git diff --check. Beast execution and renderer-import smoke validation are required before PASS.
+Validation: PASS — pytest tests/pov_prep_data tests/map_overview_data (59 passed), prep and render-ready validators, renderer import smoke, compileall, and git diff --check passed on 2026-08-27.
 
 ## Rules
 
