@@ -1,4 +1,82 @@
+import json
+from types import SimpleNamespace
+
+import improve_yourself.system_check as system_check
 from improve_yourself.system_check import ACTION_REQUIRED, OK, REVIEW, collect_official_gpu_driver_catalog, detect_chipset, evaluate_system_facts
+
+
+def _deterministic_local_facts() -> dict[str, object]:
+    return {
+        "windows": {"caption": "Windows 11", "version": "10.0", "build": "26200"},
+        "cpu": {"name": "CPU", "logical_processors": 16}, "memory": {"total_gb": 32.0},
+        "motherboard": {"manufacturer": "Gigabyte Technology Co., Ltd.", "product": "X870 GAMING X WIFI7"},
+        "gpus": [{"name": "AMD Radeon RX 7900 XTX", "driver_version": "32.0"}],
+        "amd_software": {"installed": True, "version": "26.7.1"},
+        "amd_chipset": {"name": "AMD Chipset Software", "version": "8.07.16.1035"},
+        "amd_adrenalin": {"installed": True, "version": "26.7.1"},
+        "displays": [{"refresh_hz": 240}], "monitors": [], "secure_boot": None, "tpm": None,
+    }
+
+
+def _stub_local_windows_collection(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(system_check.platform, "system", lambda: "Windows")
+    monkeypatch.setattr(
+        system_check.subprocess, "run",
+        lambda *_args, **_kwargs: SimpleNamespace(returncode=0, stdout=json.dumps(_deterministic_local_facts()), stderr=""),
+    )
+    monkeypatch.setattr(system_check.Path, "home", classmethod(lambda _cls: tmp_path))
+
+
+def test_offline_collection_never_calls_official_vendor_collectors(monkeypatch, tmp_path) -> None:
+    _stub_local_windows_collection(monkeypatch, tmp_path)
+    calls = {"gpu": 0, "chipset": 0}
+
+    def forbidden_gpu(*_args, **_kwargs):
+        calls["gpu"] += 1
+        raise AssertionError("offline collection must not call GPU vendor collector")
+
+    def forbidden_chipset(*_args, **_kwargs):
+        calls["chipset"] += 1
+        raise AssertionError("offline collection must not call chipset vendor collector")
+
+    monkeypatch.setattr(system_check, "collect_official_gpu_driver_catalog", forbidden_gpu)
+    monkeypatch.setattr(system_check, "collect_official_chipset_catalog", forbidden_chipset)
+
+    facts = system_check.collect_windows_facts(include_official_catalogs=False)
+
+    assert calls == {"gpu": 0, "chipset": 0}
+    assert facts["gpu_driver_catalog"] == {"reason": "Offline mode: official comparison not requested."}
+    assert facts["chipset_driver_catalog"] == {"reason": "Offline mode: official comparison not requested."}
+
+
+def test_normal_collection_calls_both_vendor_collectors_and_persists_catalog_evidence(monkeypatch, tmp_path) -> None:
+    _stub_local_windows_collection(monkeypatch, tmp_path)
+    calls = {"gpu": 0, "chipset": 0}
+
+    def gpu_catalog(gpus):
+        calls["gpu"] += 1
+        assert gpus == _deterministic_local_facts()["gpus"]
+        return {"version": "26.7.1", "source": "https://official.example/gpu"}
+
+    def chipset_catalog(chipset):
+        calls["chipset"] += 1
+        assert chipset == {"name": "AMD X870", "source": "https://www.gigabyte.com/us/Motherboard/X870-GAMING-X-WIFI7-rev-1x/sp"}
+        return {"version": "8.07.16.1035", "source": "https://official.example/chipset"}
+
+    monkeypatch.setattr(system_check, "collect_official_gpu_driver_catalog", gpu_catalog)
+    monkeypatch.setattr(system_check, "collect_official_chipset_catalog", chipset_catalog)
+    output = tmp_path / "system-check.json"
+
+    system_check.run_system_check(output)
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    checks = {item["id"]: item for item in payload["checks"]}
+    assert calls == {"gpu": 1, "chipset": 1}
+    assert payload["policy"]["official_vendor_comparisons"] is True
+    assert checks["gpu_driver"]["evidence"]["official_version"] == "26.7.1"
+    assert checks["gpu_driver"]["evidence"]["official_source"] == "https://official.example/gpu"
+    assert checks["chipset_driver"]["evidence"]["official_version"] == "8.07.16.1035"
+    assert checks["chipset_driver"]["evidence"]["official_source"] == "https://official.example/chipset"
 
 
 def test_evaluates_complete_read_only_baseline() -> None:

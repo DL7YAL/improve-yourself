@@ -4,11 +4,13 @@ from pathlib import Path
 
 import pytest
 
+import improve_yourself.system_check as system_check_module
 from improve_yourself.optimizer_evidence_review import (
     build_evidence_review,
     main,
     render_evidence_review,
 )
+from improve_yourself.system_check import run_system_check
 
 
 def _check(**overrides: object) -> dict[str, object]:
@@ -60,9 +62,90 @@ def test_review_preserves_unknown_and_read_only_policy(tmp_path: Path) -> None:
     assert "LOCAL REPORT / READ-ONLY" in page
     assert "Evidence details:" in page and "Evidence source:" in page
     assert "Provenance:" not in page
-    assert "fixed official vendor sources" in page
+    assert "Network policy is UNKNOWN" in page
     assert "<button" not in page and "<form" not in page
     assert "Apply" not in page and "Restore" not in page
+    assert "Legend:" in page and "Summary:" in page
+
+
+def test_offline_network_mode_is_rendered_without_vendor_claim() -> None:
+    value = system_check(); value["policy"]["official_vendor_comparisons"] = False
+    review = build_evidence_review(value)
+    assert review["network_mode"] == "OFFLINE"
+
+
+def test_missing_or_malformed_network_contract_stays_unknown(tmp_path: Path) -> None:
+    value = system_check(); value["policy"].pop("official_vendor_comparisons", None)
+    assert build_evidence_review(value)["network_mode"] == "UNKNOWN"
+    review = build_evidence_review(system_check()); review["network_mode"] = "invented"
+    with pytest.raises(ValueError, match="network mode"):
+        render_evidence_review(review, tmp_path / "review.html")
+
+
+def test_offline_system_check_builds_non_known_vendor_evidence_review(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    facts = {
+        "windows": {"caption": "Windows 11", "version": "10.0", "build": "26200"},
+        "cpu": {"name": "CPU", "logical_processors": 16}, "memory": {"total_gb": 32.0},
+        "motherboard": {"manufacturer": "Gigabyte Technology Co., Ltd.", "product": "X870 GAMING X WIFI7"},
+        "gpus": [{"name": "AMD Radeon RX 7900 XTX", "driver_version": "32.0"}],
+        "amd_software": {"installed": True, "version": "26.7.1"},
+        "amd_chipset": {"name": "AMD Chipset Software", "version": "8.07.16.1035"},
+        "amd_adrenalin": {"installed": True, "version": "26.7.1"},
+        "displays": [{"refresh_hz": 240}], "monitors": [], "secure_boot": None, "tpm": None,
+    }
+    collection_modes: list[bool] = []
+
+    def collect_local_facts(*, include_official_catalogs: bool) -> dict[str, object]:
+        collection_modes.append(include_official_catalogs)
+        assert include_official_catalogs is False
+        return {
+            **facts,
+            "chipset": {"name": "AMD X870"},
+            "gpu_driver_catalog": {"reason": "Offline mode: official comparison not requested."},
+            "chipset_driver_catalog": {"reason": "Offline mode: official comparison not requested."},
+        }
+
+    monkeypatch.setattr(system_check_module, "collect_windows_facts", collect_local_facts)
+    output = run_system_check(tmp_path / "offline-system-check.json", offline=True)
+
+    review = build_evidence_review(json.loads(output.read_text(encoding="utf-8")))
+    items = {item["id"]: item for item in review["items"]}
+
+    assert review["network_mode"] == "OFFLINE"
+    assert collection_modes == [False]
+    assert items["gpu_driver"]["availability"] in {"UNKNOWN", "NOT AVAILABLE"}
+    assert items["chipset_driver"]["availability"] in {"UNKNOWN", "NOT AVAILABLE"}
+    assert items["gpu_driver"]["availability"] != "KNOWN"
+    assert items["chipset_driver"]["availability"] != "KNOWN"
+
+
+def test_rendered_summary_counts_and_network_disclosures_are_exact(tmp_path: Path) -> None:
+    value = system_check()
+    value["checks"] = [
+        _check(id="known"),
+        _check(id="unknown", summary="Unknown", status="REVIEW", user_view={"status": "Nicht prüfbar / unbekannt"}),
+        _check(id="unavailable", classification="not_implemented", user_view={"status": "Nicht prüfbar / unbekannt"}),
+    ]
+    review = build_evidence_review(value)
+    review["network_mode"] = "OFFLINE"
+    offline = render_evidence_review(review, tmp_path / "offline.html").read_text(encoding="utf-8")
+    assert "Summary:</b> KNOWN 1 · UNKNOWN 1 · NOT AVAILABLE 1" in offline
+    assert "Network mode:</b> OFFLINE" in offline
+    assert "OFFLINE makes no vendor comparison requests." in offline
+    assert "may query fixed official vendor sources" not in offline
+
+    review["network_mode"] = "OFFICIAL COMPARISON"
+    normal = render_evidence_review(review, tmp_path / "normal.html").read_text(encoding="utf-8")
+    assert "Network mode:</b> OFFICIAL COMPARISON" in normal
+    assert "may query fixed official vendor sources" in normal
+    assert "OFFLINE makes no vendor comparison requests." not in normal
+
+    review["network_mode"] = "UNKNOWN"
+    unknown = render_evidence_review(review, tmp_path / "unknown.html").read_text(encoding="utf-8")
+    assert "Network mode:</b> UNKNOWN" in unknown
+    assert "no affirmative offline or official-comparison claim is made." in unknown
+    assert "OFFLINE makes no vendor comparison requests." not in unknown
+    assert "may query fixed official vendor sources" not in unknown
 
 
 @pytest.mark.parametrize("policy", [

@@ -370,7 +370,7 @@ if ($null -eq $tpm) { try { $tpmTool=& "$env:SystemRoot\System32\tpmtool.exe" ge
 '''
 
 
-def collect_windows_facts(timeout_seconds: int = 20) -> dict[str, Any]:
+def collect_windows_facts(timeout_seconds: int = 20, *, include_official_catalogs: bool = True) -> dict[str, Any]:
     if platform.system() != "Windows":
         raise RuntimeError("System Check V1 currently supports Windows only")
     completed = subprocess.run(
@@ -398,13 +398,18 @@ def collect_windows_facts(timeout_seconds: int = 20) -> dict[str, Any]:
         ],
     }
     facts["chipset"] = detect_chipset(facts.get("motherboard") or {})
-    facts["gpu_driver_catalog"] = collect_official_gpu_driver_catalog(facts.get("gpus") or [])
-    facts["chipset_driver_catalog"] = collect_official_chipset_catalog(facts["chipset"])
+    if include_official_catalogs:
+        facts["gpu_driver_catalog"] = collect_official_gpu_driver_catalog(facts.get("gpus") or [])
+        facts["chipset_driver_catalog"] = collect_official_chipset_catalog(facts["chipset"])
+    else:
+        facts["gpu_driver_catalog"] = {"reason": "Offline mode: official comparison not requested."}
+        facts["chipset_driver_catalog"] = {"reason": "Offline mode: official comparison not requested."}
     return facts
 
 
-def run_system_check(output: Path) -> Path:
-    payload = evaluate_system_facts(collect_windows_facts())
+def run_system_check(output: Path, *, offline: bool = False) -> Path:
+    payload = evaluate_system_facts(collect_windows_facts(include_official_catalogs=not offline))
+    payload["policy"]["official_vendor_comparisons"] = not offline
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     return output
@@ -413,9 +418,10 @@ def run_system_check(output: Path) -> Path:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Read-only Improve Yourself Windows system check")
     parser.add_argument("--output", type=Path, default=Path("results/system-check.json"))
+    parser.add_argument("--offline", action="store_true")
     args = parser.parse_args()
     try:
-        result = run_system_check(args.output)
+        result = run_system_check(args.output, offline=args.offline)
     except (RuntimeError, subprocess.TimeoutExpired, json.JSONDecodeError) as error:
         parser.error(str(error))
     print(result)
