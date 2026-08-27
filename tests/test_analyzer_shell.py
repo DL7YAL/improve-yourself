@@ -440,13 +440,24 @@ def test_shell_opens_validated_existing_workflow_without_runner(tmp_path: Path) 
 
 
 def test_shell_successful_switch_replaces_all_prior_context(tmp_path: Path) -> None:
-    first = _write_result(tmp_path / "first", ("ct1",))
-    second = _write_result(tmp_path / "second", ("t1",))
+    first_hash = "a" * 64
+    second_hash = "b" * 64
+    first = _write_result(tmp_path / "first", ("ct1",), source_hash=first_hash)
+    second = _write_result(tmp_path / "second", ("t1",), source_hash=second_hash)
     controller = AnalyzerShellController(tmp_path)
-    controller.open_existing_workflow(first)
-    controller.open_existing_workflow(second)
+    first_result = controller.open_existing_workflow(first)
+    assert first_result.manifest_path == first
+    assert controller.data_hub is not None
+    assert controller.data_hub.overview()["source"]["sha256"] == first_hash
+
+    second_result = controller.open_existing_workflow(second)
+
+    assert second_result.manifest_path == second
     assert controller.result is not None and controller.result.manifest_path == second
     assert controller.data_hub is not None
+    overview = controller.data_hub.overview()
+    assert overview["source"]["sha256"] == second_hash
+    assert overview["source"]["sha256"] != first_hash
     assert controller.selected_ids == ["t1"] and "ct1" not in controller.selected_ids
 
 
