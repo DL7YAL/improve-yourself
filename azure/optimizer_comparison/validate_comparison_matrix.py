@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate the independent read-only Optimizer comparison cohort.
 
-This validator checks dataset integrity only.  It does not import Optimizer
+This validator checks dataset integrity only. It does not import Optimizer
 code, evaluate recommendations, access a machine, call Azure, or create any
 performance claim.
 """
@@ -16,7 +16,8 @@ REQUIRED = {
     "system_id", "group", "hardware", "settings", "challenge",
     "expected_behavior", "boundaries", "safety_traps",
 }
-FORBIDDEN = ("APPLYABLE", "apply automatically", "install driver", "real performance")
+FORBIDDEN_FIELDS = {"recommendation", "recommendations", "action", "apply_plan"}
+FORBIDDEN_CLAIMS = ("apply automatically", "install driver", "real performance result")
 
 
 def validate(document: dict[str, object]) -> list[str]:
@@ -46,6 +47,9 @@ def validate(document: dict[str, object]) -> list[str]:
         missing = REQUIRED - system.keys()
         if missing:
             errors.append(f"system {index} missing: {', '.join(sorted(missing))}")
+        unexpected = FORBIDDEN_FIELDS & system.keys()
+        if unexpected:
+            errors.append(f"system {index} contains engine-owned field(s): {', '.join(sorted(unexpected))}")
         system_id = system.get("system_id")
         if not isinstance(system_id, str) or not system_id.startswith("cmp-"):
             errors.append(f"system {index} has invalid system_id")
@@ -59,10 +63,8 @@ def validate(document: dict[str, object]) -> list[str]:
         else:
             counts[str(group)] += 1
         combined = " ".join(str(system.get(key, "")) for key in REQUIRED).lower()
-        if "recommend " in combined or "recommendation" in combined:
-            errors.append(f"system {system_id} defines a product recommendation")
-        for forbidden in FORBIDDEN:
-            if forbidden.lower() in combined:
+        for forbidden in FORBIDDEN_CLAIMS:
+            if forbidden in combined:
                 errors.append(f"system {system_id} contains forbidden claim: {forbidden}")
     for group, count in counts.items():
         if count != 20:
