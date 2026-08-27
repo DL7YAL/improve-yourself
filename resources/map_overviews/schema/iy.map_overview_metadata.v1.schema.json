@@ -73,7 +73,10 @@
         "world_units_per_pixel": {"type": ["number", "null"], "exclusiveMinimum": 0},
         "world_x_to_canvas": {"enum": ["positive_x", "UNRESOLVED"]},
         "world_y_to_canvas": {"enum": ["negative_y", "UNRESOLVED"]},
-        "rotation_deg_clockwise": {"enum": [0, null]},
+        "rotation_deg_clockwise": {
+          "description": "Intrinsic world-to-canvas coordinate rotation only; Source overview presentation flags are recorded in provenance and are not converted here.",
+          "enum": [0, null]
+        },
         "rounding": {"const": "none_float"},
         "clipping": {"const": "classify_only_no_clamp"},
         "bounds_inclusive": {"const": true}
