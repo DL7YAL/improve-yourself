@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "iy.3d_pov_prep/v1",
+  "title": "Improve Yourself Anubis 3D POV Preparation V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "map_id", "purpose", "canonical_runtime", "geometry_inventory", "coordinate_contract", "camera_input_contract", "reference_anchors", "provenance", "redistribution", "verification"],
+  "properties": {
+    "schema": {"const": "iy.3d_pov_prep/v1"},
+    "map_id": {"const": "de_anubis"},
+    "purpose": {"const": "data_research_evidence_only"},
+    "canonical_runtime": {
+      "type": "object", "additionalProperties": false,
+      "required": ["replay_schema", "store", "playback_authority", "data_hub", "owns_tick", "parses_demo", "embeds_replay_frames"],
+      "properties": {
+        "replay_schema": {"const": "iy.replay/v2"}, "store": {"const": "ReplayStore"},
+        "playback_authority": {"const": "ReplayController"}, "data_hub": {"const": "AnalyzerDataHub"},
+        "owns_tick": {"const": false}, "parses_demo": {"const": false}, "embeds_replay_frames": {"const": false}
+      }
+    },
+    "geometry_inventory": {"type": "object", "required": ["runtime_asset_contract", "bundled_files", "candidates", "capabilities"]},
+    "coordinate_contract": {"type": "object", "required": ["coordinate_space", "units", "physical_unit_conversion", "handedness", "axes", "transform_to_replay", "geometry_bounds", "observed_replay_bounds", "floor_model", "overview_2d_reference"]},
+    "camera_input_contract": {"type": "object", "required": ["current_tick_source", "frame_source", "selected_player_source", "required_first_person_fields", "optional_fields", "eye_height", "fov", "orientation"]},
+    "reference_anchors": {"type": "array", "minItems": 3},
+    "provenance": {"type": "object", "required": ["repository_evidence", "external_sources"]},
+    "redistribution": {"type": "object", "required": ["bundled_proprietary_assets", "policy", "notes"]},
+    "verification": {"type": "object", "required": ["status", "verified", "unresolved"]}
+  }
+}

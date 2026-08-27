@@ -1,0 +1,142 @@
+{
+  "schema": "iy.3d_pov_prep/v1",
+  "map_id": "de_anubis",
+  "purpose": "data_research_evidence_only",
+  "canonical_runtime": {
+    "replay_schema": "iy.replay/v2",
+    "store": "ReplayStore",
+    "playback_authority": "ReplayController",
+    "data_hub": "AnalyzerDataHub",
+    "owns_tick": false,
+    "parses_demo": false,
+    "embeds_replay_frames": false
+  },
+  "geometry_inventory": {
+    "runtime_asset_contract": "iy.map_asset/v1",
+    "bundled_files": [],
+    "candidates": [
+      {
+        "id": "current_build_local_derivative",
+        "status": "VERIFIED_LOCAL_REFERENCE",
+        "source_kind": "local_cs2_extraction",
+        "source_build_id": "24828357",
+        "source_vpk": {"name": "de_anubis.vpk", "bytes": 269890099, "sha256": "BCA91CEE11592C65C2869C599769232F29335458376ED90431A013B58C938E07", "repository_path": null},
+        "render_mesh": {"format": "glTF_2_binary", "bytes": 77560564, "sha256": "9AD0036D7BDFB9E6A5DFD821FEFC52E6D12CB34EEEB44202F7E32FA4D5542AA6", "repository_path": null, "bundled": false},
+        "visibility_mesh": {"format": "little_endian_float32_triangle_soup", "bytes": 24259284, "triangles": 673869, "sha256": "D667D72898680B5C5E559C8BF39535D4C1F0E72EBA4224FEC55608BDD606639F", "repository_path": null, "bundled": false},
+        "retained_world_physics_groups": 27,
+        "distribution": "local_only",
+        "availability_rule": "Exact source build, VPK hash, derivative hashes and verified iy.map_asset/v1 manifest are required."
+      },
+      {
+        "id": "awpy_2_0_2_triangle_candidate",
+        "status": "VERSION_MISMATCH",
+        "source_kind": "awpy_downloadable_artifact",
+        "source_build_id": "17595823",
+        "artifact": {"name": "de_anubis.tri", "format": "little_endian_float32_triangle_soup", "bytes": 29088000, "triangles": 808000, "sha256": "3DA37BBC33A9E9B2C469E9E39F1FF0A31A6EFE4212D10026516C803B708D9787", "repository_path": null, "bundled": false},
+        "distribution": "UNRESOLVED",
+        "availability_rule": "Reference evidence only; not accepted for current-build runtime use."
+      },
+      {
+        "id": "installed_valve_vpk",
+        "status": "DISTRIBUTION_BLOCKED",
+        "source_kind": "installed_cs2_content",
+        "source_build_id": "24828357",
+        "artifact": {"name": "de_anubis.vpk", "bytes": 269890099, "sha256": "BCA91CEE11592C65C2869C599769232F29335458376ED90431A013B58C938E07", "repository_path": null, "bundled": false},
+        "distribution": "PROHIBITED_UNLESS_SEPARATELY_AUTHORIZED",
+        "availability_rule": "May be referenced for an approved local-only extraction; never bundled by this package."
+      }
+    ],
+    "capabilities": {
+      "collision_geometry": "LOCAL_ONLY_VERIFIED",
+      "visibility_geometry": "LOCAL_ONLY_VERIFIED",
+      "neutral_visual_mesh": "LOCAL_ONLY_VERIFIED",
+      "navigation_geometry": "UNRESOLVED",
+      "materials": "UNAVAILABLE",
+      "textures": "UNAVAILABLE",
+      "dynamic_geometry": "UNSUPPORTED",
+      "semantic_surfaces": "UNAVAILABLE"
+    }
+  },
+  "coordinate_contract": {
+    "coordinate_space": "cs2_world",
+    "units": "source_unit",
+    "physical_unit_conversion": "UNRESOLVED",
+    "handedness": "UNRESOLVED",
+    "axes": {"x": "engine_horizontal_x", "y": "engine_horizontal_y", "z": "up"},
+    "transform_to_replay": {"status": "VERIFIED_LOCAL_REFERENCE", "scale": 1.0, "rotation_deg": [0.0, 0.0, 0.0], "translation": [0.0, 0.0, 0.0], "axis_swap": "none", "axis_inversion": "none"},
+    "geometry_bounds": {"status": "VERIFIED_LOCAL_REFERENCE", "min": {"x": -3202.5049, "y": -3456.0, "z": -704.0}, "max": {"x": 2816.5098, "y": 4736.0, "z": 1012.0}},
+    "observed_replay_bounds": {"status": "VERIFIED_REFERENCE_DEMO", "positions_checked": 2523998, "min": {"x": -1971.9473, "y": -1759.9688, "z": -191.9688}, "max": {"x": 1803.9713, "y": 2771.7646, "z": 188.1563}},
+    "floor_model": {"status": "UNRESOLVED", "selection_axis": "UNRESOLVED", "ranges": [], "reason": "Bounds and sample heights do not prove named floors or selection thresholds."},
+    "overview_2d_reference": {"schema": "iy.map_overview_metadata/v1", "map_id": "de_anubis", "repository_path": "resources/map_overviews/maps/de_anubis.json", "authority": "REFERENCE_ONLY_NOT_DUPLICATED"}
+  },
+  "camera_input_contract": {
+    "current_tick_source": "ReplayController.committed_snapshot.resolved_tick",
+    "frame_source": "ReplayStore via ReplayController committed canonical ReplayFrame",
+    "selected_player_source": "ReplayController.selected_player_id",
+    "required_first_person_fields": ["PlayerState.active", "PlayerState.position", "PlayerState.view_yaw_deg", "PlayerState.view_pitch_deg"],
+    "optional_fields": ["PlayerState.alive", "PlayerState.velocity", "PlayerState.health", "PlayerState.armor", "PlayerState.weapon"],
+    "eye_height": {"status": "UNRESOLVED_FROM_CANONICAL_DATA", "world_units": null, "reason": "Renderer calibration/configuration only; not map or replay truth."},
+    "fov": {"status": "UNAVAILABLE", "degrees": null, "reason": "No canonical per-player FOV evidence is established."},
+    "orientation": {"yaw_zero_axis": "positive_x", "positive_yaw_turns_toward": "positive_y", "positive_pitch": "look_down", "world_up": "positive_z", "roll_without_evidence": 0.0}
+  },
+  "reference_anchors": [
+    {
+      "id": "tick_6401_observer",
+      "source_demo_sha256": "446eec75822c0cae5ca020296ad900307e573302b81c8beb5b5daa98623058b6",
+      "round_number": 1,
+      "tick": 6401,
+      "world": {"x": -259.6265, "y": -1595.3811, "z": 52.0313},
+      "expected_scene": {"x": -259.6265, "y": -1595.3811, "z": 52.0313},
+      "expected_overview": {"x": 485.89530651341, "y": 943.176455938698},
+      "evidence": "observer_reference"
+    },
+    {
+      "id": "tick_6401_visible_target",
+      "source_demo_sha256": "446eec75822c0cae5ca020296ad900307e573302b81c8beb5b5daa98623058b6",
+      "round_number": 1,
+      "tick": 6401,
+      "world": {"x": -508.16, "y": -1589.8218, "z": 66.0312},
+      "expected_scene": {"x": -508.16, "y": -1589.8218, "z": 66.0312},
+      "expected_overview": {"x": 438.283524904215, "y": 942.111455938697},
+      "evidence": "locally_verified_visible_pair_target"
+    },
+    {
+      "id": "tick_6401_blocked_target",
+      "source_demo_sha256": "446eec75822c0cae5ca020296ad900307e573302b81c8beb5b5daa98623058b6",
+      "round_number": 1,
+      "tick": 6401,
+      "world": {"x": -527.9521, "y": 2207.1423, "z": 89.0313},
+      "expected_scene": {"x": -527.9521, "y": 2207.1423, "z": 89.0313},
+      "expected_overview": {"x": 434.4919348659, "y": 214.723697318008},
+      "evidence": "locally_verified_blocked_pair_target"
+    }
+  ],
+  "provenance": {
+    "repository_evidence": [
+      "docs/3D_POV_V1_PREFLIGHT.md",
+      "docs/3D_POV_V1_SLICE_A.md",
+      "docs/3D_POV_V1_SLICE_C_ASSET_GATE.md",
+      "docs/3D_POV_V1_IMPLEMENTATION_SPEC.md",
+      "docs/3D_POV_V1_RENDERER_SESSION.md",
+      "resources/map_overviews/maps/de_anubis.json",
+      "src/improve_yourself/map_assets.py",
+      "src/improve_yourself/renderer.py",
+      "tools/dev/Build-LocalAnubisAsset.py"
+    ],
+    "external_sources": [
+      {"name": "Awpy", "version": "2.0.2", "code_license": "MIT", "artifact_license": "UNRESOLVED", "use": "Historical triangle format, bounds and visibility candidate."},
+      {"name": "ValveResourceFormat", "version": "19.2.6339+c72208352f5bf62f1482447ed166c548f303f8fa", "code_license": "MIT", "asset_rights": "NOT_GRANTED_BY_TOOL_LICENSE", "use": "Approved local-only Source 2 resource inspection/decompilation."},
+      {"name": "Installed Counter-Strike 2 content", "build": "24828357", "rights": "SUBJECT_TO_VALVE_TERMS", "use": "Local-only source reference; not redistributed."}
+    ]
+  },
+  "redistribution": {
+    "bundled_proprietary_assets": false,
+    "policy": "REFERENCE_METADATA_ONLY",
+    "notes": "Tool/code licenses do not grant redistribution rights for Valve-derived geometry. No referenced geometry is committed."
+  },
+  "verification": {
+    "status": "PARTIAL_LOCAL_REFERENCE",
+    "verified": ["identity transform for exact local bundle", "geometry and replay bounds", "three world-to-scene anchors", "three world-to-overview cross-checks", "canonical camera input ownership", "no bundled assets"],
+    "unresolved": ["portable/distributable geometry", "physical unit conversion", "coordinate handedness label", "named floors and Z thresholds", "navigation geometry currency", "materials and textures", "dynamic geometry", "canonical per-player FOV", "canonical eye height"]
+  }
+}

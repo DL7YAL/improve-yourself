@@ -1,0 +1,48 @@
+{
+  "schema": "iy.3d_pov_semantic_assets/v1",
+  "license": "CC0-1.0",
+  "player_representation": {
+    "asset_id": "iy.player_proxy.abstract_v1",
+    "path": "../original_assets/player_proxy.obj",
+    "classification": "FALLBACK",
+    "origin": "feet_center",
+    "forward_axis": "positive_x",
+    "world_up": "positive_z",
+    "team_materials": {"CT": "player_ct", "T": "player_t", "unknown": "player_neutral"},
+    "animation": "UNRESOLVED",
+    "meaning": "Abstract position/orientation proxy only; not a Valve player model."
+  },
+  "weapon_representations": {
+    "generic_asset": "../original_assets/weapon_proxy.obj",
+    "origin": "rear_center",
+    "forward_axis": "positive_x",
+    "material": "weapon_neutral",
+    "classification": "FALLBACK",
+    "categories": {
+      "rifle": {"scale": [46, 4, 5], "ids": ["ak47", "m4a1", "m4a1_silencer", "aug", "sg556", "famas", "galilar"]},
+      "pistol": {"scale": [22, 3, 4], "ids": ["glock", "hkp2000", "usp_silencer", "p250", "deagle", "fiveseven", "tec9", "cz75a", "revolver"]},
+      "sniper": {"scale": [56, 4, 5], "ids": ["awp", "ssg08", "scar20", "g3sg1"]},
+      "smg": {"scale": [34, 4, 5], "ids": ["mac10", "mp9", "mp7", "mp5sd", "ump45", "p90", "bizon"]},
+      "shotgun": {"scale": [42, 5, 6], "ids": ["nova", "xm1014", "mag7", "sawedoff"]},
+      "heavy": {"scale": [48, 6, 7], "ids": ["m249", "negev"]},
+      "knife": {"scale": [18, 2, 2], "ids": ["knife", "knife_t"]},
+      "grenade": {"scale": [10, 4, 4], "ids": ["hegrenade", "flashbang", "smokegrenade", "molotov", "incgrenade", "decoy"]},
+      "objective": {"scale": [16, 8, 5], "ids": ["c4"]},
+      "unknown": {"scale": [24, 4, 4], "ids": []}
+    },
+    "unknown_policy": "Use generic unknown scale and preserve the canonical weapon semantic string as text; never infer a different weapon."
+  },
+  "materials": {"path": "../original_assets/materials.mtl", "texture": "../original_assets/neutral_grid.ppm", "classification": "FALLBACK", "color_space": "sRGB"},
+  "sound_mapping": {
+    "classification": "FALLBACK",
+    "asset_files": [],
+    "generator": "procedural_original_v1",
+    "cues": {
+      "weapon_fire_generic": {"wave": "noise_burst", "duration_ms": 55, "gain": 0.22},
+      "weapon_fire_sniper": {"wave": "noise_burst_low", "duration_ms": 90, "gain": 0.28},
+      "utility_event": {"wave": "sine_decay", "frequency_hz": 620, "duration_ms": 120, "gain": 0.18},
+      "scene_marker": {"wave": "sine_decay", "frequency_hz": 880, "duration_ms": 80, "gain": 0.14}
+    },
+    "policy": "Optional renderer-generated cues only. No Valve sound, reconstructed game audio or canonical event timing is stored here."
+  }
+}

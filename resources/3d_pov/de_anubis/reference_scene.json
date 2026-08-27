@@ -1,0 +1,27 @@
+{
+  "schema": "iy.3d_pov_reference_scene/v1",
+  "scene_id": "de_anubis_tick_6401_reference_only",
+  "classification": "FALLBACK_RENDER_SAMPLE_NOT_REPLAY_EVIDENCE",
+  "map_id": "de_anubis",
+  "map_geometry": {
+    "preferred": "validated local iy.map_asset/v1 render_mesh",
+    "diagnostic_fallback": "../original_assets/reference_bounds.obj",
+    "fallback_warning": "Bounds wireframe is not Anubis geometry and must never appear as a product map."
+  },
+  "anchors": [
+    {"id": "observer", "position": [-259.6265, -1595.3811, 52.0313], "proxy_asset_id": "iy.player_proxy.abstract_v1", "material": "player_ct"},
+    {"id": "visible_target", "position": [-508.16, -1589.8218, 66.0312], "proxy_asset_id": "iy.player_proxy.abstract_v1", "material": "player_t"},
+    {"id": "blocked_target", "position": [-527.9521, 2207.1423, 89.0313], "proxy_asset_id": "iy.player_proxy.abstract_v1", "material": "player_t"}
+  ],
+  "camera": {
+    "anchor_id": "observer",
+    "position_source": "anchor.position plus FALLBACK eye height",
+    "yaw_deg": {"value": 0.0, "classification": "FALLBACK_TEST_ORIENTATION"},
+    "pitch_deg": {"value": 0.0, "classification": "FALLBACK_TEST_ORIENTATION"},
+    "expected_eye_position": [-259.6265, -1595.3811, 116.0313],
+    "expected_forward": [1.0, 0.0, 0.0],
+    "expected_target": [60.3735, -1595.3811, 116.0313]
+  },
+  "weapon_sample": {"canonical_semantic_id": "unknown", "asset": "../original_assets/weapon_proxy.obj", "classification": "FALLBACK"},
+  "purpose": "Deterministic renderer setup and coordinate/camera smoke test only; contains no playback or authoritative POV state."
+}

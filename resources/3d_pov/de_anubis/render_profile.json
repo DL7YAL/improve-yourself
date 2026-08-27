@@ -1,0 +1,31 @@
+{
+  "schema": "iy.3d_pov_render_profile/v1",
+  "map_id": "de_anubis",
+  "environment": {
+    "classification": "FALLBACK",
+    "background_rgb": [0.008, 0.02, 0.035],
+    "ambient_light_rgb": [0.20, 0.24, 0.30],
+    "ambient_intensity": 0.55,
+    "key_light": {"direction": [-0.45, -0.35, -0.82], "rgb": [0.82, 0.88, 1.0], "intensity": 1.0},
+    "fill_light": {"direction": [0.60, 0.20, -0.45], "rgb": [0.18, 0.42, 0.58], "intensity": 0.35},
+    "shadows": "optional_renderer_capability",
+    "meaning": "Neutral analytical visibility defaults, not reconstructed Anubis lighting."
+  },
+  "camera": {
+    "canonical_orientation": "yaw_pitch_from_PlayerState",
+    "fov_horizontal_deg": {"value": 90.0, "classification": "FALLBACK", "reason": "Used only when no canonical FOV exists; never written to Replay."},
+    "eye_height_world_units": {"value": 64.0, "classification": "FALLBACK", "reason": "Existing renderer default for view preparation; never written to Replay."},
+    "near_plane_world_units": {"value": 1.0, "classification": "FALLBACK"},
+    "far_plane_world_units": {"value": 20000.0, "classification": "FALLBACK"},
+    "roll_deg": {"value": 0.0, "classification": "FALLBACK", "reason": "No canonical roll evidence."}
+  },
+  "dynamic_objects": {
+    "classification": "UNRESOLVED",
+    "doors": "not represented",
+    "breakables": "not represented",
+    "props": "not represented",
+    "policy": "Do not invent geometry. Downgrade geometry-dependent conclusions when omitted dynamics are material."
+  },
+  "floors": {"classification": "UNRESOLVED", "ranges": [], "policy": "Use canonical world Z for placement but do not assign named floors."},
+  "fallback_visibility": {"classification": "FALLBACK", "map_unavailable": "Render no map geometry; show an explicit unavailable state. Diagnostic reference bounds may be used only in isolated tests."}
+}
