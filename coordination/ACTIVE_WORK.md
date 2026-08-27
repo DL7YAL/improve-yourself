@@ -45,7 +45,7 @@ Owned files:
 - a small read-only shared Viewer-State adapter/contract
 - generated Ancient product background assets selectively adapted from PR #26
 - focused Viewer-State, map-background, and Viewer tests
-Status: IN PROGRESS
+Status: BLOCKED — branch and ownership claim are committed. GitHub MCP can inspect PR #26 metadata and text patches, but truncates the required generated SVG and returns the PNG only as a large encoded payload; it provides no cherry-pick/file-copy operation. The advertised Code Interpreter and command execution are not available in this session, so the required source asset cannot be ported faithfully and repository tests, compileall, diff checks, and visual preview cannot be executed. No Viewer implementation was attempted from partial evidence.
 Depends on Codex: NO
 Scope: one canonical ReplayStore/ReplayController, read-only derived Viewer State, replaceable 2D map background, Ancient player/view-direction product rendering, and future 3D-compatible state. No parser, Replay V2, ReplayStore, ReplayController, AnalyzerCore, AnalyzerDataHub, transform-authority, cloud, or Azure-resource changes.
 
