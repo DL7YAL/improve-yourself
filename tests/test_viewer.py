@@ -27,18 +27,28 @@ def test_background_swap_does_not_mutate_replay_state(tmp_path):
  assert '"background_kind":"local_override"' in first.read_text() and '"background_kind":"local_override"' in second.read_text()
  assert re.search(r'"state":(\{.*?\}),"transform"',first.read_text()).group(1)==re.search(r'"state":(\{.*?\}),"transform"',second.read_text()).group(1)
 
-def test_ancient_default_background_is_repository_safe(tmp_path):
+def test_ancient_generated_overview_is_not_product_fallback(tmp_path):
  store=_store(tmp_path); store.manifest['source']['map_id']='de_ancient'; store.manifest_path.write_text(json.dumps(store.manifest))
- result=render_viewer(store.manifest_path,tmp_path/'viewer.html')
- assert 'improve_generated' in result.read_text() and 'data:image/svg+xml;base64' in result.read_text()
+ result=render_viewer(store.manifest_path,tmp_path/'viewer.html'); text=result.read_text()
+ assert '"background_kind":"product_map_unavailable"' in text
+ assert '"background_available":false' in text
+ assert 'PRODUCT_MAP_UNAVAILABLE' in text
+ source=(Path(__file__).parents[1]/'src/improve_yourself/viewer.py').read_text()
+ assert 'resources/generated_overviews' not in source
+
+def test_explicit_background_still_works(tmp_path):
+ store=_store(tmp_path); background=tmp_path/'approved.svg'; background.write_text('<svg/>')
+ result=render_viewer(store.manifest_path,tmp_path/'viewer.html',radar_path=background).read_text()
+ assert '"background_kind":"local_override"' in result
+ assert '"background_available":true' in result
+ assert 'data:image/svg+xml;base64' in result
 
 def test_canvas_yaw_and_missing_background_are_honest(tmp_path):
  store=_store(tmp_path); store.manifest['source']['map_id']='de_ancient'; store.manifest_path.write_text(json.dumps(store.manifest))
  result=render_viewer(store.manifest_path,tmp_path/'viewer.html'); text=result.read_text()
  assert 'M.canvas' in text and "className='dir'" in text
  assert '10.24' not in (Path(__file__).parents[1]/'src/improve_yourself/viewer.py').read_text()
- store.manifest['source']['map_id']='de_anubis'; store.manifest_path.write_text(json.dumps(store.manifest))
- assert '"background_available":false' in render_viewer(store.manifest_path,tmp_path/'missing.html').read_text()
+ assert '"background_available":false' in text
 
 def test_wrong_schema_and_script_escape(tmp_path):
  bad=tmp_path/'bad.json'; bad.write_text('{"schema":"bad"}')
