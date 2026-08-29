@@ -1,0 +1,10 @@
+system_id,source_portal,source_path,cpu,gpu,ram_gb,ram_detail,motherboard,os,reported_problem,evidence_status
+1,Reddit,r/AMDHelp/comments/19161b5,Ryzen 5 7600,Radeon RX 7800 XT,32,DDR5-5200,ASRock B650M PG Riptide,,poor performance / microstuttering,REPORTED_REAL_CONFIG
+3,Reddit,r/AMDHelp/comments/1ogc1nr,Ryzen 5 7600,Radeon RX 7800 XT,32,G.Skill DDR5-5600 CL28,ASUS TUF B650-PLUS WiFi,,input lag / stuttering / sluggish response,REPORTED_REAL_CONFIG
+5,Reddit,r/AMDHelp/comments/16ehm6p,Ryzen 5 5600X,Radeon RX 6700 XT,16,DDR4-3000,MSI A320M-A PRO MAX,Windows 10,FPS drops / inconsistent performance,REPORTED_REAL_CONFIG
+7,Reddit,r/pcmasterrace/comments/16jgexk,Intel Core i5-12400F,GeForce RTX 3060 Ti,16,,B660-A DDR4,Windows 10 Pro,game stutter / brief freezes,REPORTED_REAL_CONFIG
+9,Reddit,r/pcmasterrace/comments/1hb7t3z,Intel Core i5-12400F,GeForce RTX 3060 Ti,32,2x16GB DDR4-3600,B660M,Windows 10 Home,higher than expected CPU utilization / poor performance,REPORTED_REAL_CONFIG
+11,Reddit,r/buildapc/comments/1iucfdl,Intel Core i5-10400F,GeForce GTX 1660 Super,16,,,,low FPS / system cannot keep up,REPORTED_REAL_CONFIG
+13,Reddit,r/buildapc/comments/137imgk,Ryzen 5 1600,GeForce RTX 3060,16,DDR4-2400,,,large FPS spread / weak upgrade gain,REPORTED_REAL_CONFIG
+15,Reddit,r/radeon/comments/1bwy8gv,Ryzen 5 5600X,Radeon RX 6700 XT,,, , ,low FPS / stutter / GPU utilization drops,REPORTED_REAL_CONFIG
+17,Reddit,r/Amd tech-support megathread,Ryzen 7 5800X3D,Radeon RX 6800 XT,,,,,browser/game stutters / display flicker / FPS drops,REPORTED_REAL_CONFIG
