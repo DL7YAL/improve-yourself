@@ -143,6 +143,18 @@ def test_experimental_shell_exposes_binding_product_sections_from_canonical_desi
     )
 
 
+def test_my_improvement_profile_ui_is_explicit_local_and_not_steam_login() -> None:
+    source = (Path(__file__).parents[1] / "src" / "improve_yourself" / "analyzer_shell.py").read_text(encoding="utf-8")
+    assert 'text="Lokale Steam-Profile erkennen"' in source
+    assert 'text="Account aktivieren"' in source
+    assert 'text="Zuordnung entfernen"' in source
+    assert 'discover_local_steam_accounts(Path(selected))' in source
+    assert "askdirectory" in source
+    assert "Keine Steam-Anmeldung" in source
+    assert "requests" not in source
+    assert "openid" not in source.casefold()
+
+
 def test_profile_criteria_view_is_semantic_and_reports_the_actual_profile_count() -> None:
     profiles = {profile.profile_id: profile for profile in built_in_profiles()}
     review = analysis_profile_criteria_view(profiles["review_v1"])

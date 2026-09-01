@@ -24,12 +24,14 @@ from .analyzer_data_hub import AnalyzerDataHub
 from .embedded_review import EmbeddedReviewSession
 from .embedded_tactical import EmbeddedTacticalSession
 from .local_profiles import OBJECTIVE_RULES, LocalProfileStore
+from .local_steam_accounts import LocalSteamAccountCandidate, discover_local_steam_accounts
 from .optimizer_evidence import profile_from_system_check
 from .optimizer_foundation import OptimizationRule, integration_proof
 from .replay_store import ReplayStore
 from .review_presentation import build_review_presentation
 from .rule_pack import RulePackValidationError, import_rule_pack, load_rule_pack_document
 from .system_check import run_system_check
+from .user_profile import LocalUserProfileStore, UserProfile, profile_from_candidates, select_active_account
 
 
 _SOURCE_HASH = re.compile(r"[0-9a-f]{64}")
@@ -1292,7 +1294,9 @@ class AnalyzerShellApp:
         self.tk = tk
         self.ttk = ttk
         self.controller = controller
+        self._my_user_profile: UserProfile | None = None
         self.root = tk.Tk()
+        self._my_profile_status = tk.StringVar(value="Noch kein lokaler Analyseaccount ausgewählt. Keine Steam-Anmeldung und keine Übertragung.")
         self.root.title("Improve Yourself – Experimental")
         # The approved Optimizer MASTER exports use a 1536×1024 viewport.
         # Start at that comparable desktop geometry; the existing minimum-size
@@ -2333,6 +2337,18 @@ class AnalyzerShellApp:
             text="Echte Entwicklung wird erst aus mehreren lokalen Analysen abgeleitet. Bis dahin bleiben Trends, Scores und Fokusbereiche ausdrücklich unbekannt.",
             style="Muted.TLabel", wraplength=1100, justify="left",
         ).pack(anchor="w", pady=(0, 10))
+        profile_card = self._reference_info_card(
+            page, title="MEIN LOKALES PROFIL", textvariable=self._my_profile_status, accent="#13A7E8", min_height=138,
+        )
+        profile_card.pack(fill="x", pady=(0, 12))
+        controls = self.ttk.Frame(profile_card.body, style="HomePanel.TFrame")
+        controls.pack(anchor="w", pady=(8, 0))
+        self.ttk.Button(controls, text="Lokale Steam-Profile erkennen", command=self._choose_local_steam_root).pack(side="left")
+        self._my_profile_choice = self.tk.StringVar(value="Kein lokaler Account erkannt")
+        self._my_profile_accounts = self.ttk.Combobox(controls, textvariable=self._my_profile_choice, state="disabled", width=42)
+        self._my_profile_accounts.pack(side="left", padx=8)
+        self.ttk.Button(controls, text="Account aktivieren", command=self._activate_local_steam_account).pack(side="left")
+        self.ttk.Button(controls, text="Zuordnung entfernen", command=self._clear_local_steam_account).pack(side="left", padx=(8, 0))
         period = self.ttk.Frame(page, style="Content.TFrame")
         period.pack(fill="x", pady=(0, 12))
         self.ttk.Label(period, text="ZEITRAUM", style="PageKicker.TLabel").pack(side="left", padx=(0, 10))
@@ -2388,6 +2404,42 @@ class AnalyzerShellApp:
             min_height=132,
         )
         influenced.pack(fill="x", pady=(14, 0))
+
+    def _choose_local_steam_root(self) -> None:
+        """Read candidates only after an explicit user-selected Steam root."""
+        from tkinter import filedialog
+        selected = filedialog.askdirectory(title="Lokale Steam-Wurzel auswählen")
+        if not selected:
+            return
+        candidates = discover_local_steam_accounts(Path(selected))
+        self._my_user_profile = profile_from_candidates("local_user", candidates)
+        values = tuple(f"{item.local_label or 'Lokaler Account'} · …{item.steam_id64[-4:]}" for item in candidates)
+        self._my_profile_accounts.configure(values=values, state="readonly" if values else "disabled")
+        self._my_profile_choice.set(values[0] if values else "Kein lokaler Account erkannt")
+        self._my_profile_status.set(
+            "Lokale Kandidaten erkannt. Bitte einen Account bewusst aktivieren; keine Steam-Anmeldung und keine Übertragung."
+            if values else "Keine Kandidaten in der ausdrücklich gewählten lokalen Steam-Wurzel gefunden."
+        )
+
+    def _activate_local_steam_account(self) -> None:
+        index = self._my_profile_accounts.current()
+        if self._my_user_profile is None or index < 0:
+            self._my_profile_status.set("Zuerst lokale Kandidaten erkennen und einen Account auswählen.")
+            return
+        active = select_active_account(self._my_user_profile, self._my_user_profile.steam_accounts[index].steam_id64)
+        LocalUserProfileStore(self.controller.output_root / "user-profile").save(active)
+        self._my_user_profile = active
+        self._my_profile_status.set(f"Aktiver Analyseaccount: Steam-ID endet auf {active.active_steam_id64[-4:]}. Lokal gespeichert; keine Steam-Anmeldung.")
+
+    def _clear_local_steam_account(self) -> None:
+        if self._my_user_profile is None:
+            self._my_profile_status.set("Keine lokale Account-Zuordnung vorhanden.")
+            return
+        candidates = tuple(LocalSteamAccountCandidate(account.steam_id64, account.local_label) for account in self._my_user_profile.steam_accounts)
+        cleared = profile_from_candidates(self._my_user_profile.profile_id, candidates, display_name=self._my_user_profile.display_name)
+        LocalUserProfileStore(self.controller.output_root / "user-profile").save(cleared)
+        self._my_user_profile = cleared
+        self._my_profile_status.set("Aktive lokale Account-Zuordnung entfernt. Die Kandidatenliste bleibt lokal und unverknüpft.")
 
     def _layout_my_improvement_cards(self, width: int) -> None:
         """Keep comparison labels readable instead of squeezing five cards."""
