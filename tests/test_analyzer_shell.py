@@ -155,6 +155,16 @@ def test_my_improvement_profile_ui_is_explicit_local_and_not_steam_login() -> No
     assert "openid" not in source.casefold()
 
 
+def test_local_profile_management_lives_in_settings_not_my_improvement() -> None:
+    source = (Path(__file__).parents[1] / "src" / "improve_yourself" / "analyzer_shell.py").read_text(encoding="utf-8")
+    my_page = source[source.index("def _build_my_improvement_page"):source.index("def _layout_my_improvement_cards")]
+    settings = source[source.index("def _build_settings_page"):source.index("def _build_system_page")]
+    assert "LOKALES PROFIL & DATENSCHUTZ" not in my_page
+    assert "Lokale Steam-Profile erkennen" not in my_page
+    assert "LOKALES PROFIL & DATENSCHUTZ" in settings
+    assert "LOCAL · PRIVATE · READ-ONLY" in settings
+
+
 def test_profile_criteria_view_is_semantic_and_reports_the_actual_profile_count() -> None:
     profiles = {profile.profile_id: profile for profile in built_in_profiles()}
     review = analysis_profile_criteria_view(profiles["review_v1"])

@@ -2337,18 +2337,7 @@ class AnalyzerShellApp:
             text="Echte Entwicklung wird erst aus mehreren lokalen Analysen abgeleitet. Bis dahin bleiben Trends, Scores und Fokusbereiche ausdrücklich unbekannt.",
             style="Muted.TLabel", wraplength=1100, justify="left",
         ).pack(anchor="w", pady=(0, 10))
-        profile_card = self._reference_info_card(
-            page, title="MEIN LOKALES PROFIL", textvariable=self._my_profile_status, accent="#13A7E8", min_height=138,
-        )
-        profile_card.pack(fill="x", pady=(0, 12))
-        controls = self.ttk.Frame(profile_card.body, style="HomePanel.TFrame")
-        controls.pack(anchor="w", pady=(8, 0))
-        self.ttk.Button(controls, text="Lokale Steam-Profile erkennen", command=self._choose_local_steam_root).pack(side="left")
-        self._my_profile_choice = self.tk.StringVar(value="Kein lokaler Account erkannt")
-        self._my_profile_accounts = self.ttk.Combobox(controls, textvariable=self._my_profile_choice, state="disabled", width=42)
-        self._my_profile_accounts.pack(side="left", padx=8)
-        self.ttk.Button(controls, text="Account aktivieren", command=self._activate_local_steam_account).pack(side="left")
-        self.ttk.Button(controls, text="Zuordnung entfernen", command=self._clear_local_steam_account).pack(side="left", padx=(8, 0))
+        self.ttk.Label(page, text="Analyseaccount: wird unter Settings · Lokales Profil & Datenschutz verwaltet.", style="Muted.TLabel").pack(anchor="w", pady=(0, 12))
         period = self.ttk.Frame(page, style="Content.TFrame")
         period.pack(fill="x", pady=(0, 12))
         self.ttk.Label(period, text="ZEITRAUM", style="PageKicker.TLabel").pack(side="left", padx=(0, 10))
@@ -2720,6 +2709,19 @@ class AnalyzerShellApp:
     def _build_settings_page(self) -> None:
         page = self.pages["Settings"]
         self.ttk.Label(page, text="Settings", style="PageTitle.TLabel").pack(anchor="w")
+        profile = self.ttk.Frame(page, style="Card.TFrame", padding=20)
+        profile.pack(fill="x", pady=(18, 0))
+        self.ttk.Label(profile, text="LOKALES PROFIL & DATENSCHUTZ", style="Card.TLabel", font=(self.display_font, 11, "bold")).pack(anchor="w")
+        self.ttk.Label(profile, textvariable=self._my_profile_status, style="Muted.TLabel", wraplength=1000, justify="left").pack(anchor="w", pady=(8, 10))
+        controls = self.ttk.Frame(profile, style="CardInner.TFrame")
+        controls.pack(anchor="w")
+        self.ttk.Button(controls, text="Lokale Steam-Profile erkennen", command=self._choose_local_steam_root).pack(side="left")
+        self._my_profile_choice = self.tk.StringVar(value="Kein lokaler Account erkannt")
+        self._my_profile_accounts = self.ttk.Combobox(controls, textvariable=self._my_profile_choice, state="disabled", width=42)
+        self._my_profile_accounts.pack(side="left", padx=8)
+        self.ttk.Button(controls, text="Account aktivieren", command=self._activate_local_steam_account).pack(side="left")
+        self.ttk.Button(controls, text="Zuordnung entfernen", command=self._clear_local_steam_account).pack(side="left", padx=(8, 0))
+        self.ttk.Label(profile, text="LOCAL · PRIVATE · READ-ONLY · keine Steam-Anmeldung · keine Übertragung", style="Muted.TLabel").pack(anchor="w", pady=(10, 0))
         card = self.ttk.Frame(page, style="Card.TFrame", padding=20)
         card.pack(fill="x", pady=(18, 0))
         self.ttk.Label(card, text="DARSTELLUNG", style="Card.TLabel", font=(self.display_font, 11, "bold")).pack(anchor="w")
