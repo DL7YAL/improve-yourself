@@ -24,7 +24,7 @@ from .analyzer_data_hub import AnalyzerDataHub
 from .embedded_review import EmbeddedReviewSession
 from .embedded_tactical import EmbeddedTacticalSession
 from .local_profiles import OBJECTIVE_RULES, LocalProfileStore
-from .optimizer_evidence import evaluate_profile, profile_from_system_check
+from .optimizer_evidence import profile_from_system_check
 from .optimizer_foundation import OptimizationRule, integration_proof
 from .replay_store import ReplayStore
 from .review_presentation import build_review_presentation
@@ -415,35 +415,55 @@ def system_check_result_view(payload: dict[str, object]) -> dict[str, object] | 
     }
 
 
-def optimizer_evidence_view(payload: dict[str, object]) -> dict[str, object] | None:
-    """Present read-only selection evidence; it deliberately exposes no apply action."""
+def optimizer_evidence_view(
+    payload: dict[str, object], *, product_view: dict[str, object] | None = None
+) -> dict[str, object] | None:
+    """Present Foundation evidence without creating a second evaluator.
+
+    The product view is the sole recommendation result.  This adapter exposes
+    only its existing evidence and missing-evidence trace for the technical
+    detail surface; it never selects candidate rules itself.
+    """
     profile = profile_from_system_check(payload)
     if profile is None:
         return None
-    report = evaluate_profile(profile)
-    groups = (
-        ("VERIFIED / STABLE", report["stable_recommendations"]),
-        ("CONDITIONAL", report["conditional_recommendations"]),
-        ("EXPERIMENTAL", report["experimental_candidates"]),
-    )
+    canonical_view = product_view if isinstance(product_view, dict) else optimizer_product_view(profile)
+    models = canonical_view.get("models")
+    if not isinstance(models, list):
+        return None
     rows: list[dict[str, str]] = []
-    for evidence_class, rules in groups:
-        for rule in rules:
-            if not isinstance(rule, dict):
-                continue
-            rows.append({
-                "evidence_class": evidence_class,
-                "name": str(rule.get("name") or "Unbenannter Kandidat"),
-                "effect": str(rule.get("expected_effect") or "Keine Wirkung behauptet."),
-                "risk": _system_evidence_text(rule.get("possible_side_effects")),
-                "restore": str(rule.get("backup_restore_requirement") or "Snapshot und Restore erforderlich."),
-            })
+    missing: set[str] = set()
+    exclusions: list[dict[str, object]] = []
+    for model in models:
+        if not isinstance(model, dict):
+            continue
+        explainability = model.get("explainability")
+        trace = explainability.get("compatibility") if isinstance(explainability, dict) else {}
+        model_missing = explainability.get("missing_evidence") if isinstance(explainability, dict) else []
+        if isinstance(model_missing, list):
+            missing.update(str(item) for item in model_missing if isinstance(item, str))
+        if isinstance(trace, dict):
+            matched_exclusions = [
+                item for item in trace.get("exclusions", [])
+                if isinstance(item, dict) and item.get("matched") is True
+            ]
+            if matched_exclusions:
+                exclusions.append({"rule_id": model.get("what_is_it"), "exclusions": matched_exclusions})
+        rows.append({
+            "evidence_class": f"FOUNDATION / {model.get('status') or 'UNKNOWN'}",
+            "name": str(model.get("title") or "Unbenannte Einstellung"),
+            "effect": str(model.get("what_can_change") or "Keine Wirkung behauptet."),
+            "risk": str(model.get("risk_notes") or "Nicht verfügbar."),
+            "restore": "Nur manuelle Guidance; kein Apply."
+            if isinstance(model.get("guidance"), dict) and model["guidance"].get("manual_action_required") is True
+            else "Keine automatische Änderung verfügbar.",
+        })
     return {
-        "profile_source": str(report["profile_source"]),
-        "performance_evidence": str(report["performance_evidence"]),
+        "profile_source": str(profile.get("profile_source") or "UNKNOWN"),
+        "performance_evidence": str(profile.get("performance_evidence") or "NOT_MEASURED"),
         "rows": rows,
-        "missing_input_data": [str(item) for item in report["missing_input_data"]],
-        "excluded_rules": [item for item in report["excluded_rules"] if isinstance(item, dict)],
+        "missing_input_data": sorted(missing),
+        "excluded_rules": exclusions,
     }
 
 
@@ -4079,11 +4099,12 @@ class AnalyzerShellApp:
         self.review_system_check_payload = payload
         if self.embedded_review is not None:
             self._refresh_embedded_review_boundary()
-        self._render_optimizer_evidence(payload)
         profile = profile_from_system_check(payload)
         if profile is not None:
             try:
-                self._render_optimizer_product(optimizer_product_view(profile, rules=matrix_pack_01_rules()))
+                product_view = optimizer_product_view(profile, rules=matrix_pack_01_rules())
+                self._render_optimizer_product(product_view)
+                self._render_optimizer_evidence(payload, product_view=product_view)
             except RulePackValidationError:
                 self._clear_optimizer_product()
                 status_message += " Matrix Pack 01 konnte nicht fail-closed validiert werden; keine Optimizerbewertung angezeigt."
@@ -4095,8 +4116,8 @@ class AnalyzerShellApp:
             return
         self.optimizer_system_result_view = view
 
-    def _render_optimizer_evidence(self, payload: dict[str, object]) -> None:
-        view = optimizer_evidence_view(payload)
+    def _render_optimizer_evidence(self, payload: dict[str, object], *, product_view: dict[str, object]) -> None:
+        view = optimizer_evidence_view(payload, product_view=product_view)
         if view is None:
             return
         # Preserve the existing evidence adapter, but do not make its matrix

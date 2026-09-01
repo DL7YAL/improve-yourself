@@ -5,6 +5,15 @@ from pathlib import Path
 import improve_yourself.workflow as workflow
 
 
+def test_v1_workflow_is_explicitly_legacy_and_names_the_canonical_v2_entrypoint() -> None:
+    assert workflow.WORKFLOW_SCHEMA == "iy.workflow/v1"
+    assert workflow.LEGACY_ENTRYPOINT == "iy-workflow"
+    assert workflow.CANONICAL_V2_ENTRYPOINT == "iy-demo-workflow"
+    source = Path(workflow.__file__).read_text(encoding="utf-8")
+    assert "legacy-compatible" in source
+    assert "canonical iy.replay/v2" in source
+
+
 def test_integrates_artifacts_and_writes_review_manifest(tmp_path: Path, monkeypatch) -> None:
     demo = tmp_path / "match.dem"
     demo.write_bytes(b"demo")

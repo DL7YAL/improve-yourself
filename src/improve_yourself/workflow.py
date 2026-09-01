@@ -1,3 +1,10 @@
+"""Explicit legacy-compatible iy.replay/v1 workflow.
+
+The public ``iy-workflow`` command remains supported for local V1
+compatibility.  New integrated replay work must use ``iy-demo-workflow``,
+which emits the canonical ``iy.replay/v2`` contract without this V1 export.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -14,6 +21,8 @@ from .service import analyze
 from .viewer import render_viewer
 
 WORKFLOW_SCHEMA = "iy.workflow/v1"
+LEGACY_ENTRYPOINT = "iy-workflow"
+CANONICAL_V2_ENTRYPOINT = "iy-demo-workflow"
 
 
 def _sha256(path: Path) -> str:
@@ -35,6 +44,7 @@ def run_workflow(
     pos_y: float = 0,
     scale: float = 1,
 ) -> Path:
+    """Run the explicit V1 compatibility workflow, never the canonical V2 path."""
     demo = demo.resolve()
     if not demo.is_file():
         raise FileNotFoundError(f"demo does not exist: {demo}")
@@ -84,7 +94,10 @@ def run_workflow(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run the integrated local Improve Yourself V1 workflow")
+    parser = argparse.ArgumentParser(
+        description="Run the legacy-compatible local Improve Yourself V1 workflow.",
+        epilog="For the canonical iy.replay/v2 workflow, use iy-demo-workflow.",
+    )
     parser.add_argument("demo", type=Path)
     parser.add_argument("--output", type=Path, default=Path("results/workflow"))
     parser.add_argument("--max-mib", type=int, default=2048)
