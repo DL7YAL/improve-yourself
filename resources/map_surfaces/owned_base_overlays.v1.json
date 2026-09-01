@@ -1,0 +1,16 @@
+{
+  "schema": "iy.map_surface/v1",
+  "surfaces": [
+    {
+      "map_id": "de_ancient",
+      "asset_path": "de_ancient/base_overlay.png",
+      "sha256": "55DA4F041436E50A4A788F2E1BBF5DE2652C20E621DFD89C3CA344C8139F3914",
+      "image": {"format": "png", "width": 1024, "height": 1024},
+      "asset_role": "base_overlay",
+      "source_classification": "OWN_IMPROVE_CANVA",
+      "distribution_status": "APPROVED_PRODUCT_ASSET",
+      "provenance": "Original Improve Yourself Base Overlay, created by the Improve Yourself team in Canva; visual presentation only.",
+      "presentation_only": true
+    }
+  ]
+}

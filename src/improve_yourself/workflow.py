@@ -30,10 +30,6 @@ def run_workflow(
     *,
     max_bytes: int = 2_000_000_000,
     max_frames: int = 256,
-    radar_path: Path | None = None,
-    pos_x: float = 0,
-    pos_y: float = 0,
-    scale: float = 1,
 ) -> Path:
     demo = demo.resolve()
     if not demo.is_file():
@@ -48,8 +44,7 @@ def run_workflow(
     state_path = run_directory / "review-state.json"
     load_or_create_review_state(state_path, source_hash, replay_payload["scenes"])
     viewer_path = render_viewer(
-        replay_path, run_directory / "viewer.html", radar_path=radar_path,
-        pos_x=pos_x, pos_y=pos_y, scale=scale,
+        replay_path, run_directory / "viewer.html",
     )
     review_path = render_review_surface(
         None, analysis_path, replay_path, viewer_path, run_directory / "review.html"
@@ -89,18 +84,13 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=Path("results/workflow"))
     parser.add_argument("--max-mib", type=int, default=2048)
     parser.add_argument("--max-frames", type=int, default=256)
-    parser.add_argument("--radar", type=Path)
-    parser.add_argument("--pos-x", type=float, default=0)
-    parser.add_argument("--pos-y", type=float, default=0)
-    parser.add_argument("--scale", type=float, default=1)
     args = parser.parse_args()
     if args.max_mib <= 0:
         parser.error("max-mib must be positive")
     try:
         result = run_workflow(
             args.demo, args.output, max_bytes=args.max_mib * 1024 * 1024,
-            max_frames=args.max_frames, radar_path=args.radar,
-            pos_x=args.pos_x, pos_y=args.pos_y, scale=args.scale,
+            max_frames=args.max_frames,
         )
     except (FileNotFoundError, ValueError, RuntimeError, json.JSONDecodeError) as error:
         parser.error(str(error))

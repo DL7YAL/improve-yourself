@@ -7,18 +7,6 @@ param(
     [string]$OutputRoot = 'results\workflow',
 
     [Parameter()]
-    [string]$Radar,
-
-    [Parameter()]
-    [double]$PosX = 0,
-
-    [Parameter()]
-    [double]$PosY = 0,
-
-    [Parameter()]
-    [double]$Scale = 1,
-
-    [Parameter()]
     [ValidateRange(1, 65535)]
     [int]$Port = 8765,
 
@@ -49,16 +37,6 @@ if (-not (Test-Path -LiteralPath $Demo -PathType Leaf)) {
     throw "Demo does not exist: $Demo"
 }
 $demoPath = (Resolve-Path -LiteralPath $Demo).Path
-if ($Radar) {
-    if (-not (Test-Path -LiteralPath $Radar -PathType Leaf)) {
-        throw "Radar does not exist: $Radar"
-    }
-    if ($Scale -le 0) {
-        throw 'Scale must be positive when a radar is supplied.'
-    }
-    $radarPath = (Resolve-Path -LiteralPath $Radar).Path
-}
-
 Push-Location $repositoryRoot
 try {
     if (-not $SkipSetup) {
@@ -80,15 +58,6 @@ try {
         '--max-mib', [string]$MaxMiB,
         '--max-frames', [string]$MaxFrames
     )
-    if ($Radar) {
-        $workflowArguments += @(
-            '--radar', $radarPath,
-            '--pos-x', $PosX.ToString([Globalization.CultureInfo]::InvariantCulture),
-            '--pos-y', $PosY.ToString([Globalization.CultureInfo]::InvariantCulture),
-            '--scale', $Scale.ToString([Globalization.CultureInfo]::InvariantCulture)
-        )
-    }
-
     Write-Host '==> Run local V1 workflow' -ForegroundColor Cyan
     $workflowOutput = @(& $workflowCli @workflowArguments)
     if ($LASTEXITCODE -ne 0) {

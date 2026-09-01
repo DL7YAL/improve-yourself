@@ -3,10 +3,11 @@ from __future__ import annotations
 import argparse
 import base64
 import json
-import mimetypes
 from pathlib import Path
 from typing import Any
 
+from .map_assets import MapAssetAssessment
+from .map_surfaces import map_surface_status_presentation
 from .replay import REPLAY_SCHEMA
 from .replay_contract import REPLAY_V2_SCHEMA
 from .replay_controller import ReplayController
@@ -30,58 +31,43 @@ def _validate_replay(payload: dict[str, Any]) -> None:
         raise ValueError("replay scenes must be a list")
 
 
-def _radar_data_uri(path: Path | None) -> str:
-    if path is None:
-        return ""
-    data = path.read_bytes()
-    mime = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
-    return f"data:{mime};base64,{base64.b64encode(data).decode('ascii')}"
-
-
 def visible_players_at_frame(players: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Hide only players explicitly reported dead by the canonical replay state."""
     return [player for player in players if player.get("alive") is not False]
 
 
-def render_viewer(
-    replay_path: Path,
-    output_path: Path,
-    *,
-    radar_path: Path | None = None,
-    pos_x: float = 0,
-    pos_y: float = 0,
-    scale: float = 1,
-    scenes: list[dict[str, Any]] | None = None,
-) -> Path:
+def three_d_geometry_status_presentation(assessment: MapAssetAssessment | None) -> dict[str, str]:
+    """Render only a supplied canonical 3D geometry-gate result."""
+    if assessment is None:
+        return {"state": "NOT PROVIDED", "label": "3D-lokale Geometrie nicht geprüft", "reason": "Für diese Ansicht wurde kein iy.map_asset/v1-Ergebnis bereitgestellt."}
+    if assessment.availability == "available":
+        return {"state": "AVAILABLE", "label": "3D-lokale Geometrie verfügbar", "reason": assessment.reason}
+    if assessment.availability == "missing":
+        return {"state": "MISSING", "label": "3D-lokale Geometrie fehlt", "reason": assessment.reason}
+    return {"state": "INVALID", "label": "3D-lokale Geometrie ungültig", "reason": assessment.reason}
+
+
+def _versioned_brand_asset_data_uri(filename: str, media_type: str) -> str:
+    """Embed only fixed, versioned product brand assets in the local viewer."""
+    asset_root = Path(__file__).resolve().parent / "assets"
+    permitted = {"improve-yourself-wordmark-v3.png": "image/png", "fonts/Inter-Variable.ttf": "font/ttf", "fonts/Orbitron-Variable.ttf": "font/ttf"}
+    if permitted.get(filename) != media_type:
+        raise ValueError("unsupported product brand asset")
+    return f"data:{media_type};base64,{base64.b64encode((asset_root / filename).read_bytes()).decode('ascii')}"
+
+
+def render_viewer(replay_path: Path, output_path: Path, *, scenes: list[dict[str, Any]] | None = None, map_asset_assessment: MapAssetAssessment | None = None) -> Path:
     payload = json.loads(replay_path.read_text(encoding="utf-8"))
     if payload.get("schema") == REPLAY_V2_SCHEMA:
         store = ReplayStore(replay_path)
         if scenes is not None:
-            store.manifest["scenes"] = [
-                {"scene_id": item["scene_id"], "round_number": item["round_number"],
-                 "tick": item["review_tick"], "end_tick": item["end_tick"],
-                 "focus_player_id": item.get("focus_player_id")}
-                for item in scenes
-            ]
+            store.manifest["scenes"] = [{"scene_id": item["scene_id"], "round_number": item["round_number"], "tick": item["review_tick"], "end_tick": item["end_tick"], "focus_player_id": item.get("focus_player_id")} for item in scenes]
         payload = build_tactical_2d_projection(store, ReplayController(store))
     _validate_replay(payload)
-    if radar_path is not None and scale <= 0:
-        raise ValueError("radar scale must be positive")
-
-    model = {
-        "replay": payload,
-        "radar": {
-            "data_uri": _radar_data_uri(radar_path),
-            "pos_x": pos_x,
-            "pos_y": pos_y,
-            "scale": scale,
-        },
-    }
-    # Escaping '<' prevents an embedded player name from closing the script tag.
-    model_json = json.dumps(model, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
-    html = _HTML.replace("__IY_VIEWER_MODEL__", model_json)
+    surface = map_surface_status_presentation(payload.get("map_name"))
+    model = {"replay": payload, "map_surface": {"state": surface.state, "label": surface.label, "reason": surface.reason, "data_uri": surface.data_uri, "transform": surface.transform, "canvas": surface.canvas}, "three_d_geometry": three_d_geometry_status_presentation(map_asset_assessment), "brand": {"wordmark_data_uri": _versioned_brand_asset_data_uri("improve-yourself-wordmark-v3.png", "image/png"), "inter_data_uri": _versioned_brand_asset_data_uri("fonts/Inter-Variable.ttf", "font/ttf"), "orbitron_data_uri": _versioned_brand_asset_data_uri("fonts/Orbitron-Variable.ttf", "font/ttf")}}
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(html, encoding="utf-8")
+    output_path.write_text(_HTML.replace("__IY_VIEWER_MODEL__", json.dumps(model, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")), encoding="utf-8")
     return output_path
 
 
@@ -89,54 +75,18 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Create a self-contained iy.replay/v1 or iy.replay/v2 2D viewer")
     parser.add_argument("replay", type=Path)
     parser.add_argument("--output", type=Path, default=Path("results/replay/viewer.html"))
-    parser.add_argument("--radar", type=Path)
-    parser.add_argument("--pos-x", type=float, default=0)
-    parser.add_argument("--pos-y", type=float, default=0)
-    parser.add_argument("--scale", type=float, default=1)
     args = parser.parse_args()
     try:
-        result = render_viewer(
-            args.replay, args.output, radar_path=args.radar,
-            pos_x=args.pos_x, pos_y=args.pos_y, scale=args.scale,
-        )
+        print(render_viewer(args.replay, args.output))
     except (FileNotFoundError, ValueError, json.JSONDecodeError) as error:
         parser.error(str(error))
-    print(result)
     return 0
 
 
-_HTML = r'''<!doctype html>
-<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Improve Yourself – 2D Replay</title>
-<style>
-:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#09111d;color:#e9f0fa}*{box-sizing:border-box}
-body{margin:0;padding:20px}.shell{max-width:1180px;margin:auto}.bar,.meta{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-h1{font-size:20px;margin:0 auto 0 0}.card{background:#111e30;border:1px solid #263851;border-radius:12px;padding:14px;margin-top:14px}
-button,select,input{accent-color:#62a8ff;background:#17283d;color:#fff;border:1px solid #3a506d;border-radius:7px;padding:7px}
-input[type=range]{flex:1;min-width:180px}.stage{position:relative;aspect-ratio:1;max-height:72vh;margin:auto}
-canvas{width:100%;height:100%;background:#07101a;border-radius:8px}.pill{color:#a9bed7;font-size:13px}.warn{color:#ffc56e}
-</style></head><body><main class="shell">
-<div class="bar"><h1>Improve Yourself · 2D Replay</h1><span id="map" class="pill"></span><span id="quality" class="pill"></span></div>
-<section class="card bar"><label>Szene <select id="scene"></select></label><button id="previous-scene">‹ Szene</button><button id="next-scene">Szene ›</button><button id="previous-frame">‹ Frame</button><button id="play">▶ Abspielen</button><button id="next-frame">Frame ›</button><label>Tempo <select id="speed"><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label><label id="player-wrap" hidden>Spieler <select id="player"></select></label><input id="frame" type="range" min="0" value="0"><span id="tick" class="pill"></span></section>
-<section class="card stage"><canvas id="canvas" width="1024" height="1024"></canvas></section>
-<section class="card meta"><span class="pill">T = orange · CT = blau · Linie = Blickrichtung</span><span class="pill">Spieler verschwinden nur bei explizit belegtem Todeszustand.</span><span id="notice" class="pill warn"></span></section><section class="card"><strong id="scene-info"></strong><div id="event-info" class="pill"></div></section>
-</main><script>const MODEL=__IY_VIEWER_MODEL__;
-const replay=MODEL.replay,radar=MODEL.radar,canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d');
-const sceneEl=document.querySelector('#scene'),frameEl=document.querySelector('#frame'),playEl=document.querySelector('#play'),speedEl=document.querySelector('#speed'),playerEl=document.querySelector('#player'),eventEl=document.querySelector('#event-info'),sceneInfoEl=document.querySelector('#scene-info');let playing=false,timer=null,img=null;
-const isV2=replay.source_schema==='iy.replay/v2',timingAvailable=!isV2||replay.controller.timing_available;
-document.querySelector('#map').textContent=replay.map_name;document.querySelector('#quality').textContent=isV2?`${replay.scenes.length} Szenen · gemeinsame Replay-Wahrheit v2`:`${replay.scenes.length} Szenen · ${replay.data_quality.omitted_incomplete_player_snapshots} ausgelassene Snapshots`;
-replay.scenes.forEach((s,i)=>sceneEl.add(new Option(`Runde ${s.round_number} · ${s.marker_player}`,i)));
-if(isV2){document.querySelector('#player-wrap').hidden=false;playerEl.add(new Option('Kein Spieler gewählt',''));replay.players.forEach(p=>playerEl.add(new Option(p.display_name,p.player_id)));if(!timingAvailable){playEl.disabled=true;playEl.textContent='▶ Zeitbasis nicht verfügbar';document.querySelector('#notice').textContent='Navigation ist exakt; automatische Wiedergabe ist ohne belegte Tickrate deaktiviert.'}}
-if(radar.data_uri){img=new Image();img.onload=draw;img.src=radar.data_uri}else document.querySelector('#notice').textContent='Kein Radar eingebettet – relative Weltansicht.';
-function scene(){return replay.scenes[Number(sceneEl.value)||0]}function frame(){return scene()?.frames[Number(frameEl.value)||0]}
-function project(p,players){if(img)return[(p.x-radar.pos_x)/radar.scale*canvas.width/img.naturalWidth,(radar.pos_y-p.y)/radar.scale*canvas.height/img.naturalHeight];
- const xs=players.map(q=>q.x),ys=players.map(q=>q.y),minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys),span=Math.max(maxX-minX,maxY-minY,1);return[100+(p.x-minX)/span*824,924-(p.y-minY)/span*824]}
-function draw(){ctx.clearRect(0,0,1024,1024);if(img)ctx.drawImage(img,0,0,1024,1024);else{ctx.strokeStyle='#1c3046';for(let n=0;n<=1024;n+=128){ctx.beginPath();ctx.moveTo(n,0);ctx.lineTo(n,1024);ctx.stroke();ctx.beginPath();ctx.moveTo(0,n);ctx.lineTo(1024,n);ctx.stroke()}}
- const f=frame();if(!f)return;const s=scene(),frameIndex=Number(frameEl.value),requested=frameIndex===0?(s.requested_tick??f.tick):f.tick,resolved=f.tick;document.querySelector('#tick').textContent=isV2?`Tick ${resolved} · angefordert ${requested} · Frame ${frameIndex+1}/${s.frames.length}`:`Tick ${f.tick} · Frame ${frameIndex+1}/${s.frames.length}`;sceneInfoEl.textContent=`Runde ${s.round_number} · ${s.marker_player}`;eventEl.textContent=typeof f.event_count==='number'?`${f.event_count} belegte Ereignisse am Snapshot.`:'Keine Ereignisdaten am Snapshot.';
- const visiblePlayers=f.players.filter(p=>p.alive!==false);for(const p of visiblePlayers){const [x,y]=project(p,visiblePlayers),color=p.side.toUpperCase()==='CT'?'#55aaff':'#ff9f43',a=p.yaw*Math.PI/180,selected=!playerEl.value||playerEl.value===p.player_id;ctx.globalAlpha=selected?1:.35;ctx.strokeStyle=color;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*34,y-Math.sin(a)*34);ctx.stroke();ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();ctx.font='16px system-ui';ctx.fillStyle='#fff';ctx.fillText(p.name,x+14,y-12)}ctx.globalAlpha=1}
-function step(delta){const max=Number(frameEl.max);frameEl.value=Math.min(max,Math.max(0,Number(frameEl.value)+delta));draw()}
-function reset(){playing=false;clearInterval(timer);playEl.textContent='▶ Abspielen';const s=scene();frameEl.max=Math.max(0,(s?.frames.length||1)-1);frameEl.value=0;draw()}
-sceneEl.onchange=()=>{const s=scene();if(isV2)playerEl.value=s.focus_player_id||'';reset()};playerEl.onchange=draw;frameEl.oninput=draw;document.querySelector('#previous-frame').onclick=()=>step(-1);document.querySelector('#next-frame').onclick=()=>step(1);document.querySelector('#previous-scene').onclick=()=>{sceneEl.value=Math.max(0,Number(sceneEl.value)-1);sceneEl.onchange()};document.querySelector('#next-scene').onclick=()=>{sceneEl.value=Math.min(replay.scenes.length-1,Number(sceneEl.value)+1);sceneEl.onchange()};playEl.onclick=()=>{if(!timingAvailable)return;playing=!playing;playEl.textContent=playing?'⏸ Pause':'▶ Abspielen';clearInterval(timer);if(playing)timer=setInterval(()=>{const max=Number(frameEl.max);frameEl.value=Number(frameEl.value)>=max?0:Number(frameEl.value)+1;draw()},100/Number(speedEl.value))};speedEl.onchange=()=>{if(playing){playEl.onclick();playEl.onclick()}};if(isV2)playerEl.value=scene()?.focus_player_id||'';reset();</script></body></html>'''
+_HTML = r'''<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Improve Yourself – 2D Tactical</title><style>
+:root{color-scheme:dark;font-family:ImproveInter,Inter,Segoe UI,system-ui,sans-serif;background:#050a11;color:#eaf4ff;--page:#050a11;--line:#12314a;--cyan:#27b9ff;--muted:#94aabe;--danger:#ff8f8f;--warning:#ffce7a;--ok:#72e4ad}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 76% 4%,#0b2a42 0,transparent 27%),var(--page)}.app-shell{min-height:100vh;display:grid;grid-template-columns:248px minmax(0,1fr)}.sidebar{padding:22px 14px;border-right:1px solid #0c2940;background:linear-gradient(180deg,#06101a,#071321 70%,#050b13)}.brand{height:77px;padding:4px 9px 20px;display:flex;align-items:center}.brand img{width:100%;max-width:198px;height:auto;object-fit:contain}.nav{display:grid;gap:6px}.nav-item{display:block;padding:13px 15px;border:1px solid transparent;border-radius:9px;color:#c4d4e3;font-size:15px}.nav-item.active{background:linear-gradient(90deg,#0c4874,#0a2136);border-color:#168fda;box-shadow:0 0 20px #0e83cb38;color:#fff}.nav-foot{margin-top:34px;padding:14px;border:1px solid #13314a;border-radius:9px;color:#8fa6ba;font-size:12px;line-height:1.55}.content{min-width:0;padding:22px 28px 32px}.app-header{display:flex;align-items:center;gap:18px;justify-content:space-between;padding:0 0 20px;border-bottom:1px solid #102d45}.eyebrow{margin:0 0 5px;color:var(--cyan);font:700 11px ImproveOrbitron,Orbitron,sans-serif;letter-spacing:.12em;text-transform:uppercase}.app-header h1{margin:0;font:500 31px ImproveOrbitron,Orbitron,sans-serif;letter-spacing:.01em}.app-header p{margin:6px 0 0;color:var(--muted);font-size:14px}.header-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.pill{color:#b7cce0;font-size:13px}.map-pill{padding:9px 11px;border:1px solid #173c58;border-radius:8px;background:#071725}.card{background:linear-gradient(145deg,#0a1b2b,#071420);border:1px solid var(--line);border-radius:12px}.viewer-grid{display:grid;grid-template-columns:206px minmax(0,1fr) 278px;gap:18px;margin-top:18px;align-items:start}.viewer-main{min-width:0}.context-panel,.side-panel{padding:16px}.context-panel h2,.side-panel h2{margin:0 0 14px;font:500 13px ImproveOrbitron,Orbitron,sans-serif;letter-spacing:.045em}.context-note,.side-row{padding:13px 0;border-top:1px solid #133149}.context-note:first-of-type,.side-row:first-of-type{border-top:0;padding-top:0}.context-label{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#dbeaff;font-size:13px}.unavailable-state{color:var(--warning);font-size:10px;font-weight:700;letter-spacing:.08em}.context-note p,.unavailable-detail p{margin:6px 0 0;color:var(--muted);font-size:12px;line-height:1.48}.status-card{margin:0 0 14px;padding:14px 16px;display:flex;gap:18px;align-items:center;justify-content:space-between;border-color:#174867;background:linear-gradient(125deg,#0a2235,#071522)}.surface-stage-label{margin:0 0 4px;color:var(--cyan);font:700 10px ImproveOrbitron,Orbitron,sans-serif;letter-spacing:.09em;text-transform:uppercase}.status-title{margin:0;font-size:15px}.status-reason{margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.4}.asset-state{flex:0 0 auto;font-size:12px;font-weight:700;letter-spacing:.08em;padding:8px 10px;border-radius:7px;border:1px solid}.asset-state.available{color:var(--ok);border-color:#1c754e;background:#0c3328}.asset-state.missing,.asset-state.not-provided{color:var(--warning);border-color:#765823;background:#33250c}.asset-state.invalid{color:var(--danger);border-color:#753332;background:#351314}.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:14px}button,select,input{accent-color:var(--cyan);background:#0a2032;color:#eef7ff;border:1px solid #214665;border-radius:7px;padding:8px 9px;font:inherit;font-size:13px}button:hover{border-color:var(--cyan)}input[type=range]{flex:1;min-width:170px}.stage{position:relative;aspect-ratio:1;max-height:72vh;margin:14px auto 0;padding:12px}.stage-inner{height:100%;border:1px solid #173c58;border-radius:8px;overflow:hidden;background:#06111b}canvas{width:100%;height:100%;background:#07101a}.meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:13px;margin-top:14px}.warn{color:var(--warning)}.scene-card{padding:14px;margin-top:14px}.scene-card strong{font-size:16px}.side-label{display:block;color:var(--muted);font-size:12px}.side-value{display:block;margin-top:4px;font-size:14px;color:#dbeaff}.unavailable-detail{margin-top:14px;padding-top:14px;border-top:1px solid #133149}@media(max-width:1180px){.viewer-grid{grid-template-columns:minmax(0,1fr) 258px}.context-panel{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.context-panel h2{grid-column:1/-1;margin-bottom:0}.context-note{border-top:0;padding:0}}@media(max-width:940px){.app-shell{grid-template-columns:1fr}.sidebar{border-right:0;border-bottom:1px solid #0c2940;padding:14px}.brand{height:auto;padding:5px 10px 12px}.nav{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}.nav-foot{display:none}.content{padding:18px}.viewer-grid{grid-template-columns:1fr}.context-panel{grid-column:auto;grid-template-columns:1fr}.context-panel h2{grid-column:auto}.side-panel{display:block}}@media(max-width:620px){.content{padding:15px}.app-header,.status-card{align-items:flex-start;flex-direction:column}.app-header h1{font-size:24px}.controls{align-items:stretch}.controls input[type=range]{width:100%}}</style></head>
+<body><div class="app-shell"><aside class="sidebar"><div class="brand"><img id="brand-wordmark" alt="Improve Yourself"></div><nav class="nav" aria-label="Produktbereiche"><span class="nav-item">Home</span><span class="nav-item">My Improvement</span><span class="nav-item">Improve Analyzer</span><span class="nav-item">Demo Analyzer</span><span class="nav-item active">2D Tactical</span><span class="nav-item">Improve Optimizer</span><span class="nav-item">Improve Benchmark</span><span class="nav-item">Einstellungen</span></nav><div class="nav-foot">Lokale Ansicht<br>Keine Cloud-Verbindung erforderlich.</div></aside><main class="content"><header class="app-header"><div><p class="eyebrow">Improve Yourself</p><h1>2D Tactical</h1><p>Replay-Ansicht mit nachvollziehbaren Karten- und Datenzuständen.</p></div><div class="header-meta"><span id="map" class="pill map-pill"></span><span id="quality" class="pill map-pill"></span></div></header><div class="viewer-grid"><aside class="card context-panel" aria-label="Taktischer Kontext"><h2>Kontext</h2><div class="context-note"><div class="context-label"><span>Filterdaten</span><span class="unavailable-state">NOT AVAILABLE</span></div><p>Keine kanonische Filterprojektion bereitgestellt.</p></div><div class="context-note"><div class="context-label"><span>Zusatzdaten</span><span class="unavailable-state">NOT AVAILABLE</span></div><p>Diese Ansicht zeigt ausschließlich belegte Replay-Zustände.</p></div></aside><div class="viewer-main"><section class="card status-card" aria-live="polite"><div><p class="surface-stage-label">Kartenfläche</p><h2 id="surface-label" class="status-title"></h2><p id="surface-reason" class="status-reason"></p></div><span id="surface-state" class="asset-state"></span></section><section class="card controls"><label>Szene <select id="scene"></select></label><button id="previous-scene">‹ Szene</button><button id="next-scene">Szene ›</button><button id="previous-frame">‹ Frame</button><button id="play">▶ Abspielen</button><button id="next-frame">Frame ›</button><label>Tempo <select id="speed"><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="2">2×</option></select></label><label id="player-wrap" hidden>Spieler <select id="player"></select></label><input id="frame" type="range" min="0" value="0"><span id="tick" class="pill"></span></section><section class="card stage"><div class="stage-inner"><canvas id="canvas" width="1024" height="1024"></canvas></div></section><section class="card meta"><span class="pill">T = orange · CT = blau · Linie = Blickrichtung</span><span class="pill">Spieler verschwinden nur bei explizit belegtem Todeszustand.</span><span id="notice" class="pill warn"></span></section><section class="card scene-card"><strong id="scene-info"></strong><div id="event-info" class="pill"></div></section></div><aside class="card side-panel"><h2>Status &amp; Details</h2><div class="side-row"><span class="side-label">Karten-ID</span><span id="side-map" class="side-value"></span></div><div class="side-row"><span class="side-label">Replay-Grundlage</span><span id="side-replay" class="side-value"></span></div><div class="side-row"><span class="side-label">2D-Kartenfläche</span><span id="side-surface" class="side-value"></span></div><div class="side-row"><span class="side-label">3D-lokale Geometrie</span><span id="side-geometry" class="side-value"></span></div><div class="unavailable-detail"><div class="context-label"><span>Ereignis-Timeline</span><span class="unavailable-state">NOT AVAILABLE</span></div><p>Keine kanonischen Ereignisdaten bereitgestellt.</p><div class="context-label" style="margin-top:13px"><span>Details</span><span class="unavailable-state">NOT AVAILABLE</span></div><p>Keine zusätzliche Detailprojektion bereitgestellt.</p></div></aside></div></main></div>
+<script>const MODEL=__IY_VIEWER_MODEL__;const replay=MODEL.replay,mapSurface=MODEL.map_surface,threeDGeometry=MODEL.three_d_geometry,brand=MODEL.brand,canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d');const fontStyle=document.createElement('style');fontStyle.textContent=`@font-face{font-family:ImproveInter;src:url(${brand.inter_data_uri}) format('truetype');font-display:swap}@font-face{font-family:ImproveOrbitron;src:url(${brand.orbitron_data_uri}) format('truetype');font-display:swap}`;document.head.append(fontStyle);document.querySelector('#brand-wordmark').src=brand.wordmark_data_uri;const sceneEl=document.querySelector('#scene'),frameEl=document.querySelector('#frame'),playEl=document.querySelector('#play'),speedEl=document.querySelector('#speed'),playerEl=document.querySelector('#player'),eventEl=document.querySelector('#event-info'),sceneInfoEl=document.querySelector('#scene-info');let playing=false,timer=null,img=null;const isV2=replay.source_schema==='iy.replay/v2',timingAvailable=!isV2||replay.controller.timing_available;document.querySelector('#map').textContent=replay.map_name||'UNKNOWN';document.querySelector('#side-map').textContent=replay.map_name||'UNKNOWN';document.querySelector('#quality').textContent=isV2?`${replay.scenes.length} Szenen · gemeinsame Replay-Wahrheit v2`:`${replay.scenes.length} Szenen · ${replay.data_quality.omitted_incomplete_player_snapshots} ausgelassene Snapshots`;document.querySelector('#side-replay').textContent=isV2?'iy.replay/v2':'iy.replay/v1';document.querySelector('#surface-label').textContent=mapSurface.label;document.querySelector('#surface-reason').textContent=mapSurface.reason;const surfaceStateEl=document.querySelector('#surface-state');surfaceStateEl.textContent=mapSurface.state;surfaceStateEl.classList.add(mapSurface.state.toLowerCase());document.querySelector('#side-surface').textContent=mapSurface.state;document.querySelector('#side-geometry').textContent=threeDGeometry.state;replay.scenes.forEach((s,i)=>sceneEl.add(new Option(`Runde ${s.round_number} · ${s.marker_player}`,i)));if(isV2){document.querySelector('#player-wrap').hidden=false;playerEl.add(new Option('Kein Spieler gewählt',''));replay.players.forEach(p=>playerEl.add(new Option(p.display_name,p.player_id)));if(!timingAvailable){playEl.disabled=true;playEl.textContent='▶ Zeitbasis nicht verfügbar';document.querySelector('#notice').textContent='Navigation ist exakt; automatische Wiedergabe ist ohne belegte Tickrate deaktiviert.'}}if(mapSurface.data_uri){img=new Image();img.onload=draw;img.src=mapSurface.data_uri}else document.querySelector('#notice').textContent='Keine zugelassene Base-Overlay-Fläche – neutrale Weltansicht.';function scene(){return replay.scenes[Number(sceneEl.value)||0]}function frame(){return scene()?.frames[Number(frameEl.value)||0]}function project(p,players){if(img&&mapSurface.transform&&mapSurface.canvas){const t=mapSurface.transform,c=mapSurface.canvas;return[(p.x-t.origin_world.x)/t.world_units_per_pixel*canvas.width/c.width,(t.origin_world.y-p.y)/t.world_units_per_pixel*canvas.height/c.height]}const xs=players.map(q=>q.x),ys=players.map(q=>q.y),minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys),span=Math.max(maxX-minX,maxY-minY,1);return[100+(p.x-minX)/span*824,924-(p.y-minY)/span*824]}function draw(){ctx.clearRect(0,0,1024,1024);if(img)ctx.drawImage(img,0,0,1024,1024);else{ctx.strokeStyle='#1c3046';for(let n=0;n<=1024;n+=128){ctx.beginPath();ctx.moveTo(n,0);ctx.lineTo(n,1024);ctx.stroke();ctx.beginPath();ctx.moveTo(0,n);ctx.lineTo(1024,n);ctx.stroke()}}const f=frame();if(!f)return;const s=scene(),frameIndex=Number(frameEl.value),requested=frameIndex===0?(s.requested_tick??f.tick):f.tick,resolved=f.tick;document.querySelector('#tick').textContent=isV2?`Tick ${resolved} · angefordert ${requested} · Frame ${frameIndex+1}/${s.frames.length}`:`Tick ${f.tick} · Frame ${frameIndex+1}/${s.frames.length}`;sceneInfoEl.textContent=`Runde ${s.round_number} · ${s.marker_player}`;eventEl.textContent=typeof f.event_count==='number'?`${f.event_count} belegte Ereignisse am Snapshot.`:'Keine Ereignisdaten am Snapshot.';const visiblePlayers=f.players.filter(p=>p.alive!==false);for(const p of visiblePlayers){const [x,y]=project(p,visiblePlayers),color=p.side.toUpperCase()==='CT'?'#55aaff':'#ff9f43',a=p.yaw*Math.PI/180,selected=!playerEl.value||playerEl.value===p.player_id;ctx.globalAlpha=selected?1:.35;ctx.strokeStyle=color;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+Math.cos(a)*34,y-Math.sin(a)*34);ctx.stroke();ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();ctx.font='16px ImproveInter,system-ui';ctx.fillStyle='#fff';ctx.fillText(p.name,x+14,y-12)}ctx.globalAlpha=1}function step(delta){const max=Number(frameEl.max);frameEl.value=Math.min(max,Math.max(0,Number(frameEl.value)+delta));draw()}function reset(){playing=false;clearInterval(timer);playEl.textContent='▶ Abspielen';const s=scene();frameEl.max=Math.max(0,(s?.frames.length||1)-1);frameEl.value=0;draw()}sceneEl.onchange=()=>{const s=scene();if(isV2)playerEl.value=s.focus_player_id||'';reset()};playerEl.onchange=draw;frameEl.oninput=draw;document.querySelector('#previous-frame').onclick=()=>step(-1);document.querySelector('#next-frame').onclick=()=>step(1);document.querySelector('#previous-scene').onclick=()=>{sceneEl.value=Math.max(0,Number(sceneEl.value)-1);sceneEl.onchange()};document.querySelector('#next-scene').onclick=()=>{sceneEl.value=Math.min(replay.scenes.length-1,Number(sceneEl.value)+1);sceneEl.onchange()};playEl.onclick=()=>{if(!timingAvailable)return;playing=!playing;playEl.textContent=playing?'⏸ Pause':'▶ Abspielen';clearInterval(timer);if(playing)timer=setInterval(()=>{const max=Number(frameEl.max);frameEl.value=Number(frameEl.value)>=max?0:Number(frameEl.value)+1;draw()},100/Number(speedEl.value))};speedEl.onchange=()=>{if(playing){playEl.onclick();playEl.onclick()}};if(isV2)playerEl.value=scene()?.focus_player_id||'';reset();</script></body></html>'''
 
 
 if __name__ == "__main__":
