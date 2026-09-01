@@ -1,0 +1,29 @@
+{
+  "schema": "iy.improve_3d_scene_presentation/v1",
+  "map_id": "de_anubis",
+  "purpose": "presentation_only",
+  "source_classification": "OWNED_IMPROVE_PROCEDURAL",
+  "output_state": "technical_only",
+  "visual_layers": {
+    "player_markers": "canonical_replay",
+    "view_directions": "canonical_replay",
+    "neutral_spatial_reference": "technical_only"
+  },
+  "future_reservations": {
+    "badge": "not_available",
+    "outbox": "not_available",
+    "discovery": "not_available"
+  },
+  "non_authority": [
+    "map_geometry",
+    "collision_authority",
+    "navmesh",
+    "callout_source",
+    "route_source",
+    "event_source",
+    "replay_source",
+    "camera_source",
+    "asset_gate_replacement",
+    "proprietary_asset_manifest"
+  ]
+}
