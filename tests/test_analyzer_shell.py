@@ -64,7 +64,7 @@ def test_optimizer_product_view_is_domain_driven_read_only_and_accepts_synthetic
     assert all(str(model["improve_recommendation"]).startswith("FIXTURE_ONLY") for model in view["models"])
 
 
-def test_optimizer_evidence_view_keeps_missing_cs2_state_explicit() -> None:
+def test_optimizer_evidence_view_keeps_only_foundation_missing_state_explicit() -> None:
     payload = {
         "schema": "iy.system_check/v1",
         "policy": {"read_only": True, "changes_applied": False},
@@ -78,8 +78,41 @@ def test_optimizer_evidence_view_keeps_missing_cs2_state_explicit() -> None:
     assert view is not None
     assert view["profile_source"] == "READ_ONLY_SYSTEM_CHECK"
     assert view["performance_evidence"] == "NOT_MEASURED"
-    assert "cs2.refresh_hz" in view["missing_input_data"]
-    assert any(row["evidence_class"] == "CONDITIONAL" for row in view["rows"])
+    assert "cs2.refresh_hz" not in view["missing_input_data"]
+    assert {"bios.version", "motherboard.product", "network.adapters", "windows.build"} <= set(view["missing_input_data"])
+    assert all(row["evidence_class"].startswith("FOUNDATION /") for row in view["rows"])
+
+
+def test_optimizer_evidence_view_uses_the_supplied_foundation_product_view() -> None:
+    payload = {
+        "schema": "iy.system_check/v1",
+        "policy": {"read_only": True, "changes_applied": False},
+        "checks": [],
+    }
+    supplied = {
+        "models": [{
+            "status": "NOT_AVAILABLE", "title": "Foundation-only evidence",
+            "what_can_change": "No inferred action.", "risk_notes": "NONE",
+            "guidance": {"manual_action_required": False},
+            "explainability": {"missing_evidence": ["cs2.refresh_hz"], "compatibility": {"exclusions": []}},
+        }],
+    }
+    view = optimizer_evidence_view(payload, product_view=supplied)
+    assert view is not None
+    assert view["missing_input_data"] == ["cs2.refresh_hz"]
+    assert view["rows"] == [{
+        "evidence_class": "FOUNDATION / NOT_AVAILABLE",
+        "name": "Foundation-only evidence",
+        "effect": "No inferred action.",
+        "risk": "NONE",
+        "restore": "Keine automatische Änderung verfügbar.",
+    }]
+
+
+def test_product_shell_does_not_import_the_evidence_evaluator() -> None:
+    source = (Path(__file__).parents[1] / "src" / "improve_yourself" / "analyzer_shell.py").read_text(encoding="utf-8")
+    assert "from .optimizer_evidence import evaluate_profile" not in source
+    assert "evaluate_profile(profile)" not in source
 
 
 def test_packaged_windows_default_output_is_stable_and_user_writable(monkeypatch: pytest.MonkeyPatch) -> None:
