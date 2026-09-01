@@ -143,6 +143,16 @@ def test_tactical_composition_uses_only_versioned_brand_assets_and_honest_unavai
         assert prohibited not in html
 
 
+def test_tactical_workspace_has_equal_outer_rails_for_a_centered_map_stage(tmp_path: Path) -> None:
+    source = tmp_path / "replay.json"
+    source.write_text(json.dumps(replay_payload()), encoding="utf-8")
+
+    html = render_viewer(source, tmp_path / "viewer.html").read_text(encoding="utf-8")
+
+    assert "grid-template-columns:278px minmax(0,1fr) 278px" in html
+    assert "grid-template-columns:206px minmax(0,1fr) 278px" not in html
+
+
 def test_rejects_wrong_schema(tmp_path: Path) -> None:
     source = tmp_path / "replay.json"
     source.write_text('{"schema":"wrong","coordinate_space":"cs2_world","scenes":[]}', encoding="utf-8")
