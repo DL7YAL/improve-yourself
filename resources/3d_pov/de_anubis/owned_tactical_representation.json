@@ -1,0 +1,22 @@
+{
+  "schema": "iy.improve_tactical_representation/v1",
+  "map_id": "de_anubis",
+  "purpose": "presentation_only",
+  "source_classification": "OWNED_IMPROVE_PROCEDURAL",
+  "player_markers": {
+    "mode": "procedural_marker",
+    "team_colors": {
+      "CT": [0.18, 0.68, 0.96, 1.0],
+      "T": [0.96, 0.54, 0.16, 1.0],
+      "unknown": [0.62, 0.66, 0.72, 1.0]
+    },
+    "badge_anchor": "not_available"
+  },
+  "outbox": {
+    "state": "not_available"
+  },
+  "discovery": {
+    "state": "not_available",
+    "slots": []
+  }
+}
