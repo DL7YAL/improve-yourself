@@ -17,6 +17,10 @@ from improve_yourself.analyzer_shell import (
     analysis_profile_criteria_view,
     dashboard_layout_metrics,
     default_output_root,
+    first_run_state_path,
+    initialize_local_workspace,
+    local_workspace_is_initialized,
+    local_workspace_root,
     optimizer_domain_overview,
     optimizer_evidence_view,
     optimizer_product_view,
@@ -124,6 +128,21 @@ def test_packaged_windows_default_output_is_stable_and_user_writable(monkeypatch
     )
 
 
+def test_first_run_local_workspace_is_created_only_after_explicit_initialization(tmp_path: Path) -> None:
+    output_root = tmp_path / "Improve Yourself" / "Experimental" / "results"
+    assert local_workspace_root(output_root) == tmp_path / "Improve Yourself" / "Experimental"
+    assert local_workspace_is_initialized(output_root) is False
+    assert output_root.exists() is False
+    assert initialize_local_workspace(output_root) == local_workspace_root(output_root)
+    assert output_root.is_dir()
+    assert local_workspace_is_initialized(output_root) is True
+    assert json.loads(first_run_state_path(output_root).read_text(encoding="utf-8")) == {
+        "schema": "iy.local_workspace/v1",
+        "storage": "LOCAL_ONLY",
+        "output_root": str(output_root),
+    }
+
+
 def test_experimental_shell_exposes_binding_product_sections_from_canonical_design_spec() -> None:
     assert tuple(UI_REFERENCE_STATUS) == (
         "Dashboard", "My Improvement", "Analyzer", "Reports",
@@ -138,8 +157,7 @@ def test_experimental_shell_exposes_binding_product_sections_from_canonical_desi
     assert "Demo Analyzer" not in SIDEBAR_NAVIGATION
     assert "Rules" not in SIDEBAR_NAVIGATION
     assert SIDEBAR_NAVIGATION == (
-        "Dashboard", "Analyzer", "Tactical Replay", "My Improvement",
-        "System Check / Optimizer", "Benchmark", "Reports", "Settings",
+        "Analyzer", "Tactical Replay", "System Check / Optimizer", "Benchmark", "Settings",
     )
 
 

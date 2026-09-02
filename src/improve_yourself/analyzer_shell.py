@@ -55,21 +55,18 @@ UI_REFERENCE_STATUS = {
 # selection, rules and review are internal tabs so they share one local replay
 # truth instead of presenting separate product modules.
 SIDEBAR_NAVIGATION = (
-    "Dashboard",
     "Analyzer",
     "Tactical Replay",
-    "My Improvement",
     "System Check / Optimizer",
     "Benchmark",
-    "Reports",
     "Settings",
 )
 
 # The visible wording is intentionally product-facing while the existing
 # internal page key remains stable.  This prevents a navigation-only release
 # task from changing the established read-only System Check/Optimizer route.
-_SIDEBAR_PRIMARY = SIDEBAR_NAVIGATION[:6]
-_SIDEBAR_SECONDARY = SIDEBAR_NAVIGATION[6:]
+_SIDEBAR_PRIMARY = SIDEBAR_NAVIGATION[:-1]
+_SIDEBAR_SECONDARY = SIDEBAR_NAVIGATION[-1:]
 
 _THEME = {
     # Final Home master calibration: near-black Navy surfaces lead. Blue is
@@ -517,15 +514,17 @@ class SidebarNavItem:
     controlled active/hover treatment without changing any page routing.
     """
 
-    def __init__(self, tk, parent, *, text: str, ui_font: str, command: Callable[[], None]) -> None:
+    def __init__(self, tk, parent, *, text: str, ui_font: str, command: Callable[[], None], compact: bool = False, indent: int = 0) -> None:
         self.tk = tk
         self.text = text
         self.ui_font = ui_font
         self.command = command
+        self.compact = compact
+        self.indent = indent
         self.active = False
         self.hovered = False
         self.canvas = tk.Canvas(
-            parent, height=54, background=_THEME["sidebar"], highlightthickness=0,
+            parent, height=42 if compact else 54, background=_THEME["sidebar"], highlightthickness=0,
             borderwidth=0, bd=0, takefocus=True,
         )
         self.canvas.bind("<Configure>", self._draw)
@@ -593,8 +592,10 @@ class SidebarNavItem:
         else:
             icon_color, label_color = "#5f8eaa", _THEME["muted"]
         icon, label = self.text[:1], self.text[1:].strip()
-        canvas.create_text(30, height // 2, text=icon, fill=icon_color, anchor="center", font=(self.ui_font, 13, "bold"))
-        canvas.create_text(54, height // 2, text=label, fill=label_color, anchor="w", font=(self.ui_font, 10, "bold" if self.active else "normal"))
+        icon_x = 30 + self.indent
+        label_x = 54 + self.indent
+        canvas.create_text(icon_x, height // 2, text=icon, fill=icon_color, anchor="center", font=(self.ui_font, 11 if self.compact else 13, "bold"))
+        canvas.create_text(label_x, height // 2, text=label, fill=label_color, anchor="w", font=(self.ui_font, 9 if self.compact else 10, "bold" if self.active else "normal"))
 
 
 class SidebarStatusPanel:
@@ -904,6 +905,52 @@ def default_output_root() -> Path:
         if local_app_data:
             return Path(local_app_data) / "Improve Yourself" / "Experimental" / "results"
     return Path("results/analyzer-shell")
+
+
+_FIRST_RUN_STATE_FILE = "first-run.json"
+_FIRST_RUN_SCHEMA = "iy.local_workspace/v1"
+
+
+def local_workspace_root(output_root: Path) -> Path:
+    """Return the user-visible local product folder, never creating it implicitly."""
+    return output_root.parent
+
+
+def first_run_state_path(output_root: Path) -> Path:
+    """Keep the once-only acknowledgement next to the local product data."""
+    return local_workspace_root(output_root) / _FIRST_RUN_STATE_FILE
+
+
+def local_workspace_is_initialized(output_root: Path) -> bool:
+    """Recognize only the explicit local acknowledgement written by this app."""
+    try:
+        payload = json.loads(first_run_state_path(output_root).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return payload == {
+        "schema": _FIRST_RUN_SCHEMA,
+        "storage": "LOCAL_ONLY",
+        "output_root": str(output_root),
+    }
+
+
+def initialize_local_workspace(output_root: Path) -> Path:
+    """Create the local workspace only after the user confirms first-run setup."""
+    workspace = local_workspace_root(output_root)
+    output_root.mkdir(parents=True, exist_ok=True)
+    first_run_state_path(output_root).write_text(
+        json.dumps(
+            {
+                "schema": _FIRST_RUN_SCHEMA,
+                "storage": "LOCAL_ONLY",
+                "output_root": str(output_root),
+            },
+            ensure_ascii=False,
+            indent=2,
+        ) + "\n",
+        encoding="utf-8",
+    )
+    return workspace
 
 
 def _enable_dark_titlebar(root) -> None:
@@ -1496,6 +1543,7 @@ class AnalyzerShellApp:
         self.tactical_scene_context = tk.StringVar(value="")
         self.tactical_scene_note = tk.StringVar(value="Keine Review-Notiz")
         self.tactical_frame_status = tk.StringVar(value="")
+        self.tactical_minimap_status = tk.StringVar(value="Kartenbasis: erst nach belegter Replay-Map")
         self.tactical_action_status = tk.StringVar(value="Tactical Replay wird aus einer Review-Szene geöffnet.")
         self.tactical_frame_index = 0
         self.tactical_zoom = 1.0
@@ -1518,10 +1566,17 @@ class AnalyzerShellApp:
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
         tk.Frame(sidebar, width=1, background=_THEME["line_soft"]).pack(side="right", fill="y")
-        brand_path = Path(__file__).with_name("assets") / "improve-yourself-wordmark-v3.png"
+        icon_path = Path(__file__).with_name("assets") / "improve-yourself-icon-v3.png"
+        wordmark_path = Path(__file__).with_name("assets") / "improve-yourself-wordmark-v3.png"
         try:
-            self.brand_image = tk.PhotoImage(file=str(brand_path)).subsample(3, 3)
-            tk.Label(sidebar, image=self.brand_image, background=_THEME["sidebar"]).pack(anchor="w", padx=20, pady=(24, 7))
+            # Keep the canonical horizontal lockup inside the fixed 243px sidebar.
+            # The wordmark is intentionally shown at native aspect ratio, never cropped.
+            self.brand_icon_image = tk.PhotoImage(file=str(icon_path)).subsample(8, 8)
+            self.brand_wordmark_image = tk.PhotoImage(file=str(wordmark_path)).subsample(4, 4)
+            brand_lockup = tk.Frame(sidebar, background=_THEME["sidebar"])
+            brand_lockup.pack(anchor="w", padx=20, pady=(24, 7))
+            tk.Label(brand_lockup, image=self.brand_icon_image, background=_THEME["sidebar"]).pack(side="left", padx=(0, 8))
+            tk.Label(brand_lockup, image=self.brand_wordmark_image, background=_THEME["sidebar"]).pack(side="left")
         except tk.TclError:
             ttk.Label(sidebar, text="IMPROVE\nYOURSELF", style="Card.TLabel", font=("Segoe UI", 17, "bold"), justify="left").pack(anchor="w", padx=20, pady=(26, 7))
         tk.Label(sidebar, text="EXPERIMENTAL BUILD", background=_THEME["sidebar"], foreground="#73bddf", font=(self.ui_font, 8, "bold")).pack(anchor="w", padx=21, pady=(0, 22))
@@ -1531,14 +1586,11 @@ class AnalyzerShellApp:
         self.page_hosts: dict[str, ttk.Frame] = {}
         self.nav_buttons: dict[str, SidebarNavItem] = {}
         nav_labels = {
-            "Dashboard": "⌂   Dashboard",
-            "My Improvement": "↗   My Improvement",
             "Analyzer": "◎   Analyzer",
-            "Reports": "▤   Reports",
             "System Check / Optimizer": "◈   Optimizer",
-            "Settings": "⚙   Settings",
-            "Tactical Replay": "⌖   Tactical Replay",
-            "Benchmark": "▱   Improve Benchmark",
+            "Settings": "⚙   Einstellungen",
+            "Tactical Replay": "⌖   2D Tactical",
+            "Benchmark": "▱   Benchmark",
         }
         for name in UI_REFERENCE_STATUS:
             host = ttk.Frame(content, style="Content.TFrame")
@@ -1602,6 +1654,19 @@ class AnalyzerShellApp:
             )
             button.pack(fill="x", padx=11, pady=2)
             self.nav_buttons[name] = button
+            if name == "Analyzer":
+                self.analyzer_subnav_buttons = {
+                    "Demo Analyzer": SidebarNavItem(
+                        tk, primary_navigation, text="›   Demo Analyzer", ui_font=self.ui_font,
+                        command=self._show_demo_analyzer_workspace, compact=True, indent=18,
+                    ),
+                    "Improve": SidebarNavItem(
+                        tk, primary_navigation, text="›   Improve", ui_font=self.ui_font,
+                        command=self._show_improve_workspace, compact=True, indent=18,
+                    ),
+                }
+                for subnav in self.analyzer_subnav_buttons.values():
+                    subnav.pack(fill="x", padx=11, pady=0)
 
         frame = self.pages["Analyzer"]
         analyzer_header = ttk.Frame(frame, style="Content.TFrame")
@@ -1761,6 +1826,68 @@ class AnalyzerShellApp:
         self._show_analyzer_tab("Übersicht")
         self._show_page("Analyzer", record_history=False)
         self.root.protocol("WM_DELETE_WINDOW", self._close)
+        self.root.after_idle(self._show_first_run_welcome)
+
+    def _show_first_run_welcome(self) -> None:
+        """Explain the local data boundary before the first product folder exists."""
+        if local_workspace_is_initialized(self.controller.output_root):
+            return
+        dialog = self.tk.Toplevel(self.root)
+        dialog.title("Willkommen bei Improve Yourself")
+        dialog.configure(background=_THEME["night"])
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        _enable_dark_titlebar(dialog)
+        if self.app_icon is not None:
+            dialog.iconphoto(True, self.app_icon)
+
+        card = self.ttk.Frame(dialog, style="Card.TFrame", padding=24)
+        card.pack(fill="both", expand=True, padx=16, pady=16)
+        self.ttk.Label(card, text="Willkommen bei Improve Yourself", style="Card.TLabel", font=(self.display_font, 17, "bold")).pack(anchor="w")
+        self.ttk.Label(card, text="LOCAL · PRIVATE · DEINE ENTSCHEIDUNG", style="PageKicker.TLabel").pack(anchor="w", pady=(4, 14))
+        self.ttk.Label(
+            card,
+            text=(
+                "Für lokale Analysen richtet Improve Yourself einen eigenen Ordner auf diesem PC ein. "
+                "Dort werden nur von dir bewusst ausgewählte Demos, Analyse-Ergebnisse, lokale Profile und Einstellungen gespeichert."
+            ),
+            style="Card.TLabel", wraplength=560, justify="left",
+        ).pack(anchor="w")
+        self.ttk.Label(
+            card,
+            text=(
+                "Es werden keine Demos automatisch gesucht oder hochgeladen. "
+                "Die Anwendung verändert keine Windows-, Netzwerk-, Treiber- oder Systemeinstellungen."
+            ),
+            style="Muted.TLabel", wraplength=560, justify="left",
+        ).pack(anchor="w", pady=(10, 12))
+        destination = str(local_workspace_root(self.controller.output_root).resolve())
+        self.ttk.Label(card, text="LOKALER SPEICHERORT", style="Card.TLabel", font=(self.ui_font, 8, "bold")).pack(anchor="w")
+        self.ttk.Label(card, text=destination, style="Muted.TLabel", wraplength=560, justify="left").pack(anchor="w", pady=(3, 16))
+        actions = self.ttk.Frame(card, style="Card.TFrame")
+        actions.pack(fill="x")
+
+        def cancel() -> None:
+            dialog.destroy()
+            self._close()
+
+        def confirm() -> None:
+            try:
+                workspace = initialize_local_workspace(self.controller.output_root)
+            except OSError as error:
+                self.status.set(f"Lokaler Ordner konnte nicht eingerichtet werden: {error}")
+                return
+            self.status.set(f"Lokaler Improve-Yourself-Ordner eingerichtet: {workspace}")
+            dialog.destroy()
+
+        self.ttk.Button(actions, text="Abbrechen", command=cancel).pack(side="right")
+        self.ttk.Button(actions, text="Lokalen Ordner einrichten", style="Primary.TButton", command=confirm).pack(side="right", padx=(0, 8))
+        dialog.protocol("WM_DELETE_WINDOW", cancel)
+        dialog.update_idletasks()
+        x = self.root.winfo_rootx() + max(0, (self.root.winfo_width() - dialog.winfo_reqwidth()) // 2)
+        y = self.root.winfo_rooty() + max(0, (self.root.winfo_height() - dialog.winfo_reqheight()) // 2)
+        dialog.geometry(f"+{x}+{y}")
 
     def _build_analyzer_result_projection(self, parent) -> None:
         """Build the reference-locked Analyzer result hierarchy.
@@ -1878,6 +2005,9 @@ class AnalyzerShellApp:
             button.configure(style="Primary.TButton" if name == tab_name else "TButton")
         if hasattr(self, "analyzer_canvas"):
             self.root.after_idle(lambda: self.analyzer_canvas.yview_moveto(0.0))
+        if hasattr(self, "analyzer_subnav_buttons"):
+            self.analyzer_subnav_buttons["Demo Analyzer"].set_active(tab_name == "Analyse" and self.current_page == "Analyzer")
+            self.analyzer_subnav_buttons["Improve"].set_active(False)
 
     def _render_analyzer_result_projection(self, result: ShellResult) -> None:
         if result.status != "READY_FOR_REVIEW":
@@ -2016,7 +2146,10 @@ class AnalyzerShellApp:
         elif name == "Tactical Replay" and self.embedded_tactical is None:
             self._show_tactical_empty_state()
         for page_name, button in self.nav_buttons.items():
-            button.set_active(page_name == name)
+            button.set_active(page_name == name or (page_name == "Analyzer" and name == "My Improvement"))
+        if hasattr(self, "analyzer_subnav_buttons"):
+            self.analyzer_subnav_buttons["Demo Analyzer"].set_active(name == "Analyzer" and self.analyzer_active_tab == "Analyse")
+            self.analyzer_subnav_buttons["Improve"].set_active(name == "My Improvement")
         self.history_button.configure(state="normal" if self.page_history else "disabled")
 
     def _go_back(self) -> None:
@@ -2030,6 +2163,15 @@ class AnalyzerShellApp:
         """Enter the one Analyzer workflow at its honest demo-preflight step."""
         self._show_page("Analyzer")
         self._show_analyzer_tab("Übersicht")
+
+    def _show_demo_analyzer_workspace(self) -> None:
+        """Route the sidebar sub-item into the existing unified Analyzer setup."""
+        self._show_page("Analyzer")
+        self._show_analyzer_tab("Analyse")
+
+    def _show_improve_workspace(self) -> None:
+        """Show the existing Improve projection without creating a second data source."""
+        self._show_page("My Improvement")
 
     def _build_dashboard_page(self) -> None:
         page = self.pages["Dashboard"]
@@ -2563,12 +2705,48 @@ class AnalyzerShellApp:
     def _open_library_workflow(self, manifest_path: Path | None, *, tactical: bool) -> None:
         if manifest_path is None:
             return
-        def opened() -> ShellResult:
-            return self.controller.open_existing_workflow(manifest_path)
-        def complete(result: ShellResult) -> None:
+        def opened() -> tuple[ShellResult, EmbeddedReviewSession | None, EmbeddedTacticalSession | None]:
+            result = self.controller.open_existing_workflow(manifest_path)
+            if not tactical:
+                return result, None, None
+            # Building a large Tactical projection can touch many canonical
+            # frames.  Keep that work off Tk's event thread; the UI receives
+            # only the already validated session below.
+            manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
+            flow_path = result.manifest_path.parent / manifest["artifacts"]["analysis_flow"]
+            review = EmbeddedReviewSession(
+                flow_path,
+                result.manifest_path.parent / "review-state.json",
+                result.source_sha256,
+                Cs2ReviewCoordinator(flow_path, result.source_demo_name or ""),
+            )
+            if not review.scenes:
+                raise ValueError("bibliotheksworkflow enthält keine Tactical-Szenen")
+            tactical_session = EmbeddedTacticalSession(
+                result.manifest_path.parent / manifest["artifacts"]["replay_v2"],
+                flow_path,
+                result.source_sha256,
+            )
+            tactical_session.select_scene(review.scenes[0].scene_id)
+            return result, review, tactical_session
+
+        def complete(prepared: tuple[ShellResult, EmbeddedReviewSession | None, EmbeddedTacticalSession | None]) -> None:
+            result, review, tactical_session = prepared
             self._finish_background(result, False)
-            if tactical:
-                self._open_review(); self._open_tactical_from_review()
+            if tactical and review is not None and tactical_session is not None:
+                self.embedded_review = review
+                self.embedded_tactical = tactical_session
+                self.embedded_scene_id = tactical_session.selected_scene_id
+                self.tactical_frame_index = 0
+                self.tactical_zoom = 1.0
+                self.tactical_pan = [0.0, 0.0]
+                self.tactical_back_button.configure(state="normal")
+                self.tactical_prev_button.configure(state="normal")
+                self.tactical_next_button.configure(state="normal")
+                self.tactical_action_status.set("Bibliotheksworkflow lokal geprüft und Tactical-Session im Hintergrund vorbereitet.")
+                self._show_tactical_runtime()
+                self._show_page("Tactical Replay")
+                self._draw_tactical_scene()
             else:
                 self._open_review()
         self.status.set("Bibliotheksanalyse wird erneut geprüft …")
@@ -2578,9 +2756,21 @@ class AnalyzerShellApp:
         try:
             result = operation()
         except Exception as error:
-            self.root.after(0, lambda: self.status.set("Bibliothekseintrag konnte nicht sicher geöffnet werden."))
+            self.root.after(
+                0,
+                lambda detail=str(error): self.status.set(
+                    f"Bibliothekseintrag konnte nicht sicher geöffnet werden: {detail}"
+                ),
+            )
         else:
-            self.root.after(0, lambda: complete(result))
+            self.root.after(0, lambda value=result: self._complete_library_operation(complete, value))
+
+    def _complete_library_operation(self, complete, result) -> None:
+        """Run a prepared library transition on Tk's thread with visible failure state."""
+        try:
+            complete(result)
+        except Exception as error:
+            self.status.set(f"Bibliotheksansicht konnte nicht geöffnet werden: {error}")
 
     def _relink_library_workflow(self, manifest_path: Path | None) -> None:
         if manifest_path is None:
@@ -3429,7 +3619,7 @@ class AnalyzerShellApp:
         frame_row = self.ttk.Frame(map_panel, style="CardInner.TFrame")
         frame_row.pack(fill="x", pady=(0, 8))
         self.ttk.Label(frame_row, text="POSITIONSFRAME", style="Card.TLabel").pack(side="left")
-        self.ttk.Label(frame_row, text="Kartenbasis: nur bei belegtem Asset", style="Muted.TLabel").pack(side="left", padx=(10, 0))
+        self.ttk.Label(frame_row, textvariable=self.tactical_minimap_status, style="Muted.TLabel").pack(side="left", padx=(10, 0))
         self.tactical_frame = self.ttk.Scale(frame_row, from_=0, to=0, command=self._set_tactical_frame)
         self.tactical_frame.pack(side="left", fill="x", expand=True, padx=10)
         self.ttk.Label(frame_row, textvariable=self.tactical_frame_status, style="Muted.TLabel").pack(side="right")
@@ -4003,13 +4193,28 @@ class AnalyzerShellApp:
             return
         canvas.delete("all")
         width, height = max(canvas.winfo_width(), 2), max(canvas.winfo_height(), 2)
-        for x in range(0, width, 80):
-            canvas.create_line(x, 0, x, height, fill="#183149")
-        for y in range(0, height, 80):
-            canvas.create_line(0, y, width, y, fill="#183149")
         if self.embedded_tactical is None:
             canvas.create_text(width / 2, height / 2, text="Szene im Analyzer Review auswählen", fill=_THEME["muted"])
             return
+        minimap = self.embedded_tactical.minimap
+        self.tactical_minimap_status.set(
+            f"{minimap.map_id} · {minimap.detail}"
+        )
+        if minimap.projection_available:
+            map_size = min(width, height) * 0.88 * self.tactical_zoom
+            map_x = (width - map_size) / 2 + self.tactical_pan[0]
+            map_y = (height - map_size) / 2 + self.tactical_pan[1]
+            canvas.create_rectangle(map_x, map_y, map_x + map_size, map_y + map_size, fill="#061523", outline="#168ec8", width=2)
+            for fraction in (0.25, 0.5, 0.75):
+                canvas.create_line(map_x + map_size * fraction, map_y, map_x + map_size * fraction, map_y + map_size, fill="#12344a")
+                canvas.create_line(map_x, map_y + map_size * fraction, map_x + map_size, map_y + map_size * fraction, fill="#12344a")
+            canvas.create_text(map_x + map_size / 2, map_y + map_size / 2 - 18, text="IMPROVE YOURSELF", fill="#1ba7e8", font=(self.display_font, 17, "bold"))
+            canvas.create_text(map_x + map_size / 2, map_y + map_size / 2 + 13, text="BENCHMARK", fill="#7fc7ef", font=(self.ui_font, 10, "bold"))
+            canvas.create_text(map_x + map_size / 2, map_y + map_size / 2 + 38, text=f"{minimap.map_id.upper()} · MAP ASSET NOT INCLUDED", fill=_THEME["muted"], font=(self.ui_font, 8, "bold"))
+        else:
+            map_size = 0.0
+            map_x = map_y = 0.0
+            canvas.create_text(width / 2, height / 2, text="Keine verifizierte Map-Projektion", fill=_THEME["muted"])
         scene = self.embedded_tactical.selected_scene()
         frames = scene.get("frames", ())
         if not frames:
@@ -4025,16 +4230,17 @@ class AnalyzerShellApp:
         if not players:
             canvas.create_text(width / 2, height / 2, text="Keine vollständigen Spielerpositionen in diesem Frame", fill=_THEME["muted"])
             return
-        xs, ys = [float(player["x"]) for player in players], [float(player["y"]) for player in players]
-        min_x, max_x, min_y, max_y = min(xs), max(xs), min(ys), max(ys)
-        span = max(max_x - min_x, max_y - min_y, 1.0)
-        base_scale = min(width, height) * 0.72 / span
-        scale = base_scale * self.tactical_zoom
-        center_x, center_y = (min_x + max_x) / 2, (min_y + max_y) / 2
         focus = scene.get("focus_player_id")
         for player in players:
-            x = width / 2 + (float(player["x"]) - center_x) * scale + self.tactical_pan[0]
-            y = height / 2 - (float(player["y"]) - center_y) * scale + self.tactical_pan[1]
+            projected = minimap.project(float(player["x"]), float(player["y"]))
+            if projected is None:
+                continue
+            map_position_x, map_position_y, in_bounds = projected
+            if not in_bounds:
+                continue
+            assert minimap.width is not None and minimap.height is not None
+            x = map_x + map_position_x / minimap.width * map_size
+            y = map_y + map_position_y / minimap.height * map_size
             color = "#55aaff" if str(player.get("side", "")).upper() == "CT" else "#ff9f43"
             radius = 10 if player.get("player_id") != focus else 14
             yaw = math.radians(float(player.get("yaw", 0.0)))
