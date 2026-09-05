@@ -1,4 +1,4 @@
-Warning: truncated output (original token count: 78336)
+Warning: truncated output (original token count: 78351)
 Total output lines: 1716
 
 # Codex
@@ -456,7 +456,7 @@ BRANCH: `dev/v1-foundation`
 CHANGED: Added `analysis_flow.py` (roster/starting line-ups, Full Demo/player selection, neutral profile, objective indicators/rules, context merge, timeline/JSON and required selection UI), `demo_workflow.py` (hash-bound real `.dem` orchestration and local review artifacts), two public CLIs and tests. Replay-v2 kill normalization now preserves evidenced headshot/penetration/through-smoke/attacker-blind qualifiers. Setup smokes seven CLIs. Added locked product decision, evidence doc and updated CURRENT/handoff. No fake results, suspect verdict, OBS/video/ML, Optimizer, benchmark, asset or 3D change.
 VERIFIED: 97/97 tests, dependency check, seven CLI smokes and diff check pass. Real 477-MB source hash `2d70058ba006…` completed through Awpy 2.0.2: Mirage, 30 rounds, 10 named players, observed 5 CT/5 T starting line-ups, 201 kills, 98 headshots, 30 entries, 21 smoke kills, 6 wallbangs, 19 bounded multi-kill combinations. 375 objective markers/rule matches merged into 97 scenes; explicit one-player selection produced 35 and deduplicated IDs. Timeline/JSON/HTML plus commands file generated; first scene is round 1/tick 6352 with `demo_gototick 6352`. Trade/info rules correctly remain disabled where timing/sound/context evidence is insufficient.
 DECISIONS: Standard engine is neutral and objective-anchor-only; weak single information indicators cannot emit scenes. CT/T are starting-line-up quick selectors within Player Select, not a third mode. Context is 128 ticks before/256 after, merge gap 96; two same-attacker kills within 320 ticks form the V1 multi-kill combination. Missing tick rate prevents trade inference. Generated match data stays ignored/local.
-OPEN: DONE is not claimed. With explicit user approval, the same hash-bound Mirage demo …38336 tokens truncated…, State, Rationale, Missing Data, vollständige Required-/Exclusion-Trace, Konflikte und berücksichtigte Evidence Records. Das Result ist read-only.
+OPEN: DONE is not claimed. With explicit user approval, the same hash-bound Mirage demo …38351 tokens truncated…lusion-Trace, Konflikte und berücksichtigte Evidence Records. Das Result ist read-only.
 FOUR DOMAINS / RESULTS: Sechs als FIXTURE/TEST markierte Regeln beweisen System, Graphics, Network, BIOS, Conditional/Exclusion und SECURITY_PERFORMANCE_TRADEOFF. Tests weisen RECOMMENDED, ALREADY_RECOMMENDED, CONDITIONAL, NO_CHANGE, INSUFFICIENT_EVIDENCE sowie eine explizit gematchte Exclusion nach. Fehlende Daten ergeben nie ein positives Result. Der Trade-off-Typ ist zwingend NO_CHANGE und kann nicht automatisch empfohlen oder angewendet werden.
 NETWORK: `OBSERVED_NETWORK_QUALITY` aus Network Quality Collector V1 wird als eigener Evidence-Pfad neben Configuration Evidence übergeben. Die Provenance stellt klar: Korrelation ist keine Konfigurationskausalität. Beobachtetes RTT/Jitter/Packet-Loss kann daher keine Adapterursache oder automatische Empfehlung erzeugen.
 UI CONTRACT: Das gemeinsame Detail-ViewModel liefert Optimizer/Improve-Empfehlungsgruppe, Domain, Titel, Zustand, Status, Erklärung, systemspezifische Begründung, Wirkung, Evidence/Gültigkeit, Risiko, Restore-Information, BIOS Guidance und Explainability. Fixtures werden explizit als `FIXTURE_ONLY — <state>` gekennzeichnet; `apply_available: false` ist fest.
@@ -887,4 +887,4 @@ NEXT: Nach Tristans Implementierungsauftrag zuerst die Canva-Exporte versioniere
 MODEL_PROFILE: luna
 MODEL_REASON: Eng begrenzte Bestandsaufnahme, Quellenzuordnung und technische Handoff-Dokumentation ohne Architektur- oder Runtime-Änderung.
 COMPUTER_USE: no
-COMMIT/PR: Branch `codex/prepare-canva-ui-authority`; Commit/PR noch nicht erstellt.
+COMMIT/PR: Lokaler Branch `codex/prepare-canva-ui-authority`; maßgeblich ist dessen `HEAD`. Noch nicht nach GitHub gepusht und kein PR erstellt.
