@@ -36,6 +36,13 @@ This file records decisions that should not be repeatedly reopened without a con
 - **Impact:** The Beast has discretion to include a small fixed set of common agent variants when implementation is cheap and clean. If it requires substantial extra work, asset handling, Workshop dependencies or troubleshooting, keep the current standard models and consider the item complete. This is a bonus/polish item and must not delay multi-map transitions, camera work, measurement quality or release readiness.
 - **Date:** 2026-08-17
 
+## ChatGPT model selection rule for local work — locked
+
+- **Decision:** For this repository and related local Codex work, use a fixed task-based model selection rule instead of ad hoc model choice. The default is `gpt-5.6-terra` for concept work, ideation and normal planning. Use `gpt-5.6-luna` for lightweight extraction, sorting, short summaries, small routine checks, quick edits and other low-risk preview work. Use `gpt-5.6-sol` with `high` reasoning for complex, multi-step implementation, benchmark planning, camera/layout coordination and other tasks that need higher accuracy without wasting the top-tier budget. Keep `gpt-5.5` only as a fallback.
+- **Reason:** The project benefits more from predictable, limit-aware model selection than from always choosing the strongest available model. Concept work needs breadth and clarity, while heavy multi-step work needs accuracy, and simple analysis should stay cheap. This keeps usage efficient and reduces unnecessary limit consumption.
+- **Impact:** When a new task arrives, first classify the task and then choose the model by the rule above. Do not jump to the strongest model by default. Do not treat this as a product feature change, cloud change or architecture change. It is a working rule for local Codex/ChatGPT-assisted project work and can be revised only by another explicit decision.
+- **Date:** 2026-09-06
+
 ## 3D / POV V1 view and replay boundary — locked
 
 - **Decision:** Tactical Replay V1 uses one canonical tick-based replay truth for 2D, First Person POV and one fixed Third-Person Analysis Camera. Evidence-qualified sightline visualization is mandatory V1 functionality. The Third-Person camera is a deterministic analysis preset, not a freecam/orbit/cinematic system. The views do not parse or independently reinterpret demo state, and missing state or map evidence is never invented.
