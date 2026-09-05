@@ -45,7 +45,7 @@ def main() -> int:
     selection = select_viewer_demo_state(
         store, controller, round_number=args.round_number, tick=args.tick, player_id=args.player,
     )
-    viewer_path = write_selected_2d_viewer(args.replay, args.two_d_output, selection)
+    viewer_path = write_selected_2d_viewer(store, controller, args.two_d_output, selection)
     assessment = assess_map_asset(args.manifest, store.manifest["source"]["map_id"])
     base = {
         "tick": selection.context.resolved_tick,

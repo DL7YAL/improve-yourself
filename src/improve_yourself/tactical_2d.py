@@ -25,13 +25,23 @@ def _sample_frames(frames: list[dict[str, Any]], maximum: int) -> list[dict[str,
 
 
 def build_tactical_2d_projection(
-    store: ReplayStore, controller: ReplayController, *, max_frames_per_scene: int = 256
+    store: ReplayStore,
+    controller: ReplayController,
+    *,
+    max_frames_per_scene: int = 256,
+    source_scenes: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Project canonical replay contexts into renderer-ready 2D scene data."""
+    initial = controller.snapshot()
     identities = {item["player_id"]: item for item in store.manifest["players"]}
-    scenes: list[dict[str, Any]] = []
-    for source_scene in store.manifest.get("scenes", []):
-        context = controller.seek_scene(source_scene["scene_id"])
+    projected_scenes: list[dict[str, Any]] = []
+    for source_scene in source_scenes if source_scenes is not None else store.manifest.get("scenes", []):
+        if source_scenes is None:
+            context = controller.seek_scene(source_scene["scene_id"])
+        else:
+            context = controller.seek(source_scene["round_number"], source_scene["tick"])
+            if source_scene.get("focus_player_id") is not None:
+                context = controller.select_player(source_scene["focus_player_id"])
         chunk = store.load_round(context.current_round)
         end_tick = source_scene.get("end_tick", source_scene["tick"])
         canonical_frames = [
@@ -62,12 +72,17 @@ def build_tactical_2d_projection(
                 })
             frames.append({
                 "tick": frame["tick"],
+                "timestamp_seconds": (
+                    frame["tick"] / context.tick_rate
+                    if context.timing_available and context.tick_rate is not None
+                    else None
+                ),
                 "players": sorted(players, key=lambda item: (item["side"], item["name"], item["player_id"])),
                 "event_count": len(frame.get("events", [])),
                 "utility_count": len(frame.get("utilities", [])),
             })
         focus = identities.get(context.selected_player_id or "", {})
-        scenes.append({
+        projected_scenes.append({
             "scene_id": source_scene["scene_id"],
             "round_number": context.current_round,
             "marker_player": focus.get("display_name", context.selected_player_id or "Kein eindeutiger Fokusspieler"),
@@ -78,8 +93,8 @@ def build_tactical_2d_projection(
             "end_tick": end_tick,
             "frames": frames,
             "canonical_frame_count": len(canonical_frames),
+            "renderable_frame_count": len(frames),
         })
-    initial = ReplayController(store).snapshot()
     return {
         "schema": TACTICAL_2D_PROJECTION_SCHEMA,
         "source_schema": store.manifest["schema"],
@@ -101,5 +116,5 @@ def build_tactical_2d_projection(
         "players": list(store.manifest["players"]),
         "data_quality": store.manifest.get("data_quality", {}),
         "sampling": {"method": "event_preserving_uniform", "max_frames_per_scene": max_frames_per_scene},
-        "scenes": scenes,
+        "scenes": projected_scenes,
     }
