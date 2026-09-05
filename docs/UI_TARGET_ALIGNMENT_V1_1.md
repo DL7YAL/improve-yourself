@@ -1,5 +1,9 @@
 # UI Target Alignment & Consolidation Pass V1.1
 
+> **HISTORICAL / SUPERSEDED 2026-09-05:** Do not reuse the visual priority in
+> this report. Canva design `DAHUBn5D2aM`, revision 25, is the sole visual
+> authority.
+
 ## Authority and boundary
 
 This pass uses the current branch as the functional truth and

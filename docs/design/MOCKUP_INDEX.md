@@ -2,6 +2,11 @@
 
 ## Source status
 
+**SUPERSEDED INDEX:** This file describes historical references only. Since
+2026-09-05, Canva design `DAHUBn5D2aM` (`Versuch.nr1`), revision 25, is the
+sole visual authority. Do not implement the former Pack `MASTER` files or the
+concept PDF from the mappings below.
+
 `Improve_Yourself_Concept_Preview_Discord_Q98.pdf` is checked into this
 directory as historical concept context. The UI Reference Pack v1.0.0 is the
 binding screen-level authority: its `MASTER` files supersede older target

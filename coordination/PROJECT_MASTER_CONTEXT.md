@@ -3,6 +3,15 @@
 Stand: 2026-08-29
 Status: canonical coordination truth for active V1 planning
 
+## Visual authority override — 2026-09-05
+
+Canva design `DAHUBn5D2aM` (`Versuch.nr1`), revision 25, is the sole binding
+visual source. Page 1 is the shell/Dashboard template; pages 2–7 are the module
+visual family and page 8 is the brand reference. Every prior PDF, UI Reference
+Pack and Optimizer `MASTER` is SUPERSEDED and must not be implemented. Current
+tested functionality, canonical data authority and safety boundaries still
+override illustrative Canva values and unsupported actions.
+
 ## 1. Current product direction
 
 V1 is in consolidation, not feature-expansion mode. Existing functionality is to be bounded, simplified where justified, integrated, verified, and completed. No broad UI redesign is active now; final visual alignment is deferred until the V1 module outputs are fixed.

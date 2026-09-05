@@ -4,6 +4,14 @@ This file records decisions that should not be repeatedly reopened without a con
 
 ## Current decisions
 
+- **Visual authority (locked 2026-09-05):** Canva design `DAHUBn5D2aM`
+  (`Versuch.nr1`), revision 25, is the sole UI visual authority. Page 1 controls
+  the shared shell and Dashboard; pages 2–7 control module direction and page
+  8 branding. All earlier PDF, UI Reference Pack and Optimizer `MASTER`
+  references are `SUPERSEDED` with zero implementation priority. Their files
+  remain only for history. Current functional and safety contracts override
+  illustrative Canva data or unsupported actions.
+
 - The product must not become a Leetify/Stats-style clone.
 - Prefer a curated product line over many user options.
 - Analysis and explanation matter more than raw statistics.

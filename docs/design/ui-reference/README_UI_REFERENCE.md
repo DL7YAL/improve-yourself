@@ -1,10 +1,15 @@
 # Improve Yourself — UI Reference Pack v1.0.0
 
-This folder is the **visual source of truth** for Improve Yourself UI work.
+This folder is **SUPERSEDED archival material** and has no visual authority.
+
+Since 2026-09-05 the sole visual authority is Canva design `DAHUBn5D2aM`
+(`Versuch.nr1`), revision 25, recorded in
+`../CANVA_UI_AUTHORITY_CANDIDATE.json`. None of the images in this directory
+may be used as an implementation or visual-acceptance target.
 
 ## Authority
 
-- `*_MASTER.png` files are implementation and visual-acceptance references.
+- Former `*_MASTER.png` filenames are historical only; their former status is revoked.
 - `*_SUPERSEDED.png` files are historical only and **must not** be used as implementation targets.
 - Do **not** reconstruct a screen from the Concept Preview PDF when a matching MASTER PNG exists.
 - Example/mockup values in the images are not product rules. Runtime data, evidence, safety boundaries, and implemented feature truth override example content.

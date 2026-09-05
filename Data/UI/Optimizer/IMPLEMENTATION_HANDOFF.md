@@ -1,5 +1,9 @@
 # Optimizer MASTER Implementation Handoff
 
+> **SUPERSEDED 2026-09-05:** Do not execute this handoff. It has zero visual
+> priority. Use `docs/design/CANVA_UI_MIGRATION_HANDOFF.md` and Canva design
+> `DAHUBn5D2aM`, revision 25.
+
 ## Package location
 
 `Data/UI/Optimizer/`

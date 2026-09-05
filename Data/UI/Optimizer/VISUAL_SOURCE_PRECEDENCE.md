@@ -1,6 +1,10 @@
 # Optimizer Visual Source Precedence
 
-## Binding rule
+> **SUPERSEDED 2026-09-05:** This package has no remaining visual priority.
+> Canva design `DAHUBn5D2aM`, revision 25, is the sole visual authority.
+> The historical rule below must not be used for implementation.
+
+## Historical binding rule
 
 **FIGMA UI MASTER = ALLEINIGE VISUELLE QUELLE.**
 

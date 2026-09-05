@@ -1,6 +1,12 @@
 # UI Reference Pack Policy
 
-Status: **binding reference hierarchy — Pack v1.0.0 verified locally**
+Status: **SUPERSEDED — zero implementation priority since 2026-09-05**
+
+> **Binding replacement:** Canva design `DAHUBn5D2aM` (`Versuch.nr1`),
+> revision 25, as recorded in
+> `docs/design/CANVA_UI_AUTHORITY_CANDIDATE.json`, is the sole visual authority.
+> Every former Pack `MASTER` is archival and prohibited as an implementation or
+> acceptance target. The historical rules below are retained only as evidence.
 
 ## Authority order
 

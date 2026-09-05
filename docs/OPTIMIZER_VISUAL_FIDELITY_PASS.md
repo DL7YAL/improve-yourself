@@ -2,6 +2,10 @@
 
 Status: **final Portable runtime reviewed — `WAITING_FOR_TRISTAN`**
 
+> **HISTORICAL / SUPERSEDED 2026-09-05:** The MASTER references assessed in
+> this report have no current visual authority. New UI work must use Canva
+> design `DAHUBn5D2aM`, revision 25.
+
 ## Scope lock
 
 This pass changes only the visible treatment of the approved Optimizer pilot:

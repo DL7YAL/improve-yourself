@@ -6,9 +6,11 @@ Canonical standard theme: **Midnight / Metallic Blue**.
 
 The interface should feel technical, calm, precise and mature. Metallic does **not** mean glow, chrome, neon or animated shine. It means subtle tonal changes across dark blue surfaces, comparable to automotive metallic paint under different viewing/light conditions: restrained highlights, depth and reflection cues without becoming decorative.
 
-The UI Reference Pack v1.0.0 is the binding screen-level evidence. Its
-`MASTER` files define the target for their named screens; `SUPERSEDED` files
-must not be implemented. Variant 3 is binding for the app-wide upper shell,
+Canva design `DAHUBn5D2aM` (`Versuch.nr1`), revision 25, is the binding
+screen-level evidence as recorded in `CANVA_UI_AUTHORITY_CANDIDATE.json`.
+Page 1 controls the app-wide shell and Dashboard; pages 2–7 provide the module
+visuals and page 8 the brand treatment. All old UI Reference Pack `MASTER`
+files are SUPERSEDED and must not be implemented. The Canva source is binding for the app-wide upper shell,
 branding, header transition and shared navigation. The older
 `Improve_Yourself_Concept_Preview_Discord_Q98.pdf` remains historical concept
 context only where it is not superseded by a Pack `MASTER`. Midnight/Metallic

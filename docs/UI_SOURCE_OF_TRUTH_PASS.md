@@ -1,5 +1,9 @@
 # UI Visual Source-of-Truth Pass
 
+> **HISTORICAL / SUPERSEDED 2026-09-05:** The visual targets in this report
+> have no current authority. Canva design `DAHUBn5D2aM`, revision 25, is the
+> sole visual source for new implementation and acceptance.
+
 Status: **final Portable runtime inspected; not accepted as a global visual PASS** on `dev/v1-foundation`.
 
 The current branch remains the functional truth.  Pages 03 (Home), 05 (Demo

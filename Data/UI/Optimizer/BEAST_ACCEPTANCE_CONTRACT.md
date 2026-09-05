@@ -1,5 +1,8 @@
 # Beast Optimizer Visual Acceptance Contract
 
+> **SUPERSEDED 2026-09-05:** This acceptance contract must not be used for new
+> UI work. Canva design `DAHUBn5D2aM`, revision 25, is the visual authority.
+
 ## Scope
 
 Visual acceptance covers only Optimizer Overview and System Optimizer Detail.
