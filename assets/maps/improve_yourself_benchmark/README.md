@@ -35,9 +35,16 @@ multi-map transition contract described below.
 ## Scope
 
 Only the authoritative project-authored map and controller are versioned here.
-Compiled VPKs, caches, logs, older backups, Valve example content, Valve type
-definitions, post-processing defaults, sound events, and audio files remain
-outside this repository.
+Compiled VPKs, caches, logs, older backups, copied Valve source/binary assets,
+Valve type definitions, post-processing defaults, sound events, and audio files
+remain outside this repository. The versioned VMAP may reference original
+Valve/CS2 runtime assets available through the installed game and official CS2
+Workshop Tools; those references do not transfer ownership and must not become
+independently packaged product assets.
+
+The binding rights, provenance, branding, packaging, and Nuke authoring boundary
+is defined in [`ASSET_RIGHTS.md`](ASSET_RIGHTS.md). It applies before introducing
+or changing any visually relevant Workshop asset reference.
 
 Use `tools/benchmark/Sync-BenchmarkAddon.ps1` to verify an installed Workshop
 Tools addon against `source-manifest.json`. Its default mode is read-only; the

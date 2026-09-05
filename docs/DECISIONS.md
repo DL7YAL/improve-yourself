@@ -22,6 +22,13 @@ This file records decisions that should not be repeatedly reopened without a con
 - **Impact:** These transitions are an essential benchmark design and acceptance criterion, not optional polish. A transition is not considered finished if a normal viewer immediately perceives a hard map cut. The current `nuke_outside`, `ancient_b` and `inferno_apps_a` controller scenes must be refined to implement and validate this continuous camera concept without compromising reproducibility of the measured sections.
 - **Date:** 2026-08-16
 
+## Benchmark Workshop asset rights and branding boundary — locked
+
+- **Decision:** The benchmark remains a CS2 Workshop addon. Original Nuke Outside, Ancient B and Inferno Apps / Second Mid are the sole references for their corresponding scenes. For authentic visuals and representative CS2 workload, the addon may reference original Valve/CS2 assets available through the installed game and official CS2 Workshop Tools. Improve Yourself acquires no rights in those assets; all Valve and third-party rights remain with their respective owners.
+- **Boundary:** Prefer installed runtime references. Do not extract Valve VPK content for this workflow, copy Valve assets into the repository, package them in the standalone Improve Yourself application, claim ownership, or imply Valve endorsement. Improve Yourself branding and original supplemental content remain visibly distinct and provenance-tracked. Unknown origin is fail-closed.
+- **Distribution:** The Workshop benchmark and the standalone Improve Yourself product remain separate. Publication, monetization, commercial integration, or distribution outside the CS2 Workshop context requires a fresh terms and legal/release review. The complete binding policy and Nuke application gate are in `assets/maps/improve_yourself_benchmark/ASSET_RIGHTS.md`.
+- **Date:** 2026-09-05
+
 ## Benchmark agent-model variety — optional, cost-bounded
 
 - **Decision:** The benchmark may use a fixed, visually varied selection of common CT/T agent models instead of only standard bot models, but only when The Beast judges the change to be low-cost, reliable and free of meaningful new asset, dependency or reproducibility risk. The selection must be deterministic across benchmark runs; no random model assignment. Full coverage of every available agent model is explicitly out of scope.
