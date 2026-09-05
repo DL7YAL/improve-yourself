@@ -1700,3 +1700,27 @@ MODEL_PROFILE: terra
 MODEL_REASON: Kontrollierte Konfliktauflösung mit V2-Architekturschutz und isolierter optionaler Infrastruktur.
 COMPUTER_USE: no
 COMMIT/PR: Merge-Commit folgt auf `codex/integrate-main-dev-v1`.
+
+# Handoff 2026-09-05 — Benchmark Workshop asset-rights boundary
+
+STATUS: PASS
+TASK: Die vom Projektinhaber festgelegte Rechte-, Marken-, Provenienz- und Paketierungsgrenze fuer den CS2-Workshop-Benchmark verbindlich dokumentieren. Keine visuelle Nuke-Umsetzung und keine Aenderung am Benchmark-VMAP oder Controller.
+BRANCH / BASE: `codex/benchmark-workshop-asset-rights-v1`, frisch von live verifiziertem `origin/main` `7b9764c56ee5c5331da97b73df3b90aec3f93e24`.
+DECISION: Die Workshop-Szenen verwenden ausschliesslich die jeweiligen Originalkarten als visuelle, raeumliche und Workload-Referenz. Innerhalb des installierten Spiels und der offiziellen CS2 Workshop Tools duerfen originale Valve/CS2-Runtime-Assets referenziert werden. Improve Yourself erwirbt daran keinerlei Rechte. VPK-Extraktion, Repository-Kopien, eigenstaendige Paketierung, Eigentumsbehauptungen und eine suggerierte Valve-Bestaetigung bleiben ausgeschlossen. Improve-Originale und Markenbestandteile bleiben getrennt, eindeutig gekennzeichnet und provenienzpflichtig; unbekannte Herkunft ist fail-closed.
+CHANGED:
+- `assets/maps/improve_yourself_benchmark/ASSET_RIGHTS.md`: bindende Rechte-/Branding-Grenze, Rechteklassen und Pflichtfelder fuer Asset-Provenienz, getrennte Workshop-/Standalone-Paketierung sowie das konkrete Nuke-Outside-Anwendungsgate.
+- `assets/maps/improve_yourself_benchmark/README.md`: Scope an erlaubte installierte Runtime-Referenzen und ausgeschlossene Asset-Kopien/Pakete angeglichen.
+- `docs/DECISIONS.md`: Projektentscheidung als LOCKED verankert.
+- `coordination/agents/codex.md`: dieser Abschluss-Handoff.
+VERIFIED:
+- Live-`origin/main`, Base-HEAD, alle lokalen Worktrees, Dirty-Staende, `coordination/ACTIVE_WORK.md`, relevante Architektur-/Entscheidungsdokumente sowie offene PRs und deren Dateilisten vor der Aenderung geprueft.
+- Offener PR #27 hat keinen Datei-Overlap mit diesem Arbeitsumfang. `coordination/ACTIVE_WORK.md` bleibt wegen Azure-Zustaendigkeit und PR-Overlap unveraendert.
+- Manifest und bestehende Benchmark-Quellen bleiben unveraendert; beide SHA-256-Bindungen sind im Abschlussgate bestaetigt.
+- Dokument-/Link-/Policy-Gate, Whitespace-Pruefung, `git diff --check`, Security-/Privacy-/Artefaktpruefung und finaler Scope-Diff: PASS.
+ARCHITECTURE: Keine Aenderung an AnalyzerCore, AnalyzerDataHub, `iy.replay/v2`, ReplayStore, ReplayController, Tactical Replay, Optimizer, Azure, VMAP oder Benchmark-Controller. Workshop-Referenzen werden ausdruecklich nicht zu Standalone-Produktassets.
+OPEN: Diese Projektregel ist keine Rechtsberatung und keine Valve-Freigabe. Vor Veroeffentlichung, Monetarisierung, kommerzieller Integration oder Verteilung ausserhalb des CS2-Workshop-Kontexts muessen die dann aktuellen Bedingungen und der konkrete Release rechtlich geprueft werden. Die visuelle Umsetzung von Nuke Outside wurde nicht begonnen.
+NEXT: Nach einem ausdruecklichen Umsetzungsauftrag die aktuellen Nuke-Outside-Runtime-Referenzen in den Workshop Tools inventarisieren, jeden eingefuehrten Assetpfad klassifizieren, die bestehende deterministische Route und Uebergangslogik erhalten, Improve-Branding in eigenem Namespace setzen und anschliessend Full Compile, markerbezogene Sichtpruefung sowie uncapped Performance-Baseline ausfuehren.
+MODEL_PROFILE: luna
+MODEL_REASON: Eng begrenzte Dokumentations- und Vertragsverankerung ohne Code- oder Runtime-Aenderung.
+COMPUTER_USE: no
+COMMIT/PR: Der lokale Commit dieses dokumentierten Stands ist vom Projektinhaber freigegeben und folgt unmittelbar. Kein Push, PR oder Merge.
