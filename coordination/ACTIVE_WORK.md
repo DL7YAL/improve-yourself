@@ -30,21 +30,22 @@ Task: 3d-pov-anubis-render-ready-prep
 Branch: azure/3d-pov-anubis-prep
 Status: PASS / STALE — merged through PR #21; shared original/permissive fallback assets and render-ready contracts remain reusable static preparation only.
 
-## Azure — current task
-
 Task: 3d-pov-mirage-prep-v2
 Branch: azure/3d-pov-mirage-prep-v2
-Base HEAD: ce743519d073a6f2cc09355f89da572753fdc0a4
+Status: PASS / STALE — remote branch HEAD `43f9b40` is fully contained in GitHub `main`; the former file ownership and validation handoff are no longer active.
+
+## Current tasks
+
+### Codex
+
+Task: project-truth-sync-v1
+Branch: codex/project-truth-sync-v1
 Owned files:
 - coordination/ACTIVE_WORK.md
-- resources/3d_pov/de_mirage/**
-- tools/pov_prep_data/validate.py
-- tools/dev/Build-LocalAnubisAsset.py
-- tests/pov_prep_data/test_mirage_pov_prep.py
-Status: BLOCKED — static prep and Beast handoff are committed; Azure/MCP has no command-execution capability to run the required pytest/validator/compile/diff checks. Beast must execute the listed static validations before PR readiness.
-Depends on Codex: NO
-Handoff required: YES — Beast must execute only through existing ReplayStore → ReplayController → ReplayRendererSession → PandaReplayRenderer and iy.map_asset/v1.
-Scope: Mirage static provenance/prep, generic local-asset-builder map ID support, targeted static validation, and local execution handoff. No protected replay/runtime/controller/renderer implementation, parser, DataHub, cloud, or Azure-resource changes.
+- coordination/CURRENT.md
+Status: REVIEW — stale PR #7 and Azure Mirage ownership entries are reconciled with GitHub; awaits PR review.
+
+No active Azure task is recorded here.
 
 ## Rules
 
