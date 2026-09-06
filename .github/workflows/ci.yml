@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - main
+      - chore/github-ci-hardening-v1
   workflow_dispatch:
 
 permissions:
