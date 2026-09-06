@@ -29,6 +29,22 @@ This repository is the shared source of truth for Codex work on Improve Yourself
 - Proof Yourself must remain neutral: no artificial funnels, cross-product ads, unlock banners, or forced upsells.
 - Knowledge should be available contextually, not forced. Safety information remains mandatory where required.
 
+## Driver & Firmware module
+- Include driver and firmware update awareness as a planned Improve Optimizer capability.
+- Detect relevant hardware/OEM identity and installed driver or firmware versions where authoritative detection is possible.
+- Distinguish `UPDATE_AVAILABLE` from `UPDATE_RECOMMENDED`; a newer version is not automatically a better recommendation.
+- Prefer the system/OEM support source where vendor-specific drivers or firmware are technically appropriate, especially for notebooks and OEM systems. Use the component manufacturer's official source where that is the correct authoritative source.
+- Manufacturer-only source policy: link only to verified official OEM/component-manufacturer support or download pages. Do not use third-party driver portals, download aggregators, mirrors, or repackaged installers.
+- Prefer stable official support/product pages over fragile direct executable URLs where practical.
+- Do not host, mirror, redistribute, proxy, or repackage third-party driver/firmware binaries as part of this capability unless a future explicit legal/licensing review establishes permission.
+- Clearly identify outbound actions as opening the manufacturer's official source.
+- If the source cannot be verified as official, do not provide the download link and keep the state explicit.
+- Initial implementation should be detection, assessment, recommendation, and manufacturer linking — not unattended automatic installation.
+- Relevant categories may include GPU, chipset, LAN/WLAN, audio, motherboard/system drivers, and BIOS/UEFI/firmware where safe authoritative detection is available.
+- BIOS/UEFI and firmware remain higher-risk operations. Availability detection/linking does not override the project's manual-critical safety boundary.
+- Recommendation output should prioritize relevance rather than presenting every newer package as required; e.g. recommended, optional, no action, or insufficient evidence.
+- Keep source/provider metadata so official links can be validated and maintained over time.
+
 ## Optimizer decision discipline
 - Keep recommendation states and evidence maturity meaningful. Experimental, rejected, or no-benefit findings must not be promoted to ordinary recommendations.
 - A valid result may be NO_CHANGE or INSUFFICIENT_EVIDENCE.
