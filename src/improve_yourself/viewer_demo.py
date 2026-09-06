@@ -44,11 +44,11 @@ def select_viewer_demo_state(
 
 
 def write_selected_2d_viewer(
-    replay_path: Path, output_path: Path, selection: ViewerDemoSelection
+    store: ReplayStore, controller: ReplayController, output_path: Path, selection: ViewerDemoSelection
 ) -> Path:
     """Use the existing 2D viewer with a one-frame canonical scene selection."""
     return render_viewer(
-        replay_path,
+        store.manifest_path,
         output_path,
         scenes=[{
             "scene_id": "viewer-demo-reference",
@@ -57,4 +57,6 @@ def write_selected_2d_viewer(
             "end_tick": selection.context.resolved_tick,
             "focus_player_id": selection.player.player_id,
         }],
+        store=store,
+        controller=controller,
     )

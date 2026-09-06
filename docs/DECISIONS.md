@@ -30,12 +30,26 @@ This file records decisions that should not be repeatedly reopened without a con
 - **Impact:** These transitions are an essential benchmark design and acceptance criterion, not optional polish. A transition is not considered finished if a normal viewer immediately perceives a hard map cut. The current `nuke_outside`, `ancient_b` and `inferno_apps_a` controller scenes must be refined to implement and validate this continuous camera concept without compromising reproducibility of the measured sections.
 - **Date:** 2026-08-16
 
+## Benchmark Workshop asset rights and branding boundary — locked
+
+- **Decision:** The benchmark remains a CS2 Workshop addon. Original Nuke Outside, Ancient B and Inferno Apps / Second Mid are the sole references for their corresponding scenes. For authentic visuals and representative CS2 workload, the addon may reference original Valve/CS2 assets available through the installed game and official CS2 Workshop Tools. Improve Yourself acquires no rights in those assets; all Valve and third-party rights remain with their respective owners.
+- **Boundary:** Prefer installed runtime references. Do not extract Valve VPK content for this workflow, copy Valve assets into the repository, package them in the standalone Improve Yourself application, claim ownership, or imply Valve endorsement. Improve Yourself branding and original supplemental content remain visibly distinct and provenance-tracked. Unknown origin is fail-closed.
+- **Distribution:** The Workshop benchmark and the standalone Improve Yourself product remain separate. Publication, monetization, commercial integration, or distribution outside the CS2 Workshop context requires a fresh terms and legal/release review. The complete binding policy and Nuke application gate are in `assets/maps/improve_yourself_benchmark/ASSET_RIGHTS.md`.
+- **Date:** 2026-09-05
+
 ## Benchmark agent-model variety — optional, cost-bounded
 
 - **Decision:** The benchmark may use a fixed, visually varied selection of common CT/T agent models instead of only standard bot models, but only when The Beast judges the change to be low-cost, reliable and free of meaningful new asset, dependency or reproducibility risk. The selection must be deterministic across benchmark runs; no random model assignment. Full coverage of every available agent model is explicitly out of scope.
 - **Reason:** A small amount of model/material variety can make the benchmark look more representative and may add modest rendering diversity, but it is not important enough to consume significant implementation time or destabilize the benchmark.
 - **Impact:** The Beast has discretion to include a small fixed set of common agent variants when implementation is cheap and clean. If it requires substantial extra work, asset handling, Workshop dependencies or troubleshooting, keep the current standard models and consider the item complete. This is a bonus/polish item and must not delay multi-map transitions, camera work, measurement quality or release readiness.
 - **Date:** 2026-08-17
+
+## ChatGPT model selection rule for local work — locked
+
+- **Decision:** For this repository and related local Codex work, use a fixed task-based model selection rule instead of ad hoc model choice. The default is `gpt-5.6-terra` for concept work, ideation and normal planning. Use `gpt-5.6-luna` for lightweight extraction, sorting, short summaries, small routine checks, quick edits and other low-risk preview work. Use `gpt-5.6-sol` with `high` reasoning for complex, multi-step implementation, benchmark planning, camera/layout coordination and other tasks that need higher accuracy without wasting the top-tier budget. Keep `gpt-5.5` only as a fallback.
+- **Reason:** The project benefits more from predictable, limit-aware model selection than from always choosing the strongest available model. Concept work needs breadth and clarity, while heavy multi-step work needs accuracy, and simple analysis should stay cheap. This keeps usage efficient and reduces unnecessary limit consumption.
+- **Impact:** When a new task arrives, first classify the task and then choose the model by the rule above. Do not jump to the strongest model by default. Do not treat this as a product feature change, cloud change or architecture change. It is a working rule for local Codex/ChatGPT-assisted project work and can be revised only by another explicit decision.
+- **Date:** 2026-09-06
 
 ## 3D / POV V1 view and replay boundary — locked
 
