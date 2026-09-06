@@ -2,6 +2,9 @@
 
 Status: **PARTIAL_2D_GAME_MAP_COVERAGE_WITH_MATRIX**
 
+Internal-use authorization: **GRANTED BY PROJECT OWNER**
+Public upload/release authorization: **NOT GRANTED**
+
 Base: GitHub `main` `ef3e96aad0675b963d66b10ecdc8e40613af17b5`
 
 ## Product scope
@@ -85,8 +88,8 @@ as a substitute merely because it is 1024 x 1024.
 
 | Map ID | Transform metadata | Image candidate | Image registration | Layer status | Internal package status | Exact next evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| `de_ancient` | VERIFIED | found | not yet manifest-bound or visibly aligned | UNRESOLVED | BLOCKED | bind provenance/hash and visibly validate real Replay V2 positions |
-| `de_anubis` | VERIFIED | found | explicitly UNVERIFIED local full-canvas fit | UNRESOLVED | BLOCKED | establish pixel registration and visibly validate a real Replay V2 scene |
+| `de_ancient` | VERIFIED | found | not yet manifest-bound or visibly aligned | UNRESOLVED | AUTHORIZED; TECHNICAL GATE OPEN | bind provenance/hash and visibly validate real Replay V2 positions |
+| `de_anubis` | VERIFIED | found | explicitly UNVERIFIED local full-canvas fit | UNRESOLVED | AUTHORIZED; TECHNICAL GATE OPEN | establish pixel registration and visibly validate a real Replay V2 scene |
 | `de_dust2` | VERIFIED | not found | unavailable | UNRESOLVED | BLOCKED | provide or create an authorized map image |
 | `de_inferno` | VERIFIED | not found | unavailable | UNRESOLVED | BLOCKED | provide or create an authorized map image |
 | `de_mirage` | VERIFIED | not found | unavailable | UNRESOLVED | BLOCKED | provide or create an authorized map image without touching Azure-owned 3D files |
@@ -112,10 +115,17 @@ verified packaged game map.
 
 ## Internal-test authorization and remaining gate
 
-The project owner authorizes use of the intended map images in a controlled
-internal test candidate. This does not turn an unverified transform into a
+The project owner explicitly authorizes all intended map images for local
+development and packaging to a controlled, limited internal tester group. No
+separate per-image internal-use approval is required once an image has been
+identified. This permission does not turn an unverified transform into a
 verified one, does not establish third-party ownership, and is not a public
-release authorization.
+upload or release authorization.
+
+Public builds must exclude these assets unless a later release-specific gate
+records the necessary complete approval, including Valve or other third-party
+permission where applicable. Internal and public packaging therefore remain
+separate explicit build policies.
 
 Packaging remains blocked until each included image has:
 
