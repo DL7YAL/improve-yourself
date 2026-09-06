@@ -31,6 +31,13 @@ from .replay_store import ReplayStore
 from .review_presentation import build_review_presentation
 from .rule_pack import RulePackValidationError, import_rule_pack, load_rule_pack_document
 from .system_check import run_system_check
+from .ui_design import (
+    CANVA_MODULE_ACCENTS,
+    CANVA_OPTIMIZER_THEME,
+    CANVA_PAGE_PRESENTATION,
+    CANVA_SHELL_STATUS,
+    CANVA_THEME,
+)
 from .user_profile import LocalUserProfileStore, UserProfile, profile_from_candidates, select_active_account
 
 
@@ -71,51 +78,11 @@ SIDEBAR_NAVIGATION = (
 _SIDEBAR_PRIMARY = SIDEBAR_NAVIGATION[:6]
 _SIDEBAR_SECONDARY = SIDEBAR_NAVIGATION[6:]
 
-_THEME = {
-    # Final Home master calibration: near-black Navy surfaces lead. Blue is
-    # reserved for wayfinding and intentional state, never the card ground.
-    "night": "#020A12", "deep": "#0A1C2D", "panel": "#071725",
-    "panel_high": "#0A1C2D", "panel_hover": "#0D2236", "card": "#0A1C2D", "sidebar": "#03101C",
-    "border": "#0A2132", "border_soft": "#071A27", "border_active": "#1174AD",
-    "metal": "#0B79C9", "cyan": "#13A7E8", "line": "#13A7E8", "line_soft": "#071A27",
-    "accent": "#0B79C9", "accent_bright": "#13A7E8", "accent_strong": "#0B79C9",
-    "ice": "#E4E8ED", "ink": "#E4E8ED", "secondary": "#A0ABB8",
-    "muted": "#687789", "success": "#58d69a",
-}
-
-# Optimizer visual-fidelity tokens.  These are deliberately independent from
-# the shared Home surface scale: this approved pilot needs the deeper metallic
-# blue hierarchy, compact cyan edge-light and cooler text of the Optimizer
-# reference without rolling a new, unreviewed treatment across other routes.
-_OPTIMIZER_THEME = {
-    "page": "#020A12",
-    "surface": "#071827",
-    "surface_raised": "#0A1D2E",
-    "surface_hero": "#081B2B",
-    "surface_detail": "#061521",
-    "surface_input": "#04111C",
-    "surface_hover": "#0B2639",
-    "border": "#0A2538",
-    "border_soft": "#061722",
-    "border_bright": "#127EC0",
-    "accent": "#159BE1",
-    "accent_soft": "#0B4D73",
-    "text": "#E8F0F5",
-    "secondary": "#AAB9C5",
-    "muted": "#728696",
-    "success": "#6DBE6A",
-    "warning": "#E5B854",
-    "unknown": "#9AAAB6",
-}
-
-# The two approved Optimizer MASTER exports distinguish the four fixed product
-# areas with these compact icon/status accents. They are presentation-only;
-# recommendation state remains sourced from the existing evidence model.
+_THEME = CANVA_THEME
+_OPTIMIZER_THEME = CANVA_OPTIMIZER_THEME
 _OPTIMIZER_DOMAIN_ACCENTS = {
-    "SYSTEM_OPTIMIZER": "#159BE1",
-    "GRAPHICS_OPTIMIZER": "#22C55E",
-    "NETWORK_OPTIMIZER": "#B36CFF",
-    "BIOS_OPTIMIZER": "#F59E0B",
+    domain: CANVA_MODULE_ACCENTS[domain]
+    for domain in ("SYSTEM_OPTIMIZER", "GRAPHICS_OPTIMIZER", "NETWORK_OPTIMIZER", "BIOS_OPTIMIZER")
 }
 
 _UI_FONT = "Inter"
@@ -624,8 +591,8 @@ class SidebarStatusPanel:
         canvas.create_text(19, 39, text="READ-ONLY WHERE MARKED", fill=_THEME["muted"], anchor="w", font=(self.ui_font, 7))
 
 
-class RoundedHomeSurface:
-    """Reusable rounded Home card chrome with an unchanged ttk content grid.
+class CanvaSurface:
+    """Reusable Canva-R25 card chrome with an unchanged ttk content grid.
 
     The canvas owns only the visual perimeter; all existing labels, buttons
     and responsive grid rules live in ``body``.  This keeps Home's approved
@@ -676,8 +643,8 @@ class RoundedHomeSurface:
         self.canvas.tag_lower("surface")
 
 
-class RoundedHomeAction:
-    """A shared, restrained module action for the six approved Home cards.
+class CanvaAction:
+    """A shared, restrained action for the Canva-R25 product shell.
 
     Native ttk buttons cannot render the rounded, low-fill Master treatment
     consistently on Windows.  This component changes only the Home action
@@ -749,8 +716,8 @@ class RoundedHomeAction:
         self.canvas.create_text(width // 2, height // 2, text=self.text, fill=foreground, font=self.font, tags="action")
 
 
-class RoundedOptimizerSurface(RoundedHomeSurface):
-    """Optimizer-only metallic card perimeter over the existing Tk content.
+class CanvaOptimizerSurface(CanvaSurface):
+    """Optimizer surface using the same Canva shell tokens.
 
     The body continues to host the existing labels, result adapters and table.
     This class owns only the rounded dark surface and restrained blue contour,
@@ -765,8 +732,8 @@ class RoundedOptimizerSurface(RoundedHomeSurface):
         )
 
 
-class RoundedOptimizerAction:
-    """Low-fill outlined action used only by the reference-locked Optimizer.
+class CanvaOptimizerAction:
+    """Low-fill outlined action for read-only Optimizer controls.
 
     Tk buttons otherwise retain a platform rectangle even under the dark theme.
     The canvas forwards the same callback and keyboard activation while keeping
@@ -1298,9 +1265,8 @@ class AnalyzerShellApp:
         self.root = tk.Tk()
         self._my_profile_status = tk.StringVar(value="Noch kein lokaler Analyseaccount ausgewählt. Keine Steam-Anmeldung und keine Übertragung.")
         self.root.title("Improve Yourself – Experimental")
-        # The approved Optimizer MASTER exports use a 1536×1024 viewport.
-        # Start at that comparable desktop geometry; the existing minimum-size
-        # contract remains responsible for compact windows.
+        # Canva page 1 is compared at 1536×1024; the same shell remains usable
+        # at the required compact 1080×720 review viewport.
         self.root.geometry("1536x1024")
         self.root.minsize(1080, 720)
         self.root.configure(background=_THEME["night"])
@@ -1356,7 +1322,11 @@ class AnalyzerShellApp:
         style.map("Optimizer.TCombobox", fieldbackground=[("readonly", _OPTIMIZER_THEME["surface_input"])], foreground=[("readonly", _OPTIMIZER_THEME["text"])], bordercolor=[("focus", _OPTIMIZER_THEME["border_bright"])])
         style.configure("PageTitle.TLabel", background=_THEME["night"], foreground=_THEME["ink"], font=(self.display_font, 22, "bold"))
         style.configure("PageKicker.TLabel", background=_THEME["night"], foreground=_THEME["cyan"], font=(self.display_font, 8))
+        style.configure("PageMuted.TLabel", background=_THEME["night"], foreground=_THEME["muted"])
         style.configure("StatusBadge.TLabel", background=_THEME["panel_high"], foreground=_THEME["secondary"], padding=(9, 5), font=(self.ui_font, 8, "bold"))
+        style.configure("ShellChip.TFrame", background=_THEME["panel_high"], relief="flat", borderwidth=1, bordercolor=_THEME["border"])
+        style.configure("ShellChip.TLabel", background=_THEME["panel_high"], foreground=_THEME["ice"], font=(self.ui_font, 8, "bold"))
+        style.configure("ShellChipMuted.TLabel", background=_THEME["panel_high"], foreground=_THEME["muted"], font=(self.ui_font, 7))
         # Home deliberately has its own component family.  The command-centre
         # layout is shared with the rest of the shell, while these styles keep
         # its cards from falling back to the generic/native looking controls.
@@ -1506,14 +1476,14 @@ class AnalyzerShellApp:
         self.analyzer_setup_expanded = False
         self.current_page: str | None = None
         self.page_history: list[str] = []
+        self.reference_headers: list[tuple[object, object, object]] = []
         self._import_started_at: float | None = None
         self._import_status_after: str | None = None
 
         shell = ttk.Frame(self.root, style="Content.TFrame")
         shell.pack(fill="both", expand=True)
         self.shell = shell
-        # Variant 3 uses a compact fixed shell: content begins close to the
-        # 243 px MASTER boundary while navigation remains comfortably readable.
+        # Canva page 1 uses a compact fixed shell with one persistent left rail.
         sidebar = ttk.Frame(shell, style="Sidebar.TFrame", width=243)
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
@@ -1521,30 +1491,33 @@ class AnalyzerShellApp:
         brand_path = Path(__file__).with_name("assets") / "improve-yourself-wordmark-v3.png"
         try:
             self.brand_image = tk.PhotoImage(file=str(brand_path)).subsample(3, 3)
-            tk.Label(sidebar, image=self.brand_image, background=_THEME["sidebar"]).pack(anchor="w", padx=20, pady=(24, 7))
+            self.sidebar_brand_label = tk.Label(sidebar, image=self.brand_image, background=_THEME["sidebar"])
+            self.sidebar_brand_label.pack(anchor="w", padx=20, pady=(24, 7))
         except tk.TclError:
-            ttk.Label(sidebar, text="IMPROVE\nYOURSELF", style="Card.TLabel", font=("Segoe UI", 17, "bold"), justify="left").pack(anchor="w", padx=20, pady=(26, 7))
+            self.sidebar_brand_label = ttk.Label(
+                sidebar, text="IMPROVE\nYOURSELF", style="Card.TLabel",
+                font=("Segoe UI", 17, "bold"), justify="left",
+            )
+            self.sidebar_brand_label.pack(anchor="w", padx=20, pady=(26, 7))
         tk.Label(sidebar, text="EXPERIMENTAL BUILD", background=_THEME["sidebar"], foreground="#73bddf", font=(self.ui_font, 8, "bold")).pack(anchor="w", padx=21, pady=(0, 22))
         content = ttk.Frame(shell, style="Content.TFrame", padding=(24, 18, 24, 24))
         content.pack(side="left", fill="both", expand=True)
         self.pages: dict[str, ttk.Frame] = {}
         self.page_hosts: dict[str, ttk.Frame] = {}
         self.nav_buttons: dict[str, SidebarNavItem] = {}
+        nav_glyphs = {
+            "Dashboard": "⌂", "My Improvement": "↗", "Analyzer": "◎", "Reports": "▤",
+            "System Check / Optimizer": "◈", "Settings": "⚙", "Tactical Replay": "⚔", "Benchmark": "▱",
+        }
         nav_labels = {
-            "Dashboard": "⌂   Dashboard",
-            "My Improvement": "↗   My Improvement",
-            "Analyzer": "◎   Analyzer",
-            "Reports": "▤   Reports",
-            "System Check / Optimizer": "◈   Optimizer",
-            "Settings": "⚙   Settings",
-            "Tactical Replay": "⌖   Tactical Replay",
-            "Benchmark": "▱   Improve Benchmark",
+            name: f"{nav_glyphs[name]}   {CANVA_PAGE_PRESENTATION[name]['nav']}"
+            for name in UI_REFERENCE_STATUS
         }
         for name in UI_REFERENCE_STATUS:
             host = ttk.Frame(content, style="Content.TFrame")
             host.place(relx=0, rely=0, relwidth=1, relheight=1)
             self.page_hosts[name] = host
-            if name in {"Analyzer", "Dashboard", "My Improvement", "Benchmark"}:
+            if name in {"Analyzer", "Dashboard", "My Improvement", "Benchmark", "System Check / Optimizer"}:
                 canvas = tk.Canvas(
                     host, background=_THEME["night"], borderwidth=0, highlightthickness=0,
                 )
@@ -1571,13 +1544,8 @@ class AnalyzerShellApp:
                 elif name == "Dashboard":
                     self.dashboard_canvas = canvas
                     self.dashboard_scrollbar = scrollbar
-            elif name == "System Check / Optimizer":
-                # The Optimizer must not inherit a page-wide scrollbar. Its
-                # overview is compact and its only potentially long content,
-                # "Details & Erklärung", owns a local scroll surface.
-                page = ttk.Frame(host, style="Content.TFrame")
-                page.pack(fill="both", expand=True)
-                self.system_canvas = None
+                elif name == "System Check / Optimizer":
+                    self.system_canvas = canvas
             else:
                 page = ttk.Frame(host, style="Content.TFrame")
                 page.pack(fill="both", expand=True)
@@ -1589,7 +1557,8 @@ class AnalyzerShellApp:
         primary_navigation.pack(fill="x")
         secondary_navigation = ttk.Frame(sidebar, style="Sidebar.TFrame")
         secondary_navigation.pack(side="bottom", fill="x", padx=0, pady=(0, 4))
-        SidebarStatusPanel(tk, sidebar, ui_font=self.ui_font).pack(side="bottom", fill="x", padx=12, pady=(12, 10))
+        self.sidebar_status_panel = SidebarStatusPanel(tk, sidebar, ui_font=self.ui_font)
+        self.sidebar_status_panel.pack(side="bottom", fill="x", padx=12, pady=(12, 10))
         self.history_button = ttk.Button(
             secondary_navigation, text="← Zurück", command=self._go_back, state="disabled",
         )
@@ -1606,7 +1575,7 @@ class AnalyzerShellApp:
         frame = self.pages["Analyzer"]
         analyzer_header = ttk.Frame(frame, style="Content.TFrame")
         analyzer_header.pack(fill="x", pady=(0, 12))
-        ttk.Label(analyzer_header, text="Improve Analyzer", style="PageTitle.TLabel").pack(side="left")
+        ttk.Label(analyzer_header, text="Improve Analyzer", style="PageTitle.TLabel", font=(self.display_font, 22, "bold")).pack(side="left")
         ttk.Label(analyzer_header, textvariable=self.status, style="StatusBadge.TLabel").pack(side="right")
         ttk.Label(frame, text="Detaillierte Match-Analyse auf Basis deiner belegten lokalen Demos, Profile und objektiven Regeln.", foreground=_THEME["muted"]).pack(anchor="w", pady=(0, 12))
 
@@ -1759,7 +1728,7 @@ class AnalyzerShellApp:
         self._select_profile()
         self._load_saved_system_scan()
         self._show_analyzer_tab("Übersicht")
-        self._show_page("Analyzer", record_history=False)
+        self._show_page("Dashboard", record_history=False)
         self.root.protocol("WM_DELETE_WINDOW", self._close)
 
     def _build_analyzer_result_projection(self, parent) -> None:
@@ -2004,11 +1973,6 @@ class AnalyzerShellApp:
             self.page_history.append(self.current_page)
         self.current_page = name
         self.page_hosts[name].tkraise()
-        if hasattr(self, "optimizer_master_canvas"):
-            if name == "System Check / Optimizer":
-                self._show_optimizer_master_overlay()
-            else:
-                self.optimizer_master_canvas.place_forget()
         if name == "Dashboard":
             self.root.after_idle(lambda: self.dashboard_canvas.yview_moveto(0.0))
         elif name == "System Check / Optimizer" and self.system_canvas is not None:
@@ -2018,6 +1982,21 @@ class AnalyzerShellApp:
         for page_name, button in self.nav_buttons.items():
             button.set_active(page_name == name)
         self.history_button.configure(state="normal" if self.page_history else "disabled")
+        self.root.after_idle(self._refresh_shell_chrome)
+
+    def _refresh_shell_chrome(self) -> None:
+        """Paint shell widgets after hidden page hosts have become visible."""
+
+        if not self.root.winfo_exists():
+            return
+        if hasattr(self, "brand_image"):
+            self.sidebar_brand_label.configure(image=self.brand_image)
+        for button in self.nav_buttons.values():
+            button._draw()
+        self.sidebar_status_panel._draw()
+        for header, copy, rail in self.reference_headers:
+            if header.winfo_ismapped():
+                self._layout_reference_header(copy, rail, header.winfo_width())
 
     def _go_back(self) -> None:
         """Return across ordinary top-level pages without replacing special flows."""
@@ -2051,9 +2030,12 @@ class AnalyzerShellApp:
         self.dashboard_header = header
         self.dashboard_greeting = greeting
         self.dashboard_stats = stats
-        stat_accents = ("#23d8bb", "#30aef4", "#a687ff", "#ffcf5a")
+        stat_accents = (
+            CANVA_MODULE_ACCENTS["ANALYZER"], CANVA_MODULE_ACCENTS["TACTICAL"],
+            CANVA_MODULE_ACCENTS["DEMO"], CANVA_MODULE_ACCENTS["SYSTEM_OPTIMIZER"],
+        )
         for index, (variable, accent) in enumerate(zip((self.dashboard_readiness, self.dashboard_rounds, self.dashboard_players, self.dashboard_scenes), stat_accents)):
-            card = RoundedHomeSurface(
+            card = CanvaSurface(
                 self.tk, self.ttk, stats, style="HomeStat.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=(0, 7), min_height=58, min_width=104 if index == 0 else 62,
             )
             card.pack(side="left", padx=(6, 0))
@@ -2065,16 +2047,16 @@ class AnalyzerShellApp:
         self.dashboard_module_grid = modules
         self.dashboard_module_cards = []
         module_specs = (
-            ("◎", "IMPROVE\nANALYZER", "Demos, Szenen und Evidenz aus einer gemeinsamen lokalen Replay-Wahrheit prüfen.", "Analyzer öffnen", "Analyzer", True, "#2bdcbb", "HomeTeal.TButton"),
-            ("♙", "DEMO\nWORKFLOW", "Demo laden, Parserstatus und Line-ups innerhalb des Analyzer prüfen.", "Demo laden", "Analyzer", True, "#a687ff", "HomeViolet.TButton"),
-            ("⚔", "2D\nTACTICAL", "Rundenpositionen aus derselben Replay-Wahrheit ansehen.", "Replay öffnen", "Tactical Replay", True, "#2db8ff", "HomePrimary.TButton"),
-            ("◉", "IMPROVE\nOPTIMIZER", "Systemfakten sicher und read-only erfassen.", "System prüfen", "System Check / Optimizer", True, "#ffcc54", "HomeGold.TButton"),
+            ("◎", "IMPROVE\nANALYZER", "Demos, Szenen und Evidenz aus einer gemeinsamen lokalen Replay-Wahrheit prüfen.", "Analyzer öffnen", "Analyzer", True, CANVA_MODULE_ACCENTS["ANALYZER"], "HomeTeal.TButton"),
+            ("♙", "DEMO\nWORKFLOW", "Demo laden, Parserstatus und Line-ups innerhalb des Analyzer prüfen.", "Demo laden", "Analyzer", True, CANVA_MODULE_ACCENTS["DEMO"], "HomeViolet.TButton"),
+            ("⚔", "2D\nTACTICAL", "Rundenpositionen aus derselben Replay-Wahrheit ansehen.", "Replay öffnen", "Tactical Replay", True, CANVA_MODULE_ACCENTS["TACTICAL"], "HomePrimary.TButton"),
+            ("◉", "IMPROVE\nOPTIMIZER", "Systemfakten sicher und read-only erfassen.", "System prüfen", "System Check / Optimizer", True, CANVA_MODULE_ACCENTS["SYSTEM_OPTIMIZER"], "HomeGold.TButton"),
             ("▥", "IMPROVE\nBENCHMARK", "Separater, derzeit geparkter Arbeitsstrang.", "Nicht in diesem Slice", "", False, "#6587a0", "HomePrimary.TButton"),
-            ("◯", "MY\nIMPROVEMENT", "Lokale Reports und aktuelle Analyseartefakte öffnen.", "Übersicht öffnen", "My Improvement", True, "#238ffc", "HomePrimary.TButton"),
+            ("◯", "MY\nIMPROVEMENT", "Lokale Reports und aktuelle Analyseartefakte öffnen.", "Übersicht öffnen", "My Improvement", True, CANVA_MODULE_ACCENTS["IMPROVEMENT"], "HomePrimary.TButton"),
         )
         for column, (icon, title, detail, action, target, enabled, accent, button_style) in enumerate(module_specs):
             modules.columnconfigure(column, weight=1, uniform="home-modules")
-            card = RoundedHomeSurface(
+            card = CanvaSurface(
                 self.tk, self.ttk, modules, style="HomeModule.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=7, min_height=196, radius=8,
             )
             card.grid(row=0, column=column, sticky="nsew", padx=(0 if column == 0 else 3, 0 if column == 5 else 3))
@@ -2090,7 +2072,7 @@ class AnalyzerShellApp:
             self.ttk.Label(icon_row, text=title, style="HomeModule.TLabel", font=(self.display_font, 9, "bold"), justify="left").pack(side="left", anchor="w")
             self.ttk.Label(card.body, text=detail, style="HomeMuted.TLabel", wraplength=150, justify="left").grid(row=2, column=0, sticky="ew", pady=(2, 10))
             self.ttk.Frame(card.body, style="HomeModule.TFrame").grid(row=3, column=0, sticky="nsew")
-            RoundedHomeAction(
+            CanvaAction(
                 self.tk, card.body, text=action, accent=accent,
                 command=(self._show_analyzer_overview if target == "Analyzer" else lambda value=target: self._show_page(value)), enabled=enabled,
                 font=(self.ui_font, 9, "bold"),
@@ -2102,7 +2084,7 @@ class AnalyzerShellApp:
         overview.columnconfigure(1, weight=5, uniform="home-overview")
         overview.columnconfigure(2, weight=6, uniform="home-overview")
 
-        system_scan = RoundedHomeSurface(
+        system_scan = CanvaSurface(
             self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=15, min_height=184,
         )
         system_scan.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
@@ -2124,12 +2106,16 @@ class AnalyzerShellApp:
         self.dashboard_system_scan_details_button.pack(fill="x")
         self.dashboard_system_scan_attention_label = self.ttk.Label(system_scan.body, textvariable=self.dashboard_system_scan_attention, style="HomePanelMuted.TLabel", wraplength=210, justify="left", font=(self.ui_font, 7))
 
-        progress = RoundedHomeSurface(
+        progress = CanvaSurface(
             self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=15, min_height=184,
         )
         progress.grid(row=0, column=1, sticky="nsew", padx=5)
         self._home_accent(progress.body, "#2bdcbb")
-        self.ttk.Label(progress.body, text="DEIN FORTSCHRITT – ÜBERBLICK", style="HomePanel.TLabel", font=(self.display_font, 8, "bold")).pack(anchor="w", pady=(5, 0))
+        self.dashboard_progress_title = self.ttk.Label(
+            progress.body, text="DEIN FORTSCHRITT – ÜBERBLICK",
+            style="HomePanel.TLabel", font=(self.display_font, 8, "bold"), justify="left",
+        )
+        self.dashboard_progress_title.pack(anchor="w", pady=(5, 0))
         progress_body = self.ttk.Frame(progress.body, style="HomeInner.TFrame")
         progress_body.pack(fill="x", pady=(7, 5))
         self._home_progress_gauge(progress_body).pack(side="left", padx=(0, 9))
@@ -2145,14 +2131,14 @@ class AnalyzerShellApp:
             dimension_grid.columnconfigure(column, weight=1, uniform="progress-dimensions")
         # Keep the progress action in the same clearly selected, outlined
         # action language as the six primary module cards.
-        self.dashboard_progress_action = RoundedHomeAction(
+        self.dashboard_progress_action = CanvaAction(
             self.tk, progress.body, text="Zum Analyzer", accent="#2bdcbb",
             command=self._show_analyzer_overview, enabled=True,
             font=(self.ui_font, 9, "bold"),
         )
         self.dashboard_progress_action.pack(fill="x")
 
-        recent = RoundedHomeSurface(
+        recent = CanvaSurface(
             self.tk, self.ttk, overview, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=15, min_height=184,
         )
         recent.grid(row=0, column=2, sticky="nsew", padx=(5, 0))
@@ -2165,7 +2151,7 @@ class AnalyzerShellApp:
         lower.pack(fill="x", pady=(12, 16))
         lower.columnconfigure(0, weight=1, uniform="home-lower")
         lower.columnconfigure(1, weight=1, uniform="home-lower")
-        idea = RoundedHomeSurface(
+        idea = CanvaSurface(
             self.tk, self.ttk, lower, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=15, min_height=116,
         )
         idea.grid(row=0, column=0, sticky="nsew", padx=(0, 6))
@@ -2176,7 +2162,7 @@ class AnalyzerShellApp:
             text="Datenbasierte Analyse, gemeinsame Replay-Wahrheit und transparente lokale Werkzeuge begleiten dich Schritt für Schritt – ohne erfundene Ergebnisse.",
             style="HomePanelMuted.TLabel", wraplength=360, justify="left",
         ).pack(anchor="w", pady=(8, 0))
-        community = RoundedHomeSurface(
+        community = CanvaSurface(
             self.tk, self.ttk, lower, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"], padding=15, min_height=116,
         )
         community.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
@@ -2249,6 +2235,9 @@ class AnalyzerShellApp:
             width, self.dashboard_canvas.winfo_height()
         )
         self.dashboard_compact = compact
+        self.dashboard_progress_title.configure(
+            text="DEIN FORTSCHRITT\n– ÜBERBLICK" if compact else "DEIN FORTSCHRITT – ÜBERBLICK"
+        )
         self.dashboard_greeting.pack_forget()
         self.dashboard_stats.pack_forget()
         if compact:
@@ -2279,8 +2268,8 @@ class AnalyzerShellApp:
 
     def _build_reports_page(self) -> None:
         page = self.pages["Reports"]
-        self.ttk.Label(page, text="Reports", style="PageTitle.TLabel").pack(anchor="w")
-        self.ttk.Label(page, text="Nachvollziehbare Ergebnisse aus der aktuellen lokalen Analyse", foreground=_THEME["muted"]).pack(anchor="w", pady=(2, 14))
+        presentation = CANVA_PAGE_PRESENTATION["Reports"]
+        self._reference_page_header(page, str(presentation["title"]), str(presentation["subtitle"]))
         card = self.ttk.Frame(page, style="Card.TFrame", padding=20)
         card.pack(fill="x")
         self.ttk.Label(card, text="ANALYSEBERICHT", style="Card.TLabel", font=(self.display_font, 11, "bold")).pack(anchor="w")
@@ -2292,12 +2281,38 @@ class AnalyzerShellApp:
         self.timeline_button = self.ttk.Button(actions, text="Timeline JSON öffnen", command=lambda: self._open_artifact("timeline"), state="disabled")
         self.timeline_button.pack(side="left", padx=8)
 
+    def _canva_status_rail(self, parent) -> object:
+        """Render only static, truthful shell facts in the Canva status-card rhythm."""
+        rail = self.ttk.Frame(parent, style="Content.TFrame")
+        for label, detail in CANVA_SHELL_STATUS:
+            chip = self.ttk.Frame(rail, style="ShellChip.TFrame", padding=(11, 7))
+            chip.pack(side="left", padx=(6, 0))
+            self.ttk.Label(chip, text=label, style="ShellChip.TLabel").pack(anchor="w")
+            self.ttk.Label(chip, text=detail, style="ShellChipMuted.TLabel").pack(anchor="w", pady=(1, 0))
+        return rail
+
     def _reference_page_header(self, page, title: str, subtitle: str) -> None:
-        """Shared MASTER-screen heading; content remains deliberately truthful."""
+        """Shared Canva-R25 heading; content remains deliberately truthful."""
         header = self.ttk.Frame(page, style="Content.TFrame")
         header.pack(fill="x", pady=(0, 16))
-        self.ttk.Label(header, text=title, style="PageTitle.TLabel").pack(anchor="w")
-        self.ttk.Label(header, text=subtitle, style="Muted.TLabel", wraplength=1100, justify="left").pack(anchor="w", pady=(3, 0))
+        copy = self.ttk.Frame(header, style="Content.TFrame")
+        self.ttk.Label(copy, text=title, style="PageTitle.TLabel", font=(self.display_font, 22, "bold")).pack(anchor="w")
+        self.ttk.Label(copy, text=subtitle, style="PageMuted.TLabel", wraplength=640, justify="left").pack(anchor="w", pady=(3, 0))
+        rail = self._canva_status_rail(header)
+        self.reference_headers.append((header, copy, rail))
+        header.bind("<Configure>", lambda event: self._layout_reference_header(copy, rail, event.width))
+        self.root.after_idle(lambda: self._layout_reference_header(copy, rail, header.winfo_width()))
+
+    @staticmethod
+    def _layout_reference_header(copy, rail, width: int) -> None:
+        copy.pack_forget()
+        rail.pack_forget()
+        if width < 1_000:
+            copy.pack(fill="x")
+            rail.pack(anchor="w", pady=(10, 0))
+        else:
+            copy.pack(side="left", fill="x", expand=True)
+            rail.pack(side="right")
 
     def _reference_info_card(
         self,
@@ -2308,14 +2323,15 @@ class AnalyzerShellApp:
         textvariable: object | None = None,
         accent: str = "#13A7E8",
         min_height: int = 148,
+        wraplength: int = 310,
     ) -> object:
-        card = RoundedHomeSurface(
+        card = CanvaSurface(
             self.tk, self.ttk, parent, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
             padding=16, min_height=min_height, radius=10,
         )
         self._home_accent(card.body, accent)
         self.ttk.Label(card.body, text=title, style="HomePanel.TLabel", font=(self.display_font, 9, "bold")).pack(anchor="w", pady=(8, 0))
-        label_options: dict[str, object] = {"style": "HomePanelMuted.TLabel", "wraplength": 310, "justify": "left"}
+        label_options: dict[str, object] = {"style": "HomePanelMuted.TLabel", "wraplength": wraplength, "justify": "left"}
         if textvariable is not None:
             label_options["textvariable"] = textvariable
         else:
@@ -2325,19 +2341,22 @@ class AnalyzerShellApp:
 
     def _build_my_improvement_page(self) -> None:
         page = self.pages["My Improvement"]
-        header = self.ttk.Frame(page, style="Content.TFrame")
-        header.pack(fill="x", pady=(0, 10))
-        self.ttk.Label(header, text="Meine Entwicklung", style="PageTitle.TLabel").pack(side="left")
-        evidence_state = self.ttk.Frame(header, style="CardInner.TFrame", padding=(12, 7))
-        evidence_state.pack(side="right")
+        presentation = CANVA_PAGE_PRESENTATION["My Improvement"]
+        self._reference_page_header(page, str(presentation["title"]), str(presentation["subtitle"]))
+        evidence_state = self.ttk.Frame(page, style="CardInner.TFrame", padding=(12, 7))
+        evidence_state.pack(anchor="e", pady=(0, 10))
         self.ttk.Label(evidence_state, text="VERGLEICHSEVIDENZ", style="PageKicker.TLabel").pack(anchor="w")
         self.ttk.Label(evidence_state, text="Noch nicht verfügbar", style="Muted.TLabel").pack(anchor="w", pady=(2, 0))
         self.ttk.Label(
             page,
             text="Echte Entwicklung wird erst aus mehreren lokalen Analysen abgeleitet. Bis dahin bleiben Trends, Scores und Fokusbereiche ausdrücklich unbekannt.",
-            style="Muted.TLabel", wraplength=1100, justify="left",
+            style="PageMuted.TLabel", wraplength=720, justify="left",
         ).pack(anchor="w", pady=(0, 10))
-        self.ttk.Label(page, text="Analyseaccount: wird unter Settings · Lokales Profil & Datenschutz verwaltet.", style="Muted.TLabel").pack(anchor="w", pady=(0, 12))
+        self.ttk.Label(
+            page,
+            text="Analyseaccount: wird unter Einstellungen · Lokales Profil & Datenschutz verwaltet.",
+            style="PageMuted.TLabel", wraplength=720, justify="left",
+        ).pack(anchor="w", pady=(0, 12))
         period = self.ttk.Frame(page, style="Content.TFrame")
         period.pack(fill="x", pady=(0, 12))
         self.ttk.Label(period, text="ZEITRAUM", style="PageKicker.TLabel").pack(side="left", padx=(0, 10))
@@ -2354,7 +2373,7 @@ class AnalyzerShellApp:
             ("PERFORMANCE", "#E5B854"),
         )
         for index, (title, accent) in enumerate(cards):
-            card = RoundedHomeSurface(
+            card = CanvaSurface(
                 self.tk, self.ttk, summary, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
                 padding=(10, 14), min_height=230, radius=10,
             )
@@ -2481,7 +2500,7 @@ class AnalyzerShellApp:
             ("BEREIT ZUR ANALYSE", self.demo_ready_text, "#58D69A"),
         )):
             readiness.columnconfigure(index, weight=1, uniform="demo-ready")
-            self._reference_info_card(readiness, title=title, textvariable=variable, accent=accent).grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 5, 0 if index == 2 else 5))
+            self._reference_info_card(readiness, title=title, textvariable=variable, accent=accent, wraplength=210).grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 5, 0 if index == 2 else 5))
         self.demo_overview_text = self.tk.StringVar(value="Nach dem bestätigten Import erscheinen hier ausschließlich aus dem Workflow belegte Demo-Fakten.")
         overview = self._reference_info_card(
             page,
@@ -2613,7 +2632,7 @@ class AnalyzerShellApp:
         top.columnconfigure(1, weight=5)
         top.columnconfigure(2, weight=4)
 
-        start = RoundedHomeSurface(
+        start = CanvaSurface(
             self.tk, self.ttk, top, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
             padding=16, min_height=266, radius=10,
         )
@@ -2634,7 +2653,7 @@ class AnalyzerShellApp:
         self.ttk.Label(profile, text="TESTPROFIL", style="PageKicker.TLabel").pack(anchor="w")
         self.ttk.Label(profile, text="Nicht verfügbar", style="HomePanel.TLabel").pack(anchor="w", pady=(3, 0))
 
-        result = RoundedHomeSurface(
+        result = CanvaSurface(
             self.tk, self.ttk, top, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
             padding=16, min_height=266, radius=10,
         )
@@ -2658,7 +2677,7 @@ class AnalyzerShellApp:
         self.ttk.Label(chart, text="FPS-VERLAUF", style="PageKicker.TLabel").pack(anchor="w")
         self.ttk.Label(chart, text="Kein gemessener Verlauf verfügbar.", style="HomePanelMuted.TLabel", wraplength=450, justify="left").pack(anchor="w", pady=(5, 0))
 
-        map_card = RoundedHomeSurface(
+        map_card = CanvaSurface(
             self.tk, self.ttk, top, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
             padding=16, min_height=266, radius=10,
         )
@@ -2674,8 +2693,12 @@ class AnalyzerShellApp:
             style="HomePanelMuted.TLabel", wraplength=280, justify="left",
         ).pack(anchor="w", pady=(8, 0))
         self.ttk.Label(map_card.body, text="VERSION / DATUM / API: nicht bestätigt", style="Muted.TLabel", wraplength=280, justify="left").pack(anchor="w", pady=(12, 0))
+        self.benchmark_top = top
+        self.benchmark_top_cards = (start, result, map_card)
+        top.bind("<Configure>", lambda event: self._layout_benchmark_top(event.width))
+        self.root.after_idle(lambda: self._layout_benchmark_top(top.winfo_width()))
 
-        middle = RoundedHomeSurface(
+        middle = CanvaSurface(
             self.tk, self.ttk, page, style="HomePanel.TFrame", fill=_THEME["panel"], outline=_THEME["border"],
             padding=16, min_height=172, radius=10,
         )
@@ -2706,21 +2729,50 @@ class AnalyzerShellApp:
         )
         tip.grid(row=0, column=1, sticky="nsew", padx=(6, 0))
 
+    def _layout_benchmark_top(self, width: int) -> None:
+        """Keep the three Canva benchmark cards readable at both review sizes."""
+
+        compact = width < 1000
+        if getattr(self, "_benchmark_top_compact", None) == compact:
+            return
+        self._benchmark_top_compact = compact
+        top = self.benchmark_top
+        start, result, map_card = self.benchmark_top_cards
+        if compact:
+            top.columnconfigure(0, weight=1, uniform="")
+            top.columnconfigure(1, weight=0, uniform="")
+            top.columnconfigure(2, weight=0, uniform="")
+            start.grid_configure(row=0, column=0, columnspan=1, padx=0, pady=0)
+            result.grid_configure(row=1, column=0, columnspan=1, padx=0, pady=(12, 0))
+            map_card.grid_configure(row=2, column=0, columnspan=1, padx=0, pady=(12, 0))
+            return
+        top.columnconfigure(0, weight=3, uniform="")
+        top.columnconfigure(1, weight=5, uniform="")
+        top.columnconfigure(2, weight=4, uniform="")
+        start.grid_configure(row=0, column=0, columnspan=1, padx=(0, 6), pady=0)
+        result.grid_configure(row=0, column=1, columnspan=1, padx=6, pady=0)
+        map_card.grid_configure(row=0, column=2, columnspan=1, padx=(6, 0), pady=0)
+
     def _build_settings_page(self) -> None:
         page = self.pages["Settings"]
-        self.ttk.Label(page, text="Settings", style="PageTitle.TLabel").pack(anchor="w")
+        presentation = CANVA_PAGE_PRESENTATION["Settings"]
+        self._reference_page_header(page, str(presentation["title"]), str(presentation["subtitle"]))
         profile = self.ttk.Frame(page, style="Card.TFrame", padding=20)
-        profile.pack(fill="x", pady=(18, 0))
+        profile.pack(fill="x")
         self.ttk.Label(profile, text="LOKALES PROFIL & DATENSCHUTZ", style="Card.TLabel", font=(self.display_font, 11, "bold")).pack(anchor="w")
         self.ttk.Label(profile, textvariable=self._my_profile_status, style="Muted.TLabel", wraplength=1000, justify="left").pack(anchor="w", pady=(8, 10))
         controls = self.ttk.Frame(profile, style="CardInner.TFrame")
-        controls.pack(anchor="w")
-        self.ttk.Button(controls, text="Lokale Steam-Profile erkennen", command=self._choose_local_steam_root).pack(side="left")
+        controls.pack(fill="x")
+        source_controls = self.ttk.Frame(controls, style="CardInner.TFrame")
+        source_controls.pack(fill="x")
+        self.ttk.Button(source_controls, text="Lokale Steam-Profile erkennen", command=self._choose_local_steam_root).pack(side="left")
         self._my_profile_choice = self.tk.StringVar(value="Kein lokaler Account erkannt")
-        self._my_profile_accounts = self.ttk.Combobox(controls, textvariable=self._my_profile_choice, state="disabled", width=42)
-        self._my_profile_accounts.pack(side="left", padx=8)
-        self.ttk.Button(controls, text="Account aktivieren", command=self._activate_local_steam_account).pack(side="left")
-        self.ttk.Button(controls, text="Zuordnung entfernen", command=self._clear_local_steam_account).pack(side="left", padx=(8, 0))
+        self._my_profile_accounts = self.ttk.Combobox(source_controls, textvariable=self._my_profile_choice, state="disabled", width=42)
+        self._my_profile_accounts.pack(side="left", fill="x", expand=True, padx=(8, 0))
+        account_actions = self.ttk.Frame(controls, style="CardInner.TFrame")
+        account_actions.pack(anchor="w", pady=(8, 0))
+        self.ttk.Button(account_actions, text="Account aktivieren", command=self._activate_local_steam_account).pack(side="left")
+        self.ttk.Button(account_actions, text="Zuordnung entfernen", command=self._clear_local_steam_account).pack(side="left", padx=(8, 0))
         self.ttk.Label(profile, text="LOCAL · PRIVATE · READ-ONLY · keine Steam-Anmeldung · keine Übertragung", style="Muted.TLabel").pack(anchor="w", pady=(10, 0))
         card = self.ttk.Frame(page, style="Card.TFrame", padding=20)
         card.pack(fill="x", pady=(18, 0))
@@ -2754,211 +2806,13 @@ class AnalyzerShellApp:
         self._build_optimizer_overview_view()
         self._build_optimizer_detail_view()
         self._show_optimizer_overview()
-        self._create_optimizer_master_overlay()
-
-    def _create_optimizer_master_overlay(self) -> None:
-        """Render the approved Optimizer MASTER separately from legacy shell chrome.
-
-        The canvas owns only the visual composition. Existing data adapters,
-        actions and read-only safety behaviour remain behind this presentation
-        layer and are called through the small interaction map below.
-        """
-        self.optimizer_master_mode = "overview"
-        self.optimizer_master_canvas = self.tk.Canvas(
-            self.root, background="#02070d", highlightthickness=0, borderwidth=0, bd=0,
-        )
-        self.optimizer_master_canvas.bind("<Button-1>", self._activate_optimizer_master)
-        self.optimizer_master_canvas.bind("<Configure>", self._draw_optimizer_master)
-
-    def _show_optimizer_master_overlay(self) -> None:
-        self.optimizer_master_canvas.place(x=0, y=0, relwidth=1, relheight=1)
-        self.optimizer_master_canvas.lift()
-        self._draw_optimizer_master()
-
-    def _master_rect(self, x1, y1, x2, y2, *, fill, outline="#152b3d", width=1, radius=10, tag="master") -> None:
-        canvas = self.optimizer_master_canvas
-        canvas.create_rectangle(x1 + radius, y1, x2 - radius, y2, fill=fill, outline="", tags=tag)
-        canvas.create_rectangle(x1, y1 + radius, x2, y2 - radius, fill=fill, outline="", tags=tag)
-        for box, start in (((x1, y1, x1 + 2 * radius, y1 + 2 * radius), 90), ((x1, y2 - 2 * radius, x1 + 2 * radius, y2), 180), ((x2 - 2 * radius, y2 - 2 * radius, x2, y2), 270), ((x2 - 2 * radius, y1, x2, y1 + 2 * radius), 0)):
-            canvas.create_arc(*box, start=start, extent=90, fill=fill, outline=outline, width=width, tags=tag)
-        canvas.create_line(x1 + radius, y1, x2 - radius, y1, fill=outline, width=width, tags=tag)
-        canvas.create_line(x1 + radius, y2, x2 - radius, y2, fill=outline, width=width, tags=tag)
-        canvas.create_line(x1, y1 + radius, x1, y2 - radius, fill=outline, width=width, tags=tag)
-        canvas.create_line(x2, y1 + radius, x2, y2 - radius, fill=outline, width=width, tags=tag)
-
-    def _master_text(self, x, y, text, *, size=12, color="#E7EEF5", anchor="w", bold=False, width=0, tag="master") -> None:
-        self.optimizer_master_canvas.create_text(
-            x, y, text=text, fill=color, anchor=anchor, width=width or 0,
-            font=(self.ui_font, size, "bold" if bold else "normal"), tags=tag,
-        )
-
-    def _draw_optimizer_master_shell(self) -> tuple[float, float]:
-        canvas = self.optimizer_master_canvas
-        canvas.delete("master")
-        width, height = max(canvas.winfo_width(), 1), max(canvas.winfo_height(), 1)
-        scale = min(width / 1536, height / 1024)
-        ox, oy = (width - 1536 * scale) / 2, (height - 1024 * scale) / 2
-        canvas.create_rectangle(0, 0, width, height, fill="#02070d", outline="", tags="master")
-        canvas.create_rectangle(ox, oy, ox + 243 * scale, oy + 1024 * scale, fill="#06121f", outline="", tags="master")
-        canvas.create_line(ox + 243 * scale, oy, ox + 243 * scale, oy + 1024 * scale, fill="#13293a", tags="master")
-        self._master_text(ox + 38 * scale, oy + 48 * scale, "IMPROVE", size=max(12, int(29 * scale)), color="#F4F8FC", bold=True)
-        self._master_text(ox + 39 * scale, oy + 80 * scale, "YOURSELF", size=max(10, int(20 * scale)), color="#EAF4FD", bold=False)
-        self._master_text(ox + 210 * scale, oy + 111 * scale, "v1.0.0", size=max(7, int(11 * scale)), color="#95A6B7", anchor="e")
-        nav = (("⌂", "Dashboard"), ("⚙", "Optimizer"), ("▣", "Analyzer"), ("◌", "Tactical Viewer"), ("▧", "System Info"), ("♧", "Benchmark"), ("▤", "Monitor"), ("☑", "Tools"), ("♙", "Profiles"))
-        for index, (icon, label) in enumerate(nav):
-            y = 169 + index * 54
-            if label == "Optimizer":
-                self._master_rect(ox + 4 * scale, oy + (y - 26) * scale, ox + 218 * scale, oy + (y + 26) * scale, fill="#0A2135", outline="#1676C1", radius=max(5, int(8 * scale)))
-            self._master_text(ox + 28 * scale, oy + y * scale, icon, size=max(9, int(18 * scale)), color="#36A8FF" if label == "Optimizer" else "#A5B8CA")
-            self._master_text(ox + 60 * scale, oy + y * scale, label, size=max(8, int(15 * scale)), color="#D8E7F2" if label == "Optimizer" else "#B2C1CF", bold=label == "Optimizer")
-        self._master_text(ox + 28 * scale, oy + 873 * scale, "⚙", size=max(9, int(18 * scale)), color="#A5B8CA")
-        self._master_text(ox + 60 * scale, oy + 873 * scale, "Settings", size=max(8, int(15 * scale)), color="#B2C1CF")
-        self._master_text(ox + 28 * scale, oy + 920 * scale, "ⓘ", size=max(9, int(18 * scale)), color="#A5B8CA")
-        self._master_text(ox + 60 * scale, oy + 920 * scale, "About Improve", size=max(8, int(15 * scale)), color="#B2C1CF")
-        self._master_rect(ox + 18 * scale, oy + 950 * scale, ox + 210 * scale, oy + 1012 * scale, fill="#071725", outline="#183044", radius=max(5, int(8 * scale)))
-        self._master_text(ox + 34 * scale, oy + 973 * scale, "✓", size=max(9, int(18 * scale)), color="#21D07A")
-        self._master_text(ox + 57 * scale, oy + 971 * scale, "System bereit", size=max(8, int(14 * scale)), color="#2BE07E", bold=True)
-        self._master_text(ox + 57 * scale, oy + 994 * scale, "Alle Dienste aktiv", size=max(7, int(12 * scale)), color="#AAB9C5")
-        self._master_text(ox + 272 * scale, oy + 40 * scale, "Optimizer", size=max(13, int(25 * scale)), color="#F3F7FB", bold=True)
-        for index, label in enumerate(("Windows", "CPU", "RAM", "GPU")):
-            x = 764 + index * 160
-            self._master_rect(ox + x * scale, oy + 22 * scale, ox + (x + 150) * scale, oy + 58 * scale, fill="#061321", outline="#17334A", radius=max(4, int(7 * scale)))
-            value = list(self.optimizer_hardware_values.values())[index]
-            self._master_text(ox + (x + 12) * scale, oy + 33 * scale, label, size=max(6, int(8 * scale)), color="#8297A9")
-            self._master_text(ox + (x + 12) * scale, oy + 47 * scale, value, size=max(7, int(10 * scale)), color="#D7E2EA", width=122 * scale)
-        self._master_rect(ox + 1423 * scale, oy + 22 * scale, ox + 1459 * scale, oy + 58 * scale, fill="#061321", outline="#17334A", radius=max(4, int(7 * scale)))
-        self._master_text(ox + 1441 * scale, oy + 40 * scale, "•••", size=max(8, int(13 * scale)), color="#D9E6EF", anchor="center")
-        self._master_text(ox + 1497 * scale, oy + 40 * scale, "×", size=max(13, int(26 * scale)), color="#D9E6EF", anchor="center")
-        return ox, oy
-
-    def _draw_optimizer_master(self, _event=None) -> None:
-        ox, oy = self._draw_optimizer_master_shell()
-        canvas = self.optimizer_master_canvas
-        width, height = max(canvas.winfo_width(), 1), max(canvas.winfo_height(), 1)
-        scale = min(width / 1536, height / 1024)
-        S = lambda value: value * scale
-        if self.optimizer_master_mode == "detail":
-            self._draw_optimizer_master_detail(ox, oy, S)
-            return
-        self._master_rect(ox + S(258), oy + S(82), ox + S(1016), oy + S(368), fill="#071827", outline="#1A4663", radius=max(7, int(S(12))))
-        self._master_text(ox + S(284), oy + S(113), "IMPROVE EMPFEHLUNGEN", size=max(10, int(S(18))), color="#43B4FF", bold=True)
-        self._master_text(ox + S(284), oy + S(145), "Auf Basis deines Systems und unserer geprüften Optimierungsregeln", size=max(8, int(S(14))), color="#B7C6D4")
-        self._master_text(ox + S(372), oy + S(239), "ALLE\n4 BEREICHE\nANALYSIERT\n✓", size=max(9, int(S(15))), color="#E8F0F5", anchor="center", bold=True)
-        canvas.create_oval(ox + S(290), oy + S(176), ox + S(456), oy + S(343), outline="#10D678", width=max(2, int(S(11))), tags="master")
-        canvas.create_arc(ox + S(290), oy + S(176), ox + S(456), oy + S(343), start=30, extent=125, style="arc", outline="#22A7FF", width=max(2, int(S(11))), tags="master")
-        counts = self.optimizer_view_data.get("counts", {}) if isinstance(self.optimizer_view_data, dict) else {}
-        metric_data = (("♜", str(counts.get("recommended", "—")), "EMPFEHLUNGEN\ngesamt", "#2A9DF4"), ("✓", str(counts.get("already", "—")), "Automatisch\numsetzbar", "#20D77A"), ("✋", str(counts.get("manual_bios", "—")), "BIOS-Empfehlungen\nerfordern deine Mithilfe", "#EE941B"))
-        for index, (icon, value, text, color) in enumerate(metric_data):
-            x = 495 + index * 157
-            self._master_text(ox + S(x), oy + S(220), icon, size=max(12, int(S(27))), color=color, anchor="center")
-            self._master_text(ox + S(x + 34), oy + S(208), value, size=max(12, int(S(25))), color="#F0F5FA", bold=True)
-            self._master_text(ox + S(x + 34), oy + S(245), text, size=max(7, int(S(11))), color="#B8C7D5", width=S(110))
-        self._master_rect(ox + S(484), oy + S(296), ox + S(990), oy + S(345), fill="#0B2034", outline="#197FC2", radius=max(5, int(S(7))))
-        self._master_text(ox + S(737), oy + S(320), "Empfehlungen prüfen", size=max(10, int(S(18))), color="#F1F6FA", anchor="center", bold=True)
-        self._master_text(ox + S(967), oy + S(320), "›", size=max(14, int(S(28))), color="#5FC0FF", anchor="center")
-        cards = optimizer_domain_overview(self.optimizer_view_data)
-        positions = ((258, 380), (641, 380), (258, 619), (641, 619))
-        for item, (x, y) in zip(cards, positions):
-            accent = _OPTIMIZER_DOMAIN_ACCENTS[str(item["domain"])]
-            self._master_rect(ox + S(x), oy + S(y), ox + S(x + 375), oy + S(y + 227), fill="#071725", outline="#19364A", radius=max(7, int(S(10))))
-            self._master_rect(ox + S(x + 19), oy + S(y + 45), ox + S(x + 88), oy + S(y + 114), fill="#092337", outline=accent, radius=max(6, int(S(10))))
-            self._master_text(ox + S(x + 54), oy + S(y + 80), "◉", size=max(12, int(S(30))), color=accent, anchor="center")
-            self._master_text(ox + S(x + 105), oy + S(y + 32), str(item["title"]).upper(), size=max(9, int(S(16))), color="#EEF4F8", bold=True)
-            self._master_text(ox + S(x + 105), oy + S(y + 60), str(item["description"]), size=max(7, int(S(13))), color="#B4C2D0", width=S(230))
-            self._master_text(ox + S(x + 105), oy + S(y + 119), str(item["state"]), size=max(7, int(S(12))), color=accent, width=S(235))
-            self._master_rect(ox + S(x + 14), oy + S(y + 175), ox + S(x + 360), oy + S(y + 212), fill="#071B2C", outline="#195E91", radius=max(4, int(S(7))))
-            self._master_text(ox + S(x + 187), oy + S(y + 194), "Details ansehen", size=max(8, int(S(14))), color="#67C6FF", anchor="center")
-        self._master_rect(ox + S(258), oy + S(858), ox + S(1016), oy + S(1012), fill="#071725", outline="#19364A", radius=max(7, int(S(10))))
-        self._master_text(ox + S(280), oy + S(894), "LETZTER OPTIMIERUNGSLAUF", size=max(9, int(S(16))), color="#33A9FF", bold=True)
-        self._master_text(ox + S(280), oy + S(940), "Kein abgeschlossener lokaler Optimierungslauf vorhanden.", size=max(8, int(S(14))), color="#C0CDD8")
-        self._master_text(ox + S(280), oy + S(966), "Read-only: Ergebnisse und Wiederherstellung werden erst nach belegten lokalen Vorgängen angezeigt.", size=max(7, int(S(12))), color="#8FA4B5")
-        self._draw_optimizer_master_right(ox, oy, S)
-
-    def _draw_optimizer_master_right(self, ox, oy, S) -> None:
-        selected = next(item for item in optimizer_domain_overview(self.optimizer_view_data) if item["domain"] == self.optimizer_active_domain)
-        self._master_rect(ox + S(1030), oy + S(82), ox + S(1520), oy + S(1012), fill="#061522", outline="#18364B", radius=max(7, int(S(12))))
-        self._master_text(ox + S(1054), oy + S(114), "DETAILS & ERKLÄRUNG", size=max(10, int(S(17))), color="#37ADFF", bold=True)
-        self._master_text(ox + S(1488), oy + S(114), "×", size=max(12, int(S(24))), color="#B9C9D7", anchor="center")
-        self._master_text(ox + S(1085), oy + S(165), str(selected["title"]), size=max(10, int(S(18))), color="#F0F5F9", bold=True)
-        self._master_text(ox + S(1085), oy + S(194), str(selected["description"]), size=max(8, int(S(13))), color="#B9C7D4")
-        self._master_text(ox + S(1055), oy + S(232), "Aktuell: Nicht verfügbar", size=max(8, int(S(12))), color="#C6D3DD")
-        self._master_text(ox + S(1200), oy + S(232), "Empfohlen: —", size=max(8, int(S(12))), color="#53C98B")
-        self._master_text(ox + S(1360), oy + S(232), "Keine Änderung", size=max(8, int(S(12))), color="#E6A33B")
-        headings = (("WAS IST DAS?", "Die Übersicht zeigt nur vorhandene lokale Fakten. Fehlende Bewertungen bleiben sichtbar unbekannt."), ("WARUM EMPFIEHLT IMPROVE DAS?", "Eine Empfehlung wird erst bei vorhandener lokaler Evidenz angezeigt."), ("EVIDENZ & GÜLTIGKEIT", "Nicht verfügbar."), ("ÄNDERUNG & WIEDERHERSTELLUNG", "Read-only · es wird keine Änderung ausgeführt."), ("NÄCHSTER SCHRITT", "Starte die vorhandene Prüfung nur bewusst über „Empfehlungen prüfen“ ."))
-        y = 286
-        for heading, value in headings:
-            self._master_text(ox + S(1055), oy + S(y), heading, size=max(8, int(S(13))), color="#37ADFF", bold=True)
-            self._master_text(ox + S(1055), oy + S(y + 31), value, size=max(7, int(S(12))), color="#BAC8D4", width=S(408))
-            y += 126
-
-    def _draw_optimizer_master_detail(self, ox, oy, S) -> None:
-        self._master_rect(ox + S(242), oy + S(76), ox + S(1075), oy + S(252), fill="#071725", outline="#18364B", radius=max(7, int(S(10))))
-        self._master_text(ox + S(272), oy + S(107), "←", size=max(14, int(S(28))), color="#BFD0DD")
-        self._master_text(ox + S(319), oy + S(108), "System Optimizer", size=max(13, int(S(25))), color="#F4F8FB", bold=True)
-        self._master_text(ox + S(319), oy + S(137), "Windows & System", size=max(8, int(S(14))), color="#C0CDD8")
-        self._master_rect(ox + S(900), oy + S(96), ox + S(1061), oy + S(130), fill="#092034", outline="#1769A2", radius=max(4, int(S(7))))
-        self._master_text(ox + S(980), oy + S(113), "Zurück zur Übersicht", size=max(7, int(S(12))), color="#DAEAF4", anchor="center")
-        counts = self.optimizer_view_data.get("counts", {}) if isinstance(self.optimizer_view_data, dict) else {}
-        metrics = (("⚙", "Einstellungen geprüft", counts.get("checked", "—"), "#199CFF"), ("✓", "Bereits optimal", counts.get("already", "—"), "#1FD47A"), ("●", "Änderungen empfohlen", counts.get("recommended", "—"), "#F18C1B"), ("◌", "Nicht relevant", counts.get("conditional", "—"), "#9BAABA"))
-        for index, (icon, label, value, color) in enumerate(metrics):
-            x = 259 + index * 212
-            self._master_rect(ox + S(x), oy + S(162), ox + S(x + 208), oy + S(235), fill="#071725", outline="#19364A", radius=max(5, int(S(8))))
-            self._master_text(ox + S(x + 28), oy + S(198), icon, size=max(11, int(S(25))), color=color, anchor="center")
-            self._master_text(ox + S(x + 68), oy + S(187), str(value), size=max(11, int(S(23))), color="#F1F6FA", bold=True)
-            self._master_text(ox + S(x + 68), oy + S(211), label, size=max(7, int(S(11))), color="#C0CDD8")
-        self._master_rect(ox + S(242), oy + S(253), ox + S(1075), oy + S(1010), fill="#061522", outline="#18364B", radius=max(7, int(S(10))))
-        self._master_rect(ox + S(259), oy + S(264), ox + S(487), oy + S(298), fill="#04111C", outline="#19364A", radius=max(4, int(S(6))))
-        self._master_text(ox + S(274), oy + S(281), "⌕  Einstellung suchen...", size=max(7, int(S(12))), color="#AAB9C5")
-        self._master_rect(ox + S(498), oy + S(264), ox + S(615), oy + S(298), fill="#071B2C", outline="#19364A", radius=max(4, int(S(6))))
-        self._master_text(ox + S(556), oy + S(281), "Alle Status⌄", size=max(7, int(S(12))), color="#D5E1EA", anchor="center")
-        headers = (("Einstellung", 275), ("Aktuell", 640), ("Empfehlung", 742), ("Status", 872))
-        for text, x in headers:
-            self._master_text(ox + S(x), oy + S(324), text, size=max(7, int(S(12))), color="#D2DEE7")
-        visible = optimizer_visible_models(self.optimizer_view_data, self.optimizer_active_domain, query=self.optimizer_search_var.get(), status_filter=self.optimizer_filter_var.get())
-        if visible:
-            y = 365
-            for model in visible[:12]:
-                self._master_rect(ox + S(258), oy + S(y - 21), ox + S(1061), oy + S(y + 15), fill="#071725", outline="#173044", radius=max(2, int(S(3))))
-                label, semantic = status_presentation(model.get("status"))
-                color = {"ready": "#24D47B", "conditional": "#F1A21E", "unknown": "#99A9B8", "evidence": "#2FA8FF"}[semantic]
-                self._master_text(ox + S(275), oy + S(y - 3), str(model.get("title") or "Unbenannte Einstellung"), size=max(7, int(S(12))), color="#E7EEF5")
-                self._master_text(ox + S(640), oy + S(y - 3), optimizer_table_cell(model.get("current_state"), maximum=18), size=max(7, int(S(11))), color="#CBD7E0")
-                self._master_text(ox + S(742), oy + S(y - 3), optimizer_table_cell(model.get("improve_recommendation"), maximum=18), size=max(7, int(S(11))), color=color)
-                self._master_text(ox + S(872), oy + S(y - 3), optimizer_table_cell(label, maximum=16), size=max(7, int(S(11))), color=color)
-                y += 38
-        else:
-            self._master_text(ox + S(660), oy + S(500), "Keine bestätigten lokalen Einstellungen verfügbar.", size=max(8, int(S(14))), color="#8FA4B5", anchor="center")
-        self._draw_optimizer_master_right(ox, oy, S)
-
-    def _activate_optimizer_master(self, event) -> None:
-        width, height = max(self.optimizer_master_canvas.winfo_width(), 1), max(self.optimizer_master_canvas.winfo_height(), 1)
-        scale = min(width / 1536, height / 1024)
-        x, y = event.x / scale, event.y / scale
-        if self.optimizer_master_mode == "detail":
-            if 242 <= x <= 1075 and 76 <= y <= 145:
-                self.optimizer_master_mode = "overview"
-                self._show_optimizer_overview()
-                self.optimizer_master_canvas.lift()
-                self._draw_optimizer_master()
-            return
-        if 258 <= x <= 1016 and 380 <= y <= 846:
-            column = 0 if x < 641 else 1
-            row = 0 if y < 619 else 1
-            domain = (("SYSTEM_OPTIMIZER", "GRAPHICS_OPTIMIZER"), ("NETWORK_OPTIMIZER", "BIOS_OPTIMIZER"))[row][column]
-            self.optimizer_master_mode = "detail"
-            self._show_optimizer_detail_screen(domain)
-            self.optimizer_master_canvas.lift()
-            self._draw_optimizer_master()
-        elif 484 <= x <= 990 and 296 <= y <= 345:
-            self._run_system_check()
-
 
     def _optimizer_header(self, parent, *, title: str, back_command: Callable[[], None] | None = None):
         header = self.ttk.Frame(parent, style="Content.TFrame")
         header.pack(fill="x", pady=(0, 14))
         if back_command is not None:
             self.ttk.Button(header, text="← Zurück zur Übersicht", command=back_command).pack(side="left", padx=(0, 13))
-        self.ttk.Label(header, text=title, style="PageTitle.TLabel").pack(side="left")
+        self.ttk.Label(header, text=title, style="PageTitle.TLabel", font=(self.display_font, 22, "bold")).pack(side="left")
         chips = self.ttk.Frame(header, style="Content.TFrame")
         chips.pack(side="right")
         self.optimizer_header_chip_hosts.append(chips)
@@ -2967,21 +2821,19 @@ class AnalyzerShellApp:
 
     def _build_optimizer_overview_view(self) -> None:
         self.optimizer_header_chip_hosts: list[object] = []
-        self._optimizer_header(self.optimizer_overview_view, title="Optimizer")
+        self._optimizer_header(self.optimizer_overview_view, title="Improve Optimizer")
         content = self.ttk.Frame(self.optimizer_overview_view, style="Content.TFrame")
         content.pack(fill="both", expand=True)
         left = self.ttk.Frame(content, style="Content.TFrame")
-        left.pack(side="left", fill="both", expand=True, padx=(0, 12))
-        right_surface = RoundedOptimizerSurface(
+        right_surface = CanvaOptimizerSurface(
             self.tk, self.ttk, content, style="OptimizerDetail.TFrame", fill=_OPTIMIZER_THEME["surface_detail"],
             padding=22, min_height=760, min_width=430,
         )
-        right_surface.pack(side="right", fill="y")
         right_surface.canvas.pack_propagate(False)
         right = right_surface.body
         self.optimizer_overview_details = right_surface
 
-        hero_surface = RoundedOptimizerSurface(
+        hero_surface = CanvaOptimizerSurface(
             self.tk, self.ttk, left, style="OptimizerHero.TFrame", fill=_OPTIMIZER_THEME["surface_hero"],
             padding=26, min_height=286,
         )
@@ -3013,7 +2865,7 @@ class AnalyzerShellApp:
         self.optimizer_overview_metric_values: dict[str, object] = {}
         for index, (key, label) in enumerate((("checked", "GEPRÜFT"), ("already", "BEREITS PASSEND"), ("conditional", "ZU PRÜFEN"))):
             metrics.columnconfigure(index, weight=1, uniform="optimizer-summary")
-            metric_surface = RoundedOptimizerSurface(
+            metric_surface = CanvaOptimizerSurface(
                 self.tk, self.ttk, metrics, style="OptimizerMetric.TFrame", fill=_OPTIMIZER_THEME["surface_raised"],
                 padding=(12, 10), min_height=82, radius=9,
             )
@@ -3024,7 +2876,7 @@ class AnalyzerShellApp:
             value = self.ttk.Label(metric, text="—", style="OptimizerMetric.TLabel", foreground=metric_color, font=(self.display_font, 15, "bold"))
             value.pack(anchor="w", pady=(3, 0))
             self.optimizer_overview_metric_values[key] = value
-        self.optimizer_overview_run_action = RoundedOptimizerAction(
+        self.optimizer_overview_run_action = CanvaOptimizerAction(
             self.tk, hero_copy, text="System Check ausführen", command=self._run_system_check,
             primary=True, font=(self.ui_font, 9, "bold"),
         )
@@ -3039,7 +2891,7 @@ class AnalyzerShellApp:
             self.optimizer_domain_grid.columnconfigure(index, weight=1, uniform="optimizer-domains")
         # The final row is part of the approved Overview hierarchy. It stays
         # explicitly empty until an actual local optimization run exists.
-        last_run_surface = RoundedOptimizerSurface(
+        last_run_surface = CanvaOptimizerSurface(
             self.tk, self.ttk, left, style="OptimizerArea.TFrame", fill=_OPTIMIZER_THEME["surface"],
             padding=(20, 16), min_height=126, radius=12,
         )
@@ -3050,6 +2902,29 @@ class AnalyzerShellApp:
         self.ttk.Label(last_run, text="Read-only: Ergebnisse und Wiederherstellung werden erst nach belegten lokalen Vorgängen angezeigt.", style="OptimizerAreaMuted.TLabel", wraplength=620, justify="left").pack(anchor="w", pady=(4, 0))
         self._build_optimizer_explanation_panel(right)
         self._render_optimizer_overview()
+        self.optimizer_overview_content = content
+        self.optimizer_overview_left = left
+        self.optimizer_overview_right = right_surface
+        content.bind("<Configure>", lambda event: self._layout_optimizer_overview(event.width))
+        self.root.after_idle(lambda: self._layout_optimizer_overview(content.winfo_width()))
+
+    def _layout_optimizer_overview(self, width: int) -> None:
+        """Reflow the shared-shell Optimizer instead of clipping its detail rail."""
+
+        compact = width < 1000
+        if getattr(self, "_optimizer_overview_compact", None) == compact:
+            return
+        self._optimizer_overview_compact = compact
+        left = self.optimizer_overview_left
+        right = self.optimizer_overview_right.canvas
+        left.pack_forget()
+        right.pack_forget()
+        if compact:
+            left.pack(fill="x")
+            right.pack(fill="x", pady=(14, 0))
+            return
+        left.pack(side="left", fill="both", expand=True, padx=(0, 12))
+        right.pack(side="right", fill="y")
 
     def _build_optimizer_explanation_panel(self, panel) -> None:
         self.ttk.Label(panel, text="DETAILS & ERKLÄRUNG", style="OptimizerDetail.TLabel", font=(self.display_font, 10, "bold")).pack(anchor="w")
@@ -3065,7 +2940,7 @@ class AnalyzerShellApp:
         self.optimizer_overview_detail_status.pack(anchor="w", pady=(0, 12))
         self.ttk.Label(panel, text="WAS IST DAS?", style="OptimizerDetailMuted.TLabel", foreground=_OPTIMIZER_THEME["accent"], font=(self.ui_font, 7, "bold")).pack(anchor="w", pady=(8, 3))
         self.ttk.Label(panel, text="Die Übersicht zeigt nur vorhandene lokale Fakten und die vier festen read-only Bereiche. Eine fehlende Bewertung ist keine Empfehlung.", style="OptimizerDetailMuted.TLabel", wraplength=380, justify="left").pack(anchor="w")
-        self.optimizer_overview_open_action = RoundedOptimizerAction(
+        self.optimizer_overview_open_action = CanvaOptimizerAction(
             self.tk, panel, text="System Optimizer öffnen", primary=True,
             command=lambda: self._show_optimizer_detail_screen(self.optimizer_active_domain), font=(self.ui_font, 9, "bold"),
         )
@@ -3083,7 +2958,7 @@ class AnalyzerShellApp:
         self.optimizer_detail_metric_values: dict[str, object] = {}
         for index, (key, label) in enumerate((("checked", "EINSTELLUNGEN GEPRÜFT"), ("already", "BEREITS PASSEND"), ("recommended", "ÄNDERUNG EMPFOHLEN"), ("conditional", "ZU PRÜFEN"))):
             metrics.columnconfigure(index, weight=1, uniform="optimizer-detail-metrics")
-            metric_surface = RoundedOptimizerSurface(
+            metric_surface = CanvaOptimizerSurface(
                 self.tk, self.ttk, metrics, style="OptimizerMetric.TFrame", fill=_OPTIMIZER_THEME["surface_raised"],
                 padding=(14, 11), min_height=84, radius=9,
             )
@@ -3107,13 +2982,13 @@ class AnalyzerShellApp:
 
         content = self.ttk.Frame(self.optimizer_detail_view, style="Content.TFrame")
         content.pack(fill="both", expand=True)
-        table_surface = RoundedOptimizerSurface(
+        table_surface = CanvaOptimizerSurface(
             self.tk, self.ttk, content, style="OptimizerArea.TFrame", fill=_OPTIMIZER_THEME["surface_input"],
             padding=0, min_height=420, radius=12,
         )
         table_surface.pack(side="left", fill="both", expand=True, padx=(0, 12))
         table_card = table_surface.body
-        detail_surface = RoundedOptimizerSurface(
+        detail_surface = CanvaOptimizerSurface(
             self.tk, self.ttk, content, style="OptimizerDetail.TFrame", fill=_OPTIMIZER_THEME["surface_detail"],
             padding=22, min_height=620, min_width=435,
         )
@@ -3184,7 +3059,7 @@ class AnalyzerShellApp:
             value = self.ttk.Label(detail, text="—", style="OptimizerDetailMuted.TLabel", wraplength=380, justify="left")
             value.pack(anchor="w")
             self.optimizer_detail_sections[key] = value
-        self.optimizer_detail_technical_action = RoundedOptimizerAction(
+        self.optimizer_detail_technical_action = CanvaOptimizerAction(
             self.tk, detail, text="Technische Details", command=self._toggle_optimizer_technical_detail,
             font=(self.ui_font, 9, "bold"),
         )
@@ -3201,7 +3076,7 @@ class AnalyzerShellApp:
                 OptimizerHardwareChip(self.tk, host, label=label, value=value, ui_font=self.ui_font).pack(side="left", padx=(5, 0))
 
     def _draw_optimizer_overview_ring(self, _event=None) -> None:
-        """Draw the MASTER-style status ring without implying a result we lack."""
+        """Draw the Canva-style status ring without implying a result we lack."""
         canvas = self.optimizer_overview_ring
         width, height = max(canvas.winfo_width(), 1), max(canvas.winfo_height(), 1)
         inset = 11
@@ -3217,10 +3092,6 @@ class AnalyzerShellApp:
         self.optimizer_detail_view.pack_forget()
         self.optimizer_overview_view.pack(fill="both", expand=True)
         self._render_optimizer_overview(self.optimizer_view_data)
-        if hasattr(self, "optimizer_master_canvas") and self.optimizer_master_canvas.winfo_ismapped():
-            self.optimizer_master_mode = "overview"
-            self.optimizer_master_canvas.lift()
-            self._draw_optimizer_master()
         if self.system_canvas is not None:
             self.root.after_idle(lambda: self.system_canvas.yview_moveto(0.0))
 
@@ -3231,10 +3102,6 @@ class AnalyzerShellApp:
         selected = next(item for item in optimizer_domain_overview(self.optimizer_view_data) if item["domain"] == domain)
         self.optimizer_detail_screen_title.configure(text=str(selected["title"]).upper())
         self._render_optimizer_detail_table()
-        if hasattr(self, "optimizer_master_canvas") and self.optimizer_master_canvas.winfo_ismapped():
-            self.optimizer_master_mode = "detail"
-            self.optimizer_master_canvas.lift()
-            self._draw_optimizer_master()
         if self.system_canvas is not None:
             self.root.after_idle(lambda: self.system_canvas.yview_moveto(0.0))
 
@@ -3260,17 +3127,17 @@ class AnalyzerShellApp:
         self.optimizer_overview_open_action._draw()
         for index, item in enumerate(cards):
             active = item["domain"] == self.optimizer_active_domain
-            card_surface = RoundedOptimizerSurface(
+            card_surface = CanvaOptimizerSurface(
                 self.tk, self.ttk, self.optimizer_domain_grid,
                 style="OptimizerAreaActive.TFrame" if active else "OptimizerArea.TFrame",
                 fill=_OPTIMIZER_THEME["surface_raised"] if active else _OPTIMIZER_THEME["surface"],
-                padding=(16, 14), min_height=192, radius=12,
+                padding=(16, 14), min_height=236, radius=12,
             )
             card_surface.grid(row=index // 2, column=index % 2, sticky="nsew", padx=(0 if index % 2 == 0 else 5, 5 if index % 2 == 0 else 0), pady=(0 if index < 2 else 10, 10 if index < 2 else 0))
             card = card_surface.body
             label_style = "OptimizerAreaActive.TLabel" if active else "OptimizerArea.TLabel"
             muted_style = "OptimizerAreaActiveMuted.TLabel" if active else "OptimizerAreaMuted.TLabel"
-            # The approved MASTER gives each fixed area a compact identity
+            # Canva page 6 gives each fixed area a compact identity
             # accent without changing any evidence-derived semantic status.
             accent = _OPTIMIZER_DOMAIN_ACCENTS[str(item["domain"])]
             self.ttk.Label(card, text="●", style=label_style, foreground=accent, font=(self.display_font, 17, "bold")).pack(anchor="w")
@@ -3278,7 +3145,7 @@ class AnalyzerShellApp:
             self.ttk.Label(card, text=item["title"], style=label_style, font=(self.display_font, 10, "bold")).pack(anchor="w", pady=(6, 3))
             self.ttk.Label(card, text=item["description"], style=muted_style, wraplength=270, justify="left").pack(anchor="w")
             self.ttk.Label(card, text=item["state"], style=label_style, foreground=accent, wraplength=270, justify="left", font=(self.ui_font, 8, "bold")).pack(anchor="w", pady=(12, 12))
-            action = RoundedOptimizerAction(self.tk, card, text="Details ansehen", primary=active, command=lambda value=item["domain"]: self._show_optimizer_detail_screen(value), font=(self.ui_font, 9, "bold"))
+            action = CanvaOptimizerAction(self.tk, card, text="Details ansehen", primary=active, command=lambda value=item["domain"]: self._show_optimizer_detail_screen(value), font=(self.ui_font, 9, "bold"))
             action.canvas.configure(background=_OPTIMIZER_THEME["surface_raised"] if active else _OPTIMIZER_THEME["surface"])
             action.pack(fill="x")
 
@@ -3370,8 +3237,11 @@ class AnalyzerShellApp:
         header.pack(fill="x")
         self.tactical_back_button = self.ttk.Button(header, text="← Zurück zum Review", command=self._return_to_embedded_review, state="disabled")
         self.tactical_back_button.pack(side="left")
-        self.ttk.Label(header, text="2D Tactical", style="PageTitle.TLabel").pack(side="left", padx=16)
-        self.ttk.Label(header, text="GEMEINSAME REPLAY-WAHRHEIT", style="StatusBadge.TLabel").pack(side="right")
+        title = self.ttk.Frame(header, style="Content.TFrame")
+        title.pack(side="left", fill="x", expand=True, padx=16)
+        self.ttk.Label(title, text="2D Tactical Replay", style="PageTitle.TLabel", font=(self.display_font, 22, "bold")).pack(anchor="w")
+        self.ttk.Label(title, text=str(CANVA_PAGE_PRESENTATION["Tactical Replay"]["subtitle"]), style="PageMuted.TLabel").pack(anchor="w", pady=(2, 0))
+        self.ttk.Label(page, text="GEMEINSAME REPLAY-WAHRHEIT", style="StatusBadge.TLabel").pack(anchor="e", pady=(6, 0))
         context_bar = self.ttk.Frame(page, style="Card.TFrame", padding=(14, 10))
         context_bar.pack(fill="x", pady=(10, 10))
         self.ttk.Label(context_bar, textvariable=self.tactical_scene_title, style="Card.TLabel", font=(self.display_font, 10, "bold")).pack(side="left")
@@ -3399,7 +3269,7 @@ class AnalyzerShellApp:
         self.tactical_scene_list.pack(fill="both", expand=True, pady=(8, 0))
         self.tactical_scene_list.bind("<<ListboxSelect>>", self._select_tactical_scene)
 
-        # The MASTER's right-hand information rail is retained without
+        # Canva page 5's right-hand information rail is retained without
         # inventing a synthetic event timeline.  It projects only the selected
         # review scene, its confirmed frame/tick and the locally stored note.
         detail_panel = self.ttk.Frame(body, style="Card.TFrame", padding=14, width=280)

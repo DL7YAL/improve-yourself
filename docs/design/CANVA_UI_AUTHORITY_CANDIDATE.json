@@ -9,7 +9,8 @@
     "view_url": "https://www.canva.com/d/N5EMb2oiYndTeOo",
     "revision_id": 25,
     "page_count": 8,
-    "updated_at_utc": "2026-09-02T08:26:31Z"
+    "updated_at_utc": "2026-09-05T10:25:49Z",
+    "export_manifest": "CANVA_UI_AUTHORITY_MANIFEST.json"
   },
   "activation_rule": "Activated by Tristan on 2026-09-05. Canva design DAHUBn5D2aM revision 25 is the sole visual authority. All prior UI Reference Pack and Optimizer MASTER images are SUPERSEDED and must not be implemented.",
   "functional_truth": "Current tested product contracts and safety boundaries override illustrative Canva content.",

@@ -190,15 +190,15 @@ def test_optimizer_overview_keeps_four_areas_visible_and_does_not_claim_preview_
     assert "kein Apply" in cards[-1]["description"]
 
 
-def test_optimizer_ui_keeps_master_grid_local_detail_scroll_and_domain_identity() -> None:
+def test_optimizer_ui_keeps_canva_grid_scrollable_shell_and_domain_identity() -> None:
     source = (Path(__file__).parents[1] / "src" / "improve_yourself" / "analyzer_shell.py").read_text(encoding="utf-8")
     assert 'self.optimizer_domain_grid.columnconfigure(index, weight=1, uniform="optimizer-domains")' in source
     assert 'row=index // 2, column=index % 2' in source
     assert 'self.optimizer_detail_scroll_canvas = detail_canvas' in source
     assert '_OPTIMIZER_DOMAIN_ACCENTS[str(item["domain"])]' in source
-    assert 'text="IMPROVE\\nYOURSELF"' in source
     assert 'text="LETZTER OPTIMIERUNGSLAUF"' in source
-    assert 'self.system_canvas = None' in source
+    assert 'self.system_canvas = canvas' in source
+    assert 'self._create_optimizer_master_overlay()' not in source
 
 
 def test_optimizer_visible_models_filters_one_domain_without_reinterpreting_results() -> None:

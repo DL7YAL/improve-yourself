@@ -1,0 +1,36 @@
+{
+  "schema": "iy.ui.canva_runtime_review/v1",
+  "status": "READY_FOR_TRISTAN_REVIEW",
+  "authority": {
+    "design_id": "DAHUBn5D2aM",
+    "revision": 25,
+    "manifest": "CANVA_UI_AUTHORITY_MANIFEST.json"
+  },
+  "capture": {
+    "tool": "tools/dev/Capture-CanvaUi.py",
+    "format": "PNG",
+    "viewports": [
+      {"width": 1536, "height": 1024},
+      {"width": 1080, "height": 720}
+    ],
+    "runtime_state": "fresh local controller with no demo, analysis, benchmark run or local profile evidence"
+  },
+  "screenshots": [
+    {"runtime_page": "Analyzer", "file": "canva-runtime-review/revision-25/analyzer-1080x720.png", "width": 1080, "height": 720, "sha256": "3c2033d020d1ba361ef704d4fe70bca970d8cb0b792809df474ce7d88271d86f"},
+    {"runtime_page": "Analyzer", "file": "canva-runtime-review/revision-25/analyzer-1536x1024.png", "width": 1536, "height": 1024, "sha256": "04a25feede5dbdb4e143ab620ea1a585a625cf6830a8f972d4a4654b737e796d"},
+    {"runtime_page": "Benchmark", "file": "canva-runtime-review/revision-25/benchmark-1080x720.png", "width": 1080, "height": 720, "sha256": "fa084ec2c63c9ee82b3e17ced99ebf79dd1fdc1ecaed3f40084a5fc29d4cd325"},
+    {"runtime_page": "Benchmark", "file": "canva-runtime-review/revision-25/benchmark-1536x1024.png", "width": 1536, "height": 1024, "sha256": "b4522f6b33fa854b11fff7e2842aef0016ad07ad0a94de186a1d808a1099714c"},
+    {"runtime_page": "Dashboard", "file": "canva-runtime-review/revision-25/dashboard-1080x720.png", "width": 1080, "height": 720, "sha256": "156faf9313f2b8105487d0adc5725c1a3ba61c74a42cff8c43ffdc2b21b0c11a"},
+    {"runtime_page": "Dashboard", "file": "canva-runtime-review/revision-25/dashboard-1536x1024.png", "width": 1536, "height": 1024, "sha256": "f2ccf1d530edd6435334e66947a6fbc45fe6985b7adc334cac0e5dc4fff6b215"},
+    {"runtime_page": "My Improvement", "file": "canva-runtime-review/revision-25/my-improvement-1080x720.png", "width": 1080, "height": 720, "sha256": "52f9ff97cbcc48d64b45793ff28371f548d1eb0f6fa608ab8ded8a28b29e4c6d"},
+    {"runtime_page": "My Improvement", "file": "canva-runtime-review/revision-25/my-improvement-1536x1024.png", "width": 1536, "height": 1024, "sha256": "41ea42d97ea10575e7e294ab9ec04addb551a8df72d8e51403fc8b1f8a4b6100"},
+    {"runtime_page": "System Check / Optimizer", "file": "canva-runtime-review/revision-25/optimizer-1080x720.png", "width": 1080, "height": 720, "sha256": "edd0023d742ae53420020d955e3444ddfdbf20d43cf6a1c1d0f032c16aa1451c"},
+    {"runtime_page": "System Check / Optimizer", "file": "canva-runtime-review/revision-25/optimizer-1536x1024.png", "width": 1536, "height": 1024, "sha256": "0bfabf51218ce2addea6c6205e46354731a657a6a746a33df0ed0630777f8e78"},
+    {"runtime_page": "Reports", "file": "canva-runtime-review/revision-25/reports-1080x720.png", "width": 1080, "height": 720, "sha256": "329359f14f9adc706772540bb753414c259ef337c37aeb87eb464669d0ddfd36"},
+    {"runtime_page": "Reports", "file": "canva-runtime-review/revision-25/reports-1536x1024.png", "width": 1536, "height": 1024, "sha256": "151f64a6418b57134ea0f9856d9ca804462c5709a56824f3d2f55ce243e372d9"},
+    {"runtime_page": "Settings", "file": "canva-runtime-review/revision-25/settings-1080x720.png", "width": 1080, "height": 720, "sha256": "6ce93b9d0c5ca81188bf27e9d0338eaaf99b5b981a1f5877a365ffcd593aaab7"},
+    {"runtime_page": "Settings", "file": "canva-runtime-review/revision-25/settings-1536x1024.png", "width": 1536, "height": 1024, "sha256": "428954ff6690b5a531e44dc70acde7528fca41639a15e103b90971d3ed4fa43d"},
+    {"runtime_page": "Tactical Replay", "file": "canva-runtime-review/revision-25/tactical-replay-1080x720.png", "width": 1080, "height": 720, "sha256": "4a6b8d2a6b2eca0790b5a580054aae8ae79fea23d837374c8e86b0d1c306c86c"},
+    {"runtime_page": "Tactical Replay", "file": "canva-runtime-review/revision-25/tactical-replay-1536x1024.png", "width": 1536, "height": 1024, "sha256": "141f39886145865b999ae351ae62abbe754e5e2ec0f75e3447ac98f73de673b8"}
+  ]
+}
