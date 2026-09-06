@@ -1,5 +1,10 @@
 # Improve Yourself – Experimental
 
+> **Visual authority update 2026-09-05:** Any older visual-master statement in
+> this document is superseded. Canva design `DAHUBn5D2aM` (`Versuch.nr1`),
+> revision 25, is the sole visual authority; current code remains functional
+> truth.
+
 Date: 2026-08-21
 Branch: `dev/v1-foundation`
 

@@ -1,0 +1,109 @@
+{
+  "schema": "iy.ui.canva_authority_candidate/v1",
+  "status": "BINDING_VISUAL_AUTHORITY",
+  "decision_owner": "Tristan",
+  "prepared_at": "2026-09-05",
+  "canva_source": {
+    "design_id": "DAHUBn5D2aM",
+    "title": "Versuch.nr1",
+    "view_url": "https://www.canva.com/d/N5EMb2oiYndTeOo",
+    "revision_id": 25,
+    "page_count": 8,
+    "updated_at_utc": "2026-09-05T10:25:49Z",
+    "export_manifest": "CANVA_UI_AUTHORITY_MANIFEST.json"
+  },
+  "activation_rule": "Activated by Tristan on 2026-09-05. Canva design DAHUBn5D2aM revision 25 is the sole visual authority. All prior UI Reference Pack and Optimizer MASTER images are SUPERSEDED and must not be implemented.",
+  "functional_truth": "Current tested product contracts and safety boundaries override illustrative Canva content.",
+  "pages": [
+    {
+      "page": 1,
+      "page_id": "PBBJrNXlG2tLfWTz",
+      "dimensions": {"width": 1672, "height": 941},
+      "role": "PRIMARY_SHELL_AND_DASHBOARD_CANDIDATE",
+      "target": "Dashboard and app-wide visual direction",
+      "preserve": [
+        "persistent left navigation",
+        "six primary module cards",
+        "top status row",
+        "progress, recent analyses and quick-access hierarchy",
+        "lower product idea and community panels",
+        "dark navy surfaces with restrained module accent colors"
+      ],
+      "replace_or_bind_to_runtime": [
+        "user name and profile",
+        "streak, level, analysis counters and date",
+        "progress percentages",
+        "recent match rows",
+        "quick actions and availability"
+      ]
+    },
+    {
+      "page": 2,
+      "page_id": "PB29ZSf9t1WZHmsL",
+      "dimensions": {"width": 1264, "height": 1264},
+      "role": "MODULE_LAYOUT_CANDIDATE",
+      "target": "Improve Analyzer",
+      "preserve": ["filter/action header", "summary metrics", "recent matches", "trend and category panel hierarchy"],
+      "replace_or_bind_to_runtime": ["all example statistics", "match rows", "rank and performance values", "analysis actions"]
+    },
+    {
+      "page": 3,
+      "page_id": "PB0yzBhyhZQzk37v",
+      "dimensions": {"width": 1264, "height": 1264},
+      "role": "MODULE_LAYOUT_CANDIDATE",
+      "target": "Improve Benchmark",
+      "preserve": ["metric header", "progress chart hierarchy", "comparison cards", "recent benchmark panel"],
+      "replace_or_bind_to_runtime": ["all example scores and ranks", "start action", "history and comparison claims"],
+      "current_boundary": "Benchmark remains parked; unavailable actions must stay disabled and honest."
+    },
+    {
+      "page": 4,
+      "page_id": "PBycRt5LZ5kXbWnd",
+      "dimensions": {"width": 1264, "height": 1264},
+      "role": "MODULE_LAYOUT_CANDIDATE",
+      "target": "My Improvement",
+      "preserve": ["overview metrics", "category comparison", "map analysis", "trend and action hierarchy"],
+      "replace_or_bind_to_runtime": ["all example longitudinal values", "heatmap claims", "personal trend claims", "recommended action claims"],
+      "current_boundary": "Do not manufacture longitudinal scores until backed by comparable local evidence."
+    },
+    {
+      "page": 5,
+      "page_id": "PBTdJTqLpv65rFj7",
+      "dimensions": {"width": 1264, "height": 1264},
+      "role": "MODULE_LAYOUT_CANDIDATE",
+      "target": "2D Tactical Replay",
+      "preserve": ["dominant central map", "left situation navigation", "right contextual rail", "bottom timeline and playback controls"],
+      "replace_or_bind_to_runtime": ["map and round selectors", "event timeline", "utility and player legend", "scene notes"],
+      "current_boundary": "Render only canonical replay/analyzer evidence; never infer missing events or map data."
+    },
+    {
+      "page": 6,
+      "page_id": "PB7cTfkx4vBqFFwg",
+      "dimensions": {"width": 1264, "height": 1264},
+      "role": "MODULE_LAYOUT_CANDIDATE",
+      "target": "Improve Optimizer",
+      "preserve": ["system overview first", "prioritized recommendation cards", "summary/detail split", "yellow optimizer accent"],
+      "replace_or_bind_to_runtime": ["system values", "priority and progress values", "recommended sequence", "primary action"],
+      "forbidden_in_v1": ["automatic apply", "automatic BIOS changes", "unproven backup/restore", "one-click recovery", "unsupported AMD import/export"]
+    },
+    {
+      "page": 7,
+      "page_id": "PBNgRrq3Yh1jClDj",
+      "dimensions": {"width": 1264, "height": 1264},
+      "role": "MODULE_LAYOUT_CANDIDATE",
+      "target": "Settings and local profile",
+      "preserve": ["profile header", "local/privacy status cards", "goal cards", "recent achievements hierarchy"],
+      "replace_or_bind_to_runtime": ["profile values", "goals", "achievements", "storage and privacy state"],
+      "current_boundary": "Only real local settings and the existing local profile/privacy contract may be exposed."
+    },
+    {
+      "page": 8,
+      "page_id": "PB98yjz76VWhxK9b",
+      "dimensions": {"width": 490, "height": 770},
+      "role": "BRAND_REFERENCE_CANDIDATE",
+      "target": "Improve Yourself logo treatment",
+      "preserve": ["blue rising-bar symbol", "IMPROVE YOURSELF wordmark", "dark presentation"],
+      "current_boundary": "Existing versioned app icon and wordmark remain active until separately approved replacement assets exist."
+    }
+  ]
+}

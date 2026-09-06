@@ -1,7 +1,12 @@
 # Improve Yourself — Design Reference
 
-Status: UI Reference Pack is the BINDING VISUAL MASTER REFERENCE for the
-current Experimental/V1.1 consolidation.
+Status: **Canva revision 25 is the binding visual authority.**
+
+Read `CANVA_UI_AUTHORITY_CANDIDATE.json` and
+`CANVA_UI_MIGRATION_HANDOFF.md` first. Canva design `DAHUBn5D2aM`
+(`Versuch.nr1`) is the sole visual source. The old UI Reference Pack, its
+`*_MASTER.png` files, the concept PDF and the former Optimizer package are
+SUPERSEDED and must not be implemented.
 
 This directory exists so implementation agents do not have to reconstruct approved UI decisions from chat history.
 

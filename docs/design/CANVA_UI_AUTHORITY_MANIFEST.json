@@ -1,0 +1,100 @@
+{
+  "schema": "iy.ui.canva_authority/v1",
+  "status": "BINDING_VISUAL_AUTHORITY",
+  "title": "Versuch.nr1",
+  "design_id": "DAHUBn5D2aM",
+  "revision": 25,
+  "source_url": "https://www.canva.com/d/N5EMb2oiYndTeOo",
+  "verified_edit_url": "https://www.canva.com/design/DAHUBn5D2aM/s3Pupycg18-p7p0312YUgw/edit",
+  "verified_at_utc": "2026-09-05T10:25:49Z",
+  "export": {
+    "format": "PNG",
+    "scale": 1,
+    "selection": "ALL_PAGES",
+    "preserve_original_dimensions": true
+  },
+  "content_rule": "Canva controls visual treatment only. Runtime data, feature availability, read-only boundaries and honest unavailable states remain product truth.",
+  "supersession_rule": "All earlier PDF, Figma, UI Reference Pack and Optimizer MASTER material is historical SUPERSEDED content with zero implementation or acceptance priority.",
+  "pages": [
+    {
+      "page_number": 1,
+      "page_id": "PBBJrNXlG2tLfWTz",
+      "runtime_page": "Dashboard",
+      "role": "shared_shell_and_dashboard_primary",
+      "file": "canva-authority/revision-25/page-01-shell-dashboard.png",
+      "width": 1672,
+      "height": 941,
+      "sha256": "78b5836ecd8606edb11a3652b88cbba432d3337060b04afeebc4698e90dd936d"
+    },
+    {
+      "page_number": 2,
+      "page_id": "PB29ZSf9t1WZHmsL",
+      "runtime_page": "Analyzer",
+      "role": "improve_analyzer",
+      "file": "canva-authority/revision-25/page-02-improve-analyzer.png",
+      "width": 1264,
+      "height": 1264,
+      "sha256": "9c0b0f8ca698d552fb6136c5ed95632848548081854ceb535066a503ba45b67e"
+    },
+    {
+      "page_number": 3,
+      "page_id": "PB0yzBhyhZQzk37v",
+      "runtime_page": "Benchmark",
+      "role": "improve_benchmark",
+      "file": "canva-authority/revision-25/page-03-improve-benchmark.png",
+      "width": 1264,
+      "height": 1264,
+      "sha256": "cb596501750b518b79408d7fa8b6b82cb6b28c5d2a55ad5940afce869abc77a9"
+    },
+    {
+      "page_number": 4,
+      "page_id": "PBycRt5LZ5kXbWnd",
+      "runtime_page": "My Improvement",
+      "role": "my_improvement",
+      "file": "canva-authority/revision-25/page-04-my-improvement.png",
+      "width": 1264,
+      "height": 1264,
+      "sha256": "98fcbda84d61413e7ddb3a05229e74688de775c49cdbea049c58276f3f46cba2"
+    },
+    {
+      "page_number": 5,
+      "page_id": "PBTdJTqLpv65rFj7",
+      "runtime_page": "Tactical Replay",
+      "role": "two_dimensional_tactical_replay",
+      "file": "canva-authority/revision-25/page-05-tactical-replay.png",
+      "width": 1264,
+      "height": 1264,
+      "sha256": "12eb4f8278df6ce98abfa057f6402a3620fd5f53ca155c38e47559ce6c03a692"
+    },
+    {
+      "page_number": 6,
+      "page_id": "PB7cTfkx4vBqFFwg",
+      "runtime_page": "System Check / Optimizer",
+      "role": "improve_optimizer_read_only",
+      "file": "canva-authority/revision-25/page-06-improve-optimizer.png",
+      "width": 1264,
+      "height": 1264,
+      "sha256": "da347f399b77f421701ff6e42a01685438a4d0d9caa45ad1ce02998a8e67a8d5"
+    },
+    {
+      "page_number": 7,
+      "page_id": "PBNgRrq3Yh1jClDj",
+      "runtime_page": "Settings",
+      "role": "settings_and_local_profile",
+      "file": "canva-authority/revision-25/page-07-settings-local-profile.png",
+      "width": 1264,
+      "height": 1264,
+      "sha256": "0aa50bfcf636cd21f61c6c625fe6239db2f69c6bb701646c22edbb5f7609c37e"
+    },
+    {
+      "page_number": 8,
+      "page_id": "PB98yjz76VWhxK9b",
+      "runtime_page": "Shared branding",
+      "role": "variant_3_branding_reference",
+      "file": "canva-authority/revision-25/page-08-branding.png",
+      "width": 490,
+      "height": 770,
+      "sha256": "215f710338bef5480650dda1b2db57daab1f16f17adb9380d70964bd2654e868"
+    }
+  ]
+}

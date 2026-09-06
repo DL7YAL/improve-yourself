@@ -1,5 +1,12 @@
 # Improve Yourself — Shared Agent Base
 
+> **Current visual authority — 2026-09-05:** Canva design `DAHUBn5D2aM`
+> (`Versuch.nr1`), revision 25, is the sole binding UI reference. All earlier
+> PDF, UI Reference Pack and Optimizer `MASTER` statements later in this file
+> are historical snapshots and have zero implementation priority. Functional
+> and safety contracts in current code remain binding over illustrative Canva
+> values.
+
 ## Zweck
 
 Dieses Repository ist die gemeinsame Source of Truth für alle Arbeitsumgebungen des Projekts. Roadrunner of Lightning Detonation Aurel (kurz: Aurel) und Codex / The Beast dürfen in getrennten Sessions und Tools arbeiten, müssen aber Entscheidungen, Übergaben und relevante Arbeitsstände hier synchronisieren.

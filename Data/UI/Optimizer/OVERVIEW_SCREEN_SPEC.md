@@ -2,7 +2,9 @@
 
 ## Authority
 
-`optimizer_overview_MASTER.png` is the sole visual authority for this screen.
+**SUPERSEDED:** `optimizer_overview_MASTER.png` has no implementation or
+acceptance authority. Canva design `DAHUBn5D2aM`, revision 25, page 6 is the
+binding Optimizer visual source.
 This specification records the approved Figma export; it does not replace the
 PNG and must not be used to invent omitted visual details.
 

@@ -1,12 +1,15 @@
 {
   "package": "Improve Yourself Optimizer MASTER Package",
   "version": "1.0.0",
-  "visual_authority": "FIGMA UI MASTER = ALLEINIGE VISUELLE QUELLE.",
+  "status": "SUPERSEDED",
+  "superseded_at": "2026-09-05",
+  "superseded_by": "../../../docs/design/CANVA_UI_AUTHORITY_CANDIDATE.json",
+  "visual_authority": "NONE. This package is archival and prohibited as an implementation or acceptance source.",
   "source_exports": [
     {
       "file": "optimizer_overview_MASTER.png",
       "screen_id": "optimizer_overview",
-      "status": "MASTER",
+      "status": "SUPERSEDED",
       "width": 1536,
       "height": 1024,
       "sha256": "e2e91fdc4e69e11f567f1fe4a921883200dcf365f8fd68cee052a1aea4d6a004",
@@ -15,7 +18,7 @@
     {
       "file": "system_optimizer_detail_MASTER.png",
       "screen_id": "system_optimizer_detail",
-      "status": "MASTER",
+      "status": "SUPERSEDED",
       "width": 1536,
       "height": 1024,
       "sha256": "4b0b5d5e4cb632159935d4b51aaf4f5f1b104d1e89cd1e15fbfdec217b8bdb51",
