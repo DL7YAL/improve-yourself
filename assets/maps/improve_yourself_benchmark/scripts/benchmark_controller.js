@@ -1,6 +1,6 @@
 import { CSGrenadeType, Instance } from "cs_script/point_script";
 
-const VERSION = "iy-benchmark/v1.1";
+const VERSION = "iy-benchmark/v1.2-candidate.1";
 const TICK_SECONDS = 1 / 64;
 const PASS_SECONDS = 64;
 const COOLDOWN_SECONDS = 3;
@@ -162,6 +162,13 @@ function transitionMarker(index, phaseName) {
     );
 }
 
+function captureWindow(sceneId, landmarkId, expectedTime) {
+    marker(
+        `CAPTURE_WINDOW pass=${activePass} scene=${sceneId} landmark=${landmarkId}`
+        + ` expected_t=${expectedTime}`
+    );
+}
+
 function runtimeError(scope, error) {
     Instance.Msg(`[IYBENCH] ERROR scope=${scope} detail=${String(error)}`);
 }
@@ -260,6 +267,7 @@ const EVENTS = [
     { t: 5.2, run: startFire }, { t: 6.0, run: stopFire },
     { t: 8.2, run: clearUtilities },
     { t: 8.45, run: () => grenade(CSGrenadeType.FLASHBANG, [150, 650, 190]) },
+    { t: 9.0, run: () => captureWindow("nuke_outside", "yard_landmarks", 9.0) },
     { t: 13.0, run: startFire }, { t: 14.2, run: stopFire },
     { t: 16.2, run: () => grenade(CSGrenadeType.SMOKE, [200, 920, 82]) },
     { t: 16.45, run: () => grenade(CSGrenadeType.SMOKE, [470, 980, 82]) },
@@ -273,9 +281,11 @@ const EVENTS = [
     { t: 23.0, run: () => grenade(CSGrenadeType.SMOKE, [0, 1800, 85]) },
     { t: 24.0, run: () => grenade(CSGrenadeType.MOLOTOV, [-220, 2400, 75]) },
     { t: 24.5, run: () => transitionMarker(0, "EXIT") },
+    { t: 27.0, run: () => captureWindow("ancient_b", "water_reflection", 27.0) },
     { t: 27.0, run: startFire }, { t: 28.4, run: stopFire },
     { t: 31.0, run: () => grenade(CSGrenadeType.HE, [220, 2600, 90]) },
     { t: 34.0, run: startFire }, { t: 35.2, run: stopFire },
+    { t: 38.0, run: () => captureWindow("ancient_b", "red_room", 38.0) },
     { t: 38.0, run: () => transitionMarker(1, "APPROACH") },
     { t: 38.05, run: redRoomTint },
     { t: 41.82, run: clearRedRoomTint },
@@ -290,8 +300,11 @@ const EVENTS = [
     { t: 43.35, run: whiteFadeIn },
     { t: 44.5, run: () => transitionMarker(1, "EXIT") },
     { t: 45.0, run: () => grenade(CSGrenadeType.MOLOTOV, [-180, 4300, 75]) },
+    { t: 48.0, run: () => captureWindow("inferno_apps_a", "stairs", 48.0) },
     { t: 48.0, run: startFire }, { t: 49.3, run: stopFire },
-    { t: 51.0, run: bombTick }, { t: 53.0, run: bombTick },
+    { t: 51.0, run: bombTick },
+    { t: 53.0, run: () => captureWindow("inferno_apps_a", "apps_details", 53.0) },
+    { t: 53.0, run: bombTick },
     { t: 54.5, run: bombTick }, { t: 55.6, run: bombTick },
     { t: 56.4, run: bombTick }, { t: 57.0, run: bombTick },
     { t: 58.0, run: startFire }, { t: 59.2, run: stopFire },
@@ -313,6 +326,8 @@ function configure() {
     command("con_logfile iy_benchmark_console.log", true);
     command("mp_ignore_round_win_conditions 1");
     command("mp_freezetime 0");
+    command("mp_team_intro_time 0");
+    command("mp_force_pick_time 0");
     command("mp_roundtime_defuse 9999");
     command("mp_autoteambalance 0");
     command("mp_limitteams 0");
@@ -337,6 +352,10 @@ function beginPass(name) {
         command("vprof_off", true);
         command("vprof_reset", true);
         command("vprof_on", true);
+        marker(
+            "MEASUREMENT_STATUS status=unverified"
+            + " reason=client_commands_require_runtime_confirmation"
+        );
     }
     marker(`PASS_START type=${name} version=${VERSION}`);
 }
@@ -362,9 +381,14 @@ function endPass() {
     } catch (error) {
         runtimeError("final_report", error);
     }
-    marker("PASS_END type=measured status=complete");
+    marker("PASS_END type=measured runtime_status=complete measurement_status=unverified");
     try {
-        Instance.SetSaveData(JSON.stringify({ version: VERSION, completedAt: Instance.GetGameTime() }));
+        Instance.SetSaveData(JSON.stringify({
+            version: VERSION,
+            runtimeStatus: "complete",
+            measurementStatus: "unverified",
+            completedAt: Instance.GetGameTime(),
+        }));
     } catch (error) {
         runtimeError("save_result", error);
     }

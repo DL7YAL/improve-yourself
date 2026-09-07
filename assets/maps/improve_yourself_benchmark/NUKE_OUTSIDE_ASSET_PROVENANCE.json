@@ -1,0 +1,113 @@
+{
+  "schema": "iy.cs2-workshop-asset-provenance/v1",
+  "scene": "nuke_outside",
+  "cs2_build_id": "25000182",
+  "workshop_tools_build_evidence": "vrad3 pc64 build 2026-08-24",
+  "verification": {
+    "method": "Installed CS2 pak01_dir.vpk directory-index lookup only",
+    "runtime_reference_only": true,
+    "vpk_payload_extracted": false,
+    "repository_asset_copy_created": false
+  },
+  "assets": [
+    {
+      "asset_path": "materials/de_nuke/hr_nuke/hr_asphalt_002.vmat",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Nuke Outside yard ground material and representative surface workload",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled runtime resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "asset_path": "materials/de_nuke/hr_nuke/nuke_concrete_wall_001.vmat",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Nuke Outside industrial building masses and representative surface workload",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled runtime resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "asset_path": "models/props/de_nuke/hr_nuke/nuke_cooling_tower/nuke_cooling_tower.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Nuke Outside industrial skyline and long-range rendering load",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled runtime resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "asset_path": "models/props/de_nuke/hr_nuke/medium_silo/medium_silo.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Outside silo landmark and mid-range geometry workload",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled runtime resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "asset_path": "models/props/de_nuke/hr_nuke/nuke_cargo_crane/nuke_cargo_crane_base.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Outside crane landmark and complex prop workload",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled runtime resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "asset_path": "models/props/de_nuke/hr_nuke/nuke_cars/nuke_truck_01.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Outside service truck landmark",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled runtime resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "asset_path": "models/props/de_nuke/hr_nuke/nuke_cars/nuke_truck_01_trailer.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Outside truck trailer and representative prop workload",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled runtime resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "asset_path": "models/props/de_nuke/hr_nuke/nuke_forklift/nuke_forklift_small.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Outside industrial yard detail",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled runtime resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "asset_path": "models/props/de_nuke/hr_nuke/nuke_signs/nuke_sign_secret.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Secret landmark identification",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled runtime resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "asset_path": "models/props/de_nuke/hr_nuke/nuke_signs/nuke_sign_garage.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Garage landmark identification",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled runtime resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "asset_path": "models/props/de_nuke/hr_nuke/nuke_concrete_barrier/nuke_concrete_barrier.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Outside yard safety detail and prop workload",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled runtime resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    }
+  ]
+}

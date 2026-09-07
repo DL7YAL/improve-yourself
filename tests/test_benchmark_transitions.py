@@ -5,6 +5,17 @@ from pathlib import Path
 
 
 CONTROLLER = Path("assets/maps/improve_yourself_benchmark/scripts/benchmark_controller.js")
+PROVENANCE = Path("assets/maps/improve_yourself_benchmark/NUKE_OUTSIDE_ASSET_PROVENANCE.json")
+TRANSITION_PROVENANCE = Path("assets/maps/improve_yourself_benchmark/TRANSITION_WORLDS_ASSET_PROVENANCE.json")
+MAP = Path("assets/maps/improve_yourself_benchmark/maps/improve_yourself_benchmark.vmap")
+SCENE_REFERENCE_PREFIXES = (
+    b"materials/de_nuke/",
+    b"materials/de_ancient/",
+    b"materials/de_inferno/",
+    b"models/props/de_nuke/",
+    b"models/props/de_ancient/",
+    b"models/props/de_inferno/",
+)
 
 
 def source() -> str:
@@ -18,6 +29,84 @@ def test_source_manifest_hashes_every_versioned_addon_file() -> None:
     for item in manifest["files"]:
         digest = hashlib.sha256((root / item["path"]).read_bytes()).hexdigest().upper()
         assert digest == item["sha256"]
+
+
+def test_nuke_outside_runtime_references_are_fail_closed() -> None:
+    record = json.loads(PROVENANCE.read_text(encoding="utf-8"))
+    assert record["schema"] == "iy.cs2-workshop-asset-provenance/v1"
+    assert record["scene"] == "nuke_outside"
+    assert record["verification"] == {
+        "method": "Installed CS2 pak01_dir.vpk directory-index lookup only",
+        "runtime_reference_only": True,
+        "vpk_payload_extracted": False,
+        "repository_asset_copy_created": False,
+    }
+    assert len(record["assets"]) == 11
+    paths = set()
+    for asset in record["assets"]:
+        assert asset["rights_class"] == "VALVE_RUNTIME_REFERENCE"
+        assert asset["distribution"] == "CS2_WORKSHOP_RUNTIME"
+        assert asset["runtime_reference_only"] is True
+        assert asset["asset_path"].endswith((".vmdl", ".vmat"))
+        assert not asset["asset_path"].endswith("_c")
+        paths.add(asset["asset_path"])
+    assert len(paths) == len(record["assets"])
+
+
+def test_transition_world_runtime_references_are_fail_closed() -> None:
+    record = json.loads(TRANSITION_PROVENANCE.read_text(encoding="utf-8"))
+    assert record["schema"] == "iy.cs2-workshop-asset-provenance/v1"
+    assert record["scenes"] == ["benchmark_intro", "ancient_b", "inferno_apps_a"]
+    assert record["verification"] == {
+        "method": "Installed CS2 pak01_dir.vpk directory-index lookup only",
+        "runtime_reference_only": True,
+        "vpk_payload_extracted": False,
+        "repository_asset_copy_created": False,
+    }
+    assert len(record["assets"]) == 22
+    paths = set()
+    for asset in record["assets"]:
+        assert asset["scene"] in record["scenes"]
+        assert asset["rights_class"] == "VALVE_RUNTIME_REFERENCE"
+        assert asset["distribution"] == "CS2_WORKSHOP_RUNTIME"
+        assert asset["runtime_reference_only"] is True
+        assert asset["asset_path"].endswith((".vmdl", ".vmat"))
+        assert not asset["asset_path"].endswith("_c")
+        paths.add(asset["asset_path"])
+    assert len(paths) == len(record["assets"])
+
+
+def test_all_provenanced_runtime_references_exist_in_hammer_saved_map() -> None:
+    map_bytes = MAP.read_bytes()
+    records = (
+        json.loads(PROVENANCE.read_text(encoding="utf-8")),
+        json.loads(TRANSITION_PROVENANCE.read_text(encoding="utf-8")),
+    )
+    for record in records:
+        for asset in record["assets"]:
+            assert asset["asset_path"].encode("ascii") in map_bytes
+
+
+def test_all_scene_runtime_references_are_provenanced() -> None:
+    records = (
+        json.loads(PROVENANCE.read_text(encoding="utf-8")),
+        json.loads(TRANSITION_PROVENANCE.read_text(encoding="utf-8")),
+    )
+    provenanced = {
+        asset["asset_path"].encode("ascii")
+        for record in records
+        for asset in record["assets"]
+        if asset["asset_path"].encode("ascii").startswith(SCENE_REFERENCE_PREFIXES)
+    }
+    scene_references = {
+        match
+        for match in re.findall(
+            rb"(?:materials|models)/[A-Za-z0-9_./-]+\.(?:vmat|vmdl)",
+            MAP.read_bytes(),
+        )
+        if match.startswith(SCENE_REFERENCE_PREFIXES)
+    }
+    assert scene_references == provenanced
 
 
 def test_transition_sequence_and_occlusions_are_locked() -> None:
@@ -64,3 +153,38 @@ def test_transition_fades_use_cs2_time_and_rgb_syntax() -> None:
     assert 'command("fadein 0.1 160 0 0")' in text
     assert "255 255 255 255" not in text
     assert "160 0 0 96" not in text
+
+
+def test_benchmark_suppresses_default_team_intro_delay() -> None:
+    text = source()
+    assert 'command("mp_team_intro_time 0")' in text
+    assert 'command("mp_force_pick_time 0")' in text
+
+
+def test_capture_windows_are_versioned_and_follow_scene_order() -> None:
+    text = source()
+    assert 'const VERSION = "iy-benchmark/v1.2-candidate.1"' in text
+    markers = [
+        'captureWindow("nuke_outside", "yard_landmarks", 9.0)',
+        'captureWindow("ancient_b", "water_reflection", 27.0)',
+        'captureWindow("ancient_b", "red_room", 38.0)',
+        'captureWindow("inferno_apps_a", "stairs", 48.0)',
+        'captureWindow("inferno_apps_a", "apps_details", 53.0)',
+    ]
+    positions = [text.index(marker) for marker in markers]
+    assert positions == sorted(positions)
+    assert "CAPTURE_WINDOW pass=${activePass} scene=${sceneId} landmark=${landmarkId}" in text
+    assert "expected_t=${expectedTime}" in text
+
+
+def test_runtime_completion_does_not_claim_verified_measurement() -> None:
+    text = source()
+    assert (
+        "PASS_END type=measured runtime_status=complete measurement_status=unverified"
+        in text
+    )
+    assert "MEASUREMENT_STATUS status=unverified" in text
+    assert "client_commands_require_runtime_confirmation" in text
+    assert 'runtimeStatus: "complete"' in text
+    assert 'measurementStatus: "unverified"' in text
+    assert 'PASS_END type=measured status=complete' not in text
