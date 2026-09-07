@@ -1,6 +1,6 @@
 # 2D Minimap Runtime Review
 
-Status: **ANCIENT_AND_ANUBIS_INTERNAL_SOURCE_FLOW_READY; PACKAGED STARTUP PARTIAL**
+Status: **ANCIENT_AND_ANUBIS_INTERNAL_SOURCE_FLOW_READY; PACKAGED STARTUP READY**
 
 Base: GitHub `main` `ef3e96aad0675b963d66b10ecdc8e40613af17b5`
 
@@ -50,10 +50,14 @@ this repository.
 - The executable and ZIP are SHA-256-bound by a local, non-versioned build
   manifest. The inventory contains no demo, workflow, results directory,
   `.venv`, local surface manifest, private path, or local map artwork.
-- The packaged process exposed the expected window title after 0.53 seconds,
-  but did not become responsive until 20.04 seconds. This is a reproducible
-  packaged-startup defect, so the candidate is **not** classified as ready for
-  testers and the overall UI V1 closure gate remains partial.
+- The packaged process exposed the expected window title after 0.50 seconds
+  and reached the Windows input-idle state after 0.51 seconds. The earlier
+  20.04-second `Process.Responding` result was a probe artifact: that property
+  call can itself block for seconds and is not a valid startup timer.
+- The already versioned UI V1 runtime evidence independently records that the
+  early packaged window was fully branded at approximately 0.72 seconds rather
+  than white or empty. No reproducible packaged-startup product defect remains,
+  so the internal candidate passes this startup gate.
 - The normal build script was not used because it necessarily performs a pip
   install. The task explicitly prohibited package installation as a workaround;
   the existing environment instead passed `pip check` before direct packaging.
