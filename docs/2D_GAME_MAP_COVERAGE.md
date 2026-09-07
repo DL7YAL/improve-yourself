@@ -43,10 +43,11 @@ override origin, scale, intrinsic rotation, tick or layer truth.
 
 ## Bounded local inventory
 
-The authorized read-only inventory covered the Improve Yourself repository and
-known Improve Yourself worktrees under `NEW_Try`, plus the bounded
-`D:\downloads\Improve Yourself` project tree. It did not search complete drives,
-extract VPK content, download assets or modify historical worktrees.
+The authorized read-only inventory covered the Improve Yourself repository,
+known Improve Yourself worktrees, and the one bounded local project tree named
+by the project owner. It did not search complete drives, extract VPK content,
+download assets or modify historical worktrees. No private absolute path is
+retained in this handoff.
 
 ### Candidate 1: Anubis local test surface
 
@@ -88,8 +89,8 @@ as a substitute merely because it is 1024 x 1024.
 
 | Map ID | Transform metadata | Image candidate | Image registration | Layer status | Internal package status | Exact next evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| `de_ancient` | VERIFIED | found | not yet manifest-bound or visibly aligned | UNRESOLVED | AUTHORIZED; TECHNICAL GATE OPEN | bind provenance/hash and visibly validate real Replay V2 positions |
-| `de_anubis` | VERIFIED | found | explicitly UNVERIFIED local full-canvas fit | UNRESOLVED | AUTHORIZED; TECHNICAL GATE OPEN | establish pixel registration and visibly validate a real Replay V2 scene |
+| `de_ancient` | VERIFIED | found | local hash-bound surface visibly exercised; alignment remains non-product | UNRESOLVED | INTERNAL SOURCE FLOW READY | establish landmark-based product registration |
+| `de_anubis` | VERIFIED | found | local hash-bound full-canvas fit visibly exercised; alignment remains non-product | UNRESOLVED | INTERNAL SOURCE FLOW READY | establish landmark-based pixel registration |
 | `de_dust2` | VERIFIED | not found | unavailable | UNRESOLVED | BLOCKED | provide or create an authorized map image |
 | `de_inferno` | VERIFIED | not found | unavailable | UNRESOLVED | BLOCKED | provide or create an authorized map image |
 | `de_mirage` | VERIFIED | not found | unavailable | UNRESOLVED | BLOCKED | provide or create an authorized map image without touching Azure-owned 3D files |
@@ -136,14 +137,19 @@ Packaging remains blocked until each included image has:
 5. a visible real Replay V2 alignment check;
 6. a package inventory proving that only approved map assets were included.
 
+The source application now loads Ancient and Anubis from one explicitly
+selected external `LOCAL_ONLY` manifest. Both real workflow paths were visibly
+exercised through Analyzer, Review, and Tactical Replay. This source-flow proof
+does not upgrade either provisional image registration to product-verified.
+
 Missing maps must continue to show the honest neutral grid or
 `GAME MAP NOT AVAILABLE FOR THIS MAP ID`. A missing image must never select a
 different map or guessed transform.
 
 ## Next decision
 
-The smallest safe continuation is to validate and approve the Ancient and
-Anubis registrations using real canonical Replay V2 scenes. In parallel, the
-remaining seven map images and the Nuke/Train/Vertigo layer policy must be
-supplied or explicitly commissioned. Complete nine-map packaging cannot be
-claimed from the current local asset inventory.
+The smallest safe continuation is landmark-based registration of the exercised
+Ancient and Anubis images. In parallel, the remaining seven map images and the
+Nuke/Train/Vertigo layer policy must be supplied or explicitly commissioned.
+Complete nine-map packaging cannot be claimed from the current local asset
+inventory.

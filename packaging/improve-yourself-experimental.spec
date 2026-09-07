@@ -6,6 +6,7 @@ from PyInstaller.utils.hooks import collect_submodules
 root = Path(SPEC).resolve().parent.parent
 assets = root / "src" / "improve_yourself" / "assets"
 matrix_pack = root / "config" / "rule-packs" / "improve-matrix-pack-01.json"
+map_overview_metadata = root / "resources" / "map_overviews" / "maps"
 version_info = root / "packaging" / "windows-version-info.txt"
 hiddenimports = collect_submodules("awpy")
 
@@ -18,6 +19,7 @@ a = Analysis(
         (str(assets / "improve-yourself-icon-v3.png"), "improve_yourself/assets"),
         (str(assets / "fonts"), "improve_yourself/assets/fonts"),
         (str(matrix_pack), "config/rule-packs"),
+        (str(map_overview_metadata), "resources/map_overviews/maps"),
     ],
     hiddenimports=hiddenimports,
     hookspath=[],

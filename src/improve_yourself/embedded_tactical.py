@@ -6,6 +6,7 @@ from pathlib import Path
 from .replay_controller import ReplayController
 from .replay_store import ReplayStore
 from .tactical_2d import build_tactical_2d_projection
+from .tactical_minimap import TacticalMinimap, load_tactical_minimap
 
 
 class EmbeddedTacticalSession:
@@ -34,6 +35,7 @@ class EmbeddedTacticalSession:
             for item in raw_scenes
         ]
         self.projection = build_tactical_2d_projection(store, ReplayController(store))
+        self.minimap: TacticalMinimap = load_tactical_minimap(str(self.projection["map_name"]))
         self.scenes = tuple(self.projection["scenes"])
         self._by_id = {scene["scene_id"]: scene for scene in self.scenes}
         if len(self._by_id) != len(self.scenes):

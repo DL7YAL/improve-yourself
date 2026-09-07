@@ -7,6 +7,9 @@ param(
     [string]$OutputRoot = 'results\analyzer-shell',
 
     [Parameter()]
+    [string]$LocalMapSurfacesManifest,
+
+    [Parameter()]
     [switch]$SkipSetup
 )
 
@@ -29,6 +32,16 @@ if ($Workflow) {
     $arguments += @('--workflow', $workflowPath)
 }
 
+if ($LocalMapSurfacesManifest) {
+    if (-not (Test-Path -LiteralPath $LocalMapSurfacesManifest -PathType Leaf)) {
+        throw "Local map surfaces manifest does not exist: $LocalMapSurfacesManifest"
+    }
+    $localMapSurfacesManifestPath = (Resolve-Path -LiteralPath $LocalMapSurfacesManifest).Path
+    if ([IO.Path]::GetFileName($localMapSurfacesManifestPath) -ne 'local-map-surfaces.json') {
+        throw 'Local map surfaces manifest must be named local-map-surfaces.json.'
+    }
+}
+
 Push-Location $repositoryRoot
 try {
     if (-not $SkipSetup) {
@@ -48,7 +61,19 @@ try {
     if ($Workflow) {
         Write-Host "Workflow: $workflowPath"
     }
-    & $shellCli @arguments
+    if ($LocalMapSurfacesManifest) {
+        Write-Host "Local-only map surfaces: $localMapSurfacesManifestPath"
+    }
+    $previousLocalMapSurfacesManifest = $env:IMPROVE_YOURSELF_LOCAL_MAP_SURFACES_MANIFEST
+    try {
+        if ($LocalMapSurfacesManifest) {
+            $env:IMPROVE_YOURSELF_LOCAL_MAP_SURFACES_MANIFEST = $localMapSurfacesManifestPath
+        }
+        & $shellCli @arguments
+    }
+    finally {
+        $env:IMPROVE_YOURSELF_LOCAL_MAP_SURFACES_MANIFEST = $previousLocalMapSurfacesManifest
+    }
     if ($LASTEXITCODE -ne 0) {
         throw "Experimental shell failed with exit code $LASTEXITCODE."
     }

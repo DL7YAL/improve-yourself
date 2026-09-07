@@ -24,9 +24,25 @@ from improve_yourself.analyzer_shell import (
     optimizer_user_detail_sections,
     optimizer_visible_models,
     status_presentation,
+    tactical_image_scale_ratio,
     system_check_result_view,
     system_scan_home_view,
 )
+
+
+def test_tactical_image_scaling_retains_intermediate_zoom_steps() -> None:
+    assert tactical_image_scale_ratio(0.5) == (1, 2)
+    assert tactical_image_scale_ratio(0.59) == (3, 5)
+    assert tactical_image_scale_ratio(1.18) == (7, 6)
+    assert tactical_image_scale_ratio(99.0) == (4, 1)
+
+
+def test_startup_workflow_validation_is_deferred_until_shell_is_visible() -> None:
+    source = (Path(__file__).parents[1] / "src" / "improve_yourself" / "analyzer_shell.py").read_text(encoding="utf-8")
+    main_source = source[source.index("def main() -> int:"):]
+    assert "app.root.after_idle(" in main_source
+    assert '"Vorhandene Analyse wird lokal geprüft …"' in main_source
+    assert "app._draw(controller.open_existing_workflow(args.workflow))" not in main_source
 
 
 def test_analyzer_result_projection_repeats_only_workflow_facts_and_objective_anchors(tmp_path: Path) -> None:
