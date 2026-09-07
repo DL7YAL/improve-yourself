@@ -1,0 +1,16 @@
+{
+  "schema": "iy.asset_rights/v1",
+  "assets": [
+    {"asset_id": "map-surface-de-ancient", "status": "THIRD_PARTY_REFERENCE_ONLY", "evidence": "Local UI reference exists; standalone distributable artwork and public rights are not established."},
+    {"asset_id": "map-surface-de-anubis", "status": "THIRD_PARTY_REFERENCE_ONLY", "evidence": "Local UI reference exists; standalone distributable artwork and public rights are not established."},
+    {"asset_id": "map-surface-de-dust2", "status": "THIRD_PARTY_REFERENCE_ONLY", "evidence": "Local UI reference exists; standalone distributable artwork and public rights are not established."},
+    {"asset_id": "map-surface-de-inferno", "status": "THIRD_PARTY_REFERENCE_ONLY", "evidence": "Local UI reference exists; standalone distributable artwork and public rights are not established."},
+    {"asset_id": "map-surface-de-mirage", "status": "THIRD_PARTY_REFERENCE_ONLY", "evidence": "Local UI reference exists; standalone distributable artwork and public rights are not established."},
+    {"asset_id": "map-surface-de-nuke", "status": "THIRD_PARTY_REFERENCE_ONLY", "evidence": "Local UI reference exists; standalone distributable artwork, layer set, and public rights are not established."},
+    {"asset_id": "map-surface-de-overpass", "status": "UNKNOWN", "evidence": "No separate local map surface was found in the bounded authorized inventory."},
+    {"asset_id": "map-surface-de-train", "status": "UNKNOWN", "evidence": "No separate local map surface was found in the bounded authorized inventory."},
+    {"asset_id": "map-surface-de-vertigo", "status": "THIRD_PARTY_REFERENCE_ONLY", "evidence": "Local UI reference exists; standalone distributable artwork, layer set, and public rights are not established."},
+    {"asset_id": "anubis-local-map-geometry", "status": "THIRD_PARTY_REFERENCE_ONLY", "evidence": "Validated local-only Valve-derived geometry reference; no redistribution grant is established."},
+    {"asset_id": "iy-3d-original-placeholder-assets", "status": "OWNED", "evidence": "Project-authored abstract assets dedicated under CC0-1.0 in resources/3d_pov/LICENSE.md."}
+  ]
+}
