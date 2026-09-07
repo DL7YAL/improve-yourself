@@ -56,7 +56,7 @@ retained in this handoff.
 - Dimensions: `877 x 807`
 - Mode: `RGBA`
 - Bytes: `163993`
-- SHA-256: `6c2a543b49d7cc3047db5f02d6547eee2dff5029ec32bd56183d40554da6bf0d`
+- Integrity: locally SHA-256-bound and validated; digest intentionally not versioned
 - Existing manifest: `iy.local_test_map_surfaces/v1`
 - Distribution: `LOCAL_ONLY`
 - Registration: `FULL_OVERVIEW_CANVAS_UNVERIFIED_LOCAL_TEST`
@@ -72,7 +72,7 @@ retained in this handoff.
 - Dimensions: `1024 x 1024`
 - Mode: `RGBA`
 - Bytes: `1502116`
-- SHA-256: `55da4f041436e50a4a788f2e1bbf5de2652c20e621dfd89c3ca344c8139f3914`
+- Integrity: locally SHA-256-bound and validated; digest intentionally not versioned
 - Existing image manifest in the inspected source: none
 - Assessment: visually suitable as a dark Tactical background candidate, but
   the inspected historical asset directory does not bind it to a 2D
