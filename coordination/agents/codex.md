@@ -912,3 +912,36 @@ MODEL_PROFILE: luna
 MODEL_REASON: Eng begrenzte Dokumentations- und Vertragsverankerung ohne Code- oder Runtime-Aenderung.
 COMPUTER_USE: no
 COMMIT/PR: Der lokale Commit dieses dokumentierten Stands ist vom Projektinhaber freigegeben und folgt unmittelbar. Kein Push, PR oder Merge.
+
+# Handoff 2026-09-07 — CS2 Benchmark Map runtime correlation
+
+STATUS: BLOCKED
+
+TASK: Die bestehende CS2-Benchmark-Map weiterentwickeln, ohne Neuaufbau oder konkurrierende Produktarchitektur: vorhandenen Nuke-/Ancient-/Inferno-Stand sichern, visuelle Runtime-Referenzen und Provenienz nachvollziehbar übernehmen, Marker für die Sichtabnahme ergänzen und Runtime-Erfolg strikt von gültiger Performance-Evidenz trennen.
+
+BRANCH / BASE / COMMIT: `codex/benchmark-map-runtime-correlation`; Base `ef3e96aad0675b963d66b10ecdc8e40613af17b5` (`origin/main`); Implementierungscommit `d0b30ab60dada1d72881871d158cd3a49e0fe853`. Der anschließend ausdrücklich freigegebene Branch-Push wird mit diesem Handoff-Update abgeschlossen; kein PR oder Merge.
+
+CHANGED:
+- Bestehender authentischer VMAP-Arbeitsstand für Nuke Outside, Ancient B und Inferno Apps sowie seine zwei Provenienzdateien und fünf reproduzierbaren Authoring-Helfer wurden nach Binärpatch-Prüfung in einen sauberen aktuellen Worktree übernommen; der ältere Dirty-Worktree blieb unverändert und wurde zusätzlich außerhalb des Repositories gesichert.
+- Controller `iy-benchmark/v1.2-candidate.1` emittiert passgebundene `CAPTURE_WINDOW`-Marker bei 9, 27, 38, 48 und 53 Sekunden. Die Reihenfolge Nuke Outside → Ancient B → Inferno Apps und der bestehende 64-Sekunden-Pass bleiben unverändert.
+- Runtime-Abschluss und Performance-Evidenz sind fail-closed getrennt: `runtime_status=complete` kann nach der Route gesetzt werden, `measurement_status=unverified` bleibt bestehen, solange CS2 die angeforderten clientseitigen FPS-/Frametime-/`vprof`-Befehle nicht nachweislich ausführt.
+- Source-Manifest, Tests, Map-README und `coordination/CURRENT.md` dokumentieren den aktuellen Kandidaten, seine Hashes, die Marker und die offenen Sicht-/Messgates.
+
+VERIFIED:
+- Binärer Dirty-Worktree-Transfer: externes Backup und SHA-256-Prüfung; `git apply --3way --check` PASS; vorhandener Quell-Worktree unverändert.
+- Repository→Addon-Synchronisation mit zielbegrenztem Backup und Hash-Nachprüfung: PASS; VMAP `DBBE5A05C541D2AB47354449FC16A1495E6934E85734484CE6E09C2AE27D5645`, Controller `29CC448D423255A7FFE3840333FDD3BECA329D47B0C6F229FE61B665D15B3849`.
+- CS2 Resource Compiler für den finalen Controller: 1 kompiliert, 0 fehlgeschlagen.
+- Frischer lokaler CS2-Tools-Lauf: `READY`; Warmup und Messpass; drei Szenenreports; alle fünf Marker je Pass in richtiger Reihenfolge; `STATUS phase=complete pass=measured event=60`; keine `[IYBENCH] ERROR`-Marker.
+- Fokussierte Benchmark-Map-Suite: 12 PASS. Vollständige lokale Suite: 439 PASS. `compileall` für `src` und `tools/benchmark`, `pip check` und `git diff --check`: PASS.
+
+ARCHITECTURE: Keine Änderung an AnalyzerCore, AnalyzerDataHub, `iy.replay/v2`, ReplayStore, ReplayController, Tactical Replay, Optimizer Foundation/Evidence, System Check oder Azure. Keine zweite Datenwahrheit, keine Dummywerte, keine System-/Treiber-/Registry-/Netzwerkänderung und keine kopierten Valve-Assets.
+
+BLOCKER / OPEN: Die Werkzeugoberfläche war über die verfügbare UI-Steuerung nicht sichtbar, daher existiert für diesen Lauf kein normaler Viewer-Capture und keine belegte Landmark-Sichtbarkeit. CS2 wies außerdem die clientseitigen Messbefehle unter Workshop-Filtering ab; entsprechend wurden keine FPS-, 1%-Low- oder Frametime-Werte erzeugt. Der ältere VRAD-/Full-Compile-Preflight-Befund bleibt separat relevant, sobald der VMAP erneut gebaut werden muss.
+
+AZURE HANDOFF REQUIRED: NO.
+
+NEXT: Den kompilierten Kandidaten im normalen Viewer exakt an den fünf `pass=measured`-Markern aufnehmen und die Landmark-Sichtbarkeit bestätigen. Danach einen separaten Messsammler verwenden, der seinen aktiven Zustand und echte FPS-/Frametime-Daten belegt, bevor Ergebnisse oder Vorher-/Nachher-Vergleiche als gültig gelten.
+
+COMPUTER_USE: technisch versucht; die verfügbare UI-Surface lieferte keine native App-Ansicht. Engine-/NetCon-/Log-Evidenz wurde lokal direkt verifiziert, ersetzt aber keinen sichtbaren Abnahmecapture.
+
+COMMIT/PUSH: Implementierungscommit `d0b30ab60dada1d72881871d158cd3a49e0fe853`; dieser nachfolgende Commit aktualisiert ausschließlich das Handoff für den autorisierten Push auf `origin/codex/benchmark-map-runtime-correlation`. Kein PR oder Merge.
