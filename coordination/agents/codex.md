@@ -945,3 +945,44 @@ NEXT: Den kompilierten Kandidaten im normalen Viewer exakt an den fünf `pass=me
 COMPUTER_USE: technisch versucht; die verfügbare UI-Surface lieferte keine native App-Ansicht. Engine-/NetCon-/Log-Evidenz wurde lokal direkt verifiziert, ersetzt aber keinen sichtbaren Abnahmecapture.
 
 COMMIT/PUSH: Implementierungscommit `d0b30ab60dada1d72881871d158cd3a49e0fe853`; dieser nachfolgende Commit aktualisiert ausschließlich das Handoff für den autorisierten Push auf `origin/codex/benchmark-map-runtime-correlation`. Kein PR oder Merge.
+
+# Handoff 2026-09-07 — Standalone local CS2 benchmark results
+
+STATUS: PASS
+
+TASK: Die vorhandene CS2-Benchmark-Map um eine eigenständige lokale Ergebnisstrecke erweitern. Ergebnisse dürfen weder an Optimizer/System Check noch an Cloud, Account, Discord, Steam oder eine öffentliche Rangliste gekoppelt werden. Teilen geschieht ausschließlich durch einen vom Nutzer selbst erstellten Screenshot.
+
+BRANCH / BASE: `codex/standalone-benchmark-results-v1`; gestapelt auf dem bereits gepushten Benchmark-Runtime-Stand `277b97ed21e06424fcc323fe8d16d898a24d8e86` von `origin/codex/benchmark-map-runtime-correlation`. `origin/main` wurde vor dem Arbeitsblock bei `ef3e96aad0675b963d66b10ecdc8e40613af17b5` verifiziert. Kein Schreiben nach `main`.
+
+CHANGED:
+- `src/improve_yourself/benchmark_results.py`: lokale Capture-/Controller-Validierung, maschinenlesbares Resultat, atomare lokale Run-/History-Ablage, persönliche profilgebundene Top 10 und eigenständige screenshot-taugliche HTML-Ausgabe.
+- `tests/test_benchmark_results.py`: Kernvertrag, Fail-closed-Gates, Hash-/Routenbindung, Ergebniswerte, lokale Vergleichbarkeit, Speicherhärtung, Wiederherstellung und Unabhängigkeitsgrenzen.
+- `docs/BENCHMARK_RESULT_V1.md`: Eingabe-, Ergebnis-, Metrik-, Vergleichs-, Persistenz- und Sharing-Vertrag.
+- `docs/BENCHMARK_MAP_ASSET_REBUILD_WORK_ORDER.md`: freigegebener, eigenständiger Folgeauftrag für evidenzgetriebenen Szenen-/Asset-Ausbau und normalen Viewer-Abnahmeweg.
+- `pyproject.toml`, `tools/dev/Setup-V1.ps1`: lokaler CLI-Einstieg `iy-benchmark-result` einschließlich Setup-Smoke-Gate.
+- `coordination/CURRENT.md`, `coordination/agents/codex.md`: aktueller Ergebnisstand und nächster Realabnahmeschritt.
+
+WHAT DID NOT CHANGE:
+- Keine Änderung an VMAP, Benchmark-Controller, kompilierten CS2-Assets oder den bestehenden Nuke-/Ancient-/Inferno-Szenen.
+- Keine Imports, Datenpfade oder Aufrufe zu Optimizer, System Check, Analyzer, Replay oder Azure.
+- Kein Netzwerkzugriff, Upload, Telemetrie, Account, Spieleridentität, Discord-/Steam-Integration, Share-Button oder öffentliches Leaderboard.
+- Keine erfundenen Produktwerte und keine als echt ausgegebenen Fixture-Ergebnisse; die visuelle Prüfung verwendete nur klar bezeichnete synthetische Testdaten außerhalb des Repositorys.
+
+VERIFIED:
+- Fokussierte Ergebnis-/Benchmark-Suite: 25 PASS.
+- Vollständige lokale Suite: 452 PASS.
+- `compileall` für `src`, `tests` und `tools/benchmark`: PASS.
+- CLI-Hilfe für `improve_yourself.benchmark_results`: PASS.
+- `pip check`: PASS.
+- `git diff --check`: PASS.
+- Lokale Desktop-HTML-Ansicht mit installiertem Chrome headless bei 1280×900 gerendert: keine horizontale Überbreite und visuell lesbar. Eine Mobile-Version gehört auf ausdrückliche Nutzerfestlegung nicht zum Umfang.
+
+ARCHITECTURE: Die Benchmark-Ergebnisstrecke ist ein unabhängiges lokales Geschwistermodul. Sie führt weder eine zweite Analyzer-/Replay-Wahrheit ein noch erzeugt sie Optimizer-Evidence oder Empfehlungen. Ungültige bzw. unvollständige Messungen enthalten keine Performancewerte und gelangen nicht in die lokalen Top 10.
+
+OPEN: Ein echter FPS-/Frametime-Lauf ist weiterhin nicht belegt, weil noch kein nachweislich aktiver lokaler Frame-Collector auf das normalisierte Capture-Format angebunden und zusammen mit dem normalen CS2-Viewer-Lauf abgenommen wurde. Die lokale Capture-Datei ist durch den Maschineninhaber editierbar; V1 erhebt deshalb ausdrücklich keinen Anti-Cheat-, Attestierungs- oder öffentlichen Wettbewerbsanspruch.
+
+AZURE HANDOFF REQUIRED: NO.
+
+NEXT: Einen ausdrücklich vom Nutzer gestarteten lokalen Frame-Collector als separaten Adapter auf `iy.cs2_benchmark_capture/v1` abbilden. Danach genau einen echten V1.2-Lauf im normalen Viewer samt fünf Landmark-Sichtprüfungen durchführen und erst bei bestandenem Controller-/Collector-Gate lokale Werte freigeben.
+
+COMMIT/PUSH: Commit und Push dieses Arbeitsstands auf `codex/standalone-benchmark-results-v1` sind vom Projektinhaber ausdrücklich freigegeben. Maßgeblich ist der gepushte Branch-HEAD; kein PR oder Merge.
