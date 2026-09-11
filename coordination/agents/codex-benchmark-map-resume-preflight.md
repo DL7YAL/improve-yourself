@@ -39,11 +39,32 @@ Foundry, cloud CI, or MCP.
 - This WSL environment has no `powershell.exe` bridge, so it cannot read the
   Windows process list or execute `vrad3.exe` by itself.
 
+## Local source divergence — do not overwrite
+
+The installed addon's active sources differ from the repository manifest and
+must be treated as unreviewed local work until the owner chooses the authority:
+
+| Source | Repository SHA-256 | Installed SHA-256 | Installed state |
+| --- | --- | --- | --- |
+| `maps/improve_yourself_benchmark.vmap` | `9d7be49fd2fa9f720267e5fd155054f478f64416408ac681ef02b578274276ce` | `74ae13f43eda0fc213330a30d9714d16b2897710c5409378a9d4bf1294e4beb6` | 1,205,304 bytes, modified 2026-09-11 23:31 local time |
+| `scripts/benchmark_controller.js` | `45d2cf2c0efb05454304b2f46630239d6b7998bc0f3172b8b71dd405dc07b4bd` | `0038baacb132a907654e03fe3b42b27bf198d5d1a23f4f9f0d8c87b5df16723e` | 16,613 bytes, `iy-benchmark/v1.2-candidate.2` |
+
+The controller difference includes changed Nuke camera coordinates, explicit
+capture-window markers for Nuke/Ancient/Inferno, team-intro timing controls,
+and a fail-honest `measurement_status=unverified`. The VMAP is also materially
+larger than the 401,300-byte repository source. Do not run the repository-to-
+addon deploy mode and do not overwrite either installed file. A project-owner
+decision is required before promoting the installed candidate into GitHub or
+discarding it.
+
 ## Next bounded action
 
-With CS2 Workshop Tools and Hammer initialized on the fixed benchmark machine,
-run the existing local `vrad3.exe -script check_raytracing_support.vrad3
--vulkan -gpuraytracing` preflight from the discovered CS2 `game\bin\win64`
-directory. Record the complete non-secret output and exit code here. Do not
-change Azure configuration, drivers, registry settings, benchmark geometry,
-controller logic, or copied Valve assets as part of this preflight.
+First decide whether the materially newer installed V1.2 candidate is the
+authoritative continuation to preserve in GitHub. Do not sync or compile before
+that decision. Once the source authority is resolved and CS2 Workshop Tools and
+Hammer are initialized on the fixed benchmark machine, run the existing local
+`vrad3.exe -script check_raytracing_support.vrad3 -vulkan -gpuraytracing`
+preflight from the discovered CS2 `game\bin\win64` directory. Record the
+complete non-secret output and exit code here. Do not change Azure
+configuration, drivers, registry settings, benchmark geometry, controller
+logic, or copied Valve assets as part of this preflight.
