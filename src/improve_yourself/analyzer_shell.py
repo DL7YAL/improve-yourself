@@ -13,6 +13,7 @@ import threading
 import time
 import webbrowser
 from dataclasses import dataclass, replace
+from fractions import Fraction
 from pathlib import Path
 from typing import Any, Callable
 
@@ -118,6 +119,12 @@ def status_presentation(status: object) -> tuple[str, str]:
     state stays unknown instead of being styled like a ready result.
     """
     return _STATUS_PRESENTATION.get(str(status), _STATUS_PRESENTATION["UNKNOWN"])
+
+
+def tactical_image_scale_ratio(requested: float) -> tuple[int, int]:
+    """Return a bounded Tk zoom/subsample ratio with useful intermediate steps."""
+    fraction = Fraction(max(0.125, min(4.0, requested))).limit_denominator(8)
+    return fraction.numerator, fraction.denominator
 
 
 def analysis_profile_criteria_view(profile: AnalysisProfile) -> dict[str, object]:
@@ -1466,11 +1473,15 @@ class AnalyzerShellApp:
         self.tactical_scene_context = tk.StringVar(value="")
         self.tactical_scene_note = tk.StringVar(value="Keine Review-Notiz")
         self.tactical_frame_status = tk.StringVar(value="")
+        self.tactical_minimap_status = tk.StringVar(value="Kartenbasis: erst nach belegter Replay-Map")
         self.tactical_action_status = tk.StringVar(value="Tactical Replay wird aus einer Review-Szene geöffnet.")
         self.tactical_frame_index = 0
         self.tactical_zoom = 1.0
         self.tactical_pan = [0.0, 0.0]
         self.tactical_drag_origin: tuple[int, int] | None = None
+        self.tactical_local_map_source = None
+        self.tactical_local_map_source_path: Path | None = None
+        self.tactical_local_map_image = None
         self.tactical_syncing_selection = False
         self.tactical_ignore_selection_event = False
         self.analyzer_setup_expanded = False
@@ -3299,7 +3310,7 @@ class AnalyzerShellApp:
         frame_row = self.ttk.Frame(map_panel, style="CardInner.TFrame")
         frame_row.pack(fill="x", pady=(0, 8))
         self.ttk.Label(frame_row, text="POSITIONSFRAME", style="Card.TLabel").pack(side="left")
-        self.ttk.Label(frame_row, text="Kartenbasis: nur bei belegtem Asset", style="Muted.TLabel").pack(side="left", padx=(10, 0))
+        self.ttk.Label(frame_row, textvariable=self.tactical_minimap_status, style="Muted.TLabel").pack(side="left", padx=(10, 0))
         self.tactical_frame = self.ttk.Scale(frame_row, from_=0, to=0, command=self._set_tactical_frame)
         self.tactical_frame.pack(side="left", fill="x", expand=True, padx=10)
         self.ttk.Label(frame_row, textvariable=self.tactical_frame_status, style="Muted.TLabel").pack(side="right")
@@ -3867,19 +3878,72 @@ class AnalyzerShellApp:
         self.tactical_frame_index = int(round(float(value)))
         self._draw_tactical_canvas()
 
+    def _load_tactical_local_map_image(self, minimap, width: int, height: int):
+        """Load and integer-scale one hash-validated local PNG for Tk."""
+        surface = minimap.local_surface
+        if surface is None:
+            self.tactical_local_map_image = None
+            return None
+        try:
+            if self.tactical_local_map_source_path != surface.path:
+                self.tactical_local_map_source = self.tk.PhotoImage(file=str(surface.path))
+                self.tactical_local_map_source_path = surface.path
+            source = self.tactical_local_map_source
+            if source is None:
+                return None
+            fit = min(width * 0.88 / source.width(), height * 0.88 / source.height())
+            requested = max(0.0625, min(4.0, fit * self.tactical_zoom))
+            zoom, subsample = tactical_image_scale_ratio(requested)
+            image = source.subsample(subsample, subsample).zoom(zoom, zoom)
+            self.tactical_local_map_image = image
+            return image
+        except (OSError, self.tk.TclError, ValueError):
+            self.tactical_local_map_image = None
+            return None
+
     def _draw_tactical_canvas(self) -> None:
         canvas = getattr(self, "tactical_canvas", None)
         if canvas is None:
             return
         canvas.delete("all")
         width, height = max(canvas.winfo_width(), 2), max(canvas.winfo_height(), 2)
-        for x in range(0, width, 80):
-            canvas.create_line(x, 0, x, height, fill="#183149")
-        for y in range(0, height, 80):
-            canvas.create_line(0, y, width, y, fill="#183149")
         if self.embedded_tactical is None:
             canvas.create_text(width / 2, height / 2, text="Szene im Analyzer Review auswählen", fill=_THEME["muted"])
             return
+        minimap = self.embedded_tactical.minimap
+        self.tactical_minimap_status.set(f"{minimap.map_id} · {minimap.detail}")
+        if not minimap.projection_available:
+            canvas.create_text(width / 2, height / 2, text="Keine verifizierte Map-Projektion", fill=_THEME["muted"])
+            return
+        local_image = self._load_tactical_local_map_image(minimap, width, height)
+        if local_image is not None:
+            map_width = float(local_image.width())
+            map_height = float(local_image.height())
+            map_x = (width - map_width) / 2 + self.tactical_pan[0]
+            map_y = (height - map_height) / 2 + self.tactical_pan[1]
+            canvas.create_image(map_x, map_y, image=local_image, anchor="nw")
+            canvas.create_rectangle(map_x, map_y, map_x + map_width, map_y + map_height, outline="#16b8f3", width=2)
+            canvas.create_text(
+                map_x + 10, map_y + map_height - 10,
+                text="LOKALE INTERNE TESTOBERFLÄCHE · AUSRICHTUNG NICHT PRODUKTVERIFIZIERT",
+                fill="#8bd5ff", anchor="sw", font=(self.ui_font, 8, "bold"),
+            )
+        else:
+            map_width = map_height = min(width, height) * 0.88 * self.tactical_zoom
+            map_x = (width - map_width) / 2 + self.tactical_pan[0]
+            map_y = (height - map_height) / 2 + self.tactical_pan[1]
+            canvas.create_rectangle(
+                map_x, map_y, map_x + map_width, map_y + map_height,
+                fill="#061523", outline="#168ec8", width=2,
+            )
+            for fraction in (0.25, 0.5, 0.75):
+                canvas.create_line(map_x + map_width * fraction, map_y, map_x + map_width * fraction, map_y + map_height, fill="#12344a")
+                canvas.create_line(map_x, map_y + map_height * fraction, map_x + map_width, map_y + map_height * fraction, fill="#12344a")
+            canvas.create_text(
+                map_x + map_width / 2, map_y + map_height / 2,
+                text=f"{minimap.map_id.upper()} · MAP ASSET NOT INCLUDED",
+                fill=_THEME["muted"], font=(self.ui_font, 8, "bold"),
+            )
         scene = self.embedded_tactical.selected_scene()
         frames = scene.get("frames", ())
         if not frames:
@@ -3895,16 +3959,17 @@ class AnalyzerShellApp:
         if not players:
             canvas.create_text(width / 2, height / 2, text="Keine vollständigen Spielerpositionen in diesem Frame", fill=_THEME["muted"])
             return
-        xs, ys = [float(player["x"]) for player in players], [float(player["y"]) for player in players]
-        min_x, max_x, min_y, max_y = min(xs), max(xs), min(ys), max(ys)
-        span = max(max_x - min_x, max_y - min_y, 1.0)
-        base_scale = min(width, height) * 0.72 / span
-        scale = base_scale * self.tactical_zoom
-        center_x, center_y = (min_x + max_x) / 2, (min_y + max_y) / 2
         focus = scene.get("focus_player_id")
         for player in players:
-            x = width / 2 + (float(player["x"]) - center_x) * scale + self.tactical_pan[0]
-            y = height / 2 - (float(player["y"]) - center_y) * scale + self.tactical_pan[1]
+            projected = minimap.project(float(player["x"]), float(player["y"]))
+            if projected is None:
+                continue
+            map_position_x, map_position_y, in_bounds = projected
+            if not in_bounds:
+                continue
+            assert minimap.width is not None and minimap.height is not None
+            x = map_x + map_position_x / minimap.width * map_width
+            y = map_y + map_position_y / minimap.height * map_height
             color = "#55aaff" if str(player.get("side", "")).upper() == "CT" else "#ff9f43"
             radius = 10 if player.get("player_id") != focus else 14
             yaw = math.radians(float(player.get("yaw", 0.0)))
@@ -4145,7 +4210,13 @@ def main() -> int:
     controller = AnalyzerShellController(args.output)
     app = AnalyzerShellApp(controller)
     if args.workflow is not None:
-        app._draw(controller.open_existing_workflow(args.workflow))
+        workflow_path = args.workflow
+        app.root.after_idle(
+            lambda: app._background(
+                "Vorhandene Analyse wird lokal geprüft …",
+                lambda: controller.open_existing_workflow(workflow_path),
+            )
+        )
     app.run()
     return 0
 
