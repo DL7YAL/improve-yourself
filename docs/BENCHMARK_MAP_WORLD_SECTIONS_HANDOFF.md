@@ -48,9 +48,20 @@ Visibility, GPU light baking, navigation, bomb-damage data and VPK packaging all
 completed. No controller file was deployed because its manifest hash was
 unchanged.
 
+Repository validation also completed:
+
+```text
+Focused benchmark-map tests: 17 passed
+Full Python suite: 457 passed
+compileall: passed
+pip check: No broken requirements found
+git diff --check: passed
+```
+
 ## Open runtime gate
 
-Fresh marker screenshots are still required before visual approval. The direct
+Fresh marker screenshots and a full post-build controller run are still
+required before visual approval. The direct
 `cs2.exe` validation launch used during this session accepted `-addon
 improve_yourself_benchmark` on the command line but reported an empty active
 addon set and rejected the map name. This is a launcher/mount problem, not a map
