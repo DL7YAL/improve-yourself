@@ -69,3 +69,26 @@ preflight from the discovered CS2 `game\bin\win64` directory. Record the
 complete non-secret output and exit code here. Do not change Azure
 configuration, drivers, registry settings, benchmark geometry, controller
 logic, or copied Valve assets as part of this preflight.
+
+## Runtime excerpt received — 2026-09-12
+
+The owner supplied a 97-line console excerpt. Counting only canonical unquoted
+`[IYBENCH]` lines avoids counting the duplicated quoted console echoes.
+
+- Segment 1: 28 canonical events; warmup completed; all five warmup capture
+  windows appeared; measured pass started; `REPORT scene=nuke_outside`
+  appeared; the excerpt then reset with a new `READY` before measured end.
+- Segment 2: 21 canonical events; warmup completed; all five warmup capture
+  windows appeared; measured pass started; the excerpt ended before any
+  measured report or measured end.
+- Neither segment contains an `[IYBENCH] ERROR` line.
+- Neither segment contains `PASS_END type=measured`.
+- The expected fail-honest
+  `MEASUREMENT_STATUS status=unverified reason=client_commands_require_runtime_confirmation`
+  appears.
+
+Assessment: controller startup, scene order, transition order and warmup capture
+markers have direct runtime evidence. Measurement completion, client-command
+confirmation, visual landmark acceptance, Hammer Full Compile and VRAD success
+remain unproven. The next run must remain uninterrupted through measured end
+and the Hammer build/VRAD output must be preserved separately.

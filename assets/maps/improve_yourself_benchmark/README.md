@@ -147,3 +147,19 @@ claiming that successful runtime completion proves measurement validity.
 The promoted VMAP and controller are byte-identical to the installed addon at
 the time of import. They still require a fresh Hammer Full Compile, VRAD result,
 and marker-correlated normal-viewer review before runtime approval.
+
+### Partial runtime evidence
+
+A user-supplied console excerpt from the fixed benchmark machine proves that
+`iy-benchmark/v1.2-candidate.2` loads without a reported controller error. Two
+separate runtime segments each completed the warmup pass. The first emitted all
+five scene/landmark capture windows, both ordered transitions, started the
+measured pass and reported `nuke_outside` before a new `READY` reset. The second
+again completed warmup and started the measured pass before the excerpt ended.
+
+This is useful controller-flow evidence, but it is not a completed measurement
+or visual/runtime approval. Neither segment contains `PASS_END type=measured`;
+the controller correctly reports `MEASUREMENT_STATUS status=unverified`. The
+submitted text also contains no Hammer Full Compile or VRAD output. A clean,
+uninterrupted measured pass, the build/VRAD result, and marker-correlated visual
+captures remain required.
