@@ -29,6 +29,11 @@ Foundry, cloud CI, or MCP.
   loose `check_raytracing_support.vrad3` in either installed tree or the recent
   user temp files. Therefore file absence alone does not prove the initialized
   Hammer/VRAD preflight result; the command outcome remains required evidence.
+- The user then confirmed that the correct current CS2 Hammer instance was
+  open. An immediate repeated search still found no loose script or current
+  Hammer/VRAD log in the CS2, SDK, or user-temp trees. This rules out a durable
+  loose file created merely by opening Hammer; resolution may be virtual or
+  build-time, so only the real VRAD command/build output can close the gate.
 - The historic `cs2-workshop-tools-pre-reinstall-20260905-001` backup is
   accessible but contains only `SHA256SUMS.csv`, not Valve/Workshop Tools files.
 - This WSL environment has no `powershell.exe` bridge, so it cannot read the
