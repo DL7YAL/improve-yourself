@@ -1,0 +1,27 @@
+{
+  "schema": "iy.map_overview_metadata/v1",
+  "map_id": "de_vertigo",
+  "asset": {"status": "NOT_INCLUDED", "reference": null, "upstream_material_identifier": "overviews/de_vertigo_radar", "reason": "No Valve overview image or lower-floor image is redistributed; only numeric projection metadata and source observations are included."},
+  "canvas": {"width": 1024, "height": 1024, "unit": "overview_pixel", "origin": "top_left", "x_direction": "right", "y_direction": "down"},
+  "transform": {
+    "verification_status": "VERIFIED", "input_coordinate_space": "cs2_world_xy",
+    "origin_world": {"x": -3168, "y": 1762, "convention": "upper_left_world_coordinate"},
+    "world_units_per_pixel": 4, "world_x_to_canvas": "positive_x", "world_y_to_canvas": "negative_y",
+    "rotation_deg_clockwise": 0, "rounding": "none_float", "clipping": "classify_only_no_clamp", "bounds_inclusive": true
+  },
+  "layers": {"status": "UNRESOLVED", "selection_axis": "UNRESOLVED", "items": [], "reason": "The descriptor contains source vertical sections, but this package does not infer boundary inclusivity, asset selection, or a runtime floor policy."},
+  "reference_points": [
+    {"id": "transform_top_left", "world": {"x": -3168, "y": 1762}, "expected_overview": {"x": 0, "y": 0}, "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM", "meaning": "projection_basis_only"},
+    {"id": "transform_center", "world": {"x": -1120, "y": -286}, "expected_overview": {"x": 512, "y": 512}, "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM", "meaning": "projection_basis_only"},
+    {"id": "transform_bottom_right", "world": {"x": 928, "y": -2334}, "expected_overview": {"x": 1024, "y": 1024}, "verification_status": "VERIFIED_DERIVED_FROM_TRANSFORM", "meaning": "projection_basis_only"}
+  ],
+  "provenance": {
+    "retrieved_utc": "2026-08-27T00:00:00Z",
+    "sources": [
+      {"role": "projection_values", "repository": "SteamDatabase/GameTracking-CS2", "commit": "8651ef311b783fee253fc15c30966e4a15a3cacb", "path": "game/csgo/pak01_dir/resource/overviews/de_vertigo.txt", "values_used": {"pos_x": -3168, "pos_y": 1762, "scale": 4, "source_rotate_flag": null, "intrinsic_rotation_deg_clockwise": 0}, "verticalsections_observed": {"default": {"AltitudeMin": 11700, "AltitudeMax": 20000}, "lower": {"AltitudeMin": -10000, "AltitudeMax": 11700}}, "authority_note": "Intrinsic X/Y values are activated. Layer values remain provenance-only until a floor-selection contract is independently approved."},
+      {"role": "formula_and_canvas_cross_check", "repository": "pnxenopoulos/awpy", "commit": "007b119a6a5b4b8ee7d3011d96ce00bed7323c12", "paths": ["awpy/plot/utils.py", "awpy/plot/plot.py"], "authority_note": "Awpy cross-checks intrinsic axis/scale semantics; no layer policy is imported into this package."}
+    ],
+    "distribution_note": "No overview texture, lower-floor texture, executable content, demo content, or game asset is included."
+  },
+  "verification": {"status": "PARTIAL", "verified_fields": ["canvas.width", "canvas.height", "transform.origin_world", "transform.world_units_per_pixel", "transform.world_x_to_canvas", "transform.world_y_to_canvas", "transform.rotation_deg_clockwise", "reference_points", "provenance.sources.verticalsections_observed"], "unresolved_fields": ["asset.reference", "layers.selection_axis", "layers.items", "layer_boundary_inclusivity", "layer_asset_selection", "named_landmark_world_coordinates"]}
+}
