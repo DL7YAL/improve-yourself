@@ -153,7 +153,9 @@ transformations used for this candidate. Their logical order is:
 3. `refine_benchmark_worlds.py` for grounding and enclosure corrections;
 4. `cleanup_benchmark_props.py` for props rejected by the runtime composition
    check;
-5. `author_intro_room.py` for the isolated technical spawn room.
+5. `author_intro_room.py` for the isolated technical spawn room;
+6. `upgrade_benchmark_world_sections.py` for the approved cinema intro and the
+   second Ancient/Inferno environment-detail pass around the unchanged camera.
 
 These tools operate on Valve `dmxconvert` keyvalues2 input. Hammer remains the
 serialization authority for the versioned binary VMAP. They are fail-closed
@@ -227,3 +229,19 @@ with no `[IYBENCH] ERROR`. It ended with
 `runtime_status=complete measurement_status=unverified`. This closes only the
 assigned Nuke landmark slice; it does not claim new visual approval for the
 other four capture windows or any measured performance result.
+
+## 2026-09-11 world-sections implementation
+
+The branch `codex/benchmark-map-world-sections-v1` keeps the candidate.2
+controller byte-identical and rebuilds the remaining environment sections
+before any later camera work. The technical intro room is now an industrial
+cinema with four raised audience rows, 32 standing team-spawn positions, a rear
+player viewpoint and an in-world `IMPROVE BENCHMARK` screen carrying
+`www.improve-yourself.com`. Ancient gains a structured water approach and a
+deeper Red Room. Inferno gains a narrowed stair sequence and enclosed Apps
+facades, windows, floor and overhead structure.
+
+The full Source 2 build completed with `59 compiled, 0 failed, 0 skipped` and
+produced a new verified VPK. Fresh normal-viewer captures remain the visual
+approval gate. The exact current state and continuation steps are recorded in
+`docs/BENCHMARK_MAP_WORLD_SECTIONS_HANDOFF.md`.
