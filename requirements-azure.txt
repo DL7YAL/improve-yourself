@@ -1,5 +1,5 @@
 # Azure SDK Dependencies
-azure-identity==1.16.0
+azure-identity==1.16.1
 azure-storage-blob==12.19.0
 azure-storage-file-share==12.17.0
 azure-data-tables==12.4.4
