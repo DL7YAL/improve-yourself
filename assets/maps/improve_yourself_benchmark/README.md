@@ -143,7 +143,7 @@ rights class, purpose and build evidence are recorded in
 | V1.2 candidate source | SHA-256 |
 | --- | --- |
 | `maps/improve_yourself_benchmark.vmap` | `DBBE5A05C541D2AB47354449FC16A1495E6934E85734484CE6E09C2AE27D5645` |
-| `scripts/benchmark_controller.js` | `29CC448D423255A7FFE3840333FDD3BECA329D47B0C6F229FE61B665D15B3849` |
+| `scripts/benchmark_controller.js` | `0038BAACB132A907654E03FE3B42B27BF198D5D1A23F4F9F0D8C87B5DF16723E` |
 
 The authoring helpers under `tools/benchmark/` document the reproducible source
 transformations used for this candidate. Their logical order is:
@@ -159,7 +159,7 @@ These tools operate on Valve `dmxconvert` keyvalues2 input. Hammer remains the
 serialization authority for the versioned binary VMAP. They are fail-closed
 and must not be rerun against an already-authored candidate.
 
-Controller `iy-benchmark/v1.2-candidate.1` emits deterministic
+Controller `iy-benchmark/v1.2-candidate.2` emits deterministic
 `CAPTURE_WINDOW` markers, including the active `warmup` or `measured` pass, for
 the following review points:
 
@@ -201,3 +201,29 @@ CS2 rejected the requested client-side FPS/frametime and `vprof` commands in
 the Workshop context. The final marker therefore correctly reported
 `runtime_status=complete measurement_status=unverified`; no FPS, 1%-low or
 frametime result was created or inferred.
+
+## 2026-09-11 candidate.2 Nuke closure
+
+Candidate.2 preserves the 64-second route and all five capture windows while
+moving only the Nuke landmark camera to the verified wider yard view and the
+Nuke flash from 8.45 seconds to 10 seconds, after the 9-second capture marker.
+The controller source SHA-256 is
+`0038BAACB132A907654E03FE3B42B27BF198D5D1A23F4F9F0D8C87B5DF16723E`;
+the unchanged VMAP source SHA-256 is
+`DBBE5A05C541D2AB47354449FC16A1495E6934E85734484CE6E09C2AE27D5645`.
+
+A fresh full map compile completed with `58 compiled, 0 failed, 0 skipped`.
+The resulting local VPK SHA-256 was
+`F66D69439DDD4CEA5CCCFF7D653AFD8CBB1B84680A12FCA337BBCABAB8260EA5`.
+The post-compile normal-viewer capture at the measured 9-second marker showed
+the Nuke yard depth, cooling tower, smaller silo/building context, crane
+structure and vehicles without a flash whiteout. A second capture confirmed
+the following smoke-covered Nuke-to-Ancient entry.
+
+The post-compile controller run then completed a full warmup and measured pass.
+The measured pass emitted the five capture markers at 9, 27, 38, 48 and 53
+seconds and the Nuke, Ancient and Inferno scene reports exactly once in order,
+with no `[IYBENCH] ERROR`. It ended with
+`runtime_status=complete measurement_status=unverified`. This closes only the
+assigned Nuke landmark slice; it does not claim new visual approval for the
+other four capture windows or any measured performance result.

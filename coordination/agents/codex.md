@@ -986,3 +986,54 @@ AZURE HANDOFF REQUIRED: NO.
 NEXT: Einen ausdrücklich vom Nutzer gestarteten lokalen Frame-Collector als separaten Adapter auf `iy.cs2_benchmark_capture/v1` abbilden. Danach genau einen echten V1.2-Lauf im normalen Viewer samt fünf Landmark-Sichtprüfungen durchführen und erst bei bestandenem Controller-/Collector-Gate lokale Werte freigeben.
 
 COMMIT/PUSH: Commit und Push dieses Arbeitsstands auf `codex/standalone-benchmark-results-v1` sind vom Projektinhaber ausdrücklich freigegeben. Maßgeblich ist der gepushte Branch-HEAD; kein PR oder Merge.
+
+# Handoff 2026-09-11 — Benchmark V1.2 candidate.2 Nuke marker-9 closure
+
+STATUS: PASS
+
+TASK: Den vorhandenen lokalen `iy-benchmark/v1.2-candidate.2`-Stand verlustfrei sichern, ausschließlich den Nuke-Sichtstand bei Marker 9 sichtbar abnehmen, technisch schließen und nach erfolgreicher Validierung auf `codex/benchmark-map-visual-fidelity-v1` bereitstellen. Kein PR, Merge oder Eingriff in `main`.
+
+BRANCH / BASE: `codex/benchmark-map-visual-fidelity-v1`; Base `022105653b467e675b24ed6994005e6ffe6e571f`. Live-GitHub-`main` wurde bei `ef3e96aad0675b963d66b10ecdc8e40613af17b5`, `codex/standalone-benchmark-results-v1` bei `022105653b467e675b24ed6994005e6ffe6e571f` und `codex/benchmark-map-runtime-correlation` bei `277b97ed21e06424fcc323fe8d16d898a24d8e86` verifiziert.
+
+CHANGED:
+- Der übernommene Candidate.2-Diff bleibt eng: Controller-Version `.2`, breitere Nuke-Yard-Kamera bei `t=9`, Nuke-Flash von `t=8.45` auf `t=10.0` nach dem Capture-Marker sowie identische Version-/Hashbindung in Manifest, Ergebnisvertrag, Tests und Dokumentation.
+- Finaler Controller-SHA-256: `0038BAACB132A907654E03FE3B42B27BF198D5D1A23F4F9F0D8C87B5DF16723E`.
+- Unveränderter VMAP-SHA-256: `DBBE5A05C541D2AB47354449FC16A1495E6934E85734484CE6E09C2AE27D5645`.
+- Der ursprüngliche Dirty-Diff liegt extern unter `local-backups/benchmark-candidate2-20260911-150505`; Patch-SHA-256 `11E8FC5BBB2E94EC758952098710E06DB5219220700649937ED32DBBC096B57E`; Reverse-Apply-Check PASS.
+
+ADDON / COMPILE:
+- Autorisierter Sync-Deploy ausschließlich über `Sync-BenchmarkAddon.ps1 -Deploy`; Addon-Backup `backups/deploy-20260911-150636`; anschließende Manifest-Hashprüfung PASS.
+- Controller-Resource-Compile: `1 compiled, 0 failed, 0 skipped`.
+- Frischer vollständiger VMAP-Compile einschließlich GPU-Lightmapping/VRAD3: `58 compiled, 0 failed, 0 skipped`, Exitcode 0. Der frühere SDK-Preflight-Blocker trat nicht mehr auf.
+- Frisches lokales VPK: SHA-256 `F66D69439DDD4CEA5CCCFF7D653AFD8CBB1B84680A12FCA337BBCABAB8260EA5`, 18,581,963 Bytes.
+
+VISIBLE NUKE RESULT:
+- Post-Compile-Normal-Viewer-Capture wurde direkt bei `STATUS phase=running pass=measured event=9` ausgelöst.
+- Sichtbar: Yard-Silhouette und plausibler Boden-/Tiefenbezug, dominanter Cooling Tower, kleinerer Silo-/Gebäudebezug links im Hintergrund, Kranstruktur sowie Fahrzeug-/Garage-/Secret-Kontext.
+- Kein Flash-Whiteout über Marker 9. Ein zweiter Capture beim folgenden Smoke-Eintritt bestätigte die erhaltene Nuke-zu-Ancient-Übergangssequenz.
+- Post-Compile-Capture-SHA-256: Marker 9 `30FB4191EED60C1F46A9699204EB1ABEC0B111E84A9C540FB937A2BCED691DD6`; Smoke-Eintritt `F057E8D32DB4047E4C2856E69CBF156B033A158010470EE7DE619A4B57893E5A`.
+
+RUNTIME / PERFORMANCE:
+- Post-Compile-Warmup vollständig: `PASS_START type=warmup` bis `PASS_END type=warmup`.
+- Post-Compile-Messpass vollständig: Capture-Marker 9, 27, 38, 48 und 53 genau einmal und in Reihenfolge; Reports `nuke_outside`, `ancient_b`, `inferno_apps_a` genau einmal und in Reihenfolge; keine `[IYBENCH] ERROR`.
+- Abschluss: `PASS_END type=measured runtime_status=complete measurement_status=unverified`, danach `STATUS phase=complete pass=measured event=60`.
+- Performance-Evidenz: UNVERIFIED. Kein aktiver Frame-Collector; keine FPS-, 1%-Low-, Frametime- oder Top-10-Aussage aus dem Lauf übernommen.
+
+VALIDATION:
+- Fokussierte Transition-/Ergebnis-Suite: 26 PASS.
+- Vollständige Python-Suite: 453/453 PASS.
+- `compileall` für `src`, `tests` und `tools/benchmark`: PASS.
+- `pip check`: PASS.
+- JSON-/Manifest-/Provenienzprüfung: PASS.
+- `git diff --check`, Scope-, Secret-, Privacy-, absolute-Pfad- und Artefaktprüfung: PASS.
+- Abschließender read-only Addon-Sync: PASS.
+
+WHAT DID NOT CHANGE: Keine VMAP-, Asset-, Ancient-, Inferno-, Routen-, Gesamtdauer-, AnalyzerCore-, AnalyzerDataHub-, Replay-, Tactical-, Optimizer-, System-Check-, Azure-, 3D-POV-, 2D-Map-Overview- oder `coordination/ACTIVE_WORK.md`-Änderung. Der ältere Dirty-Worktree auf `80a2547` blieb unangetastet. Die vier Nicht-Nuke-Capture-Fenster erhielten keine neue visuelle Freigabe.
+
+ARCHITECTURE: Der Benchmark bleibt ein eigenständiger lokaler CS2-Workshop-Strang. Keine zweite Parser-, Hub-, Store-, Controller- oder Evidence-Wahrheit; Runtime-Abschluss und Performance-Messung bleiben fail-closed getrennt.
+
+AZURE HANDOFF REQUIRED: NO.
+
+COMMIT / PUSH: Für diesen exakt validierten Arbeitsblock auf `codex/benchmark-map-visual-fidelity-v1` autorisiert; unveränderliche Commit-/Remote-Hashes werden im abschließenden Task-Handoff ausgewiesen. Kein PR und kein Merge.
+
+NEXT: Separater Folgeauftrag für einen nachweislich aktiven Frame-Collector, falls echte FPS-/1%-Low-/Frametime-Evidenz gewünscht ist. Keine Performance-Aussage aus Controller- oder Screenshot-Overlays ableiten.

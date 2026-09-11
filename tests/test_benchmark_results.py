@@ -15,17 +15,17 @@ from improve_yourself.benchmark_results import (
 
 
 MAP_HASH = "DBBE5A05C541D2AB47354449FC16A1495E6934E85734484CE6E09C2AE27D5645"
-CONTROLLER_HASH = "29CC448D423255A7FFE3840333FDD3BECA329D47B0C6F229FE61B665D15B3849"
+CONTROLLER_HASH = "0038BAACB132A907654E03FE3B42B27BF198D5D1A23F4F9F0D8C87B5DF16723E"
 SETTINGS_HASH = "A" * 64
 
 
 def controller_log() -> str:
     return "\n".join((
-        "[IYBENCH] READY version=iy-benchmark/v1.2-candidate.1",
-        "[IYBENCH] PASS_START type=warmup version=iy-benchmark/v1.2-candidate.1",
+        "[IYBENCH] READY version=iy-benchmark/v1.2-candidate.2",
+        "[IYBENCH] PASS_START type=warmup version=iy-benchmark/v1.2-candidate.2",
         "[IYBENCH] PASS_END type=warmup",
         "[IYBENCH] MEASUREMENT_STATUS status=unverified reason=client_commands_require_runtime_confirmation",
-        "[IYBENCH] PASS_START type=measured version=iy-benchmark/v1.2-candidate.1",
+        "[IYBENCH] PASS_START type=measured version=iy-benchmark/v1.2-candidate.2",
         "[IYBENCH] CAPTURE_WINDOW pass=measured scene=nuke_outside landmark=yard_landmarks expected_t=9",
         "[IYBENCH] REPORT scene=nuke_outside",
         "[IYBENCH] CAPTURE_WINDOW pass=measured scene=ancient_b landmark=water_reflection expected_t=27",
@@ -45,7 +45,7 @@ def capture(*, run_id: str = "fixture-run-1", frames: int = 384) -> dict[str, ob
         "run_id": run_id,
         "captured_at_utc": "2026-09-07T16:39:55Z",
         "benchmark": {
-            "version": "iy-benchmark/v1.2-candidate.1",
+            "version": "iy-benchmark/v1.2-candidate.2",
             "map_sha256": MAP_HASH,
             "controller_sha256": CONTROLLER_HASH,
             "pass_seconds": 64,

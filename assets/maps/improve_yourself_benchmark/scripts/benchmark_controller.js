@@ -1,6 +1,6 @@
 import { CSGrenadeType, Instance } from "cs_script/point_script";
 
-const VERSION = "iy-benchmark/v1.2-candidate.1";
+const VERSION = "iy-benchmark/v1.2-candidate.2";
 const TICK_SECONDS = 1 / 64;
 const PASS_SECONDS = 64;
 const COOLDOWN_SECONDS = 3;
@@ -24,7 +24,7 @@ const SCENES = [
         cameras: [
             { t: 0, p: [-1400, -700, 240], q: [-600, 0, 72] },
             { t: 4, p: [-1050, -180, 220], q: [-350, 250, 72] },
-            { t: 9, p: [-620, 360, 210], q: [100, 600, 80] },
+            { t: 9, p: [-1000, -300, 420], q: [900, 1000, 80] },
             { t: 15, p: [-80, 690, 250], q: [450, 850, 70] },
             { t: 19, p: [250, 850, 180], q: [650, 1000, 72] },
             { t: 22, p: [470, 980, 125], q: [900, 1120, 70] },
@@ -266,8 +266,8 @@ const EVENTS = [
     { t: 3.2, run: () => grenade(CSGrenadeType.MOLOTOV, [80, 850, 78]) },
     { t: 5.2, run: startFire }, { t: 6.0, run: stopFire },
     { t: 8.2, run: clearUtilities },
-    { t: 8.45, run: () => grenade(CSGrenadeType.FLASHBANG, [150, 650, 190]) },
     { t: 9.0, run: () => captureWindow("nuke_outside", "yard_landmarks", 9.0) },
+    { t: 10.0, run: () => grenade(CSGrenadeType.FLASHBANG, [150, 650, 190]) },
     { t: 13.0, run: startFire }, { t: 14.2, run: stopFire },
     { t: 16.2, run: () => grenade(CSGrenadeType.SMOKE, [200, 920, 82]) },
     { t: 16.45, run: () => grenade(CSGrenadeType.SMOKE, [470, 980, 82]) },

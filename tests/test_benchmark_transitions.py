@@ -163,7 +163,7 @@ def test_benchmark_suppresses_default_team_intro_delay() -> None:
 
 def test_capture_windows_are_versioned_and_follow_scene_order() -> None:
     text = source()
-    assert 'const VERSION = "iy-benchmark/v1.2-candidate.1"' in text
+    assert 'const VERSION = "iy-benchmark/v1.2-candidate.2"' in text
     markers = [
         'captureWindow("nuke_outside", "yard_landmarks", 9.0)',
         'captureWindow("ancient_b", "water_reflection", 27.0)',
@@ -175,6 +175,16 @@ def test_capture_windows_are_versioned_and_follow_scene_order() -> None:
     assert positions == sorted(positions)
     assert "CAPTURE_WINDOW pass=${activePass} scene=${sceneId} landmark=${landmarkId}" in text
     assert "expected_t=${expectedTime}" in text
+
+
+def test_nuke_landmark_capture_precedes_flash_and_uses_verified_wide_camera() -> None:
+    text = source()
+    camera = '{ t: 9, p: [-1000, -300, 420], q: [900, 1000, 80] }'
+    capture = 'captureWindow("nuke_outside", "yard_landmarks", 9.0)'
+    flash = 't: 10.0, run: () => grenade(CSGrenadeType.FLASHBANG, [150, 650, 190])'
+    assert camera in text
+    assert text.index(capture) < text.index(flash)
+    assert "t: 8.45, run: () => grenade(CSGrenadeType.FLASHBANG" not in text
 
 
 def test_runtime_completion_does_not_claim_verified_measurement() -> None:
