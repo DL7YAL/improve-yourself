@@ -92,3 +92,25 @@ markers have direct runtime evidence. Measurement completion, client-command
 confirmation, visual landmark acceptance, Hammer Full Compile and VRAD success
 remain unproven. The next run must remain uninterrupted through measured end
 and the Hammer build/VRAD output must be preserved separately.
+
+## GitHub world-sections cross-check — 2026-09-12
+
+The exact local filename
+`AUFTRAG_BENCHMARK_MAP_WELTENBAU_ANCIENT_INFERNO.md` is not present on any
+fetched GitHub remote branch or tag. The corresponding versioned work order is
+`docs/BENCHMARK_MAP_ASSET_REBUILD_WORK_ORDER.md` on
+`origin/codex/benchmark-map-world-sections-v1`, final branch commit `6ee32c4`.
+The same branch contains `docs/BENCHMARK_MAP_WORLD_SECTIONS_HANDOFF.md`.
+
+That handoff records a forced Full Compile with `59 compiled, 0 failed, 0
+skipped` and VPK SHA-256
+`F950D9ECA4389F9B1BA98C1D62E9AD925A283D28C70EE938FAC89468E4C232C8`.
+It leaves the normal-viewer marker captures and uninterrupted post-build
+controller run open. Its VMAP and controller hashes are byte-identical to
+current `main` (`74AE13F...E4BEB6` and `0038BAA...16723E` respectively).
+
+The supporting world-section authoring tools, provenance records, focused
+tests and handoff remain only on that remote branch; they were not integrated
+by the later source-only V1.2 promotion to `main`. Do not merge the stale branch
+wholesale over current `main`. Any integration must preserve current main-only
+files and review the branch's supporting files as a bounded follow-up.
