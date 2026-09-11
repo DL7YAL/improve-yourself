@@ -16,19 +16,29 @@ Foundry, cloud CI, or MCP.
 ## Evidence collected
 
 - The workspace is on the stated base and has no uncommitted changes.
-- Static searches of the mounted Windows drives did not reveal `hammer.exe`,
-  `vrad3.exe`, or `check_raytracing_support.vrad3` at accessible paths.
-- No Hammer, VRAD, Steam, or CS2 process was running when checked.
+- Steam is installed under `E:\Program Files (x86)\Steam`.
+- App 730 is installed as `Counter-Strike Global Offensive`, build `25218825`;
+  its manifest reports no remaining download or staging bytes.
+- App 745 is installed as `Counter-Strike Global Offensive 745`, build
+  `11399846`, with no remaining download or staging bytes.
+- `vrad3.exe` is present at
+  `E:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\game\bin\win64\vrad3.exe`.
+- The only loose `hammer.exe` found is the SDK executable at
+  `E:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive 745\bin\hammer.exe`.
+- After the user reported Hammer open, a read-only search found no persistent
+  loose `check_raytracing_support.vrad3` in either installed tree or the recent
+  user temp files. Therefore file absence alone does not prove the initialized
+  Hammer/VRAD preflight result; the command outcome remains required evidence.
 - The historic `cs2-workshop-tools-pre-reinstall-20260905-001` backup is
   accessible but contains only `SHA256SUMS.csv`, not Valve/Workshop Tools files.
 - This WSL environment has no `powershell.exe` bridge, so it cannot read the
-  Windows Steam registry entry or launch Hammer by itself.
+  Windows process list or execute `vrad3.exe` by itself.
 
 ## Next bounded action
 
-On the fixed benchmark machine, start CS2 Workshop Tools and Hammer. After
-Hammer has initialized, provide the actual Workshop Tools install path or the
-non-secret VRAD preflight result. Then perform the existing local-only preflight
-and record the outcome here. Do not change Azure configuration, drivers,
-registry settings, benchmark geometry, controller logic, or copied Valve assets
-as part of this preflight.
+With CS2 Workshop Tools and Hammer initialized on the fixed benchmark machine,
+run the existing local `vrad3.exe -script check_raytracing_support.vrad3
+-vulkan -gpuraytracing` preflight from the discovered CS2 `game\bin\win64`
+directory. Record the complete non-secret output and exit code here. Do not
+change Azure configuration, drivers, registry settings, benchmark geometry,
+controller logic, or copied Valve assets as part of this preflight.
