@@ -50,8 +50,8 @@ Dieser Abschnitt ist der gemeinsame Einstiegspunkt für den aktuell gepushten Ar
 ### Benchmark, Blocker und Grenzen
 
 - Nuke-Graybox-/frühe-Kamera-Reparaturen und der zielbegrenzte, backup-/hashgeprüfte Benchmark-Sync sind versioniert und abgeschlossen.
-- Multi-Map-/Hammer-Full-Compile bleibt `WAITING_FOR_TRISTAN`: CS2 und Workshop Tools sind aktuell und Hammer lädt die VMAP, aber VRAD bricht vor der Build-Pipeline ab, weil `check_raytracing_support.vrad3` im erwarteten CS2-Mount-/Assetkontext nicht lesbar ist. Die RX 7900 XTX wird als Vulkan Physical Device erkannt; es gibt keinen Beleg für fehlende Hardware-RT-Unterstützung.
-- Bis zu einer offiziellen SDK-/Valve-Klärung werden keine Treiber-, Registry-, Adrenalin-, Controller-, Szenengeometrie-, Smoke- oder Benchmark-Runtime-Änderungen vorgenommen.
+- `check_raytracing_support.vrad3` ist ein lokales, von den installierten Workshop Tools/Hammer bereitgestelltes VRAD-Artefakt. Es wird nicht in GitHub kopiert oder versioniert. Eine fehlende Datei vor dem Hammer-Start ist kein Hardware- oder SDK-Blocker; der begrenzte lokale Ablauf ist in `assets/maps/improve_yourself_benchmark/HAMMER_RAYTRACING_PREFLIGHT.md` festgehalten.
+- Azure, Foundry, Cloud-CI und MCP ignorieren diesen lokalen Hammer-Preflight vollständig. Erst bei einer ausdrücklich wiederaufgenommenen Benchmark-Arbeit wird nach Hammer-Initialisierung ein lokaler VRAD-Nachweis erfasst; daraus folgen keine Treiber-, Registry-, Adrenalin-, Controller-, Szenengeometrie-, Smoke- oder Benchmark-Runtime-Änderungen ohne neuen Auftrag.
 - Nicht in diesen V1-Stand gezogen werden OBS, Clip-/Videoeditor-Workflows, automatisches Rendering, Windowed-/Borderless-Zwang, ML-/Anti-Cheat-Klassifikation, vollständige Standard-Angle-Erkennung sowie Optimizer-/System-Check-Arbeit innerhalb des Replay-Strangs.
 
 ### Aktuell nächster freigegebener Engineering-Schritt
