@@ -11,15 +11,21 @@ scripts/benchmark_controller.js
 
 ## Provenance
 
-Imported on 2026-08-15 from the authoritative local addon
+Initially imported on 2026-08-15 from the authoritative local addon
 `content/csgo_addons/improve_yourself_benchmark` after the successful rebooted
 Full Compile and runtime-camera revalidation recorded in
 `coordination/agents/codex.md`.
 
+On 2026-09-12 the project owner explicitly selected the materially newer
+installed `iy-benchmark/v1.2-candidate.2` sources as the authoritative
+continuation. They were imported byte-for-byte from the fixed benchmark
+machine before any repository-to-addon sync or new compile. This promotion is
+a source checkpoint, not runtime approval.
+
 | Source | SHA-256 |
 | --- | --- |
-| `maps/improve_yourself_benchmark.vmap` | `9D7BE49FD2FA9F720267E5FD155054F478F64416408AC681EF02B578274276CE` |
-| `scripts/benchmark_controller.js` | `45D2CF2C0EFB05454304B2F46630239D6B7998BC0F3172B8B71DD405DC07B4BD` |
+| `maps/improve_yourself_benchmark.vmap` | `74AE13F43EDA0FC213330A30D9714D16B2897710C5409378A9D4BF1294E4BEB6` |
+| `scripts/benchmark_controller.js` | `0038BAACB132A907654E03FE3B42B27BF198D5D1A23F4F9F0D8C87B5DF16723E` |
 
 The earlier map baseline hash
 `A37273C6E27AB8357068DC3FF064888EF82C2C11C84C668B85CB1FE910036572`
@@ -29,8 +35,9 @@ backup. The earlier controller baseline hash
 `41BA031586C168CB368875CE275B02DE7BB0B2879B2CBD0115EA47CE8778DCFA`
 matches the local
 `scripts/backups/benchmark_controller.post-camera-health-20260814.js` backup.
-The current controller hash differs intentionally because V1.1 adds the locked
-multi-map transition contract described below.
+The current controller hash differs intentionally because the V1.2 candidate
+extends the locked V1.1 multi-map transition contract with explicit capture
+windows and fail-honest measurement status.
 
 ## Scope
 
@@ -54,7 +61,7 @@ addon independently.
 
 ## Locked multi-map transition contract
 
-Controller V1.1 implements the source-side transition design from
+Controller V1.2 candidate 2 preserves the V1.1 source-side transition design from
 `docs/DECISIONS.md`:
 
 - the Nuke camera enters the existing first smoke wall before the hidden swap;
@@ -72,9 +79,9 @@ and `TRANSITION_EXIT` make capture/log correlation reproducible. These source
 constraints do not by themselves prove that the transitions are visually
 seamless. A Full Compile and normal-viewer runtime capture remain required.
 
-## 2026-08-17 runtime result
+## 2026-08-17 V1.1 runtime result
 
-The current V1.1 source contract is **not runtime-approved**. A successful Full
+The historical V1.1 source contract was **not runtime-approved**. A successful Full
 Compile produced a fresh VPK, but two normal-viewer observations showed the
 occlusion clearing to empty sky with isolated effects instead of a complete
 destination environment. The red-tinted empty view is not accepted as a Red
@@ -129,3 +136,14 @@ still not approved: sampled frames did not yet prove the reflective water,
 recognizable Red Room and all five Inferno stair blocks as a coherent sequence.
 The next runtime pass must correlate those landmarks with the existing markers
 and adjust only camera composition if required.
+
+## 2026-09-12 V1.2 candidate checkpoint
+
+The promoted local candidate adds explicit `CAPTURE_WINDOW` markers for the
+Nuke yard landmarks, Ancient water/reflection and Red Room, and Inferno stairs
+and Apps details. It also records measurement status as `unverified` instead of
+claiming that successful runtime completion proves measurement validity.
+
+The promoted VMAP and controller are byte-identical to the installed addon at
+the time of import. They still require a fresh Hammer Full Compile, VRAD result,
+and marker-correlated normal-viewer review before runtime approval.

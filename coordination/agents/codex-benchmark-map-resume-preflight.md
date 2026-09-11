@@ -39,10 +39,9 @@ Foundry, cloud CI, or MCP.
 - This WSL environment has no `powershell.exe` bridge, so it cannot read the
   Windows process list or execute `vrad3.exe` by itself.
 
-## Local source divergence — do not overwrite
+## Local source divergence — resolved by owner decision
 
-The installed addon's active sources differ from the repository manifest and
-must be treated as unreviewed local work until the owner chooses the authority:
+The installed addon's active sources differed from the repository manifest:
 
 | Source | Repository SHA-256 | Installed SHA-256 | Installed state |
 | --- | --- | --- | --- |
@@ -52,17 +51,19 @@ must be treated as unreviewed local work until the owner chooses the authority:
 The controller difference includes changed Nuke camera coordinates, explicit
 capture-window markers for Nuke/Ancient/Inferno, team-intro timing controls,
 and a fail-honest `measurement_status=unverified`. The VMAP is also materially
-larger than the 401,300-byte repository source. Do not run the repository-to-
-addon deploy mode and do not overwrite either installed file. A project-owner
-decision is required before promoting the installed candidate into GitHub or
-discarding it.
+larger than the 401,300-byte previous repository source.
+
+On 2026-09-12 the project owner explicitly selected the installed
+`iy-benchmark/v1.2-candidate.2` as the authoritative continuation for GitHub.
+The VMAP and controller were imported byte-for-byte, their manifest hashes were
+updated, and equality with the installed sources was verified immediately
+after import. No repository-to-addon deployment occurred and the installed
+files were not modified.
 
 ## Next bounded action
 
-First decide whether the materially newer installed V1.2 candidate is the
-authoritative continuation to preserve in GitHub. Do not sync or compile before
-that decision. Once the source authority is resolved and CS2 Workshop Tools and
-Hammer are initialized on the fixed benchmark machine, run the existing local
+With source authority resolved and CS2 Workshop Tools and Hammer initialized on
+the fixed benchmark machine, run the existing local
 `vrad3.exe -script check_raytracing_support.vrad3 -vulkan -gpuraytracing`
 preflight from the discovered CS2 `game\bin\win64` directory. Record the
 complete non-secret output and exit code here. Do not change Azure
