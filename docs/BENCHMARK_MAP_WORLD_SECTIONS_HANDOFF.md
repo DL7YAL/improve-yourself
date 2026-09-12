@@ -164,6 +164,8 @@ The next bearer starts here, in this order:
 1. Fetch `origin/codex/benchmark-v1.2-runtime-evidence` and verify a clean
    worktree before changing anything.
 2. Read the authoritative root work order and this handoff completely.
+   Execute the Windows gate using
+   [`BENCHMARK_WINDOWS_RUNTIME_RUNBOOK.md`](BENCHMARK_WINDOWS_RUNTIME_RUNBOOK.md).
 3. Confirm the repository and installed-addon VMAP/controller hashes still
    match the two hashes recorded above; use the existing sync workflow in
    read-only mode where PowerShell is available.
