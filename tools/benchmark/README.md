@@ -48,12 +48,14 @@ py -3.13 .\tools\benchmark\validate_benchmark_runtime.py `
 ```
 
 The validator is read-only, uses only the Python standard library and checks
-the latest `READY` segment. It ignores quoted duplicate console echoes, but it
-fails on a partial/restarted latest run, duplicate or reordered contract
-events, missing captures/reports, and every `[IYBENCH] ERROR`. A runtime `PASS`
-continues to report `measurement_status=unverified`; it does not manufacture a
-performance result. Preserve the emitted input SHA-256 and the JSON result in
-the handoff, but keep the raw local log outside Git.
+the latest `READY` segment. It accepts plain `[IYBENCH]` lines and the
+authoritative VConsole `[ cs_script ]: [IYBENCH]` form. It ignores quoted
+duplicate `Console` echoes, but fails on a partial/restarted latest run,
+duplicate or reordered contract events, missing captures/reports, and every
+`[IYBENCH] ERROR`. A runtime `PASS` continues to report
+`measurement_status=unverified`; it does not manufacture a performance result.
+Preserve the emitted input SHA-256 and the JSON result in the handoff, but keep
+the raw local log outside Git.
 
 The controller also writes a compact save record only after measured-pass
 completion. Validate that independent Windows artifact with:

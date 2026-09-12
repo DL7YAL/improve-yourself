@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -95,14 +96,18 @@ CONTRACT_PREFIXES = (
     "ERROR ",
 )
 
+PLAIN_EVENT = re.compile(r"^\s*\[IYBENCH\]\s+(.*)$")
+VCONSOLE_SCRIPT_EVENT = re.compile(
+    r"^\s*\[\s*cs_script\s*\]\s*:\s*\[IYBENCH\]\s+(.*)$"
+)
+
 
 def canonical_events(text: str) -> list[str]:
     events = []
     for line in text.splitlines():
-        stripped = line.strip()
-        if not stripped.startswith("[IYBENCH] "):
-            continue
-        events.append(stripped.removeprefix("[IYBENCH] "))
+        match = PLAIN_EVENT.match(line) or VCONSOLE_SCRIPT_EVENT.match(line)
+        if match:
+            events.append(match.group(1))
     return events
 
 

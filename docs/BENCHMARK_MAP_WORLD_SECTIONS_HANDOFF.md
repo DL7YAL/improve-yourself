@@ -115,21 +115,29 @@ Status: **PARTIAL**
   `0038BAACB132A907654E03FE3B42B27BF198D5D1A23F4F9F0D8C87B5DF16723E`.
 - The historical forced Full Compile and test evidence above belongs to those
   exact source hashes and therefore remains valid build evidence.
-- A supplied console excerpt proves two complete warmup passes, the ordered
-  capture windows and no `[IYBENCH] ERROR`, but neither segment reached
-  `PASS_END type=measured`.
+- The complete supplied Windows VConsole capture has SHA-256
+  `9D5295BC4441C461D1BF74B4F487111479026086C030699CEE28CD992F57FABF`.
+  Its authoritative `cs_script` stream validates `PASS` with exactly 39/39
+  ordered events, one complete segment and no `[IYBENCH] ERROR`.
 - No new Steam screenshot was found for the five required post-compile views.
 - The 32 deterministic spawn slots and screen-facing placement are statically
   covered. A stable cheering animation and the required two-restart visual
   reproducibility proof are not implemented or evidenced.
+- The same complete VConsole capture blocks world approval: the cubemap array
+  is missing with 35,501 follow-on fog warnings, four nav-generation warnings
+  request re-export, 33 vertical-velocity warnings affect bots/player, and
+  only nine bots are present before the warmup begins.
+- Workshop client-command restrictions reject 78 calls. Server-side effects
+  must not be inferred from those client warnings, but client-only attack,
+  fade and VProf calls are demonstrably not confirmed.
 - `measurement_status=unverified` remains correct because no active frame
   collector was proven.
 
-The next execution point is the normal CS2 viewer: let one uninterrupted run
-reach measured end and capture the intro plus markers 27, 38, 48 and 53. Then
-perform a second clean restart for the audience-state comparison. Do not alter
-camera coordinates, timings, scene order or Azure configuration while closing
-these gates.
+The next implementation point is Hammer on Windows: repair the missing cubemap
+build and nav export, then isolate the bot floor/count and Workshop-safe
+client-effect problems without changing camera coordinates, timings, scene
+order or Azure configuration. Only after a fresh Full Compile succeeds should
+the five visual captures and second audience restart be recorded.
 
 Current repository checks on the continuation branch:
 
@@ -178,45 +186,46 @@ The next bearer starts here, in this order:
 3. Confirm the repository and installed-addon VMAP/controller hashes still
    match the two hashes recorded above; use the existing sync workflow in
    read-only mode where PowerShell is available.
-4. In the normal CS2 viewer, run the addon uninterrupted through
-   `PASS_END type=measured`. Preserve the full canonical `[IYBENCH]` output and
-   validate it on Windows with
-   `py -3.13 .\tools\benchmark\validate_benchmark_runtime.py <log> --json`.
-5. Capture the intro and markers 27, 38, 48 and 53, then repeat a clean restart
+4. Preserve the locked route and timing. Repair/rebuild the missing cubemap,
+   re-export nav, and prove the intended bot count/floor state plus a
+   Workshop-safe replacement for rejected client-only effect/profiler calls.
+5. In the normal CS2 viewer, run the addon uninterrupted through
+   `PASS_END type=measured`, preserve the full VConsole text, and require both
+   the 39-event contract `PASS` and absence of the recorded engine blockers.
+6. Capture the intro and markers 27, 38, 48 and 53, then repeat a clean restart
    for the audience-state comparison. Store local captures outside Git and
    create their path-safe hash manifest with
    `py -3.13 .\tools\benchmark\collect_benchmark_evidence.py ...`. Store local
    captures outside Git and commit only their SHA-256, time/marker correlation
    and reviewed result.
-6. Keep the assignment `PARTIAL` until every visual gate passes and a stable,
+7. Keep the assignment `PARTIAL` until every visual gate passes and a stable,
    deterministic cheering implementation is both available and proven. The
    installed `point_script.d.ts` exposes player lookup, teleport and model
    operations but no documented player animation, sequence, activity or
    gesture method; do not invent an unsupported API. Follow the isolated
    one-bot gate in
    [`BENCHMARK_BOT_CHEER_PROTOTYPE.md`](BENCHMARK_BOT_CHEER_PROTOTYPE.md).
-7. Before any source change, preserve the locked controller/camera/timing
+8. Before any source change, preserve the locked controller/camera/timing
    hashes and follow READ -> SNAPSHOT -> APPLY -> VERIFY -> RESTORE.
 
 Azure, Foundry and cloud execution are outside this assignment and must remain
 untouched.
 
-## Latest supplied Windows runtime excerpt
+## Latest supplied Windows runtime capture
 
 Input SHA-256:
-`619FEFBFC04A5C83CA70A4951ABFE896F9D9E4D7EFCE1F3366D1D217B9F90A7E`
+`9D5295BC4441C461D1BF74B4F487111479026086C030699CEE28CD992F57FABF`
 
-The 139-line excerpt contains three canonical `READY` segments. The first
-reaches measured Ancient water at marker 27 and is then restarted. The second
-and third complete warmup but end immediately after measured Nuke starts. The
-validator selects the latest segment and reports `PARTIAL`, 21 of 39 required
-contract events, no `[IYBENCH] ERROR`, and no measured completion. This does
-not replace the still-required uninterrupted Windows run.
+The complete capture contains one canonical `READY` segment and the entire
+39-event contract through measured `PASS_END`. The corrected validator accepts
+the authoritative VConsole `cs_script` prefix, ignores quoted `Console`
+duplicates and reports `PASS`. The console event-order gate is closed.
 
 The same Windows run later wrote the controller save record with
 `runtimeStatus=complete`, `measurementStatus=unverified` and
 `completedAt=135.1875`. Its 126-byte artifact SHA-256 is
 `2A336BBAB6572FFF66821A94181821DD9141EE63D1D209361CCA91D669D67A3B`,
-and its save contract validates as `PASS`. Measured runtime completion is
-therefore proven; only the full console event-order evidence remains missing.
+and its save contract validates as `PASS`. Measured runtime completion and the
+full console event order are therefore both proven. The engine and visual
+findings listed above remain open.
 See [`BENCHMARK_RUNTIME_EVIDENCE_2026-09-12.md`](BENCHMARK_RUNTIME_EVIDENCE_2026-09-12.md).

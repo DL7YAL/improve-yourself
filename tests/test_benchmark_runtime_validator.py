@@ -37,6 +37,19 @@ def test_complete_latest_segment_passes_and_quoted_echoes_are_ignored() -> None:
     assert result.errors == ()
 
 
+def test_vconsole_cs_script_events_are_canonical_and_console_echoes_are_ignored() -> None:
+    module = load_validator()
+    lines = []
+    for event in module.EXPECTED_EVENTS:
+        lines.append(f"[   cs_script ]: [IYBENCH] {event}")
+        lines.append(f'[ Console ]: "[IYBENCH] {event}"')
+    result = module.validate_latest("\n".join(lines) + "\n")
+    assert result.status == "PASS"
+    assert result.segment_count == 1
+    assert result.canonical_event_count == len(module.EXPECTED_EVENTS)
+    assert result.errors == ()
+
+
 def test_latest_partial_restart_cannot_hide_behind_older_complete_run() -> None:
     module = load_validator()
     complete = canonical_text(module)

@@ -75,8 +75,10 @@ assignment remains `PARTIAL` until the separate one-bot cheer gate succeeds.
 
 ## 4. Validate and hash on Windows
 
-Save or paste only the newest uninterrupted segment, beginning at its `READY`
-line, into a local UTF-8 text file. Then run:
+Save or paste the full VConsole output or only its newest uninterrupted
+segment, beginning at `READY`, into a local UTF-8 text file. The validator
+accepts the authoritative `cs_script` channel and ignores quoted `Console`
+duplicates. Then run:
 
 ```powershell
 py -3.13 .\tools\benchmark\validate_benchmark_runtime.py '<LOG_PATH>' --json
