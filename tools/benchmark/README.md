@@ -55,6 +55,18 @@ continues to report `measurement_status=unverified`; it does not manufacture a
 performance result. Preserve the emitted input SHA-256 and the JSON result in
 the handoff, but keep the raw local log outside Git.
 
+The controller also writes a compact save record only after measured-pass
+completion. Validate that independent Windows artifact with:
+
+```powershell
+py -3.13 .\tools\benchmark\validate_benchmark_save.py `
+  '<ADDON_ROOT>\cfg\workshop_saves\save_local.txt' `
+  --json
+```
+
+This can prove measured runtime completion even when VConsole text was copied
+too early. It cannot replace the full console-order or visual checks.
+
 After the five required captures exist, create a path-safe evidence manifest:
 
 ```powershell

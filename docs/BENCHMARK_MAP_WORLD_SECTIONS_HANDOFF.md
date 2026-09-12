@@ -150,6 +150,10 @@ zero-fixture total is 21 passed. The collector refuses partial runtime logs,
 missing or empty images, unsupported image extensions and duplicate capture
 hashes; it keeps every visual result `UNREVIEWED` until actual inspection.
 
+After adding the independent measured-completion save validator, the focused
+zero-fixture total is 25 passed. The actual Windows `save_local.txt` passes
+that validator with the hash and completion time recorded below.
+
 The earlier 17/17 focused and 457/457 full-suite results remain historical
 evidence from the original branch. They must not be represented as a fresh
 rerun on the continuation branch.
@@ -208,3 +212,11 @@ and third complete warmup but end immediately after measured Nuke starts. The
 validator selects the latest segment and reports `PARTIAL`, 21 of 39 required
 contract events, no `[IYBENCH] ERROR`, and no measured completion. This does
 not replace the still-required uninterrupted Windows run.
+
+The same Windows run later wrote the controller save record with
+`runtimeStatus=complete`, `measurementStatus=unverified` and
+`completedAt=135.1875`. Its 126-byte artifact SHA-256 is
+`2A336BBAB6572FFF66821A94181821DD9141EE63D1D209361CCA91D669D67A3B`,
+and its save contract validates as `PASS`. Measured runtime completion is
+therefore proven; only the full console event-order evidence remains missing.
+See [`BENCHMARK_RUNTIME_EVIDENCE_2026-09-12.md`](BENCHMARK_RUNTIME_EVIDENCE_2026-09-12.md).
