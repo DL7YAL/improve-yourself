@@ -162,6 +162,12 @@ After adding the independent measured-completion save validator, the focused
 zero-fixture total is 25 passed. The actual Windows `save_local.txt` passes
 that validator with the hash and completion time recorded below.
 
+After accepting the authoritative VConsole `cs_script` prefix, the focused
+total is 26 passed and the complete supplied capture validates 39/39. After
+adding the separate engine/world VConsole audit, the focused total is 29
+passed. That audit intentionally reports `NEEDS_WORK` while retaining runtime
+contract `PASS`.
+
 The earlier 17/17 focused and 457/457 full-suite results remain historical
 evidence from the original branch. They must not be represented as a fresh
 rerun on the continuation branch.

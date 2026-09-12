@@ -64,8 +64,9 @@ same capture contains the following material findings:
   bots are then present before `PASS_START`; the intended ten-bot audience is
   therefore not proven;
 - 78 client-command/convar attempts are rejected for a missing FCVAR flag.
-  This includes client-only attack, fade and VProf commands, so the markers do
-  not prove that those effects or profiling actions ran;
+  Of these, the companion audit identifies 47 rejected calls from the
+  controller's client-only command set, including attack and VProf commands,
+  so the markers do not prove that those actions ran;
 - the Vulkan pipeline cache cannot be written twice. This is a local Windows
   runtime warning and reinforces the honest unverified measurement status;
 - two missing camera-node and four missing overview messages are ancillary,
@@ -74,6 +75,11 @@ same capture contains the following material findings:
 There is no `[IYBENCH] ERROR` or VScript exception. These engine findings do
 not revoke the runtime-contract `PASS`; they prevent an overall assignment or
 world `PASS`.
+
+`audit_benchmark_vconsole.py` records this distinction mechanically. For the
+capture above it reports runtime contract `PASS`, overall `NEEDS_WORK`, nine
+bots at first warmup and the exact blocker/warning counts without storing the
+private raw-log path.
 
 ## Remaining acceptance gates
 

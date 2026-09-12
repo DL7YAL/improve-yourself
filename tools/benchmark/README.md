@@ -69,6 +69,18 @@ py -3.13 .\tools\benchmark\validate_benchmark_save.py `
 This can prove measured runtime completion even when VConsole text was copied
 too early. It cannot replace the full console-order or visual checks.
 
+For a full VConsole capture, run the stricter companion audit as well:
+
+```powershell
+py -3.13 .\tools\benchmark\audit_benchmark_vconsole.py '<LOG_PATH>'
+```
+
+It keeps the 39-event contract result separate from engine/world acceptance.
+It reports the bot population at the first warmup and known cubemap, nav,
+vertical-velocity, client-command and ancillary runtime findings. `CLEAR`
+requires a complete contract, ten observed bots and no blocker; `NEEDS_WORK`
+means the controller order passed but an engine/world blocker remains.
+
 After the five required captures exist, create a path-safe evidence manifest:
 
 ```powershell
