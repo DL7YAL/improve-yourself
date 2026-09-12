@@ -15,6 +15,10 @@ Original world-build branch: `codex/benchmark-map-world-sections-v1`
 
 Current continuation branch: `codex/benchmark-v1.2-runtime-evidence`
 
+Runtime authority: the Windows machine running Codex, CS2 Workshop Tools,
+Hammer and the normal CS2 viewer. Linux/WSL is used only for the SSH/Git
+connection; its checks are not Windows build or runtime evidence.
+
 The source-only checkpoint was later promoted to `main` by explicit owner
 authorization in PR #43 (`b56aa34`). On 2026-09-12 this continuation branch
 restored the matching provenance records, reproducible authoring helpers,
@@ -136,6 +140,11 @@ git diff --check: passed
 pytest / pip check: not rerun; this Linux workspace has no installed pytest or pip
 ```
 
+After adding the read-only runtime-log validator, the focused zero-fixture
+total is 18 passed. The validator correctly classifies the previously supplied
+restarted excerpt as `PARTIAL`: its latest segment contains 21 of 39 required
+contract events and ends before the first measured capture window.
+
 The earlier 17/17 focused and 457/457 full-suite results remain historical
 evidence from the original branch. They must not be represented as a fresh
 rerun on the continuation branch.
@@ -159,7 +168,9 @@ The next bearer starts here, in this order:
    match the two hashes recorded above; use the existing sync workflow in
    read-only mode where PowerShell is available.
 4. In the normal CS2 viewer, run the addon uninterrupted through
-   `PASS_END type=measured`. Preserve the full canonical `[IYBENCH]` output.
+   `PASS_END type=measured`. Preserve the full canonical `[IYBENCH]` output and
+   validate it on Windows with
+   `py -3.13 .\tools\benchmark\validate_benchmark_runtime.py <log> --json`.
 5. Capture the intro and markers 27, 38, 48 and 53, then repeat a clean restart
    for the audience-state comparison. Store local captures outside Git and
    commit only their SHA-256, time/marker correlation and review result.

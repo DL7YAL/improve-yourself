@@ -136,3 +136,11 @@ run and `pip check` were not possible in this Linux workspace because neither
 pytest nor pip is installed. No new Steam screenshot was found. The assignment
 therefore remains `PARTIAL`: visual marker evidence, a complete measured pass,
 and the deterministic cheering-animation/two-restart proof are still open.
+
+The owner clarified that Windows is the runtime authority for Codex, Hammer,
+Workshop Tools and CS2; Linux/WSL is only the SSH/Git connection. The added
+standard-library runtime validator is therefore intended to be executed from
+Windows after the next normal-viewer run. Its focused tests raise the local
+zero-fixture total to 18, and it correctly rejects the earlier supplied log as
+`PARTIAL` because the latest restart contains only 21 of 39 required contract
+events.

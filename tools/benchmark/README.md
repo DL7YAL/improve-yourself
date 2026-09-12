@@ -35,3 +35,22 @@ target is copied first to
 `backups/deploy-<yyyyMMdd-HHmmss>/<relative-path>` inside the addon and the
 backup hash is checked before overwrite. Every deployed file is checked again
 against the manifest. If the addon already matches, `-Deploy` is a no-op.
+
+## Validate a Windows CS2 runtime log
+
+After an uninterrupted normal-viewer run on the Windows benchmark machine,
+validate the CS2-generated log from a Windows terminal at the repository root:
+
+```powershell
+py -3.13 .\tools\benchmark\validate_benchmark_runtime.py `
+  'E:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\game\csgo\iy_benchmark_console.log' `
+  --json
+```
+
+The validator is read-only, uses only the Python standard library and checks
+the latest `READY` segment. It ignores quoted duplicate console echoes, but it
+fails on a partial/restarted latest run, duplicate or reordered contract
+events, missing captures/reports, and every `[IYBENCH] ERROR`. A runtime `PASS`
+continues to report `measurement_status=unverified`; it does not manufacture a
+performance result. Preserve the emitted input SHA-256 and the JSON result in
+the handoff, but keep the raw local log outside Git.
