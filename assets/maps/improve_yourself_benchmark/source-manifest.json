@@ -4,7 +4,7 @@
   "files": [
     {
       "path": "maps/improve_yourself_benchmark.vmap",
-      "sha256": "74AE13F43EDA0FC213330A30D9714D16B2897710C5409378A9D4BF1294E4BEB6"
+      "sha256": "B80C9111043DDB68ADF4CE5CB0C157050EE3AA470AA99F8BA6FCCCF5A2062AEF"
     },
     {
       "path": "scripts/benchmark_controller.js",

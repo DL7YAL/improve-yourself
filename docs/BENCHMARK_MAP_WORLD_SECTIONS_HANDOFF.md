@@ -105,9 +105,9 @@ assignment. Real player bots expose no stable animation/gesture method in the
 installed `point_script.d.ts`; the cheering motion therefore remains in that
 later assignment while this branch fixes their map spawn positions and facing.
 
-## Current acceptance status — 2026-09-12
+## Pre-repair acceptance status — 2026-09-12
 
-Status: **PARTIAL**
+Status at the locked pre-repair source hash: **PARTIAL**
 
 - Repository and installed addon sources match byte-for-byte at VMAP SHA-256
   `74AE13F43EDA0FC213330A30D9714D16B2897710C5409378A9D4BF1294E4BEB6`
@@ -219,7 +219,7 @@ The next bearer starts here, in this order:
 Azure, Foundry and cloud execution are outside this assignment and must remain
 untouched.
 
-## Latest supplied Windows runtime capture
+## Prior supplied Windows runtime capture
 
 Input SHA-256:
 `9D5295BC4441C461D1BF74B4F487111479026086C030699CEE28CD992F57FABF`
@@ -237,3 +237,89 @@ and its save contract validates as `PASS`. Measured runtime completion and the
 full console event order are therefore both proven. The engine and visual
 findings listed above remain open.
 See [`BENCHMARK_RUNTIME_EVIDENCE_2026-09-12.md`](BENCHMARK_RUNTIME_EVIDENCE_2026-09-12.md).
+
+## Current post-compile checkpoint — 2026-09-12
+
+Status: **PARTIAL / NEEDS_WORK**
+
+The owner added a third, cinema-local
+`env_combined_light_probe_volume` in Hammer at origin `-4000 -4000 176`, with
+local bounds `-640 -480 -240` to `640 480 272`, client-only enabled and normal
+priority. The saved and promoted repository/addon source hashes are:
+
+```text
+VMAP:      B80C9111043DDB68ADF4CE5CB0C157050EE3AA470AA99F8BA6FCCCF5A2062AEF
+Controller: 0038BAACB132A907654E03FE3B42B27BF198D5D1A23F4F9F0D8C87B5DF16723E
+```
+
+A target-limited pre-edit backup retains the prior VMAP hash
+`74AE13F43EDA0FC213330A30D9714D16B2897710C5409378A9D4BF1294E4BEB6`;
+a second target-limited pre-compile backup matches the new VMAP hash. Neither
+backup is committed.
+
+The owner ran one Hammer Full Compile with world, standard-quality 1024
+lightmaps, physics, visibility, nav and Steam Audio enabled, followed by the
+normal viewer and `buildcubemaps`:
+
+```text
+Build end: 2026-09-12 09:39:27 Europe/Berlin
+Result: 58 compiled, 0 failed, 1 skipped, about 40 seconds
+VPK SHA-256: D15D2D879DD317B4276461AD7346280BBA790C18C71FB3F0518EF5ADB2426DEC
+```
+
+The rebuilt VPK index contains:
+
+```text
+maps/improve_yourself_benchmark.nav
+maps/improve_yourself_benchmark.vmap_c
+maps/improve_yourself_benchmark/cubemaps/env_cubemap_array.vtex_c
+```
+
+The automatic normal-viewer run completed at controller time `135.203125`.
+Its save record and VConsole hashes are:
+
+```text
+save_local.txt: C691BB7F52026B0E6AE230D44F70C1E1C9D1412C21D1CC2BF8CCCD96B2220DF9
+VConsole:       B97C260A3673A17EC78C3DB5ED41DB23E0C3E0CEA6291366A03C15BCC4DF18AC
+```
+
+Both the save validator and runtime validator pass. The retained VConsole
+segment has one canonical `READY`, 39/39 ordered events and no
+`[IYBENCH] ERROR`. Its engine result remains `NEEDS_WORK`:
+
+- the missing `env_cubemap_array.vtex_c` blocker is resolved;
+- `env_cubemap_fog` remains unresolved 49,247 times;
+- four nav-generation mismatch warnings remain after `Build nav`;
+- nine bots, not the intended ten, are present at first warmup;
+- 33 vertical-velocity failures affect all nine bots and the local player;
+- 78 missing-FCVAR rejections remain, including the known 47-call client-only
+  controller subset.
+
+The VConsole export says older buffered messages were discarded at 8 MiB, but
+the final post-cubemap map load, bot creation, complete benchmark segment and
+measured `PASS_END` are retained. The current audit helper does not associate a
+plain `[IYBENCH] PASS_START` line with its bot boundary; a read-only equivalent
+count over that retained boundary proves the nine named bots. Do not interpret
+the helper's `null` field as proof that no bots existed.
+
+`Build nav` alone did not refresh the embedded generation metadata. The next
+new-evidence attempt is narrowly defined: in Hammer, leave
+`Use Custom Generation Params` disabled, invoke `Nav Preview` (internal
+`GenerateNavPolyclip`) once, save and hash the resulting VMAP, then run at most
+one new Full Compile. Stop if no new dirty state, generated preview or other
+observable evidence results. Five marker-correlated visual captures and a
+second clean cinema restart remain outstanding. `measurement_status` remains
+`unverified`.
+
+The seven focused benchmark modules were executed through their zero-fixture
+test functions under the available Linux Python 3.14: **29 passed, 0 failed**.
+Full repository pytest and `pip check` were not executable because this Linux
+SSH environment has neither pytest nor pip, and the Windows SSH key was not
+accepted for non-interactive execution. This is an environment block, not a
+test failure. Supplemental `compileall` and `git diff --check` passed. The
+earlier 457-test full-suite result remains historical and must not be relabeled
+as a fresh run.
+
+See
+[`BENCHMARK_MAP_WORLD_SECTIONS_RUNTIME_REVIEW.md`](BENCHMARK_MAP_WORLD_SECTIONS_RUNTIME_REVIEW.md)
+for the artifact-bound review.

@@ -1,6 +1,6 @@
 # Benchmark Candidate 2 — runtime repair plan
 
-Status: **READY FOR WINDOWS REPAIR — DO NOT CLAIM PASS**
+Status: **PARTIAL POST-COMPILE — NAV/FLOOR/FOG REPAIR STILL REQUIRED**
 
 This plan follows the world-build assignment after the complete Windows
 VConsole capture. Windows Hammer/CS2 remains the runtime authority. Linux/WSL
@@ -18,6 +18,44 @@ Azure is excluded.
   `74AE13F43EDA0FC213330A30D9714D16B2897710C5409378A9D4BF1294E4BEB6`;
 - controller SHA-256:
   `0038BAACB132A907654E03FE3B42B27BF198D5D1A23F4F9F0D8C87B5DF16723E`.
+
+## 2026-09-12 post-compile checkpoint
+
+The owner added and visually checked the bounded cinema
+`env_combined_light_probe_volume` in Hammer. The saved source is now versioned
+at VMAP SHA-256
+`B80C9111043DDB68ADF4CE5CB0C157050EE3AA470AA99F8BA6FCCCF5A2062AEF`.
+The controller remains byte-identical at the locked hash above.
+
+Hammer Full Compile completed once with world, standard-quality 1024
+lightmaps, physics, visibility, navigation and Steam Audio enabled. The normal
+viewer then ran `buildcubemaps`. Results:
+
+```text
+58 compiled, 0 failed, 1 skipped
+VPK SHA-256: D15D2D879DD317B4276461AD7346280BBA790C18C71FB3F0518EF5ADB2426DEC
+VConsole SHA-256: B97C260A3673A17EC78C3DB5ED41DB23E0C3E0CEA6291366A03C15BCC4DF18AC
+save_local.txt SHA-256: C691BB7F52026B0E6AE230D44F70C1E1C9D1412C21D1CC2BF8CCCD96B2220DF9
+```
+
+The VPK directory contains the rebuilt `.nav`, `.vmap_c` and
+`cubemaps/env_cubemap_array.vtex_c`. The formerly missing cubemap-array resource
+is therefore repaired. Runtime contract and save-contract validation both
+pass; the VConsole segment contains 39/39 ordered events and no
+`[IYBENCH] ERROR`.
+
+Engine acceptance remains `NEEDS_WORK`: 49,247 unresolved cubemap-fog
+messages, four nav-generation mismatch warnings, 33 vertical-velocity
+failures, nine rather than ten bots at first warmup, and 78 missing-FCVAR
+rejections remain. The strict audit identifies 47 of those rejections in the
+controller's client-only command set. No performance measurement is verified.
+
+The compile proves that `Build nav` packages a nav resource, but it did not
+clear the generation-parameter warnings. The next bounded hypothesis is to run
+Hammer's `Nav Preview` / internal `GenerateNavPolyclip` exactly once while
+`Use Custom Generation Params` remains disabled, save and hash the VMAP, then
+perform at most one newly justified Full Compile. Do not repeat the current
+compile unchanged.
 
 Create a target-limited backup before changing either source. Do not overwrite
 the authoritative addon manually in parallel with the sync workflow.
