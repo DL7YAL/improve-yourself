@@ -145,6 +145,11 @@ total is 18 passed. The validator correctly classifies the previously supplied
 restarted excerpt as `PARTIAL`: its latest segment contains 21 of 39 required
 contract events and ends before the first measured capture window.
 
+After adding the path-safe capture evidence collector, the focused
+zero-fixture total is 21 passed. The collector refuses partial runtime logs,
+missing or empty images, unsupported image extensions and duplicate capture
+hashes; it keeps every visual result `UNREVIEWED` until actual inspection.
+
 The earlier 17/17 focused and 457/457 full-suite results remain historical
 evidence from the original branch. They must not be represented as a fresh
 rerun on the continuation branch.
