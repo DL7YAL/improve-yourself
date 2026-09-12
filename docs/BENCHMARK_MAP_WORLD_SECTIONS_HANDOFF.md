@@ -140,13 +140,15 @@ The earlier 17/17 focused and 457/457 full-suite results remain historical
 evidence from the original branch. They must not be represented as a fresh
 rerun on the continuation branch.
 
-## Usage-limit checkpoint — 37% remaining
+## Usage-limit checkpoint — owner-reported display at 37%
 
 This checkpoint was requested by the owner so that work can continue without
-private chat context. Commit and push every new durable evidence slice before
-the remaining usage limit falls below 15%; do not wait for the final few
-percent. Never commit screenshots, logs, compiled VPKs, credentials or private
-absolute paths.
+private chat context. The owner did not specify whether the displayed 37%
+means consumed or remaining, so this handoff does not assume either. Commit
+and push every new durable evidence slice; if more than 15% remaining capacity
+cannot be confirmed, checkpoint immediately and stop before starting another
+large slice. Never commit screenshots, logs, compiled VPKs, credentials or
+private absolute paths.
 
 The next bearer starts here, in this order:
 
