@@ -58,14 +58,34 @@ pip check: No broken requirements found
 git diff --check: passed
 ```
 
-## Open runtime gate
+## Runtime review completed on 2026-09-12
 
-Fresh marker screenshots and a full post-build controller run are still
-required before visual approval. The direct
-`cs2.exe` validation launch used during this session accepted `-addon
-improve_yourself_benchmark` on the command line but reported an empty active
-addon set and rejected the map name. This is a launcher/mount problem, not a map
-compile failure. Do not change camera coordinates to work around it.
+The direct `cs2.exe` launch still reports an empty active addon set. The
+reliable validation path is:
+
+1. open `csgocfg.exe`;
+2. select the default `improve_yourself_benchmark` project;
+3. choose `Edit Addon Map`;
+4. press F9 in Hammer;
+5. choose `Run ( Skip Build )` for the already compiled VPK.
+
+This path ran the map and the byte-identical controller. One full run reached
+`[IYBENCH] STATUS phase=complete pass=measured event=60`; no matching
+`[IYBENCH] ERROR` line was found in the reviewed VConsole log. Measurement
+status remains unverified.
+
+Free post-compile inspection was also completed for the cinema and all four
+required marker poses. The evidence and per-area findings are in
+`docs/BENCHMARK_MAP_WORLD_SECTIONS_RUNTIME_REVIEW.md`.
+
+Overall visual result is **PARTIAL**. Every area is `WORLD NEEDS WORK`:
+
+- cinema text is mirrored and too small, the URL is unreadable, the display is
+  grey, seat/bot placement clips and no cheering pose is active;
+- Ancient Water does not read as water or reflection;
+- Ancient Red Room does not read red;
+- Inferno stairs exist but remain overexposed and externally open;
+- Inferno Apps lacks a recognizable layered apartment interior.
 
 Continue from the compiled VPK at:
 
@@ -73,19 +93,24 @@ Continue from the compiled VPK at:
 E:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\game\csgo_addons\improve_yourself_benchmark\maps\improve_yourself_benchmark.vpk
 ```
 
-Launch the addon through the CS2 Workshop Tools project selector so the active
-host state shows `addons(improve_yourself_benchmark)`. Then capture:
+Continue by correcting `tools/benchmark/upgrade_benchmark_world_sections.py`,
+regenerating the binary VMAP from the candidate.2 keyvalues2 source, deploying
+through `Sync-BenchmarkAddon.ps1`, forcing a full Resource Compiler build and
+repeating the same five free-inspection captures. Preserve candidate.2 camera
+data and controller hash throughout.
 
-1. the three-second `boot_delay` view for the cinema screen, player position and
-   standing bots;
-2. measured marker 27 (`ancient_b/water_reflection`);
-3. measured marker 38 (`ancient_b/red_room`);
-4. measured marker 48 (`inferno_apps_a/stairs`);
-5. measured marker 53 (`inferno_apps_a/apps_details`).
+The first correction pass should address these concrete faults:
 
-The controller provides `iy_benchmark_status` and `iy_benchmark_finish_pass` for
-correlation and warmup skipping. Preserve candidate.2 until all world images
-are reviewed. After world approval, create a separate camera/intro-animation
-assignment. Real player bots expose no stable animation/gesture method in the
-installed `point_script.d.ts`; the cheering motion therefore remains in that
-later assignment while this branch fixes their map spawn positions and facing.
+1. cinema world text facing and scale, dark screen separation, seat/back sizes
+   and bot stand clearances;
+2. a continuous visible Ancient water plane and a materially red enclosed Red
+   Room;
+3. closed Inferno stair/Apps volumes with visible warm facades and props;
+4. one-bot cheering prototype before changing audience runtime logic.
+
+Real player bots expose no stable animation/gesture method in the installed
+`point_script.d.ts`. Do not claim the cheering criterion until an in-engine
+prototype demonstrates a stable method. The team-spawn layout also does not yet
+prove a deterministic rear user viewpoint distinct from bot audience slots;
+resolve that in the later intro/controller assignment without changing the
+current 64-second camera route in this branch.
