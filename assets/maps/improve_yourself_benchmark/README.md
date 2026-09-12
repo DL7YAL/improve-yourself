@@ -53,6 +53,15 @@ The binding rights, provenance, branding, packaging, and Nuke authoring boundary
 is defined in [`ASSET_RIGHTS.md`](ASSET_RIGHTS.md). It applies before introducing
 or changing any visually relevant Workshop asset reference.
 
+The complete approved world-build assignment is versioned at
+[`AUFTRAG_BENCHMARK_MAP_WELTENBAU_ANCIENT_INFERNO.md`](../../../AUFTRAG_BENCHMARK_MAP_WELTENBAU_ANCIENT_INFERNO.md).
+Runtime-reference evidence is recorded in
+[`NUKE_OUTSIDE_ASSET_PROVENANCE.json`](NUKE_OUTSIDE_ASSET_PROVENANCE.json) and
+[`TRANSITION_WORLDS_ASSET_PROVENANCE.json`](TRANSITION_WORLDS_ASSET_PROVENANCE.json).
+The reproducible transformation helpers remain under `tools/benchmark/`, and
+the current acceptance state is documented in
+[`BENCHMARK_MAP_WORLD_SECTIONS_HANDOFF.md`](../../../docs/BENCHMARK_MAP_WORLD_SECTIONS_HANDOFF.md).
+
 Use `tools/benchmark/Sync-BenchmarkAddon.ps1` to verify an installed Workshop
 Tools addon against `source-manifest.json`. Its default mode is read-only; the
 explicit `-Deploy` mode creates verified backups before replacing only missing

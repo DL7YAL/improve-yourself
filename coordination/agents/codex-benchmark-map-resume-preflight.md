@@ -114,3 +114,25 @@ tests and handoff remain only on that remote branch; they were not integrated
 by the later source-only V1.2 promotion to `main`. Do not merge the stale branch
 wholesale over current `main`. Any integration must preserve current main-only
 files and review the branch's supporting files as a bounded follow-up.
+
+## Bounded continuity restoration — 2026-09-12
+
+The owner then supplied the complete detailed German assignment. The exact
+filename is now versioned as
+`AUFTRAG_BENCHMARK_MAP_WELTENBAU_ANCIENT_INFERNO.md`, with its obsolete private
+absolute brand-reference path intentionally removed. The matching provenance
+records, reproducible authoring helpers, world-section handoff and focused
+tests were selectively restored from the proven source commits; the stale
+branch was not merged and no Azure-owned file was changed.
+
+Read-only hash comparison still shows exact repository/addon source equality:
+
+- VMAP: `74AE13F43EDA0FC213330A30D9714D16B2897710C5409378A9D4BF1294E4BEB6`;
+- controller: `0038BAACB132A907654E03FE3B42B27BF198D5D1A23F4F9F0D8C87B5DF16723E`.
+
+Twelve focused zero-fixture assertions passed under the available system
+Python, as did `compileall` and `git diff --check`. A fresh pytest/full-suite
+run and `pip check` were not possible in this Linux workspace because neither
+pytest nor pip is installed. No new Steam screenshot was found. The assignment
+therefore remains `PARTIAL`: visual marker evidence, a complete measured pass,
+and the deterministic cheering-animation/two-restart proof are still open.

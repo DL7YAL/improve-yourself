@@ -1,0 +1,238 @@
+{
+  "schema": "iy.cs2-workshop-asset-provenance/v1",
+  "scenes": [
+    "benchmark_intro",
+    "ancient_b",
+    "inferno_apps_a"
+  ],
+  "cs2_build_id": "25000182",
+  "workshop_tools_build_evidence": "vrad3 pc64 build 2026-08-24",
+  "verification": {
+    "method": "Installed CS2 pak01_dir.vpk directory-index lookup only",
+    "runtime_reference_only": true,
+    "vpk_payload_extracted": false,
+    "repository_asset_copy_created": false
+  },
+  "assets": [
+    {
+      "scene": "ancient_b",
+      "asset_path": "materials/de_ancient/hr_ancient_ground_rock_01_base.vmat",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Ancient B approach ground",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "ancient_b",
+      "asset_path": "materials/de_ancient/hr_ancient_ground_rock_01_wet.vmat",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Ancient shallow-water surface",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "ancient_b",
+      "asset_path": "materials/de_ancient/hr_ancient_wall_stone_01_base.vmat",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Ancient corridor stone walls",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "ancient_b",
+      "asset_path": "materials/de_ancient/hr_ancient_wall_stone_04_base.vmat",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Ancient B end wall",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "ancient_b",
+      "asset_path": "materials/de_ancient/hr_ancient_ceiling_wood_01_base.vmat",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Ancient timber ceiling",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "ancient_b",
+      "asset_path": "materials/de_ancient/hr_ancient_wall_plaster_01_red_wet.vmat",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Ancient Red Room surfaces",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "inferno_apps_a",
+      "asset_path": "materials/de_inferno/ground/inferno_stone_floor_01.vmat",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Inferno stairs and floor",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "inferno_apps_a",
+      "asset_path": "materials/de_inferno/plaster/inferno_plaster_01_orange.vmat",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Inferno orange plaster and ceiling",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "inferno_apps_a",
+      "asset_path": "materials/de_inferno/plaster/inferno_plaster_01_yellow.vmat",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Inferno yellow plaster",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "inferno_apps_a",
+      "asset_path": "materials/de_inferno/brick/inferno_brick_01.vmat",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Inferno end-wall brick",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "ancient_b",
+      "asset_path": "models/props/de_ancient/ancient_crates/ancient_crate_assembly_100x100_01.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Ancient B-site crate workload",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "ancient_b",
+      "asset_path": "models/props/de_ancient/ancient_lighting/ancient_lighting_candle_cluster_01_lit.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Ancient Red Room lighting detail",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "inferno_apps_a",
+      "asset_path": "models/props/de_inferno/hr_i/arch_a/arch_a.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Inferno Apps arch landmark",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "inferno_apps_a",
+      "asset_path": "models/props/de_inferno/hr_i/door_a/door_a.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Inferno Apps door detail",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "inferno_apps_a",
+      "asset_path": "models/props/de_inferno/hr_i/inferno_stair_railing/inferno_stair_railing.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Inferno stair railing workload",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "inferno_apps_a",
+      "asset_path": "models/props/de_inferno/hr_i/inferno_balcony/inferno_balcony_railing01.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Inferno balcony silhouette",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "inferno_apps_a",
+      "asset_path": "models/props/de_inferno/hr_i/barrel_a/barrel_a_full.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Inferno environment barrel",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "inferno_apps_a",
+      "asset_path": "models/props/de_inferno/hr_i/inferno_wine_crate/inferno_wine_crate_01.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Inferno wine-crate detail",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "inferno_apps_a",
+      "asset_path": "models/props/de_inferno/hr_i/inferno_planter/inferno_planter.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Inferno planter detail",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "inferno_apps_a",
+      "asset_path": "models/props/de_inferno/hr_i/ornate_lamp/ornate_lamp.vmdl",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Inferno wall-light detail",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "benchmark_intro",
+      "asset_path": "materials/dev/dev_measuregeneric01.vmat",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Hammer-serialized neutral intro-room floor and enclosure",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    },
+    {
+      "scene": "benchmark_intro",
+      "asset_path": "materials/dev/reflectivity_30.vmat",
+      "rights_class": "VALVE_RUNTIME_REFERENCE",
+      "source": "Installed Counter-Strike 2 runtime",
+      "purpose": "Separated intro-room presentation strip",
+      "distribution": "CS2_WORKSHOP_RUNTIME",
+      "evidence": "Compiled _c resource path present in installed CS2 build 25000182",
+      "runtime_reference_only": true
+    }
+  ]
+}
