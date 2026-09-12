@@ -54,3 +54,22 @@ events, missing captures/reports, and every `[IYBENCH] ERROR`. A runtime `PASS`
 continues to report `measurement_status=unverified`; it does not manufacture a
 performance result. Preserve the emitted input SHA-256 and the JSON result in
 the handoff, but keep the raw local log outside Git.
+
+After the five required captures exist, create a path-safe evidence manifest:
+
+```powershell
+py -3.13 .\tools\benchmark\collect_benchmark_evidence.py `
+  --log '<LOG_PATH>' `
+  --intro '<CAPTURE_DIR>\intro.png' `
+  --ancient-water '<CAPTURE_DIR>\ancient-water-27.png' `
+  --ancient-red-room '<CAPTURE_DIR>\ancient-red-room-38.png' `
+  --inferno-stairs '<CAPTURE_DIR>\inferno-stairs-48.png' `
+  --inferno-apps '<CAPTURE_DIR>\inferno-apps-53.png' `
+  --output '<EVIDENCE_DIR>\benchmark-world-evidence.json'
+```
+
+The collector first requires a runtime `PASS`, then verifies all five files
+are present, non-empty, supported image types and have distinct hashes. Its
+manifest stores only filenames, hashes, sizes and UTC timestamps—never local
+absolute input paths. Every visual result remains `UNREVIEWED` until the images
+are actually inspected; file hashes alone cannot create a `WORLD PASS`.

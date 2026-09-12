@@ -173,7 +173,10 @@ The next bearer starts here, in this order:
    `py -3.13 .\tools\benchmark\validate_benchmark_runtime.py <log> --json`.
 5. Capture the intro and markers 27, 38, 48 and 53, then repeat a clean restart
    for the audience-state comparison. Store local captures outside Git and
-   commit only their SHA-256, time/marker correlation and review result.
+   create their path-safe hash manifest with
+   `py -3.13 .\tools\benchmark\collect_benchmark_evidence.py ...`. Store local
+   captures outside Git and commit only their SHA-256, time/marker correlation
+   and reviewed result.
 6. Keep the assignment `PARTIAL` until every visual gate passes and a stable,
    deterministic cheering implementation is both available and proven. The
    installed `point_script.d.ts` exposes player lookup, teleport and model
