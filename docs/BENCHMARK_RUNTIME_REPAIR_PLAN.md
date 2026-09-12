@@ -42,6 +42,19 @@ In Hammer on the disposable source copy:
    a fresh viewer run has neither `cubemap_resource_missing` nor
    `cubemap_fog_unresolved`.
 
+The current authored cinema envelope supports this initial Hammer transform:
+
+```text
+origin:   -4000 -4000 176
+box_mins: -640 -480 -240
+box_maxs:  640  480  272
+```
+
+Those local bounds cover world space `x=-4640..-3360`,
+`y=-4480..-3520`, `z=-64..448`, including the authored room shell. Confirm
+the entity gizmo encloses the complete cinema before compiling; do not apply
+these bounds to either existing probe.
+
 Do not approve Ancient water/reflection until the fresh visual capture is
 reviewed after this repair.
 
