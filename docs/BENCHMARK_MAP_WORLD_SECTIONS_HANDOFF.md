@@ -139,3 +139,35 @@ pytest / pip check: not rerun; this Linux workspace has no installed pytest or p
 The earlier 17/17 focused and 457/457 full-suite results remain historical
 evidence from the original branch. They must not be represented as a fresh
 rerun on the continuation branch.
+
+## Usage-limit checkpoint — 37% remaining
+
+This checkpoint was requested by the owner so that work can continue without
+private chat context. Commit and push every new durable evidence slice before
+the remaining usage limit falls below 15%; do not wait for the final few
+percent. Never commit screenshots, logs, compiled VPKs, credentials or private
+absolute paths.
+
+The next bearer starts here, in this order:
+
+1. Fetch `origin/codex/benchmark-v1.2-runtime-evidence` and verify a clean
+   worktree before changing anything.
+2. Read the authoritative root work order and this handoff completely.
+3. Confirm the repository and installed-addon VMAP/controller hashes still
+   match the two hashes recorded above; use the existing sync workflow in
+   read-only mode where PowerShell is available.
+4. In the normal CS2 viewer, run the addon uninterrupted through
+   `PASS_END type=measured`. Preserve the full canonical `[IYBENCH]` output.
+5. Capture the intro and markers 27, 38, 48 and 53, then repeat a clean restart
+   for the audience-state comparison. Store local captures outside Git and
+   commit only their SHA-256, time/marker correlation and review result.
+6. Keep the assignment `PARTIAL` until every visual gate passes and a stable,
+   deterministic cheering implementation is both available and proven. The
+   installed `point_script.d.ts` exposes player lookup, teleport and model
+   operations but no documented player animation, sequence, activity or
+   gesture method; do not invent an unsupported API.
+7. Before any source change, preserve the locked controller/camera/timing
+   hashes and follow READ -> SNAPSHOT -> APPLY -> VERIFY -> RESTORE.
+
+Azure, Foundry and cloud execution are outside this assignment and must remain
+untouched.
