@@ -181,9 +181,23 @@ The next bearer starts here, in this order:
    deterministic cheering implementation is both available and proven. The
    installed `point_script.d.ts` exposes player lookup, teleport and model
    operations but no documented player animation, sequence, activity or
-   gesture method; do not invent an unsupported API.
+   gesture method; do not invent an unsupported API. Follow the isolated
+   one-bot gate in
+   [`BENCHMARK_BOT_CHEER_PROTOTYPE.md`](BENCHMARK_BOT_CHEER_PROTOTYPE.md).
 7. Before any source change, preserve the locked controller/camera/timing
    hashes and follow READ -> SNAPSHOT -> APPLY -> VERIFY -> RESTORE.
 
 Azure, Foundry and cloud execution are outside this assignment and must remain
 untouched.
+
+## Latest supplied Windows runtime excerpt
+
+Input SHA-256:
+`619FEFBFC04A5C83CA70A4951ABFE896F9D9E4D7EFCE1F3366D1D217B9F90A7E`
+
+The 139-line excerpt contains three canonical `READY` segments. The first
+reaches measured Ancient water at marker 27 and is then restarted. The second
+and third complete warmup but end immediately after measured Nuke starts. The
+validator selects the latest segment and reports `PARTIAL`, 21 of 39 required
+contract events, no `[IYBENCH] ERROR`, and no measured completion. This does
+not replace the still-required uninterrupted Windows run.
