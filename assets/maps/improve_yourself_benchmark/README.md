@@ -24,8 +24,13 @@ a source checkpoint, not runtime approval.
 
 | Source | SHA-256 |
 | --- | --- |
-| `maps/improve_yourself_benchmark.vmap` | `74AE13F43EDA0FC213330A30D9714D16B2897710C5409378A9D4BF1294E4BEB6` |
+| `maps/improve_yourself_benchmark.vmap` | `B80C9111043DDB68ADF4CE5CB0C157050EE3AA470AA99F8BA6FCCCF5A2062AEF` |
 | `scripts/benchmark_controller.js` | `0038BAACB132A907654E03FE3B42B27BF198D5D1A23F4F9F0D8C87B5DF16723E` |
+
+The historical pre-repair/pre-probe VMAP hash was
+`74AE13F43EDA0FC213330A30D9714D16B2897710C5409378A9D4BF1294E4BEB6`.
+It does not describe the current versioned VMAP or the post-compile
+checkpoint.
 
 The earlier map baseline hash
 `A37273C6E27AB8357068DC3FF064888EF82C2C11C84C668B85CB1FE910036572`
