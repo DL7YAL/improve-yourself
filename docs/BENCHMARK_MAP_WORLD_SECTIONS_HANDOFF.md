@@ -138,6 +138,8 @@ build and nav export, then isolate the bot floor/count and Workshop-safe
 client-effect problems without changing camera coordinates, timings, scene
 order or Azure configuration. Only after a fresh Full Compile succeeds should
 the five visual captures and second audience restart be recorded.
+The evidence-bound sequence is recorded in
+[`BENCHMARK_RUNTIME_REPAIR_PLAN.md`](BENCHMARK_RUNTIME_REPAIR_PLAN.md).
 
 Current repository checks on the continuation branch:
 

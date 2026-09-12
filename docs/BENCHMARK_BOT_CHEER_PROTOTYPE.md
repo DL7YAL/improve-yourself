@@ -8,14 +8,20 @@ this in-engine gate.
 
 ## Established state
 
-- Candidate 2 creates five T and five CT bots, stops their AI and stages them
-  deterministically for each measured scene.
+- Candidate 2 requests five T and five CT bots. The complete captured run uses
+  `numSlots=10` and has only nine bots at first warmup because the local human
+  occupies the remaining slot. Ten active bots and the intended 5/5 split are
+  therefore not yet proven.
 - During the three-second boot delay, those ten bots use fixed cinema spawn
   positions facing the screen. The VMAP contains 32 fixed team spawn slots,
   but no additional active bots are created for presentation.
-- The installed `point_script.d.ts` exposes player lookup, teleport, health,
+- The addon-local `point_script.d.ts` exposes player lookup, teleport, health,
   armor, weapons and inherited model operations for `CSPlayerPawn`. It exposes
   no player animation, activity, sequence or gesture method.
+- The current editor-supplied definition additionally exposes `CSMoveType`,
+  `GetMoveType()` and `SetMoveType()`. This can support a disposable fixed-pose
+  movement probe, but it still exposes no live-player cheering method and does
+  not by itself prove that bot AI is inactive.
 - Installed Hammer FGD inputs such as `SetAnimationLooping` belong to dynamic
   props, not to `CSPlayerPawn`.
 - A read-only lookup in the installed `pak01_dir.vpk` directory index confirms
