@@ -75,6 +75,9 @@ def run(args):
         print(lock.read_text() if lock.exists() else 'NO_ACTIVE_SESSION')
         print(git(repo, 'status', '--short', '--branch'))
         return
+    if args.action == 'auto-checkpoint' and not lock.exists():
+        print('IDLE: no active session')
+        return
     # Short-lived exclusive guard prevents simultaneous bridge invocations.
     guard = common / 'work-bridge-operation.lock'
     fd = os.open(guard, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
@@ -107,13 +110,15 @@ def run(args):
             print('READY; keep session ID. Reserve final 20% for verification and handoff.')
         else:
             session = json.loads(lock.read_text())
+            if args.action == 'auto-checkpoint':
+                args.session = session['id']
             if args.session != session['id'] or str(repo) != session['repo']:
                 raise RuntimeError('Session ID or checkout mismatch')
             if git(repo, 'symbolic-ref', '--short', 'HEAD') != session['branch']:
                 raise RuntimeError('Branch changed during session')
             snap = snapshot(repo, Path(session['backup_root']) / session['id'] / uuid.uuid4().hex)
             print('LOCAL_BACKUP_VERIFIED', snap, flush=True)
-            if args.action == 'checkpoint':
+            if args.action in ('checkpoint', 'auto-checkpoint'):
                 return
             if git(repo, 'remote', 'get-url', '--push', 'origin') != session['remote']:
                 raise RuntimeError('Push destination changed; review before publishing')
@@ -141,7 +146,7 @@ def run(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['start', 'status', 'checkpoint', 'finish'])
+    parser.add_argument('action', choices=['start', 'status', 'checkpoint', 'auto-checkpoint', 'finish'])
     parser.add_argument('--repo', default='.')
     for option in ['backup-root', 'owner', 'session', 'reviewed-head', 'validation', 'handoff']:
         parser.add_argument('--' + option)

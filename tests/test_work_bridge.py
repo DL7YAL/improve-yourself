@@ -90,6 +90,23 @@ class BridgeTests(unittest.TestCase):
         self.start()
         self.assertNotEqual(self.bridge('checkpoint', '--session', 'wrong').returncode, 0)
 
+    def test_scheduled_idle_and_active_backup(self):
+        result = self.bridge('auto-checkpoint')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('IDLE', result.stdout)
+        self.assertFalse(self.backup.exists())
+        sid = self.start()
+        (self.repo / 'data.txt').write_text('unsynced work')
+        result = self.bridge('auto-checkpoint')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        snapshots = list((self.backup / sid).glob('*/working.zip'))
+        self.assertEqual(len(snapshots), 2)
+        contents = []
+        for path in snapshots:
+            with zipfile.ZipFile(path) as archive:
+                contents.append(archive.read('data.txt'))
+        self.assertIn(b'unsynced work', contents)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -32,7 +32,8 @@ python .\tools\dev\work_bridge.py status
 python .\tools\dev\work_bridge.py checkpoint --session <SESSION-ID>
 ```
 
-Alternativ leitet `Work-Bridge.ps1` dieselben Argumente an Python weiter.
+Alternativ: `Work-Bridge.ps1 -Action status -Repo <Checkout> -PythonExe <python.exe>`.
+Für Start zusätzlich `-Owner` und `-BackupRoot`, für Übergabe `-Session` verwenden.
 Beide Zugänge verwenden dieselbe Installation, Checkout-Adresse und dieselbe
 Sitzungs-ID nur nach ausdrücklicher Übergabe. Die ID ist ein Koordinationsmerkmal,
 keine Authentifizierung. Eine offene Sitzung verhindert einen zweiten Start.
@@ -85,6 +86,35 @@ Ein Operator kann bei nachweislich beendeter Arbeit die Sperrdatei im Git-Verzei
 unter einem Archivnamen umbenennen. Backups und Verlauf bleiben erhalten.
 
 ## Einführungsstand
+
+Windows-Kerntest des Commits `1717316`: vom Benutzer am 2026-09-13 ausgeführt,
+Git 2.55.0.windows.5 und Python 3.13.15, alle drei Integrationstests PASS.
+Die JSON-Ergebnisdatei wurde lokal zurückgelesen. Dies prüft weder Windows-
+Aufgabenplanung noch GitHub-SSH. Der erweiterte Linux-Test umfasst vier Tests.
+
+### 30-Minuten-Sicherung
+
+`Install-WorkBridgeSchedule.ps1 -Repo <gemeinsamer Checkout> -PythonExe <python.exe>`
+registriert eine Windows-Aufgabe für den angemeldeten Benutzer. Sie ruft alle
+30 Minuten `auto-checkpoint` auf und wird einmal sofort gestartet. Ohne aktive
+Brückensitzung meldet sie IDLE; sie erzeugt dann keine Sicherung. Nach `start`
+sichert sie dieselbe Sitzung einschließlich uncommitteter, nicht ignorierter
+Dateien. Sie führt keine Commits, Pushes oder Merges aus.
+
+Die geprüfte Runtime wird unter LocalAppData in einen eindeutigen Ordner kopiert.
+`latest-result.json` enthält das jüngste Resultat, `failures.log` die Fehler.
+Keine automatische Benachrichtigung ist eingerichtet. Der Operator muss Fehler
+prüfen. Eine belegte Sperre oder sich gleichzeitig ändernde Datei kann einen
+Lauf abbrechen; die vorherige Sicherung bleibt erhalten. Nach einem harten
+Prozessabbruch kann eine manuell zu prüfende Sperre verbleiben.
+Die Aufgabe läuft nur während der Benutzer angemeldet ist; Schlafzustand und
+ausgeschalteter Rechner erlauben keine garantierten 30-Minuten-Sicherungen.
+Ein vorhandener gleichnamiger Zeitplan wird nicht überschrieben.
+Pause: `Disable-ScheduledTask -TaskName ImproveYourself-WorkBridge-30min`.
+
+Windows-Zeitplaninstallation und tatsächliche Ausführung bleiben bis zum
+Einrichtungstest UNVERIFIED. Vor produktiver Nutzung beide Zugänge explizit
+auf denselben Windows-Checkout richten und dort `start` erfolgreich ausführen.
 
 Unter Linux meldet BRIX1 viele Änderungen, deren getrackter Diff mit
 `--ignore-space-at-eol` leer ist. Zeilenenden mit Git for Windows prüfen,
