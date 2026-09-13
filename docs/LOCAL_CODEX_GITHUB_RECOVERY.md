@@ -7,11 +7,13 @@ local Codex workspace after a Windows or Codex reinstallation.
 
 - Repository: `git@github.com:DL7YAL/improve-yourself.git`
 - Default branch: `main`
-- Git commit identity: `DL7YAL <DL7YAL@users.noreply.github.com>`
+- Personal GitHub account: `Brix39`; confirm its actual commit email separately.
 - Local Codex is hosted by account 1 on the fixed local machine.
-- Account 2 uses that same local Codex environment. It has separate ChatGPT
-  context and usage, but edits the same checked-out files when it accesses the
-  fixed local Codex instance.
+- Both access paths must explicitly open the same Windows checkout. A shared
+  machine or Codex installation does not guarantee identical working files.
+- Use `docs/LOCAL_WORK_BRIDGE.md` for cooperative locking, local snapshots and
+  verified completion. The legacy restoration script below is for separate
+  recovery review, not for synchronizing an existing dirty checkout.
 
 The repository is the portable shared project record. Chat history is not a
 backup mechanism.
@@ -54,6 +56,10 @@ The script stops rather than overwriting a non-empty folder that is not already
 a Git repository.
 
 ## Normal synchronization
+
+For the shared working folder, follow `docs/LOCAL_WORK_BRIDGE.md` instead of
+the legacy manual example below. Review explicit paths; never stage everything
+without checking new files and private data.
 
 Before starting work:
 

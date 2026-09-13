@@ -57,6 +57,11 @@ This repository is the shared source of truth for Codex work on Improve Yourself
 - Do not invent support for adapter settings that cannot yet be authoritatively detected.
 
 ## Collaboration and continuity
+
+- Follow `docs/LOCAL_WORK_BRIDGE.md` for shared-checkout work and handoff.
+- Reserve the final 20% of available usage for validation, local recovery,
+  reviewed commits, verified push and handoff. Usage is not automatically measured.
+- Do not report synchronization complete without remote commit verification.
 - Prefer small, reviewable commits with descriptive messages.
 - Keep secrets, tokens, passwords, personal credentials, and machine-specific private data out of the repository.
 - Machine-specific setup may be documented with safe placeholders, but credentials must stay in the appropriate local/secret store.
