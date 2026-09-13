@@ -1,7 +1,7 @@
 # GitHub access handoff: Brix39 and DL7YAL
 
 Date: 2026-09-13
-Status: PARTIAL — organization ownership, Windows SSH and Azure verification pending.
+Status: PARTIAL — ownership confirmed by user screenshot; Windows SSH and Azure verification pending.
 
 ## Approved target
 
@@ -16,8 +16,11 @@ Windows accounts and service billing are outside this task.
 - Repository owner: DL7YAL, type Organization.
 - Brix39 repository permission: admin, verified by collaborator permission query.
   Repository metadata also reports admin, maintain, push and pull.
-- Organization membership query returned an empty list. This is not proof of
-  absence of membership and does not establish Owner status.
+- Organization membership query returned an empty list; that result was inconclusive.
+- Subsequently, the user supplied a screenshot of GitHub Settings > Organizations
+  for personal account Brix39 showing DL7YAL with the Owner badge (2026-09-13).
+  Owner status is confirmed by this user-supplied visual evidence, not by the API.
+  No role change is needed. The screenshot is not committed.
 - The current connector exposes installations on Brix39 and DL7YAL with
   repository selection `all`. These are not evidence of Azure's installation.
   Installation administration capability and complete permission sets were
@@ -49,10 +52,8 @@ No application behavior changes; application tests are NOT RUN.
 
 ## Required continuation
 
-1. In DL7YAL People, verify Brix39 has Owner role. If absent, an existing Owner
-   must grant it and any invitation must be accepted. Repository admin alone
-   cannot establish organization ownership. No organization membership
-   administration tool is exposed in this session.
+1. DONE: Brix39 Owner role confirmed by the user's GitHub settings screenshot.
+   Preserve the existing organization ownership.
 2. User confirms two-factor protection and recovery readiness without sharing
    codes. These settings were not observable through the available connector.
 3. Identify the active Windows checkout before configuring Git. From that
