@@ -112,8 +112,13 @@ ausgeschalteter Rechner erlauben keine garantierten 30-Minuten-Sicherungen.
 Ein vorhandener gleichnamiger Zeitplan wird nicht überschrieben.
 Pause: `Disable-ScheduledTask -TaskName ImproveYourself-WorkBridge-30min`.
 
-Windows-Zeitplaninstallation und tatsächliche Ausführung bleiben bis zum
-Einrichtungstest UNVERIFIED. Vor produktiver Nutzung beide Zugänge explizit
+Windows-Einrichtungstest am 2026-09-13: vier Tests PASS (Benutzerausgabe).
+Aufgabe `ImproveYourself-WorkBridge-30min` registriert; erster Lauf um 22:37:32
+mit LastTaskResult 0. Lokal zurückgelesene Ergebnisdatei bestätigt exitCode 0
+und `IDLE: no active session`. Konfiguration zeigt auf den vereinbarten
+Windows-BRIX1-Checkout. Installation und erster Idle-Lauf sind bestätigt.
+Ein produktiver Snapshot, ein wiederkehrender 30-Minuten-Lauf und der Start
+der gemeinsamen Sitzung sind noch nicht nachgewiesen. Vor produktiver Nutzung beide Zugänge explizit
 auf denselben Windows-Checkout richten und dort `start` erfolgreich ausführen.
 
 Unter Linux meldet BRIX1 viele Änderungen, deren getrackter Diff mit
