@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 
 
@@ -26,6 +27,8 @@ def validate_record(record: object) -> list[str]:
     completed_at = record.get("completedAt")
     if not isinstance(completed_at, (int, float)) or isinstance(completed_at, bool):
         errors.append(f"completedAt must be numeric, got {completed_at!r}")
+    elif isinstance(completed_at, float) and not math.isfinite(completed_at):
+        errors.append(f"completedAt must be finite, got {completed_at!r}")
     elif completed_at < 134:
         errors.append(f"completedAt is too early for the full run: {completed_at}")
     return errors
