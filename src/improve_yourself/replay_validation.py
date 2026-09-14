@@ -50,7 +50,10 @@ def validate_replay_manifest(payload: Any) -> list[str]:
         rounds = []
     previous = 0
     for index, round_item in enumerate(rounds):
-        number = round_item.get("round_number") if isinstance(round_item, dict) else None
+        if not isinstance(round_item, dict):
+            errors.append(f"rounds[{index}] must be an object")
+            continue
+        number = round_item.get("round_number")
         if not isinstance(number, int) or number <= previous:
             errors.append(f"rounds[{index}].round_number must be strictly increasing")
         elif number > 0:
@@ -58,7 +61,9 @@ def validate_replay_manifest(payload: Any) -> list[str]:
         for field in ("first_tick", "last_tick", "frame_count"):
             if not isinstance(round_item.get(field), int) or round_item[field] < 0:
                 errors.append(f"rounds[{index}].{field} must be a non-negative integer")
-        if isinstance(round_item, dict) and round_item.get("first_tick", 0) > round_item.get("last_tick", 0):
+        first_tick = round_item.get("first_tick")
+        last_tick = round_item.get("last_tick")
+        if isinstance(first_tick, int) and isinstance(last_tick, int) and first_tick > last_tick:
             errors.append(f"rounds[{index}] tick range is invalid")
         if not isinstance(round_item.get("chunk"), str) or not round_item["chunk"]:
             errors.append(f"rounds[{index}].chunk must be non-empty")
