@@ -78,6 +78,37 @@ compatibility. No Windows converter was located in the searched tool locations;
 selecting a verified Windows Source 2 Viewer CLI and the visual checks above
 remain outstanding. Linux resource-load evidence does not replace these checks.
 
+### Verified Windows converter and resource load, 2026-09-19
+
+Following explicit user approval, the Windows x64 CLI was provisioned outside
+the checkout under the user's local application-data tools directory. No game
+assets or converter binaries were added to Git. Official release:
+https://github.com/ValveResourceFormat/ValveResourceFormat/releases/tag/20.0
+
+The downloaded `cli-windows-x64.zip` SHA-256 matched the GitHub release asset
+digest before extraction/execution:
+`d32ab327b8bbb42a2528866afb03bb582bdb779d0005488da32b90292afd3ff5`.
+Reported CLI version: `20.0.6980+a06886f7d06049052d32a7381ec05523064a2ca0`.
+
+The unmodified application loader successfully read the installed Anubis
+resources through that Windows executable in 1.05 seconds. Output: 1024x1024,
+projection (-2796, 3328, 5.22); image SHA-256 matches the Linux result above.
+Archive-index SHA-256:
+`ca5aaacf24a78ab3ce61934ad6da83193ee303ca5842b7a86d16537d3b1625fd`.
+Descriptor SHA-256:
+`f83755ed8a85365923ac565d3fbd2ab1391e75d8b89cfd759da9214bf80e9fff`.
+The loader checked that the archive index was unchanged after conversion and
+removed its temporary exports. Demo/map compatibility remains `unknown`.
+
+The missing-converter prerequisite is resolved. The focused Windows tests
+(local loader, embedded Tactical, viewer) also passed: 27 tests in 0.52 seconds.
+Title-based window lookup failed, but a targeted capture using the window handle
+reported by Windows succeeded. The inspected Home screen shows the existing
+Anubis match with 24 rounds, 10 players and 67 scenes. This is Home-screen
+evidence only, not map/player alignment or interactive replay acceptance.
+The capture remains local, outside Git. Use the local-map button in Tactical
+Replay and complete the alignment and interaction checks listed above.
+
 The final UI design and functional Anubis 3D POV remain subsequent work as
 specified in ANALYZER_TEST_VERSION_HANDOFF.md. This slice adds only the actual
 2D map loading control; it does not preempt the final visual design.
