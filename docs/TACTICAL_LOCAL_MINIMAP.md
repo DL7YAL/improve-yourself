@@ -112,3 +112,37 @@ Replay and complete the alignment and interaction checks listed above.
 The final UI design and functional Anubis 3D POV remain subsequent work as
 specified in ANALYZER_TEST_VERSION_HANDOFF.md. This slice adds only the actual
 2D map loading control; it does not preempt the final visual design.
+
+## Direct Tactical entry repair, 2026-09-20
+
+The Home `Replay öffnen` and sidebar entry previously only raised the Tactical
+page; they never initialized a session from the already loaded match. They now
+share a navigation handler which opens the existing Review and its selected
+scene before opening Tactical. No demo reparse is requested. An existing
+Tactical session keeps its map/frame when returning via navigation. New results
+and a new demo import clear the previous Tactical session and map; an unready
+match cannot resume the old session. Missing/invalid scenes do not create a
+fake successful view. Legacy V1 and benchmark code are unchanged.
+
+Windows validation: 47 focused tests passed; full suite **515 passed, 1 skipped**.
+Eight new navigation cases cover a ready match, existing Review selection,
+resuming Tactical, absent/incomplete/failed results, missing scenes and ordinary
+navigation. These unit tests do not claim mouse/dialog coverage.
+
+A separate live Windows diagnostic called the same navigation handler with the
+existing Anubis workflow, loaded the real map through the application loader,
+and attached it directly to the canvas (the file dialogs were not exercised).
+The inspected window capture shows the Anubis map, player markers and headings,
+scene list and frame slider: round 1, tick 4177, frame 1/256. The canvas reported
+49 items. The capture remains local, outside Git. Its map-status label still
+shows the fallback wording because the diagnostic bypassed the normal load
+completion callback; it is not evidence of that callback or its status text.
+
+The initial real-data run took substantially longer than the unit tests. A
+bounded 25-second follow-up captured the process inside JSON decoding in
+ReplayStore.load_round, called by validate_existing_workflow during workflow
+opening, then exited automatically. This locates one expensive path, not a
+complete performance profile. Synchronous validation remains a responsiveness
+limitation. No validation or integrity check was removed to hide the delay.
+Full interactive acceptance (dialog load, responsiveness, seeking, zoom/pan,
+scene changes, map alignment/revision and error states) remains outstanding.

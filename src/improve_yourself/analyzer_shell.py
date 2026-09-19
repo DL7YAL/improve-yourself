@@ -1568,7 +1568,7 @@ class AnalyzerShellApp:
             button = SidebarNavItem(
                 tk, primary_navigation if name in _SIDEBAR_PRIMARY else secondary_navigation,
                 text=nav_labels[name], ui_font=self.ui_font,
-                command=lambda value=name: self._show_page(value),
+                command=lambda value=name: self._navigate_page(value),
             )
             button.pack(fill="x", padx=11, pady=2)
             self.nav_buttons[name] = button
@@ -1967,6 +1967,34 @@ class AnalyzerShellApp:
             detail, text="HTML-Export im Browser (Fallback)", command=self._open_review_fallback
         ).pack(anchor="w", pady=(12, 0))
 
+    def _navigate_page(self, name: str) -> None:
+        """User navigation must initialize Tactical from the loaded workflow."""
+        if name != "Tactical Replay":
+            self._show_page(name)
+            return
+        result = self.controller.result
+        if result is None or result.status != "READY_FOR_REVIEW":
+            self._clear_tactical_session()
+            self._show_page(name)
+            self.tactical_scene_note.set("Noch kein fertiger Matchstand: Analyse öffnen oder abschließen.")
+            return
+        if self.embedded_tactical is not None:
+            self._show_page(name)
+            return
+        if self.embedded_review is None:
+            self._open_review()
+        if self.embedded_scene_id is None:
+            self.status.set("2D nicht geöffnet: keine gültige Review-Szene verfügbar. Review prüfen.")
+            return
+        self._open_tactical_from_review()
+
+    def _clear_tactical_session(self) -> None:
+        self.embedded_tactical = None
+        self.tactical_minimap = None
+        self.tactical_minimap_photo = None
+        self.tactical_frame_index = 0
+        self._show_tactical_empty_state()
+
     def _show_page(self, name: str, *, record_history: bool = True) -> None:
         if name not in self.page_hosts:
             raise ValueError(f"unknown page: {name}")
@@ -2075,7 +2103,7 @@ class AnalyzerShellApp:
             self.ttk.Frame(card.body, style="HomeModule.TFrame").grid(row=3, column=0, sticky="nsew")
             CanvaAction(
                 self.tk, card.body, text=action, accent=accent,
-                command=(self._show_analyzer_overview if target == "Analyzer" else lambda value=target: self._show_page(value)), enabled=enabled,
+                command=(self._show_analyzer_overview if target == "Analyzer" else lambda value=target: self._navigate_page(value)), enabled=enabled,
                 font=(self.ui_font, 9, "bold"),
             ).grid(row=4, column=0, sticky="ew")
 
@@ -3384,6 +3412,9 @@ class AnalyzerShellApp:
 
     def _mark_demo_import_started(self, demo: Path) -> None:
         """Project an explicit, non-actionable parsing state into all tabs."""
+        self.embedded_review = None
+        self.embedded_scene_id = None
+        self._clear_tactical_session()
         self._stop_import_status_timer()
         self._import_started_at = time.monotonic()
         self._set_analysis_controls_available(False)
@@ -3493,6 +3524,7 @@ class AnalyzerShellApp:
             self._preflight()
 
     def _draw(self, result: ShellResult) -> None:
+        self._clear_tactical_session()
         self._set_analysis_controls_available(True)
         for box in (self.ct, self.t):
             for child in box.winfo_children():
