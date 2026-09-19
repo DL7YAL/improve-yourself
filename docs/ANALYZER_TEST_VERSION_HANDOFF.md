@@ -41,6 +41,10 @@ rejection without caching, empty frames and valid single/multi-frame rounds.
 
 ## Tactical 2D next slice
 
+Update 2026-09-19: the first local minimap loading slice is implemented; see
+TACTICAL_LOCAL_MINIMAP.md for actual tests, resource-load evidence and remaining
+Windows visual acceptance. The following paragraphs describe its original scope.
+
 The standalone HTML viewer already accepts a local radar image. The embedded
 desktop canvas currently draws player-relative coordinates without a minimap.
 The integration must use one shared transform for image and player markers,

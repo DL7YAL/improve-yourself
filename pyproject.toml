@@ -10,6 +10,7 @@ requires-python = ">=3.13,<3.14"
 dependencies = [
   "awpy==2.0.2",
   "zstandard>=0.23,<1",
+  "pillow>=12,<13",
 ]
 
 [project.optional-dependencies]

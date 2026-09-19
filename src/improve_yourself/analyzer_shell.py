@@ -23,6 +23,7 @@ from .demo_workflow import ensure_tactical_replay_export, preflight_demo_workflo
 from .analyzer_data_hub import AnalyzerDataHub
 from .embedded_review import EmbeddedReviewSession
 from .embedded_tactical import EmbeddedTacticalSession
+from .local_minimap import load_local_minimap, project_point, viewport
 from .local_profiles import OBJECTIVE_RULES, LocalProfileStore
 from .local_steam_accounts import LocalSteamAccountCandidate, discover_local_steam_accounts
 from .optimizer_evidence import profile_from_system_check
@@ -3299,7 +3300,12 @@ class AnalyzerShellApp:
         frame_row = self.ttk.Frame(map_panel, style="CardInner.TFrame")
         frame_row.pack(fill="x", pady=(0, 8))
         self.ttk.Label(frame_row, text="POSITIONSFRAME", style="Card.TLabel").pack(side="left")
-        self.ttk.Label(frame_row, text="Kartenbasis: nur bei belegtem Asset", style="Muted.TLabel").pack(side="left", padx=(10, 0))
+        self.tactical_minimap = None
+        self.tactical_minimap_photo = None
+        self.tactical_minimap_status = self.tk.StringVar(value="Ohne Kartenbild · relative Positionsansicht")
+        self.ttk.Label(map_panel, textvariable=self.tactical_minimap_status, style="Muted.TLabel").pack(fill="x")
+        self.tactical_minimap_button = self.ttk.Button(frame_row, text="Lokale CS2-Karte laden", command=self._load_tactical_minimap)
+        self.tactical_minimap_button.pack(side="left", padx=(10, 0))
         self.tactical_frame = self.ttk.Scale(frame_row, from_=0, to=0, command=self._set_tactical_frame)
         self.tactical_frame.pack(side="left", fill="x", expand=True, padx=10)
         self.ttk.Label(frame_row, textvariable=self.tactical_frame_status, style="Muted.TLabel").pack(side="right")
@@ -3758,6 +3764,9 @@ class AnalyzerShellApp:
                 str(manifest["source_sha256"]),
             )
             self.embedded_tactical.select_scene(self.embedded_scene_id)
+            self.tactical_minimap = None
+            self.tactical_minimap_photo = None
+            self.tactical_minimap_status.set("Ohne Kartenbild · relative Positionsansicht")
             self.tactical_frame_index = 0
             self.tactical_zoom = 1.0
             self.tactical_pan = [0.0, 0.0]
@@ -3867,6 +3876,44 @@ class AnalyzerShellApp:
         self.tactical_frame_index = int(round(float(value)))
         self._draw_tactical_canvas()
 
+    def _load_tactical_minimap(self) -> None:
+        from tkinter import filedialog
+        if self.embedded_tactical is None:
+            self.tactical_minimap_status.set("Zuerst eine Replay-Szene öffnen.")
+            return
+        session = self.embedded_tactical
+        map_id = session.projection["map_name"]
+        directory = filedialog.askdirectory(parent=self.root, title="Lokale Counter-Strike-2-Installation auswählen")
+        if not directory:
+            return
+        converter = filedialog.askopenfilename(parent=self.root, title="Source 2 Viewer CLI auswählen")
+        if not converter:
+            return
+        self.tactical_minimap = None
+        self.tactical_minimap_photo = None
+        self.tactical_minimap_status.set("Lokale Kartenressourcen werden gelesen …")
+        self.tactical_minimap_button.configure(state="disabled")
+        self._draw_tactical_canvas()
+
+        def complete(result, message):
+            self.tactical_minimap_button.configure(state="normal")
+            if self.embedded_tactical is not session:
+                return
+            self.tactical_minimap = result
+            self.tactical_minimap_status.set(message)
+            self._draw_tactical_canvas()
+
+        def worker():
+            try:
+                result = load_local_minimap(Path(directory), Path(converter), map_id)
+                message = "Lokale Karte · Nord oben · Demo/Kartenversion nicht abgeglichen · Ebenen nicht geprüft"
+            except Exception as error:
+                result = None
+                message = f"Ohne Kartenbild: {error}"
+            self.root.after(0, lambda: complete(result, message))
+
+        threading.Thread(target=worker, daemon=True).start()
+
     def _draw_tactical_canvas(self) -> None:
         canvas = getattr(self, "tactical_canvas", None)
         if canvas is None:
@@ -3901,10 +3948,25 @@ class AnalyzerShellApp:
         base_scale = min(width, height) * 0.72 / span
         scale = base_scale * self.tactical_zoom
         center_x, center_y = (min_x + max_x) / 2, (min_y + max_y) / 2
+        minimap = getattr(self, "tactical_minimap", None)
+        map_view = None
+        if minimap is not None and minimap.map_id == self.embedded_tactical.projection["map_name"]:
+            from PIL import Image, ImageTk
+            map_view = viewport(width, height, self.tactical_zoom, tuple(self.tactical_pan))
+            left, top, pixel_scale = map_view
+            rendered = minimap.image.transform(
+                (width, height), Image.Transform.AFFINE,
+                (1 / pixel_scale, 0, -left / pixel_scale, 0, 1 / pixel_scale, -top / pixel_scale),
+                resample=Image.Resampling.BILINEAR,
+            )
+            self.tactical_minimap_photo = ImageTk.PhotoImage(rendered, master=canvas)
+            canvas.create_image(0, 0, image=self.tactical_minimap_photo, anchor="nw")
         focus = scene.get("focus_player_id")
         for player in players:
             x = width / 2 + (float(player["x"]) - center_x) * scale + self.tactical_pan[0]
             y = height / 2 - (float(player["y"]) - center_y) * scale + self.tactical_pan[1]
+            if map_view is not None:
+                x, y = project_point(minimap, float(player["x"]), float(player["y"]), map_view)
             color = "#55aaff" if str(player.get("side", "")).upper() == "CT" else "#ff9f43"
             radius = 10 if player.get("player_id") != focus else 14
             yaw = math.radians(float(player.get("yaw", 0.0)))
