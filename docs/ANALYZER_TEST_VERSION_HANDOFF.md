@@ -109,6 +109,13 @@ routine but does not install another scheduler.
 
 ## Validation record
 
+Update 2026-09-19: Windows execution now works. The shared checkout's locked
+Windows setup and nine CLI smoke tests passed; full suite: **507 passed,
+1 skipped**. An existing real Anubis workflow passed the current validator and
+the application started with it. See TACTICAL_LOCAL_MINIMAP.md for the evidence
+boundary and still-pending Windows local-resource/visual acceptance. The earlier
+environment limitation below is historical, not an active blanket blocker.
+
 Initial focused check: 34 tests passed using Python 3.13.15 / pytest 8.4.2 on
 Linux against the shared checkout. Windows execution and real visual acceptance
 are separate requirements; Windows Python cannot currently be launched from
