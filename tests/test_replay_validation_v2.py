@@ -1,3 +1,5 @@
+import pytest
+
 from improve_yourself.replay_contract import REPLAY_V2_SCHEMA, ROUND_CHUNK_SCHEMA
 from improve_yourself.replay_validation import validate_replay_manifest, validate_round_chunk
 
@@ -20,6 +22,22 @@ def valid_manifest() -> dict:
 
 def test_valid_manifest_passes() -> None:
     assert validate_replay_manifest(valid_manifest()) == []
+
+
+@pytest.mark.parametrize("entry", [None, 7, "round", [], True])
+def test_non_object_round_returns_validation_errors(entry) -> None:
+    payload = valid_manifest()
+    payload["rounds"].insert(0, entry)
+    errors = validate_replay_manifest(payload)
+    assert errors
+    assert all("rounds[0]" in error for error in errors)
+
+
+@pytest.mark.parametrize("field,value", [("first_tick", None), ("last_tick", "20")])
+def test_invalid_round_tick_type_returns_validation_errors(field, value) -> None:
+    payload = valid_manifest()
+    payload["rounds"][0][field] = value
+    assert any(field in error for error in validate_replay_manifest(payload))
 
 
 def test_duplicate_players_and_invalid_capability_fail() -> None:

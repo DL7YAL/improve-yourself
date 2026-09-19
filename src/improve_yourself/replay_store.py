@@ -52,6 +52,16 @@ class ReplayStore:
         errors = validate_round_chunk(chunk, known_ids)
         if errors:
             raise ValueError(f"invalid round {round_number}: " + "; ".join(errors))
+        frames = chunk["frames"]
+        actual = {
+            "round_number": chunk["round_number"],
+            "first_tick": frames[0]["tick"],
+            "last_tick": frames[-1]["tick"],
+            "frame_count": len(frames),
+        }
+        for field, value in actual.items():
+            if value != descriptor[field]:
+                raise ValueError(f"round {round_number} chunk {field} differs from descriptor")
         self._cache = {round_number: chunk}
         return chunk
 
